@@ -57,6 +57,12 @@ Size of:
 - Val: 100
 - Train: 12500
 - Test: 500
+Total (equals total possible): 13100
+they took the first and third column out of metadata.csv
 
 pretrain only contains 'state_dict'
 - iteration, optimizer, learning_rate are not present
+
+maybe create original text of LJSpeech and convert it to IPA and then split it again
+
+training on pretrained model do not give results on first iterations
