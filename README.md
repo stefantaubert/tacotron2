@@ -51,3 +51,12 @@ Load inference.ipynb
 
 N.b.  When performing Mel-Spectrogram to Audio synthesis, make sure Tacotron 2
 and the Mel decoder were trained on the same mel-spectrogram representation. 
+
+## Notes
+Size of:
+- Val: 100
+- Train: 12500
+- Test: 500
+
+pretrain only contains 'state_dict'
+- iteration, optimizer, learning_rate are not present
