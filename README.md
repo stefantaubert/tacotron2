@@ -15,7 +15,7 @@ $ pip install -r req.txt
 
 ## FYI
 
-don't know if this is really required
+apex is only required for fp16_run
 ```
 git clone https://github.com/NVIDIA/apex
 cd apex
