@@ -4,19 +4,17 @@ import torch
 import torch.utils.data
 
 import layers
-from utils import load_wav_to_torch, load_filepaths_and_text
-from text import text_to_sequence
+from utils import load_wav_to_torch, load_filepaths_and_symbols
 
 
-class TextMelLoader(torch.utils.data.Dataset):
+class SymbolsMelLoader(torch.utils.data.Dataset):
   """
     1) loads audio,text pairs
     2) normalizes text and converts them to sequences of one-hot vectors
     3) computes mel-spectrograms from audio files.
   """
   def __init__(self, audiopaths_and_text, hparams):
-    self.audiopaths_and_text = load_filepaths_and_text(audiopaths_and_text)
-    self.text_cleaners = hparams.text_cleaners
+    self.audiopaths_and_symbols = load_filepaths_and_symbols(audiopaths_and_text)
     self.max_wav_value = hparams.max_wav_value
     self.sampling_rate = hparams.sampling_rate
     self.load_mel_from_disk = hparams.load_mel_from_disk
@@ -25,14 +23,14 @@ class TextMelLoader(torch.utils.data.Dataset):
       hparams.n_mel_channels, hparams.sampling_rate, hparams.mel_fmin,
       hparams.mel_fmax)
     random.seed(hparams.seed)
-    random.shuffle(self.audiopaths_and_text)
+    random.shuffle(self.audiopaths_and_symbols)
 
-  def get_mel_text_pair(self, audiopath_and_text):
+  def get_mel_symbols_pair(self, audiopath_and_text):
     # separate filename and text
-    audiopath, text = audiopath_and_text[0], audiopath_and_text[1]
-    text = self.get_text(text)
-    mel = self.get_mel(audiopath)
-    return (text, mel)
+    audiopath, symbols_str = audiopath_and_text[0], audiopath_and_text[1]
+    symbols_tensor = self.get_symbols(symbols_str)
+    mel_tensor = self.get_mel(audiopath)
+    return (symbols_tensor, mel_tensor)
 
   def get_mel(self, filename):
     if not self.load_mel_from_disk:
@@ -52,19 +50,21 @@ class TextMelLoader(torch.utils.data.Dataset):
           melspec.size(0), self.stft.n_mel_channels))
 
     return melspec
+  def get_symbols(self, symbols_str):
+    symbols = symbols_str.split(',')
+    symbols = list(map(int, symbols))
+    symbols_tensor = torch.IntTensor(symbols)
+    return symbols_tensor
 
-  def get_text(self, text):
-    text_norm = torch.IntTensor(text_to_sequence(text, self.text_cleaners))
-    return text_norm
 
   def __getitem__(self, index):
-    return self.get_mel_text_pair(self.audiopaths_and_text[index])
+    return self.get_mel_symbols_pair(self.audiopaths_and_symbols[index])
 
   def __len__(self):
-    return len(self.audiopaths_and_text)
+    return len(self.audiopaths_and_symbols)
 
 
-class TextMelCollate():
+class SymbolsMelCollate():
   """ Zero-pads model inputs and targets based on number of frames per step
   """
   def __init__(self, n_frames_per_step):
@@ -77,9 +77,7 @@ class TextMelCollate():
     batch: [text_normalized, mel_normalized]
     """
     # Right zero-pad all one-hot text sequences to max input length
-    input_lengths, ids_sorted_decreasing = torch.sort(
-      torch.LongTensor([len(x[0]) for x in batch]),
-      dim=0, descending=True)
+    input_lengths, ids_sorted_decreasing = torch.sort(torch.LongTensor([len(x[0]) for x in batch]), dim=0, descending=True)
     max_input_len = input_lengths[0]
 
     text_padded = torch.LongTensor(len(batch), max_input_len)

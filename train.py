@@ -11,11 +11,12 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
 
 from model import Tacotron2
-from data_utils import TextMelLoader, TextMelCollate
+from data_utils import SymbolsMelLoader, SymbolsMelCollate
 from loss_function import Tacotron2Loss
 from logger import Tacotron2Logger
 from hparams import create_hparams
 
+from text_new.conversion.SymbolConverter import get_from_file
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -41,9 +42,9 @@ def init_distributed(hparams, n_gpus, rank, group_name):
 
 def prepare_dataloaders(hparams):
   # Get data, data loaders and collate function ready
-  trainset = TextMelLoader(hparams.training_files, hparams)
-  valset = TextMelLoader(hparams.validation_files, hparams)
-  collate_fn = TextMelCollate(hparams.n_frames_per_step)
+  trainset = SymbolsMelLoader(hparams.training_files, hparams)
+  valset = SymbolsMelLoader(hparams.validation_files, hparams)
+  collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
 
   if hparams.distributed_run:
     train_sampler = DistributedSampler(trainset)
@@ -254,12 +255,13 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
 
 if __name__ == '__main__':
+
   parser = argparse.ArgumentParser()
   parser.add_argument('-o', '--output_directory', type=str,
             help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
   parser.add_argument('-l', '--log_directory', type=str,
             help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
-  parser.add_argument('-c', '--checkpoint_path', type=str, default='/datasets/code/tacotron2/pretrained/tacotron2_statedict.pt',
+  parser.add_argument('-c', '--checkpoint_path', type=str, #default='/datasets/code/tacotron2/pretrained/tacotron2_statedict.pt',
             required=False, help='checkpoint path')
   parser.add_argument('--warm_start', action='store_true',
             help='load model weights only, ignore specified layers', default='true')
@@ -274,6 +276,12 @@ if __name__ == '__main__':
 
   args = parser.parse_args()
   hparams = create_hparams(args.hparams)
+
+  hparams.iters_per_checkpoint = 5
+
+  conv = get_from_file('/tmp/symbols.json')
+  n_symbols = conv.get_symbols_count()
+  hparams.n_symbols = n_symbols
 
   torch.backends.cudnn.enabled = hparams.cudnn_enabled
   torch.backends.cudnn.benchmark = hparams.cudnn_benchmark

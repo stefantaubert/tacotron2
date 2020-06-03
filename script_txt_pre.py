@@ -27,7 +27,8 @@ with open('in/text_sents.txt', 'w') as f:
 
 accented_sents = []
 for s in cleaned_sents:
-  accented_sentence = s ## todo
+  ### todo
+  accented_sentence = s
   accented_sents.append(accented_sentence)
 
 with open('in/text_sents_accented.txt', 'w') as f:

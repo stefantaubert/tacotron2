@@ -13,7 +13,6 @@ from denoiser import Denoiser
 
 from hparams import create_hparams
 from model import Tacotron2
-from text import text_to_sequence
 from train import load_model
 from scipy.io.wavfile import write
 
@@ -30,16 +29,16 @@ def to_wav(path, data, sr):
   write(path, sr, wav.astype(np.int16))
 
 class Synthesizer():
-  def __init__(self):
+  def __init__(self, hparams):
     super().__init__()
-    self.hparams = create_hparams()
-    self.hparams.sampling_rate = 22050
-
+    self.hparams = hparams
     # Load model from checkpoint
     #checkpoint_path = "pretrained/tacotron2_statedict.pt"
-    checkpoint_path = "/datasets/models/taco2pytorch/checkpoint_13000"
+    checkpoint_path = "/datasets/models/taco2pytorch/checkpoint_5"
     self.model = load_model(self.hparams)
-    self.model.load_state_dict(torch.load(checkpoint_path)['state_dict'])
+    torch_model = torch.load(checkpoint_path)
+    state_dict = torch_model['state_dict']
+    self.model.load_state_dict(state_dict)
     self.model.cuda().eval().half()
 
     # Load WaveGlow for mel2audio synthesis and denoiser
@@ -50,8 +49,8 @@ class Synthesizer():
       k.float()
     self.denoiser = Denoiser(self.waveglow)
 
-  def infer(self, text, dest_name):
-    sequence = np.array(text_to_sequence(text, ['english_cleaners']))[None, :]
+  def infer(self, symbols, dest_name):
+    sequence = np.array([symbols])
     sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
 
     # Decode text input and plot results
@@ -73,24 +72,27 @@ class Synthesizer():
 if __name__ == "__main__":
   from tqdm import tqdm
   from nltk.tokenize import sent_tokenize
+  from text_new.conversion.SymbolConverter import get_from_file
+
+  conv = get_from_file('/tmp/symbols.json')
+  n_symbols = conv.get_symbols_count()
 
   output = np.array([])
-  lines = []
 
-  with open('in/text.txt', 'r') as f:
-    lines = f.readlines()
-  sentences = []
-  for line in lines:
-    sents = sent_tokenize(line)
-    sentences.extend(sents)
+  sentences_symbols = []
+  with open('in/text_sents_accented_seq.txt', 'r') as f:
+    sentences_symbols = f.readlines()
+  sentences_symbols = [x.split(',') for x in sentences_symbols]
+  sentences_symbols = [list(map(int, l)) for l in sentences_symbols]
 
-  print('\n'.join(sentences))
-  
+  hparams = create_hparams()
+  hparams.sampling_rate = 22050
+  hparams.n_symbols = n_symbols
   # Speed is: 1min inference for 3min wav result
-  synt = Synthesizer()
-  for i, line in tqdm(enumerate(sentences), total=len(sentences)):
+  synt = Synthesizer(hparams)
+  for i, sentence_symbols in tqdm(enumerate(sentences_symbols), total=len(sentences_symbols)):
     #print("Inferring...", line)
-    res = synt.infer(line, str(i))
+    res = synt.infer(sentence_symbols, str(i))
     output = np.concatenate((output, res), axis=0)
     #print(output)
 
