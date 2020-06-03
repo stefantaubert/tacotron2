@@ -16,7 +16,7 @@ from loss_function import Tacotron2Loss
 from logger import Tacotron2Logger
 from hparams import create_hparams
 
-from text_new.conversion.SymbolConverter import get_from_file
+from text.conversion.SymbolConverter import get_from_file
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()

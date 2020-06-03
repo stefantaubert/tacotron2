@@ -72,7 +72,7 @@ class Synthesizer():
 if __name__ == "__main__":
   from tqdm import tqdm
   from nltk.tokenize import sent_tokenize
-  from text_new.conversion.SymbolConverter import get_from_file
+  from text.conversion.SymbolConverter import get_from_file
 
   conv = get_from_file('/tmp/symbols.json')
   n_symbols = conv.get_symbols_count()

@@ -1,5 +1,5 @@
-from text_new.adjustments.TextAdjuster import TextAdjuster
-from text_new.conversion.SymbolConverter import get_from_file
+from text.adjustments.TextAdjuster import TextAdjuster
+from text.conversion.SymbolConverter import get_from_file
 import os
 from nltk.tokenize import sent_tokenize
 

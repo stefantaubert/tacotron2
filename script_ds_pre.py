@@ -2,8 +2,8 @@
 dataset_path = '/datasets/LJSpeech-1.1'
 
 from parser.LJSpeechDatasetParser import LJSpeechDatasetParser
-from text_new.adjustments.TextAdjuster import TextAdjuster
-from text_new.conversion.SymbolConverter import get_from_symbols
+from text.adjustments.TextAdjuster import TextAdjuster
+from text.conversion.SymbolConverter import get_from_symbols
 import pandas as pd
 import os
 
