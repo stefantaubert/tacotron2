@@ -12,10 +12,10 @@ hyperparameter. Some cleaners are English-specific. You'll typically want to use
 
 from unidecode import unidecode as convert_to_ascii
 
-from text.adjustments.abbreviations import \
+from text_new.adjustments.abbreviations import \
     expand_abbreviations
-from text.adjustments.numbers import normalize_numbers
-from text.adjustments.whitespace import \
+from text_new.adjustments.numbers import normalize_numbers
+from text_new.adjustments.whitespace import \
     collapse_whitespace
 
 

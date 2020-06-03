@@ -167,8 +167,7 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
   model = load_model(hparams)
   learning_rate = hparams.learning_rate
-  optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
-                 weight_decay=hparams.weight_decay)
+  optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=hparams.weight_decay)
 
   if hparams.fp16_run:
     from apex import amp
@@ -193,8 +192,7 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
       model = warm_start_model(
         checkpoint_path, model, hparams.ignore_layers)
     else:
-      model, optimizer, _learning_rate, iteration = load_checkpoint(
-        checkpoint_path, model, optimizer)
+      model, optimizer, _learning_rate, iteration = load_checkpoint(checkpoint_path, model, optimizer)
       if hparams.use_saved_learning_rate:
         learning_rate = _learning_rate
       iteration += 1  # next iteration is iteration + 1

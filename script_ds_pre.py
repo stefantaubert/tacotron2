@@ -4,6 +4,7 @@ dataset_path = '/datasets/LJSpeech-1.1'
 from parser.LJSpeechDatasetParser import LJSpeechDatasetParser
 from text_new.adjustments.TextAdjuster import TextAdjuster
 from text_new.conversion.SymbolConverter import get_from_symbols
+import pandas as pd
 import os
 
 p = LJSpeechDatasetParser(dataset_path)
@@ -36,8 +37,6 @@ for basename, text, wav_path in data:
 
 ### save
 #dest_filename = os.path.join(dataset_path, 'preprocessed.txt')
-dest_filename = "/tmp/preprocessed.txt"
+dest_filename = "/tmp/preprocessed.csv"
 
-with open(dest_filename, 'w', encoding='utf-8') as f:
-  for m in result:
-    f.write('|'.join([str(x) for x in m]) + '\n')
+pd.DataFrame(result).to_csv(dest_filename, header=None, index=None, sep="|")

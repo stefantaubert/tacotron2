@@ -37,7 +37,7 @@ class Synthesizer():
 
     # Load model from checkpoint
     #checkpoint_path = "pretrained/tacotron2_statedict.pt"
-    checkpoint_path = "/datasets/models/taco2pytorch/checkpoint_10"
+    checkpoint_path = "/datasets/models/taco2pytorch/checkpoint_13000"
     self.model = load_model(self.hparams)
     self.model.load_state_dict(torch.load(checkpoint_path)['state_dict'])
     self.model.cuda().eval().half()
