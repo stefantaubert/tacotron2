@@ -13,9 +13,9 @@ print(len(train))
 print(len(test))
 print(len(val))
 
-test_path = "filelists/ljs_audio_text_test_filelist.csv"
-train_path = "filelists/ljs_audio_text_train_filelist.csv"
-val_path = "filelists/ljs_audio_text_val_filelist.csv"
+test_path = "filelist/ljs_audio_text_test_filelist.csv"
+train_path = "filelist/ljs_audio_text_train_filelist.csv"
+val_path = "filelist/ljs_audio_text_val_filelist.csv"
 
 train.to_csv(train_path, header=None, index=None, sep="|")
 test.to_csv(test_path, header=None, index=None, sep="|")
