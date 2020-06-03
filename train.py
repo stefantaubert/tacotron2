@@ -17,6 +17,7 @@ from logger import Tacotron2Logger
 from hparams import create_hparams
 
 from text.conversion.SymbolConverter import get_from_file
+from script_ds_pre import symbols_path
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -180,8 +181,7 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
   criterion = Tacotron2Loss()
 
-  logger = prepare_directories_and_logger(
-    output_directory, log_directory, rank)
+  logger = prepare_directories_and_logger(output_directory, log_directory, rank)
 
   train_loader, valset, collate_fn = prepare_dataloaders(hparams)
 
@@ -229,27 +229,20 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
           amp.master_params(optimizer), hparams.grad_clip_thresh)
         is_overflow = math.isnan(grad_norm)
       else:
-        grad_norm = torch.nn.utils.clip_grad_norm_(
-          model.parameters(), hparams.grad_clip_thresh)
+        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), hparams.grad_clip_thresh)
 
       optimizer.step()
 
       if not is_overflow and rank == 0:
         duration = time.perf_counter() - start
-        print("Train loss {} {:.6f} Grad Norm {:.6f} {:.2f}s/it".format(
-          iteration, reduced_loss, grad_norm, duration))
-        logger.log_training(
-          reduced_loss, grad_norm, learning_rate, duration, iteration)
+        print("Train loss {} {:.6f} Grad Norm {:.6f} {:.2f}s/it".format(iteration, reduced_loss, grad_norm, duration))
+        logger.log_training(reduced_loss, grad_norm, learning_rate, duration, iteration)
 
       if not is_overflow and (iteration % hparams.iters_per_checkpoint == 0):
-        validate(model, criterion, valset, iteration,
-             hparams.batch_size, n_gpus, collate_fn, logger,
-             hparams.distributed_run, rank)
+        validate(model, criterion, valset, iteration, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank)
         if rank == 0:
-          checkpoint_path = os.path.join(
-            output_directory, "checkpoint_{}".format(iteration))
-          save_checkpoint(model, optimizer, learning_rate, iteration,
-                  checkpoint_path)
+          checkpoint_path = os.path.join(output_directory, "checkpoint_{}".format(iteration))
+          save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
 
       iteration += 1
 
@@ -279,7 +272,7 @@ if __name__ == '__main__':
 
   hparams.iters_per_checkpoint = 5
 
-  conv = get_from_file('/tmp/symbols.json')
+  conv = get_from_file(symbols_path)
   n_symbols = conv.get_symbols_count()
   hparams.n_symbols = n_symbols
 
@@ -292,5 +285,4 @@ if __name__ == '__main__':
   print("cuDNN Enabled:", hparams.cudnn_enabled)
   print("cuDNN Benchmark:", hparams.cudnn_benchmark)
 
-  train(args.output_directory, args.log_directory, args.checkpoint_path,
-      args.warm_start, args.n_gpus, args.rank, args.group_name, hparams)
+  train(args.output_directory, args.log_directory, args.checkpoint_path, args.warm_start, args.n_gpus, args.rank, args.group_name, hparams)
