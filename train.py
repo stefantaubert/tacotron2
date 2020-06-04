@@ -248,28 +248,19 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
 
 if __name__ == '__main__':
-
   parser = argparse.ArgumentParser()
-  parser.add_argument('-o', '--output_directory', type=str,
-            help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
-  parser.add_argument('-l', '--log_directory', type=str,
-            help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
-  parser.add_argument('-c', '--checkpoint_path', type=str, default='/datasets/code/tacotron2/pretrained/tacotron2_statedict.pt',
-            required=False, help='checkpoint path')
-  parser.add_argument('--warm_start', action='store_true',
-            help='load model weights only, ignore specified layers', default='true')
-  parser.add_argument('--n_gpus', type=int, default=1,
-            required=False, help='number of gpus')
-  parser.add_argument('--rank', type=int, default=0,
-            required=False, help='rank of current gpu')
-  parser.add_argument('--group_name', type=str, default='group_name',
-            required=False, help='Distributed group name')
-  parser.add_argument('--hparams', type=str,
-            required=False, help='comma separated name=value pairs')
+  parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
+  parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
+  parser.add_argument('-c', '--checkpoint_path', type=str, default='/datasets/code/tacotron2/pretrained/tacotron2_statedict.pt', required=False, help='checkpoint path')
+  parser.add_argument('--warm_start', action='store_true', help='load model weights only, ignore specified layers', default='true')
+  parser.add_argument('--n_gpus', type=int, default=1, required=False, help='number of gpus')
+  parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
+  parser.add_argument('--group_name', type=str, default='group_name', required=False, help='Distributed group name')
+  parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
 
   args = parser.parse_args()
-  hparams = create_hparams(args.hparams)
 
+  hparams = create_hparams(args.hparams)
   hparams.iters_per_checkpoint = 500
 
   conv = get_from_file(symbols_path)
