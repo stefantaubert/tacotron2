@@ -4,7 +4,10 @@ if __name__ == "__main__":
   import os
   from nltk.tokenize import sent_tokenize
   from script_ds_pre import symbols_path
+  import epitran
+  from ipa2symb import extract_from_sentence
 
+  epi = epitran.Epitran('eng-Latn')
   conv = get_from_file(symbols_path)
 
   lines = []
@@ -27,8 +30,9 @@ if __name__ == "__main__":
 
   accented_sents = []
   for s in cleaned_sents:
-    ### todo
-    accented_sentence = s
+    ipa_text = epi.transliterate(s)
+    ### todo include rules
+    accented_sentence = ipa_text
     accented_sents.append(accented_sentence)
 
   with open('in/text_sents_accented.txt', 'w') as f:
@@ -37,11 +41,12 @@ if __name__ == "__main__":
   #print('\n'.join(sentences))
   seq_sents = []
   for s in accented_sents:
-    s_seq = conv.text_to_sequence(s)
+    ipa_symbols = extract_from_sentence(s)
+    s_seq = conv.text_to_sequence(ipa_symbols)
     s_seq_str = ','.join([str(x) for x in s_seq])
-
     seq_sents.append('{}\n'.format(s_seq_str))
 
   with open('in/text_sents_accented_seq.txt', 'w') as f:
     f.writelines(seq_sents)
+    
   print("Text to synthesize processed.")

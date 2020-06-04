@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.io.wavfile import read
 import torch
+from script_ds_pre import csv_separator
 
 
 def get_mask_from_lengths(lengths):
@@ -17,9 +18,9 @@ def load_wav_to_torch(full_path):
 
 
 def load_filepaths_and_symbols(filename):
-  data = pd.read_csv(filename, header=None, sep="|")
+  data = pd.read_csv(filename, header=None, sep=csv_separator)
   wavpath_col = 1
-  symbols_str_col = 3
+  symbols_str_col = 4
   data = data.iloc[:,[wavpath_col, symbols_str_col]]
   return data.values
 
