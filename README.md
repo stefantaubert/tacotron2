@@ -3,6 +3,10 @@
 ## Installation for Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
 
 ```
+./init.sh /datasets/models/taco2
+```
+
+```
 $ git clone git@github.com:stefantaubert/tacotron2.git
 $ cd tacotron2
 $ git submodule init

@@ -17,7 +17,7 @@ from logger import Tacotron2Logger
 from hparams import create_hparams
 
 from text.conversion.SymbolConverter import get_from_file
-from script_ds_pre import symbols_path
+from paths import checkpoint_output_dir, log_dir, training_file, validation_file, symbols_path
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -41,10 +41,10 @@ def init_distributed(hparams, n_gpus, rank, group_name):
   print("Done initializing distributed")
 
 
-def prepare_dataloaders(hparams):
+def prepare_dataloaders(hparams, base_dir):
   # Get data, data loaders and collate function ready
-  trainset = SymbolsMelLoader(hparams.training_files, hparams)
-  valset = SymbolsMelLoader(hparams.validation_files, hparams)
+  trainset = SymbolsMelLoader(os.path.join(base_dir, training_file), hparams)
+  valset = SymbolsMelLoader(os.path.join(base_dir, validation_file), hparams)
   collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
 
   if hparams.distributed_run:
@@ -148,7 +148,7 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
     logger.log_validation(val_loss, model, y, y_pred, iteration)
 
 
-def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
+def train(base_dir, checkpoint_path, warm_start, n_gpus,
       rank, group_name, hparams):
   """Training and validation logging results to tensorboard and stdout
 
@@ -180,10 +180,11 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
     model = apply_gradient_allreduce(model)
 
   criterion = Tacotron2Loss()
-
+  output_directory = os.path.join(base_dir, checkpoint_output_dir)
+  log_directory = os.path.join(base_dir, log_dir)
   logger = prepare_directories_and_logger(output_directory, log_directory, rank)
 
-  train_loader, valset, collate_fn = prepare_dataloaders(hparams)
+  train_loader, valset, collate_fn = prepare_dataloaders(hparams, base_dir)
 
   # Load checkpoint if one exists
   iteration = 0
@@ -249,9 +250,11 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
-  parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
-  parser.add_argument('-c', '--checkpoint_path', type=str, default='/datasets/code/tacotron2/pretrained/tacotron2_statedict.pt', required=False, help='checkpoint path')
+
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt')
+  #parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
+  #parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
+  parser.add_argument('-c', '--checkpoint_path', type=str, default='/datasets/code/tacotron2/pretrained/tacotron2_statedict.pt', required=False, help='checkpoint path') ### TODO
   parser.add_argument('--warm_start', action='store_true', help='load model weights only, ignore specified layers', default='true')
   parser.add_argument('--n_gpus', type=int, default=1, required=False, help='number of gpus')
   parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
@@ -263,7 +266,7 @@ if __name__ == '__main__':
   hparams = create_hparams(args.hparams)
   hparams.iters_per_checkpoint = 500
 
-  conv = get_from_file(symbols_path)
+  conv = get_from_file(os.path.join(args.base_dir, symbols_path))
   n_symbols = conv.get_symbols_count()
   hparams.n_symbols = n_symbols
 
@@ -276,4 +279,4 @@ if __name__ == '__main__':
   print("cuDNN Enabled:", hparams.cudnn_enabled)
   print("cuDNN Benchmark:", hparams.cudnn_benchmark)
 
-  train(args.output_directory, args.log_directory, args.checkpoint_path, args.warm_start, args.n_gpus, args.rank, args.group_name, hparams)
+  train(args.base_dir, args.checkpoint_path, args.warm_start, args.n_gpus, args.rank, args.group_name, hparams)

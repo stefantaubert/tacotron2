@@ -1,21 +1,29 @@
-symbols_path = 'filelist/symbols.json'
+import argparse
+import os
+from parser.LJSpeechDatasetParser import LJSpeechDatasetParser
+
+import epitran
+import pandas as pd
+from tqdm import tqdm
+
+from ipa2symb import extract_from_sentence
+from paths import preprocessed_file, preprocessed_file_debug, symbols_path
+from text.adjustments import normalize_text
+from text.conversion.SymbolConverter import get_from_symbols
+
 csv_separator = '\t'
 
+
 if __name__ == "__main__":
-  from parser.LJSpeechDatasetParser import LJSpeechDatasetParser
-  from text.adjustments import normalize_text
-  from text.conversion.SymbolConverter import get_from_symbols
-  import pandas as pd
-  import epitran
-  from ipa2symb import extract_from_sentence
-  from tqdm import tqdm
-  import os
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt')
+  parser.add_argument('-d', '--ljspeech', type=str, help='LJSpeech dataset directory', default='/datasets/LJSpeech-1.1')
+  
+  args = parser.parse_args()
 
   epi = epitran.Epitran('eng-Latn')
 
-  dataset_path = '/datasets/LJSpeech-1.1'
-
-  p = LJSpeechDatasetParser(dataset_path)
+  p = LJSpeechDatasetParser(args.ljspeech)
   p.parse()
 
   #print(p.data)
@@ -36,7 +44,7 @@ if __name__ == "__main__":
     print(current_symbols)
     symbols = symbols.union(current_symbols)
   conv = get_from_symbols(symbols)
-  conv.dump(symbols_path)
+  conv.dump(os.path.join(args.base_dir, symbols_path))
   print(conv.get_symbols())
 
   ### convert text to symbols
@@ -48,12 +56,11 @@ if __name__ == "__main__":
 
   ### save
   #dest_filename = os.path.join(dataset_path, 'preprocessed.txt')
-  dest_filename = "/tmp/preprocessed.csv"
 
   df = pd.DataFrame(result)
   df1 = df.iloc[:, [1, 4]]
-  df1.to_csv(dest_filename, header=None, index=None, sep=csv_separator)
+  df1.to_csv(os.path.join(args.base_dir, preprocessed_file), header=None, index=None, sep=csv_separator)
   print("Dataset saved.")
   df2 = df.iloc[:, [0, 2, 3]]
-  df2.to_csv(dest_filename + ".csv", header=None, index=None, sep=csv_separator)
+  df2.to_csv(os.path.join(args.base_dir, preprocessed_file_debug), header=None, index=None, sep=csv_separator)
   print("Dataset preprocessing finished.")

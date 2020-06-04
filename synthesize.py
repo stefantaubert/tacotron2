@@ -1,11 +1,18 @@
 import sys
 
+import argparse
 import matplotlib
 import matplotlib.pylab as plt
 import numpy as np
 from scipy.io import wavfile
 
+from paths import checkpoint_output_dir, pretrained_dir, output_wav, input_symbols
+import os
 import torch
+from tqdm import tqdm
+from nltk.tokenize import sent_tokenize
+from text.conversion.SymbolConverter import get_from_file
+from script_ds_pre import symbols_path
 
 # to load denoiser, glow etc.
 sys.path.append('waveglow/')
@@ -20,6 +27,7 @@ def plot_data(data, figsize=(16, 4)):
   fig, axes = plt.subplots(1, len(data), figsize=figsize)
   for i in range(len(data)):
     axes[i].imshow(data[i], aspect='auto', origin='bottom', interpolation='none')
+  ### todo path
   plt.savefig("out/plot.png", bbox_inches='tight')
 
 def to_wav(path, data, sr):
@@ -29,12 +37,11 @@ def to_wav(path, data, sr):
   write(path, sr, wav.astype(np.int16))
 
 class Synthesizer():
-  def __init__(self, hparams):
+  def __init__(self, hparams, checkpoint_path, waveglow_path):
     super().__init__()
     self.hparams = hparams
     # Load model from checkpoint
-    #checkpoint_path = "pretrained/tacotron2_statedict.pt"
-    checkpoint_path = "/datasets/models/taco2pytorch/checkpoint_17000"
+    
     self.model = load_model(self.hparams)
     torch_model = torch.load(checkpoint_path)
     state_dict = torch_model['state_dict']
@@ -42,7 +49,6 @@ class Synthesizer():
     self.model.cuda().eval().half()
 
     # Load WaveGlow for mel2audio synthesis and denoiser
-    waveglow_path = 'pretrained/waveglow_256channels_universal_v5.pt'
     self.waveglow = torch.load(waveglow_path)['model']
     self.waveglow.cuda().eval().half()
     for k in self.waveglow.convinv:
@@ -65,15 +71,16 @@ class Synthesizer():
     return res
 
     # (Optional) Remove WaveGlow bias
-    audio_denoised = self.denoiser(audio, strength=10**-2)[:, 0]
-    print("Saving...")
-    to_wav("out/{}_denoised.wav".format(dest_name), audio_denoised.cpu().numpy(), self.hparams.sampling_rate)
+    #audio_denoised = self.denoiser(audio, strength=10**-2)[:, 0]
+    #print("Saving...")
+    #to_wav("out/{}_denoised.wav".format(dest_name), audio_denoised.cpu().numpy(), self.hparams.sampling_rate)
 
 if __name__ == "__main__":
-  from tqdm import tqdm
-  from nltk.tokenize import sent_tokenize
-  from text.conversion.SymbolConverter import get_from_file
-  from script_ds_pre import symbols_path
+
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt')
+  
+  args = parser.parse_args()
 
   conv = get_from_file(symbols_path)
   n_symbols = conv.get_symbols_count()
@@ -81,7 +88,7 @@ if __name__ == "__main__":
   output = np.array([])
 
   sentences_symbols = []
-  with open('in/text_sents_accented_seq.txt', 'r') as f:
+  with open(os.path.join(args.base_dir, input_symbols), 'r') as f:
     sentences_symbols = f.readlines()
   sentences_symbols = [x.split(',') for x in sentences_symbols]
   sentences_symbols = [list(map(int, l)) for l in sentences_symbols]
@@ -90,7 +97,11 @@ if __name__ == "__main__":
   hparams.sampling_rate = 22050
   hparams.n_symbols = n_symbols
 
-  synt = Synthesizer(hparams)
+  #checkpoint_path = os.path.join(args.base_dir, pretrained_dir, 'tacotron2_statedict.pt')
+  checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, 'checkpoint_17000')
+  waveglow_path = os.path.join(args.base_dir, pretrained_dir, 'waveglow_256channels_universal_v5.pt')
+
+  synt = Synthesizer(hparams, checkpoint_path, waveglow_path)
   
   #complete_text = [item for sublist in sentences_symbols for item in sublist]
   #print(complete_text)
@@ -106,6 +117,6 @@ if __name__ == "__main__":
     #print(output)
 
   print("Saving...")
-  to_wav("out/complete.wav", output, synt.hparams.sampling_rate)
+  to_wav(os.path.join(args.base_dir, output_wav), output, synt.hparams.sampling_rate)
 
     

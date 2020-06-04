@@ -1,10 +1,21 @@
-if __name__ == "__main__":
-  from sklearn.model_selection import train_test_split
-  import pandas as pd
-  from script_ds_pre import csv_separator
+import argparse
+import os
 
-  dest_filename = "/tmp/preprocessed.csv"
-  data = pd.read_csv(dest_filename, header=None, sep=csv_separator)
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+from paths import preprocessed_file, test_file, training_file, validation_file
+from script_ds_pre import csv_separator
+
+if __name__ == "__main__":
+ 
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt')
+  
+  args = parser.parse_args()
+  prepr_path = os.path.join(args.base_dir, preprocessed_file)
+
+  data = pd.read_csv(prepr_path, header=None, sep=csv_separator)
   print(data)
 
   train, test = train_test_split(data, test_size=500, random_state=1234)
@@ -14,11 +25,7 @@ if __name__ == "__main__":
   #print(len(test))
   #print(len(val))
 
-  test_path = "filelist/ljs_audio_text_test_filelist.csv"
-  train_path = "filelist/ljs_audio_text_train_filelist.csv"
-  val_path = "filelist/ljs_audio_text_val_filelist.csv"
-
-  train.to_csv(train_path, header=None, index=None, sep=csv_separator)
-  test.to_csv(test_path, header=None, index=None, sep=csv_separator)
-  val.to_csv(val_path, header=None, index=None, sep=csv_separator)
+  train.to_csv(os.path.join(args.base_dir, training_file), header=None, index=None, sep=csv_separator)
+  test.to_csv(os.path.join(args.base_dir, test_file), header=None, index=None, sep=csv_separator)
+  val.to_csv(os.path.join(args.base_dir, validation_file), header=None, index=None, sep=csv_separator)
   print("Dataset is splitted in train-, val- and test-set.")
