@@ -34,7 +34,7 @@ class Synthesizer():
     self.hparams = hparams
     # Load model from checkpoint
     #checkpoint_path = "pretrained/tacotron2_statedict.pt"
-    checkpoint_path = "/datasets/models/taco2pytorch/checkpoint_5"
+    checkpoint_path = "/datasets/models/taco2pytorch/checkpoint_17000"
     self.model = load_model(self.hparams)
     torch_model = torch.load(checkpoint_path)
     state_dict = torch_model['state_dict']
@@ -89,8 +89,16 @@ if __name__ == "__main__":
   hparams = create_hparams()
   hparams.sampling_rate = 22050
   hparams.n_symbols = n_symbols
-  # Speed is: 1min inference for 3min wav result
+
   synt = Synthesizer(hparams)
+  
+  #complete_text = [item for sublist in sentences_symbols for item in sublist]
+  #print(complete_text)
+  #res = synt.infer(complete_text, "aei")
+  #to_wav("out/complete_x.wav", res, synt.hparams.sampling_rate)
+  #print("exit")
+  
+  # Speed is: 1min inference for 3min wav result
   for i, sentence_symbols in tqdm(enumerate(sentences_symbols), total=len(sentences_symbols)):
     #print("Inferring...", line)
     res = synt.infer(sentence_symbols, str(i))

@@ -254,7 +254,7 @@ if __name__ == '__main__':
             help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
   parser.add_argument('-l', '--log_directory', type=str,
             help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
-  parser.add_argument('-c', '--checkpoint_path', type=str, #default='/datasets/code/tacotron2/pretrained/tacotron2_statedict.pt',
+  parser.add_argument('-c', '--checkpoint_path', type=str, default='/datasets/code/tacotron2/pretrained/tacotron2_statedict.pt',
             required=False, help='checkpoint path')
   parser.add_argument('--warm_start', action='store_true',
             help='load model weights only, ignore specified layers', default='true')
@@ -270,7 +270,7 @@ if __name__ == '__main__':
   args = parser.parse_args()
   hparams = create_hparams(args.hparams)
 
-  hparams.iters_per_checkpoint = 5
+  hparams.iters_per_checkpoint = 500
 
   conv = get_from_file(symbols_path)
   n_symbols = conv.get_symbols_count()
