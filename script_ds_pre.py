@@ -18,11 +18,11 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt')
   parser.add_argument('-d', '--ljspeech', type=str, help='LJSpeech dataset directory', default='/datasets/LJSpeech-1.1')
-  
+  parser.add_argument('-i', '--ipa', type=str, help='transcribe to IPA', default='false')
+
   args = parser.parse_args()
-
+  use_ipa = str.lower(args.ipa) == 'true'
   epi = epitran.Epitran('eng-Latn')
-
   p = LJSpeechDatasetParser(args.ljspeech)
   p.parse()
 
@@ -33,15 +33,19 @@ if __name__ == "__main__":
   ### normalize input
   for basename, text, wav_path in tqdm(p.data):
     normalized_text = normalize_text(text)
-    ipa_text = epi.transliterate(normalized_text)
-    ipa_symbols = extract_from_sentence(ipa_text)
-    data.append((basename, normalized_text, ipa_text, ipa_symbols, wav_path))
+    if use_ipa:
+      ipa_text = epi.transliterate(normalized_text)
+      text_symbols = extract_from_sentence(ipa_text)
+    else:
+      ipa_text = ''
+      text_symbols = list(normalized_text)
+    data.append((basename, normalized_text, ipa_text, text_symbols, wav_path))
 
   ### get all symbols
   symbols = set()
-  for _, _, _, ipa, _ in data:
-    current_symbols = set(ipa)
-    print(current_symbols)
+  for _, _, _, symbs, _ in data:
+    current_symbols = set(symbs)
+    #print(current_symbols)
     symbols = symbols.union(current_symbols)
   conv = get_from_symbols(symbols)
   conv.dump(os.path.join(args.base_dir, symbols_path))
@@ -49,10 +53,10 @@ if __name__ == "__main__":
 
   ### convert text to symbols
   result = []
-  for bn, norm_text, ipa_txt, ipa_sym, wav in data:
-    seq = conv.text_to_sequence(ipa_sym)
+  for bn, norm_text, ipa_txt, sym, wav in data:
+    seq = conv.text_to_sequence(sym)
     seq_str = ",".join([str(s) for s in seq])
-    result.append((bn, wav_path, norm_text, ipa_txt, seq_str))
+    result.append((bn, wav, norm_text, ipa_txt, seq_str))
 
   ### save
   #dest_filename = os.path.join(dataset_path, 'preprocessed.txt')

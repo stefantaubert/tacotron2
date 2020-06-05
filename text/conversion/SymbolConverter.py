@@ -50,6 +50,10 @@ class SymbolConverter():
     result = [symbol for symbol in symbols if symbol in self._id_to_symbol.keys()]
     return result
     
+  def get_unknown_symbols(self, chars):
+    unknown_symbols = set([x for x in chars if not self._is_valid_text_symbol(x)])
+    return unknown_symbols
+
   # todo rename to symbols_to_sequence
   def text_to_sequence(self, chars):
     '''Converts a string of text to a sequence of IDs corresponding to the symbols in the text.
@@ -100,7 +104,7 @@ class SymbolConverter():
     return text_id is not self._pad_id and text_id is not self._eos_id
 
   def _is_valid_text_symbol(self, symbol: str) -> bool:
-    return symbol is not _pad and symbol is not _eos
+    return symbol in self._id_to_symbol and symbol is not _pad and symbol is not _eos
 
   def _get_valid_symbolids(self, symbols):
     res = []
@@ -108,8 +112,8 @@ class SymbolConverter():
       if self._is_valid_text_symbol(symbol):
         s_id = self._get_id(symbol)
         res.append(s_id)
-      else:
-        print("Unknown symbol:", symbol)
+      #else:
+        #print("Unknown symbol:", symbol)
     return res
 
 def get_from_symbols(symbols: set) -> SymbolConverter:

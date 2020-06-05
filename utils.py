@@ -19,9 +19,9 @@ def load_wav_to_torch(full_path):
 
 def load_filepaths_and_symbols(filename):
   data = pd.read_csv(filename, header=None, sep=csv_separator)
-  wavpath_col = 1
-  symbols_str_col = 4
-  data = data.iloc[:,[wavpath_col, symbols_str_col]]
+  #wavpath_col = 0
+  #symbols_str_col = 1
+  #data = data.iloc[:,[wavpath_col, symbols_str_col]]
   return data.values
 
 

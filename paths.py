@@ -16,12 +16,10 @@ validation_file = os.path.join(filelist_dir, 'ljs_audio_text_val_filelist.csv')
 preprocessed_file = os.path.join(filelist_dir, 'ljs_filelist.csv')
 preprocessed_file_debug = os.path.join(filelist_dir, 'lj_ipa.csv')
 
-input_text = os.path.join(input_dir, 'text.txt')
-input_text_sents = os.path.join(input_dir, 'text_sents.txt')
-input_text_sents_accented = os.path.join(input_dir, 'text_sents_accented.txt')
-input_symbols = os.path.join(input_dir, 'text_sents_accented_seq.txt')
-
-output_wav = os.path.join(output_dir, 'complete.wav')
+#input_text = os.path.join(input_dir, 'text.txt')
+#input_text_sents = os.path.join(input_dir, 'text_sents.txt')
+#input_text_sents_accented = os.path.join(input_dir, 'text_sents_accented.txt')
+input_symbols = os.path.join(input_dir, 'input_symbols.txt')
 
 checkpoint_file = os.path.join(pretrained_dir, 'tacotron2_statedict.pt')
 waveglow_path = os.path.join(pretrained_dir, 'waveglow_256channels_universal_v5.pt')
@@ -42,11 +40,11 @@ if __name__ == "__main__":
 
   ensure_folders_exist(args.base_dir)
 
-  input_text_path = os.path.join(args.base_dir, input_text)
-  input_text_exists = os.path.exists(input_text_path)
+  # input_text_path = os.path.join(args.base_dir, input_text)
+  # input_text_exists = os.path.exists(input_text_path)
 
-  if not input_text_exists:
-    with open(input_text_path, 'w') as f:
-      f.write('This is a test.')
+  # if not input_text_exists:
+  #   with open(input_text_path, 'w') as f:
+  #     f.write('This is a test.')
 
-  print('Initialized paths.')
+  print('Initialized paths for {}.'.format(args.base_dir))

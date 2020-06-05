@@ -190,11 +190,11 @@ def train(base_dir, checkpoint_path, warm_start, n_gpus,
   iteration = 0
   epoch_offset = 0
   if checkpoint_path is not None:
+    full_checkpoint_path = os.path.join(base_dir, checkpoint_path)
     if warm_start:
-      model = warm_start_model(
-        checkpoint_path, model, hparams.ignore_layers)
+      model = warm_start_model(full_checkpoint_path, model, hparams.ignore_layers)
     else:
-      model, optimizer, _learning_rate, iteration = load_checkpoint(checkpoint_path, model, optimizer)
+      model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer)
       if hparams.use_saved_learning_rate:
         learning_rate = _learning_rate
       iteration += 1  # next iteration is iteration + 1
@@ -251,24 +251,26 @@ def train(base_dir, checkpoint_path, warm_start, n_gpus,
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
 
-  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt')
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ipa')
   #parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
   #parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
-  parser.add_argument('-c', '--checkpoint_path', type=str, default='/datasets/code/tacotron2/pretrained/tacotron2_statedict.pt', required=False, help='checkpoint path') ### TODO
-  parser.add_argument('--warm_start', action='store_true', help='load model weights only, ignore specified layers', default='true')
+  parser.add_argument('-c', '--checkpoint_path', type=str, required=False, help='checkpoint path')
+  parser.add_argument('--warm_start', action='store_true', help='load model weights only, ignore specified layers', default='false')
   parser.add_argument('--n_gpus', type=int, default=1, required=False, help='number of gpus')
   parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
   parser.add_argument('--group_name', type=str, default='group_name', required=False, help='Distributed group name')
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
 
   args = parser.parse_args()
-
+  args.checkpoint_path = 'pretrained/tacotron2_statedict.pt'
+  args.warm_start = 'true'
+  
   hparams = create_hparams(args.hparams)
   hparams.iters_per_checkpoint = 500
+  hparams.batch_size=26
 
   conv = get_from_file(os.path.join(args.base_dir, symbols_path))
-  n_symbols = conv.get_symbols_count()
-  hparams.n_symbols = n_symbols
+  hparams.n_symbols = conv.get_symbols_count()
 
   torch.backends.cudnn.enabled = hparams.cudnn_enabled
   torch.backends.cudnn.benchmark = hparams.cudnn_benchmark

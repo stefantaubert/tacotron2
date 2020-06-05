@@ -5,6 +5,11 @@
 ```
 ./init.sh /datasets/models/taco2
 ```
+examples:
+north wind and the sun: from [wiki](https://en.wikipedia.org/wiki/The_North_Wind_and_the_Sun) and replace ɚ by ɹ̩ [see](https://en.wikipedia.org/wiki/R-colored_vowel)
+narrow: ɾ do not exist
+primary and secondary stress is not supported currently
+
 
 ```
 $ git clone git@github.com:stefantaubert/tacotron2.git

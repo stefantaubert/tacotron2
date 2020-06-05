@@ -10,6 +10,7 @@ def normalize_text(text):
   text = convert_to_ascii(text)
   # text = text.lower()
   ### todo datetime conversion, BC to beecee
+  text = text.strip()
   text = normalize_numbers(text)
   text = expand_abbreviations(text)
   text = collapse_whitespace(text)
