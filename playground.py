@@ -1,29 +1,26 @@
-import string
-x = 'ænd ðə nɛkst jɪɹ ɡʌnθɹ̩ zajnɹ̩ æt ɔɡzbɹ̩ɡ fɑlowd sut; wajl ɪn fɔɹtin sɛvənti æt pɛɹɪs judælɹɪk ɡɪɹɪŋ ænd hɪz əsowsiɪts tɹ̩nd awt ðə fɹ̩st bʊks pɹɪntəd ɪn fɹæns, ɔlsow ɪn ɹowmən kɛɹɪktɹ̩.'
-y = x
-#y = u",raw,pɪkt͡ʃɹ̩-bʊk,s,"
-#y = "raw"
+import argparse
+import os
+from parser.LJSpeechDatasetParser import LJSpeechDatasetParser
 
-import re
-rx = '[{}]'.format(re.escape(string.punctuation))
-res = re.split(rx, y)
-print(res)
+import epitran
+import pandas as pd
+from tqdm import tqdm
 
-res = []
-tmp = []
-for c in y:
-  if c in string.punctuation or c in string.whitespace:
-    if len(tmp) > 0:
-      raw_word = ''.join(tmp)
-      res.append(raw_word)
-      tmp.clear()
-    res.append(c)
-  else:
-    tmp.append(c)
+from ipa2symb import extract_from_sentence
+from paths import preprocessed_file, preprocessed_file_debug, symbols_path, symbols_path_info
+from text.adjustments import normalize_text
+from text.conversion.SymbolConverter import get_from_file
 
-if len(tmp) > 0:
-  raw_word = ''.join(tmp)
-  res.append(raw_word)
-  tmp.clear()
+csv_separator = '\t'
 
-print(res)
+
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ipa')
+  parser.add_argument('-d', '--ljspeech', type=str, help='LJSpeech dataset directory', default='/datasets/LJSpeech-1.1')
+  parser.add_argument('-i', '--ipa', type=str, help='transcribe to IPA', default='true')
+
+  args = parser.parse_args()
+
+  s = get_from_file(os.path.join(args.base_dir, symbols_path))
+  s.plot(os.path.join(args.base_dir, symbols_path_info))

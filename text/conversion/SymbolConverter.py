@@ -46,10 +46,15 @@ class SymbolConverter():
     with open(file_path, 'w', encoding='utf-8') as f:
       json.dump(self._id_to_symbol, f)
 
+  def plot(self, file_path: str):
+    with open(file_path, 'w', encoding='utf-8') as f:
+      res = '\n'.join(list(sorted(self.get_symbols())))
+      f.write(res)
+    
   def remove_unknown_symbols(self, symbols):
     result = [symbol for symbol in symbols if symbol in self._id_to_symbol.keys()]
     return result
-    
+
   def get_unknown_symbols(self, chars):
     unknown_symbols = set([x for x in chars if not self._is_valid_text_symbol(x)])
     return unknown_symbols

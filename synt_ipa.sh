@@ -1,5 +1,10 @@
 base_dir='/datasets/models/taco2pt_ipa'
-checkpoint='checkpoint_1000'
+checkpoint='checkpoint_49000'
+
+python paths.py --base_dir=$base_dir
+
+python script_txt_pre.py --base_dir=$base_dir --ipa='true' --text='examples/democritus.txt' --is_ipa='false'
+python synthesize.py --base_dir=$base_dir --checkpoint=$checkpoint --output_name='democritus'
 
 # IPA
 # unknown: ɾ
@@ -19,9 +24,6 @@ python synthesize.py --base_dir=$base_dir --checkpoint=$checkpoint --output_name
 
 python script_txt_pre.py --base_dir=$base_dir --ipa='true' --text='examples/democritus_acc.txt' --is_ipa='false'
 python synthesize.py --base_dir=$base_dir --checkpoint=$checkpoint --output_name='democritus_acc'
-
-python script_txt_pre.py --base_dir=$base_dir --ipa='true' --text='examples/democritus.txt' --is_ipa='false'
-python synthesize.py --base_dir=$base_dir --checkpoint=$checkpoint --output_name='democritus'
 
 python script_txt_pre.py --base_dir=$base_dir --ipa='true' --text='examples/coma.txt' --is_ipa='false'
 python synthesize.py --base_dir=$base_dir --checkpoint=$checkpoint --output_name='coma'

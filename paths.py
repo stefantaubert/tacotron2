@@ -9,6 +9,7 @@ checkpoint_output_dir = 'output'
 pretrained_dir = 'pretrained'
 
 symbols_path = os.path.join(filelist_dir, 'symbols.json')
+symbols_path_info = os.path.join(filelist_dir, 'symbols.txt')
 
 training_file = os.path.join(filelist_dir, 'ljs_audio_text_train_filelist.csv')
 test_file = os.path.join(filelist_dir, 'ljs_audio_text_test_filelist.csv')

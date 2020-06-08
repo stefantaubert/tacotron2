@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ipa2symb import extract_from_sentence
-from paths import preprocessed_file, preprocessed_file_debug, symbols_path
+from paths import preprocessed_file, preprocessed_file_debug, symbols_path, symbols_path_info
 from text.adjustments import normalize_text
 from text.conversion.SymbolConverter import get_from_symbols
 
@@ -16,9 +16,9 @@ csv_separator = '\t'
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt')
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_testing')
   parser.add_argument('-d', '--ljspeech', type=str, help='LJSpeech dataset directory', default='/datasets/LJSpeech-1.1')
-  parser.add_argument('-i', '--ipa', type=str, help='transcribe to IPA', default='false')
+  parser.add_argument('-i', '--ipa', type=str, help='transcribe to IPA', default='true')
 
   args = parser.parse_args()
   use_ipa = str.lower(args.ipa) == 'true'
@@ -49,6 +49,7 @@ if __name__ == "__main__":
     symbols = symbols.union(current_symbols)
   conv = get_from_symbols(symbols)
   conv.dump(os.path.join(args.base_dir, symbols_path))
+  conv.plot(os.path.join(args.base_dir, symbols_path_info))
   print(conv.get_symbols())
 
   ### convert text to symbols
