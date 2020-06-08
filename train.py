@@ -267,10 +267,18 @@ if __name__ == '__main__':
   args.warm_start = 'true'
 
   hparams = create_hparams(args.hparams)
+  train_ds = "thchs"
+  #train = "lj"
+
   hparams.iters_per_checkpoint = 500
-  # THCHS-30 has 16000
-  hparams.sampling_rate = 16000
-  hparams.batch_size=26
+
+  if train_ds == "thchs":
+    # THCHS-30 has 16000
+    hparams.sampling_rate = 16000
+    hparams.batch_size=22
+  elif train_ds == 'lj':
+    hparams.sampling_rate = 22050
+    hparams.batch_size=26
 
   conv = get_from_file(os.path.join(args.base_dir, symbols_path))
   hparams.n_symbols = conv.get_symbols_count()
