@@ -1,5 +1,6 @@
 pandas==1.0.4
 epitran==1.8
+dragonmapper==0.2.6
 
 jupyter==1.0.0
 librosa==0.6.0

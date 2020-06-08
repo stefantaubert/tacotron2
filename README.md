@@ -65,7 +65,7 @@ and the Mel decoder were trained on the same mel-spectrogram representation.
 Size of:
 - Val: 100
 - Train: 12500
-- Test: 500
+- Test: 500 = 0.038167938
 Total (equals total possible): 13100
 they took the first and third column out of metadata.csv
 

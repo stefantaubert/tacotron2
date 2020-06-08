@@ -251,7 +251,7 @@ def train(base_dir, checkpoint_path, warm_start, n_gpus,
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
 
-  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ipa')
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_testing')
   #parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
   #parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
   parser.add_argument('-c', '--checkpoint_path', type=str, required=False, help='checkpoint path')
@@ -262,11 +262,14 @@ if __name__ == '__main__':
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
 
   args = parser.parse_args()
-  args.checkpoint_path = 'pretrained/tacotron2_statedict.pt'
+  args.checkpoint_path = 'pretrained/checkpoint_49000'
+  #args.warm_start = 'false'
   args.warm_start = 'true'
-  
+
   hparams = create_hparams(args.hparams)
   hparams.iters_per_checkpoint = 500
+  # THCHS-30 has 16000
+  hparams.sampling_rate = 16000
   hparams.batch_size=26
 
   conv = get_from_file(os.path.join(args.base_dir, symbols_path))
@@ -281,4 +284,5 @@ if __name__ == '__main__':
   print("cuDNN Enabled:", hparams.cudnn_enabled)
   print("cuDNN Benchmark:", hparams.cudnn_benchmark)
 
-  train(args.base_dir, args.checkpoint_path, args.warm_start, args.n_gpus, args.rank, args.group_name, hparams)
+  warm_start = str.lower(args.warm_start) == 'true'
+  train(args.base_dir, args.checkpoint_path, warm_start, args.n_gpus, args.rank, args.group_name, hparams)

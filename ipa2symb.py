@@ -51,7 +51,7 @@ def extract_symbols(ipa: IPAString):
   symbols = []
 
   for char in ipa.ipa_chars:
-    if char.is_diacritic:
+    if char.is_diacritic or char.is_tone:
       if len(symbols) > 0:
         symbols[-1] += char.unicode_repr
     else:

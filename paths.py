@@ -11,11 +11,11 @@ pretrained_dir = 'pretrained'
 symbols_path = os.path.join(filelist_dir, 'symbols.json')
 symbols_path_info = os.path.join(filelist_dir, 'symbols.txt')
 
-training_file = os.path.join(filelist_dir, 'ljs_audio_text_train_filelist.csv')
-test_file = os.path.join(filelist_dir, 'ljs_audio_text_test_filelist.csv')
-validation_file = os.path.join(filelist_dir, 'ljs_audio_text_val_filelist.csv')
-preprocessed_file = os.path.join(filelist_dir, 'ljs_filelist.csv')
-preprocessed_file_debug = os.path.join(filelist_dir, 'lj_ipa.csv')
+training_file = os.path.join(filelist_dir, 'audio_text_train_filelist.csv')
+test_file = os.path.join(filelist_dir, 'audio_text_test_filelist.csv')
+validation_file = os.path.join(filelist_dir, 'audio_text_val_filelist.csv')
+preprocessed_file = os.path.join(filelist_dir, 'filelist.csv')
+preprocessed_file_debug = os.path.join(filelist_dir, 'filelist_debug.csv')
 
 #input_text = os.path.join(input_dir, 'text.txt')
 #input_text_sents = os.path.join(input_dir, 'text_sents.txt')
@@ -35,7 +35,7 @@ def ensure_folders_exist(base_dir):
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt')
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_testing')
   
   args = parser.parse_args()
 

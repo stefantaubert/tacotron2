@@ -82,9 +82,9 @@ class Synthesizer():
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ipa')
-  parser.add_argument('--checkpoint', type=str, help='checkpoint subpath', default='checkpoint_1000')
+  parser.add_argument('--checkpoint', type=str, help='checkpoint subpath', default='checkpoint_49000')
   parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
-  
+
   args = parser.parse_args()
 
   conv = get_from_file(os.path.join(args.base_dir, symbols_path))
@@ -107,17 +107,19 @@ if __name__ == "__main__":
   waveglow_path = os.path.join(args.base_dir, pretrained_dir, 'waveglow_256channels_universal_v5.pt')
 
   synt = Synthesizer(hparams, checkpoint_path, waveglow_path)
-  
+
   #complete_text = [item for sublist in sentences_symbols for item in sublist]
   #print(complete_text)
   #res = synt.infer(complete_text, "aei")
   #to_wav("out/complete_x.wav", res, synt.hparams.sampling_rate)
   #print("exit")
-  
+
   # Speed is: 1min inference for 3min wav result
+  print("Inferring...")
   for i, sentence_symbols in tqdm(enumerate(sentences_symbols), total=len(sentences_symbols)):
-    #print("Inferring...", line)
     #print(sentence_symbols)
+    origin_text = conv.sequence_to_original_text(sentence_symbols)
+    print(origin_text, "({})".format(len(sentence_symbols)))
     res = synt.infer(sentence_symbols, str(i))
     output = np.concatenate((output, res), axis=0)
     sentence_pause = np.zeros(10**4)
@@ -126,5 +128,3 @@ if __name__ == "__main__":
 
   print("Saving...")
   to_wav(os.path.join(args.base_dir, output_dir, args.output_name + ".wav"), output, synt.hparams.sampling_rate)
-
-    

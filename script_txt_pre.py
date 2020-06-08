@@ -13,11 +13,13 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ipa')
   parser.add_argument('--ipa', type=str, help='IPA-based', default='true')
-  parser.add_argument('--text', type=str, help='path to text which should be synthesized', default='examples/north_broad.txt')
-  parser.add_argument('--is_ipa', type=str, help='text is ipa', default='true')
+  parser.add_argument('--text', type=str, help='path to text which should be synthesized', default='examples/stella.txt')
+  parser.add_argument('--is_ipa', type=str, help='text is ipa', default='false')
   args = parser.parse_args()
   is_ipa = str.lower(args.is_ipa) == 'true'
   use_ipa = str.lower(args.ipa) == 'true' or is_ipa
+  
+  print("Processing text from", args.text)
   
   if use_ipa:
     epi = epitran.Epitran('eng-Latn')

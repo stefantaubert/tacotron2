@@ -1,3 +1,16 @@
+
+import os
+import wave
+with wave.open('/datasets/thchs_wav/wav/train/A11/A11_1.WAV', "rb") as wave_file:
+  frame_rate = wave_file.getframerate()
+  print(frame_rate)
+        
+x = '/datasets/LJSpeech-1.1-lite/wavs/LJ001-0001.wav'
+
+with wave.open(x, "rb") as wave_file:
+  frame_rate = wave_file.getframerate()
+  print(frame_rate)
+
 import argparse
 import os
 from parser.LJSpeechDatasetParser import LJSpeechDatasetParser
@@ -15,6 +28,7 @@ csv_separator = '\t'
 
 
 if __name__ == "__main__":
+
   parser = argparse.ArgumentParser()
   parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ipa')
   parser.add_argument('-d', '--ljspeech', type=str, help='LJSpeech dataset directory', default='/datasets/LJSpeech-1.1')
