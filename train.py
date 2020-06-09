@@ -17,7 +17,7 @@ from logger import Tacotron2Logger
 from hparams import create_hparams
 
 from text.conversion.SymbolConverter import get_from_file
-from paths import checkpoint_output_dir, log_dir, training_file, validation_file, symbols_path, savecheckpoints_dir
+from paths import checkpoint_output_dir, log_dir, training_file_name, validation_file_name, symbols_path_name, savecheckpoints_dir, pre_ds_thchs_dir
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -41,10 +41,10 @@ def init_distributed(hparams, n_gpus, rank, group_name):
   print("Done initializing distributed")
 
 
-def prepare_dataloaders(hparams, base_dir):
+def prepare_dataloaders(hparams, speaker_dir):
   # Get data, data loaders and collate function ready
-  trainset = SymbolsMelLoader(os.path.join(base_dir, training_file), hparams)
-  valset = SymbolsMelLoader(os.path.join(base_dir, validation_file), hparams)
+  trainset = SymbolsMelLoader(os.path.join(speaker_dir, training_file_name), hparams)
+  valset = SymbolsMelLoader(os.path.join(speaker_dir, validation_file_name), hparams)
   collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
 
   if hparams.distributed_run:
@@ -148,7 +148,7 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
     logger.log_validation(val_loss, model, y, y_pred, iteration)
 
 
-def train(base_dir, checkpoint_path, warm_start, n_gpus,
+def train(base_dir, checkpoint_path, speaker_dir, warm_start, n_gpus,
       rank, group_name, hparams):
   """Training and validation logging results to tensorboard and stdout
 
@@ -184,7 +184,7 @@ def train(base_dir, checkpoint_path, warm_start, n_gpus,
   log_directory = os.path.join(base_dir, log_dir)
   logger = prepare_directories_and_logger(output_directory, log_directory, rank)
 
-  train_loader, valset, collate_fn = prepare_dataloaders(hparams, base_dir)
+  train_loader, valset, collate_fn = prepare_dataloaders(hparams, speaker_dir)
 
   # Load checkpoint if one exists
   iteration = 0
@@ -251,7 +251,7 @@ def train(base_dir, checkpoint_path, warm_start, n_gpus,
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
 
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_testing')
+  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
   #parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
   #parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
   parser.add_argument('--checkpoint_path', type=str, required=False, help='checkpoint path')
@@ -260,9 +260,11 @@ if __name__ == '__main__':
   parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
   parser.add_argument('--group_name', type=str, default='group_name', required=False, help='Distributed group name')
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
+  parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
+
 
   args = parser.parse_args()
-  args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'checkpoint_49000')
+  #args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'checkpoint_49000')
   args.checkpoint_path = '/datasets/models/pretrained/tacotron2_statedict.pt'
   #args.warm_start = 'false'
   args.warm_start = 'true'
@@ -276,12 +278,13 @@ if __name__ == '__main__':
   if train_ds == "thchs":
     # THCHS-30 has 16000
     hparams.sampling_rate = 16000
-    hparams.batch_size=22
+    #hparams.batch_size=22
+    hparams.batch_size=35
   elif train_ds == 'lj':
     hparams.sampling_rate = 22050
     hparams.batch_size=26
-
-  conv = get_from_file(os.path.join(args.base_dir, symbols_path))
+  speaker_dir = os.path.join(args.base_dir, pre_ds_thchs_dir, args.speaker)
+  conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
   hparams.n_symbols = conv.get_symbols_count()
 
   torch.backends.cudnn.enabled = hparams.cudnn_enabled
@@ -294,4 +297,5 @@ if __name__ == '__main__':
   print("cuDNN Benchmark:", hparams.cudnn_benchmark)
 
   warm_start = str.lower(args.warm_start) == 'true'
-  train(args.base_dir, args.checkpoint_path, warm_start, args.n_gpus, args.rank, args.group_name, hparams)
+  
+  train(args.base_dir, args.checkpoint_path, speaker_dir, warm_start, args.n_gpus, args.rank, args.group_name, hparams)

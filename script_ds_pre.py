@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ipa2symb import extract_from_sentence
-from paths import preprocessed_file, preprocessed_file_debug, symbols_path, symbols_path_info
+from paths import preprocessed_file_name, preprocessed_file_debug_name, symbols_path_name, symbols_path_info_name
 from text.adjustments import normalize_text
 from text.conversion.SymbolConverter import get_from_symbols
 

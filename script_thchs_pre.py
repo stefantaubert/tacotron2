@@ -28,7 +28,7 @@ if __name__ == "__main__":
   data = {}
 
   ### normalize input
-  for _, speaker_name, basename, wav_path, pinyin in tqdm(parsed_data[:100]):
+  for _, speaker_name, basename, wav_path, pinyin in tqdm(parsed_data):
     try:
       pinyin_ipa = hanzi.pinyin_to_ipa(pinyin)
     except Exception as e:
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     text_symbols = extract_from_sentence(pinyin_ipa)
     if speaker_name not in data:
       data[speaker_name] = []
-    rgs.base_dir,rgs.base_dir,
+
     data[speaker_name].append((basename, pinyin, pinyin_ipa, text_symbols, wav_path))
 
   for speaker, recordings in data.items():
