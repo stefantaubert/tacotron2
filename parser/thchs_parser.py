@@ -10,14 +10,14 @@ def __parse_dataset__(syll_path, wavs_dir):
     pos = x.find(' ')
     name, pinyin = x[:pos], x[pos + 1:]
     
-    dir_name, nr = name.split('_')
+    speaker_name, nr = name.split('_')
     nr = int(nr)
-    wav_path = os.path.join(wavs_dir, dir_name, name + '.wav')
+    wav_path = os.path.join(wavs_dir, speaker_name, name + '.wav')
     exists = os.path.exists(wav_path)
     if not exists:
       print(wav_path)
       continue
-    files.append((nr, dir_name, name, wav_path, pinyin))
+    files.append((nr, speaker_name, name, wav_path, pinyin))
 
   return files
 

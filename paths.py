@@ -8,14 +8,17 @@ log_dir = 'logs'
 checkpoint_output_dir = 'output'
 savecheckpoints_dir = 'saved_checkpoints'
 
-symbols_path = os.path.join(filelist_dir, 'symbols.json')
-symbols_path_info = os.path.join(filelist_dir, 'symbols.txt')
+symbols_path_name = 'symbols.json'
+symbols_path_info_name = 'symbols.txt'
 
-training_file = os.path.join(filelist_dir, 'audio_text_train_filelist.csv')
-test_file = os.path.join(filelist_dir, 'audio_text_test_filelist.csv')
-validation_file = os.path.join(filelist_dir, 'audio_text_val_filelist.csv')
-preprocessed_file = os.path.join(filelist_dir, 'filelist.csv')
-preprocessed_file_debug = os.path.join(filelist_dir, 'filelist_debug.csv')
+training_file_name = 'audio_text_train_filelist.csv'
+test_file_name = 'audio_text_test_filelist.csv'
+validation_file_name = 'audio_text_val_filelist.csv'
+preprocessed_file_name ='filelist.csv'
+preprocessed_file_debug_name =  'filelist_debug.csv'
+
+pre_ds_thchs_dir = os.path.join(filelist_dir, 'thchs')
+pre_ds_ljs_dir = os.path.join(filelist_dir, 'ljs')
 
 input_symbols = os.path.join(input_dir, 'input_symbols.txt')
 
