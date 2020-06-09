@@ -6,7 +6,7 @@ input_dir = "in"
 output_dir = "out"
 log_dir = 'logs'
 checkpoint_output_dir = 'output'
-pretrained_dir = 'pretrained'
+savecheckpoints_dir = 'saved_checkpoints'
 
 symbols_path = os.path.join(filelist_dir, 'symbols.json')
 symbols_path_info = os.path.join(filelist_dir, 'symbols.txt')
@@ -17,13 +17,7 @@ validation_file = os.path.join(filelist_dir, 'audio_text_val_filelist.csv')
 preprocessed_file = os.path.join(filelist_dir, 'filelist.csv')
 preprocessed_file_debug = os.path.join(filelist_dir, 'filelist_debug.csv')
 
-#input_text = os.path.join(input_dir, 'text.txt')
-#input_text_sents = os.path.join(input_dir, 'text_sents.txt')
-#input_text_sents_accented = os.path.join(input_dir, 'text_sents_accented.txt')
 input_symbols = os.path.join(input_dir, 'input_symbols.txt')
-
-checkpoint_file = os.path.join(pretrained_dir, 'tacotron2_statedict.pt')
-waveglow_path = os.path.join(pretrained_dir, 'waveglow_256channels_universal_v5.pt')
 
 def ensure_folders_exist(base_dir):
   os.makedirs(os.path.join(base_dir, filelist_dir), exist_ok=True)
@@ -31,7 +25,7 @@ def ensure_folders_exist(base_dir):
   os.makedirs(os.path.join(base_dir, output_dir), exist_ok=True)
   os.makedirs(os.path.join(base_dir, log_dir), exist_ok=True)
   os.makedirs(os.path.join(base_dir, checkpoint_output_dir), exist_ok=True)
-  os.makedirs(os.path.join(base_dir, pretrained_dir), exist_ok=True)
+  os.makedirs(os.path.join(base_dir, savecheckpoints_dir), exist_ok=True)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()

@@ -13,6 +13,8 @@ def load_checkpoint(checkpoint_path):
     print(state_dict_key, 'keys:')
     for k, v in checkpoint_dict[state_dict_key].items():
       print(k)
+  w = checkpoint_dict['state_dict']['embedding.weight']
+  print(w.shape)
   #model.load_state_dict(checkpoint_dict['state_dict'])
   #optimizer.load_state_dict(checkpoint_dict['optimizer'])
   #learning_rate = checkpoint_dict['learning_rate']
@@ -21,4 +23,5 @@ def load_checkpoint(checkpoint_path):
   #return model, optimizer, learning_rate, iteration
 
 if __name__ == "__main__":
-  load_checkpoint('/datasets/code/tacotron2/pretrained/tacotron2_statedict.pt')
+  load_checkpoint('/datasets/models/pretrained/tacotron2_statedict.pt')
+  #load_checkpoint('/datasets/models/taco2pt_ipa_chn_15500/output/checkpoint_15500')

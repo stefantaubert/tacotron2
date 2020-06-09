@@ -6,7 +6,7 @@ import matplotlib.pylab as plt
 import numpy as np
 from scipy.io import wavfile
 
-from paths import checkpoint_output_dir, pretrained_dir, input_symbols, output_dir
+from paths import checkpoint_output_dir, savecheckpoints_dir, input_symbols, output_dir
 import os
 import torch
 from tqdm import tqdm
@@ -84,6 +84,7 @@ if __name__ == "__main__":
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ipa')
   parser.add_argument('--checkpoint', type=str, help='checkpoint subpath', default='checkpoint_49000')
   parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
+  parser.add_argument('--waveglow', type=str, help='Path to pretrained waveglow file', default='/datasets/models/pretrained/waveglow_256channels_universal_v5.pt')
 
   args = parser.parse_args()
 
@@ -100,13 +101,13 @@ if __name__ == "__main__":
 
   hparams = create_hparams()
   hparams.sampling_rate = 22050
+  #hparams.sampling_rate = 16000
   hparams.n_symbols = n_symbols
 
   #checkpoint_path = os.path.join(args.base_dir, pretrained_dir, 'tacotron2_statedict.pt')
   checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, args.checkpoint)
-  waveglow_path = os.path.join(args.base_dir, pretrained_dir, 'waveglow_256channels_universal_v5.pt')
 
-  synt = Synthesizer(hparams, checkpoint_path, waveglow_path)
+  synt = Synthesizer(hparams, checkpoint_path, args.waveglow)
 
   #complete_text = [item for sublist in sentences_symbols for item in sublist]
   #print(complete_text)

@@ -17,7 +17,7 @@ from logger import Tacotron2Logger
 from hparams import create_hparams
 
 from text.conversion.SymbolConverter import get_from_file
-from paths import checkpoint_output_dir, log_dir, training_file, validation_file, symbols_path
+from paths import checkpoint_output_dir, log_dir, training_file, validation_file, symbols_path, savecheckpoints_dir
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -251,10 +251,10 @@ def train(base_dir, checkpoint_path, warm_start, n_gpus,
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
 
-  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_testing')
+  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_testing')
   #parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
   #parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
-  parser.add_argument('-c', '--checkpoint_path', type=str, required=False, help='checkpoint path')
+  parser.add_argument('--checkpoint_path', type=str, required=False, help='checkpoint path')
   parser.add_argument('--warm_start', action='store_true', help='load model weights only, ignore specified layers', default='false')
   parser.add_argument('--n_gpus', type=int, default=1, required=False, help='number of gpus')
   parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
@@ -262,13 +262,14 @@ if __name__ == '__main__':
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
 
   args = parser.parse_args()
-  args.checkpoint_path = 'pretrained/checkpoint_49000'
+  args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'checkpoint_49000')
+  args.checkpoint_path = '/datasets/models/pretrained/tacotron2_statedict.pt'
   #args.warm_start = 'false'
   args.warm_start = 'true'
 
   hparams = create_hparams(args.hparams)
   train_ds = "thchs"
-  #train = "lj"
+  #train_ds = "lj"
 
   hparams.iters_per_checkpoint = 500
 
