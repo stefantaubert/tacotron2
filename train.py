@@ -280,7 +280,7 @@ if __name__ == '__main__':
   if train_ds == "thchs":
     # THCHS-30 has 16000
     hparams.sampling_rate = 16000
-    #hparams.batch_size=22
+    #hparams.batch_size=22 only when on all speakers simultanously
     hparams.batch_size=35
   elif train_ds == 'lj':
     hparams.sampling_rate = 22050

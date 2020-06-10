@@ -15,6 +15,7 @@ if __name__ == "__main__":
   parser.add_argument('--ipa', type=str, help='IPA-based', default='true')
   parser.add_argument('--text', type=str, help='path to text which should be synthesized', default='examples/chn.txt')
   parser.add_argument('--is_ipa', type=str, help='text is ipa', default='true')
+  parser.add_argument('--ds', type=str, required=False, default='thchs', help='thchs or ljs')
   parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
   args = parser.parse_args()
   is_ipa = str.lower(args.is_ipa) == 'true'

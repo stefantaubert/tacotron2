@@ -11,20 +11,18 @@ from ipa2symb import extract_from_sentence
 from paths import preprocessed_file_name, preprocessed_file_debug_name, symbols_path_name, symbols_path_info_name, pre_ds_thchs_dir
 from text.adjustments import normalize_text
 from text.conversion.SymbolConverter import get_from_symbols
-
-csv_separator = '\t'
-
+from utils import csv_separator
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-  parser.add_argument('--thchs', type=str, help='THCHS dataset directory', default='/datasets/thchs_wav')
+  parser.add_argument('--data', type=str, help='THCHS dataset directory', default='/datasets/thchs_wav')
   #parser.add_argument('--id', type=str, help='id which should be assigned to the dataset', default='2')
 
   args = parser.parse_args()
   #use_ipa = str.lower(args.ipa) == 'true'
 
-  parsed_data = parse_thchs(args.thchs)
+  parsed_data = parse_thchs(args.data)
   data = {}
 
   ### normalize input

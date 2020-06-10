@@ -6,7 +6,7 @@ import matplotlib.pylab as plt
 import numpy as np
 from scipy.io import wavfile
 
-from paths import checkpoint_output_dir, savecheckpoints_dir, input_symbols, output_dir, pre_ds_thchs_dir, symbols_path_name
+from paths import savecheckpoints_dir, input_symbols, wav_out_dir, pre_ds_thchs_dir, symbols_path_name
 import os
 import torch
 from tqdm import tqdm
@@ -81,7 +81,7 @@ class Synthesizer():
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-  parser.add_argument('--checkpoint', type=str, help='checkpoint subpath', default='checkpoint_2500')
+  parser.add_argument('--checkpoint', type=str, help='checkpoint name', default='thchs_A11_ipa_2500')
   parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
   parser.add_argument('--waveglow', type=str, help='Path to pretrained waveglow file', default='/datasets/models/pretrained/waveglow_256channels_universal_v5.pt')
   parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
@@ -102,12 +102,12 @@ if __name__ == "__main__":
 
   hparams = create_hparams()
   #hparams.sampling_rate = 22050
-  hparams.sampling_rate = 16000
+  hparams.sampling_rate = 17000
   hparams.n_symbols = n_symbols
 
   #checkpoint_path = os.path.join(args.base_dir, pretrained_dir, 'tacotron2_statedict.pt')
-  checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, args.checkpoint)
-
+  checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, args.checkpoint)
+  print("Using model:", checkpoint_path)
   synt = Synthesizer(hparams, checkpoint_path, args.waveglow)
 
   #complete_text = [item for sublist in sentences_symbols for item in sublist]
@@ -129,4 +129,4 @@ if __name__ == "__main__":
     #print(output)
 
   print("Saving...")
-  to_wav(os.path.join(args.base_dir, output_dir, args.output_name + ".wav"), output, synt.hparams.sampling_rate)
+  to_wav(os.path.join(args.base_dir, wav_out_dir, args.output_name + ".wav"), output, synt.hparams.sampling_rate)

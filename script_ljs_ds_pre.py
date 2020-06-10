@@ -7,24 +7,26 @@ import pandas as pd
 from tqdm import tqdm
 
 from ipa2symb import extract_from_sentence
-from paths import preprocessed_file_name, preprocessed_file_debug_name, symbols_path_name, symbols_path_info_name
+from paths import preprocessed_file_name, preprocessed_file_debug_name, symbols_path_name, symbols_path_info_name, pre_ds_ljs_dir
 from text.adjustments import normalize_text
 from text.conversion.SymbolConverter import get_from_symbols
-
-csv_separator = '\t'
-
+from utils import csv_separator
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_testing')
-  parser.add_argument('-d', '--ljspeech', type=str, help='LJSpeech dataset directory', default='/datasets/LJSpeech-1.1')
-  parser.add_argument('-i', '--ipa', type=str, help='transcribe to IPA', default='true')
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
+  parser.add_argument('-d', '--data', type=str, help='LJSpeech dataset directory', default='/datasets/LJSpeech-1.1')
+  parser.add_argument('-i', '--ipa', type=str, help='transcribe to IPA', default='false')
 
   args = parser.parse_args()
   use_ipa = str.lower(args.ipa) == 'true'
   epi = epitran.Epitran('eng-Latn')
-  p = LJSpeechDatasetParser(args.ljspeech)
+  p = LJSpeechDatasetParser(args.data)
   p.parse()
+
+  speaker = "1"
+  speaker_dir = os.path.join(args.base_dir, pre_ds_ljs_dir, speaker)
+  os.makedirs(speaker_dir, exist_ok=True)
 
   #print(p.data)
 
@@ -48,8 +50,8 @@ if __name__ == "__main__":
     #print(current_symbols)
     symbols = symbols.union(current_symbols)
   conv = get_from_symbols(symbols)
-  conv.dump(os.path.join(args.base_dir, symbols_path))
-  conv.plot(os.path.join(args.base_dir, symbols_path_info))
+  conv.dump(os.path.join(speaker_dir, symbols_path_name))
+  conv.plot(os.path.join(speaker_dir, symbols_path_info_name))
   print(conv.get_symbols())
 
   ### convert text to symbols
@@ -61,11 +63,11 @@ if __name__ == "__main__":
 
   ### save
   #dest_filename = os.path.join(dataset_path, 'preprocessed.txt')
-
+ 
   df = pd.DataFrame(result)
   df1 = df.iloc[:, [1, 4]]
-  df1.to_csv(os.path.join(args.base_dir, preprocessed_file), header=None, index=None, sep=csv_separator)
+  df1.to_csv(os.path.join(speaker_dir, preprocessed_file_name), header=None, index=None, sep=csv_separator)
   print("Dataset saved.")
   df2 = df.iloc[:, [0, 2, 3]]
-  df2.to_csv(os.path.join(args.base_dir, preprocessed_file_debug), header=None, index=None, sep=csv_separator)
+  df2.to_csv(os.path.join(speaker_dir, preprocessed_file_debug_name), header=None, index=None, sep=csv_separator)
   print("Dataset preprocessing finished.")

@@ -3,7 +3,7 @@ import argparse
 
 filelist_dir = "filelist"
 input_dir = "in"
-output_dir = "out"
+wav_out_dir = "wav_out"
 log_dir = 'logs'
 checkpoint_output_dir = 'output'
 savecheckpoints_dir = 'saved_checkpoints'
@@ -25,7 +25,7 @@ input_symbols = os.path.join(input_dir, 'input_symbols.txt')
 def ensure_folders_exist(base_dir):
   os.makedirs(os.path.join(base_dir, filelist_dir), exist_ok=True)
   os.makedirs(os.path.join(base_dir, input_dir), exist_ok=True)
-  os.makedirs(os.path.join(base_dir, output_dir), exist_ok=True)
+  os.makedirs(os.path.join(base_dir, wav_out_dir), exist_ok=True)
   os.makedirs(os.path.join(base_dir, log_dir), exist_ok=True)
   os.makedirs(os.path.join(base_dir, checkpoint_output_dir), exist_ok=True)
   os.makedirs(os.path.join(base_dir, savecheckpoints_dir), exist_ok=True)

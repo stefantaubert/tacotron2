@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from scipy.io.wavfile import read
 import torch
-from script_ds_pre import csv_separator
 
+csv_separator = '\t'
 
 def get_mask_from_lengths(lengths):
   max_len = torch.max(lengths).item()
