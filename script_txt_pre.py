@@ -7,7 +7,7 @@ from nltk.tokenize import sent_tokenize
 from ipa2symb import extract_from_sentence
 from text.adjustments import normalize_text
 from text.conversion.SymbolConverter import get_from_file
-from paths import input_symbols, input_dir, symbols_path_name, pre_ds_thchs_dir
+from paths import input_symbols, input_dir, symbols_path_name, pre_ds_thchs_dir, pre_ds_ljs_dir
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -23,10 +23,17 @@ if __name__ == "__main__":
   
   print("Processing text from", args.text)
   
+  if args.ds == 'ljs':
+    ds = pre_ds_ljs_dir
+  elif args.ds == 'thchs':
+    ds = pre_ds_thchs_dir
+  else: 
+    raise Exception()
+
   if use_ipa:
     epi = epitran.Epitran('eng-Latn')
   
-  speaker_dir = os.path.join(args.base_dir, pre_ds_thchs_dir, args.speaker)
+  speaker_dir = os.path.join(args.base_dir, ds, args.speaker)
   conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
   base=os.path.basename(args.text)
   file_name = os.path.splitext(base)[0]

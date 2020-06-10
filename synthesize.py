@@ -6,7 +6,7 @@ import matplotlib.pylab as plt
 import numpy as np
 from scipy.io import wavfile
 
-from paths import savecheckpoints_dir, input_symbols, wav_out_dir, pre_ds_thchs_dir, symbols_path_name
+from paths import savecheckpoints_dir, input_symbols, wav_out_dir, pre_ds_thchs_dir, symbols_path_name, pre_ds_ljs_dir
 import os
 import torch
 from tqdm import tqdm
@@ -84,11 +84,19 @@ if __name__ == "__main__":
   parser.add_argument('--checkpoint', type=str, help='checkpoint name', default='thchs_A11_ipa_2500')
   parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
   parser.add_argument('--waveglow', type=str, help='Path to pretrained waveglow file', default='/datasets/models/pretrained/waveglow_256channels_universal_v5.pt')
+  parser.add_argument('--ds', type=str, required=False, default='ljs', help='thchs or ljs')
   parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
 
   args = parser.parse_args()
 
-  speaker_dir = os.path.join(args.base_dir, pre_ds_thchs_dir, args.speaker)
+  if args.ds == 'ljs':
+    ds = pre_ds_ljs_dir
+  elif args.ds == 'thchs':
+    ds = pre_ds_thchs_dir
+  else:
+    raise Exception()
+
+  speaker_dir = os.path.join(args.base_dir, ds, args.speaker)
   conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
   n_symbols = conv.get_symbols_count()
 

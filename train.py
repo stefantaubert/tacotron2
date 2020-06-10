@@ -17,7 +17,7 @@ from logger import Tacotron2Logger
 from hparams import create_hparams
 
 from text.conversion.SymbolConverter import get_from_file
-from paths import checkpoint_output_dir, log_dir, training_file_name, validation_file_name, symbols_path_name, savecheckpoints_dir, pre_ds_thchs_dir
+from paths import checkpoint_output_dir, log_dir, training_file_name, validation_file_name, symbols_path_name, savecheckpoints_dir, pre_ds_thchs_dir, pre_ds_ljs_dir
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -262,6 +262,7 @@ if __name__ == '__main__':
   parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
   parser.add_argument('--group_name', type=str, default='group_name', required=False, help='Distributed group name')
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
+  parser.add_argument('--ds', type=str, required=False, default='ljs', help='thchs or ljs')
   parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
 
 
@@ -272,20 +273,23 @@ if __name__ == '__main__':
   args.warm_start = 'true'
 
   hparams = create_hparams(args.hparams)
-  train_ds = "thchs"
-  #train_ds = "lj"
 
   hparams.iters_per_checkpoint = 500
 
-  if train_ds == "thchs":
+  if args.ds == "thchs":
     # THCHS-30 has 16000
     hparams.sampling_rate = 16000
     #hparams.batch_size=22 only when on all speakers simultanously
     hparams.batch_size=35
-  elif train_ds == 'lj':
+    ds = pre_ds_ljs_dir
+  elif args.ds == 'ljs':
     hparams.sampling_rate = 22050
     hparams.batch_size=26
-  speaker_dir = os.path.join(args.base_dir, pre_ds_thchs_dir, args.speaker)
+    ds = pre_ds_thchs_dir
+  else: 
+    raise Exception()
+
+  speaker_dir = os.path.join(args.base_dir, ds, args.speaker)
   conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
   hparams.n_symbols = conv.get_symbols_count()
 
