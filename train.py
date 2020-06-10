@@ -247,6 +247,8 @@ def train(base_dir, checkpoint_path, speaker_dir, warm_start, n_gpus,
 
       iteration += 1
 
+  checkpoint_path = os.path.join(output_directory, "checkpoint_{}".format(iteration))
+  save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()

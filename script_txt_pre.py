@@ -7,14 +7,15 @@ from nltk.tokenize import sent_tokenize
 from ipa2symb import extract_from_sentence
 from text.adjustments import normalize_text
 from text.conversion.SymbolConverter import get_from_file
-from paths import input_symbols, symbols_path, input_dir
+from paths import input_symbols, input_dir, symbols_path_name, pre_ds_thchs_dir
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ipa')
+  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
   parser.add_argument('--ipa', type=str, help='IPA-based', default='true')
-  parser.add_argument('--text', type=str, help='path to text which should be synthesized', default='examples/stella.txt')
-  parser.add_argument('--is_ipa', type=str, help='text is ipa', default='false')
+  parser.add_argument('--text', type=str, help='path to text which should be synthesized', default='examples/chn.txt')
+  parser.add_argument('--is_ipa', type=str, help='text is ipa', default='true')
+  parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
   args = parser.parse_args()
   is_ipa = str.lower(args.is_ipa) == 'true'
   use_ipa = str.lower(args.ipa) == 'true' or is_ipa
@@ -24,7 +25,8 @@ if __name__ == "__main__":
   if use_ipa:
     epi = epitran.Epitran('eng-Latn')
   
-  conv = get_from_file(os.path.join(args.base_dir, symbols_path))
+  speaker_dir = os.path.join(args.base_dir, pre_ds_thchs_dir, args.speaker)
+  conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
   base=os.path.basename(args.text)
   file_name = os.path.splitext(base)[0]
 

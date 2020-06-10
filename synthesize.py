@@ -6,13 +6,12 @@ import matplotlib.pylab as plt
 import numpy as np
 from scipy.io import wavfile
 
-from paths import checkpoint_output_dir, savecheckpoints_dir, input_symbols, output_dir
+from paths import checkpoint_output_dir, savecheckpoints_dir, input_symbols, output_dir, pre_ds_thchs_dir, symbols_path_name
 import os
 import torch
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from text.conversion.SymbolConverter import get_from_file
-from script_ds_pre import symbols_path
 
 # to load denoiser, glow etc.
 sys.path.append('waveglow/')
@@ -81,14 +80,16 @@ class Synthesizer():
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ipa')
-  parser.add_argument('--checkpoint', type=str, help='checkpoint subpath', default='checkpoint_49000')
+  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
+  parser.add_argument('--checkpoint', type=str, help='checkpoint subpath', default='checkpoint_2500')
   parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
   parser.add_argument('--waveglow', type=str, help='Path to pretrained waveglow file', default='/datasets/models/pretrained/waveglow_256channels_universal_v5.pt')
+  parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
 
   args = parser.parse_args()
 
-  conv = get_from_file(os.path.join(args.base_dir, symbols_path))
+  speaker_dir = os.path.join(args.base_dir, pre_ds_thchs_dir, args.speaker)
+  conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
   n_symbols = conv.get_symbols_count()
 
   output = np.array([])
@@ -100,8 +101,8 @@ if __name__ == "__main__":
   sentences_symbols = [list(map(int, l)) for l in sentences_symbols]
 
   hparams = create_hparams()
-  hparams.sampling_rate = 22050
-  #hparams.sampling_rate = 16000
+  #hparams.sampling_rate = 22050
+  hparams.sampling_rate = 16000
   hparams.n_symbols = n_symbols
 
   #checkpoint_path = os.path.join(args.base_dir, pretrained_dir, 'tacotron2_statedict.pt')
