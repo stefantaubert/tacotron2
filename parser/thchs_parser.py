@@ -27,8 +27,8 @@ def parse(dir_path: str):
     print("Directory not found:", dir_path)
     raise Exception()
 
-  train_syll = os.path.join(dir_path, 'doc/trans/train.syllable.txt')
-  test_syll = os.path.join(dir_path, 'doc/trans/test.syllable.txt')
+  train_syll = os.path.join(dir_path, 'doc/trans/train.word.txt')
+  test_syll = os.path.join(dir_path, 'doc/trans/test.word.txt')
   train_wavs = os.path.join(dir_path, 'wav/train/')
   test_wavs = os.path.join(dir_path, 'wav/test/')
 

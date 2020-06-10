@@ -6,7 +6,7 @@ import matplotlib.pylab as plt
 import numpy as np
 from scipy.io import wavfile
 
-from paths import savecheckpoints_dir, input_symbols, wav_out_dir, pre_ds_thchs_dir, symbols_path_name, pre_ds_ljs_dir
+from paths import savecheckpoints_dir, filelist_dir, input_symbols, wav_out_dir, symbols_path_name
 import os
 import torch
 from tqdm import tqdm
@@ -81,24 +81,19 @@ class Synthesizer():
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-  parser.add_argument('--checkpoint', type=str, help='checkpoint name', default='thchs_A11_ipa_2500')
+  parser.add_argument('--checkpoint', type=str, help='checkpoint name', default='thchs_A11_ipa_500')
   parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
   parser.add_argument('--waveglow', type=str, help='Path to pretrained waveglow file', default='/datasets/models/pretrained/waveglow_256channels_universal_v5.pt')
-  parser.add_argument('--ds', type=str, required=False, default='ljs', help='thchs or ljs')
+  parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
+  parser.add_argument('--ds_name', type=str, required=False, default='thchs', help='name of the dataset')
   parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
 
   args = parser.parse_args()
 
-  if args.ds == 'ljs':
-    ds = pre_ds_ljs_dir
-  elif args.ds == 'thchs':
-    ds = pre_ds_thchs_dir
-  else:
-    raise Exception()
-
-  speaker_dir = os.path.join(args.base_dir, ds, args.speaker)
+  speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
   conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
   n_symbols = conv.get_symbols_count()
+  print('Loaded {} symbols from {}'.format(n_symbols, speaker_dir))
 
   output = np.array([])
 
@@ -108,9 +103,9 @@ if __name__ == "__main__":
   sentences_symbols = [x.split(',') for x in sentences_symbols]
   sentences_symbols = [list(map(int, l)) for l in sentences_symbols]
 
-  hparams = create_hparams()
+  hparams = create_hparams(args.hparams)
   #hparams.sampling_rate = 22050
-  hparams.sampling_rate = 17000
+  #hparams.sampling_rate = 17000
   hparams.n_symbols = n_symbols
 
   #checkpoint_path = os.path.join(args.base_dir, pretrained_dir, 'tacotron2_statedict.pt')

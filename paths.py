@@ -17,9 +17,6 @@ validation_file_name = 'audio_text_val_filelist.csv'
 preprocessed_file_name ='filelist.csv'
 preprocessed_file_debug_name =  'filelist_debug.csv'
 
-pre_ds_thchs_dir = os.path.join(filelist_dir, 'thchs')
-pre_ds_ljs_dir = os.path.join(filelist_dir, 'ljs')
-
 input_symbols = os.path.join(input_dir, 'input_symbols.txt')
 
 def ensure_folders_exist(base_dir):

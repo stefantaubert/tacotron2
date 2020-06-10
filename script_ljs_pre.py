@@ -7,25 +7,26 @@ import pandas as pd
 from tqdm import tqdm
 
 from ipa2symb import extract_from_sentence
-from paths import preprocessed_file_name, preprocessed_file_debug_name, symbols_path_name, symbols_path_info_name, pre_ds_ljs_dir
+from paths import filelist_dir, preprocessed_file_name, preprocessed_file_debug_name, symbols_path_name, symbols_path_info_name
 from text.adjustments import normalize_text
 from text.conversion.SymbolConverter import get_from_symbols
 from utils import csv_separator
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-  parser.add_argument('-d', '--data', type=str, help='LJSpeech dataset directory', default='/datasets/LJSpeech-1.1')
-  parser.add_argument('-i', '--ipa', type=str, help='transcribe to IPA', default='false')
+  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
+  parser.add_argument('--data_dir', type=str, help='LJSpeech dataset directory', default='/datasets/LJSpeech-1.1')
+  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', default='ljs_en')
+  parser.add_argument('--ipa', type=str, help='transcribe to IPA', default='false')
 
   args = parser.parse_args()
   use_ipa = str.lower(args.ipa) == 'true'
   epi = epitran.Epitran('eng-Latn')
-  p = LJSpeechDatasetParser(args.data)
+  p = LJSpeechDatasetParser(args.data_dir)
   p.parse()
 
   speaker = "1"
-  speaker_dir = os.path.join(args.base_dir, pre_ds_ljs_dir, speaker)
+  speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, speaker)
   os.makedirs(speaker_dir, exist_ok=True)
 
   #print(p.data)

@@ -4,28 +4,21 @@ import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from paths import preprocessed_file_name, pre_ds_thchs_dir, pre_ds_ljs_dir, test_file_name, training_file_name, validation_file_name
+from paths import preprocessed_file_name, test_file_name, training_file_name, validation_file_name, filelist_dir
 from utils import csv_separator
 
 if __name__ == "__main__":
- 
+
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
   parser.add_argument('--seed', type=str, help='random seed', default='1234')
-  parser.add_argument('--ds', type=str, required=False, default='ljs', help='thchs or ljs')
-  parser.add_argument('--speaker', type=str, required=False, default='1', help='speaker')
+  parser.add_argument('--ds_name', default='thchs')
+  parser.add_argument('--speaker', default='A11')
   
   args = parser.parse_args()
   seed = int(args.seed)
 
-  if args.ds == 'ljs':
-    ds = pre_ds_ljs_dir
-  elif args.ds == 'thchs':
-    ds = pre_ds_thchs_dir
-  else: 
-    raise Exception()
-
-  speaker_dir = os.path.join(args.base_dir, ds, args.speaker)
+  speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
   prepr_path = os.path.join(speaker_dir, preprocessed_file_name)
 
   data = pd.read_csv(prepr_path, header=None, sep=csv_separator)

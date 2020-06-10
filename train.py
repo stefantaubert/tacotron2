@@ -17,7 +17,7 @@ from logger import Tacotron2Logger
 from hparams import create_hparams
 
 from text.conversion.SymbolConverter import get_from_file
-from paths import checkpoint_output_dir, log_dir, training_file_name, validation_file_name, symbols_path_name, savecheckpoints_dir, pre_ds_thchs_dir, pre_ds_ljs_dir
+from paths import checkpoint_output_dir, log_dir, training_file_name, validation_file_name, symbols_path_name, savecheckpoints_dir, filelist_dir
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -247,8 +247,8 @@ def train(base_dir, checkpoint_path, speaker_dir, warm_start, n_gpus,
 
       iteration += 1
 
-  checkpoint_path = os.path.join(output_directory, "checkpoint_{}".format(iteration))
-  save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
+  checkpoint_path = os.path.join(output_directory, "checkpoint_{}".format(iteration - 1))
+  save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
@@ -257,45 +257,48 @@ if __name__ == '__main__':
   #parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
   #parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
   parser.add_argument('--checkpoint_path', type=str, required=False, help='checkpoint path')
-  parser.add_argument('--warm_start', action='store_true', help='load model weights only, ignore specified layers', default='false')
+  parser.add_argument('--warm_start', help='load model weights only, ignore specified layers', default='false')
   parser.add_argument('--n_gpus', type=int, default=1, required=False, help='number of gpus')
   parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
   parser.add_argument('--group_name', type=str, default='group_name', required=False, help='Distributed group name')
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
-  parser.add_argument('--ds', type=str, required=False, default='ljs', help='thchs or ljs')
+  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', default='thchs')
   parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
 
 
   args = parser.parse_args()
   #args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'checkpoint_49000')
-  args.checkpoint_path = '/datasets/models/pretrained/tacotron2_statedict.pt'
+  #args.checkpoint_path = '/datasets/models/pretrained/tacotron2_statedict.pt'
   #args.warm_start = 'false'
-  args.warm_start = 'true'
+  #args.warm_start = 'true'
 
   hparams = create_hparams(args.hparams)
 
-  hparams.iters_per_checkpoint = 500
+  #hparams.iters_per_checkpoint = 500
+  # hparams.epochs = 500
 
-  if args.ds == "thchs":
-    # THCHS-30 has 16000
-    hparams.sampling_rate = 16000
-    #hparams.batch_size=22 only when on all speakers simultanously
-    hparams.batch_size=35
-    ds = pre_ds_ljs_dir
-  elif args.ds == 'ljs':
-    hparams.sampling_rate = 22050
-    hparams.batch_size=26
-    ds = pre_ds_thchs_dir
-  else: 
-    raise Exception()
+  # # TODO: as param
+  # if args.ds_name == "thchs":
+  #   # THCHS-30 has 16000
+  #   hparams.sampling_rate = 16000
+  #   #hparams.batch_size=22 only when on all speakers simultanously
+  #   hparams.batch_size=35
+  # elif args.ds_name == 'ljs':
+  #   hparams.sampling_rate = 22050
+  #   hparams.batch_size=26
+  # else: 
+  #   raise Exception()
 
-  speaker_dir = os.path.join(args.base_dir, ds, args.speaker)
+  speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
   conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
   hparams.n_symbols = conv.get_symbols_count()
 
   torch.backends.cudnn.enabled = hparams.cudnn_enabled
   torch.backends.cudnn.benchmark = hparams.cudnn_benchmark
 
+  print("Epochs:", hparams.epochs)
+  print("Batchsize:", hparams.batch_size)
+  print("Speaker:", speaker_dir)
   print("FP16 Run:", hparams.fp16_run)
   print("Dynamic Loss Scaling:", hparams.dynamic_loss_scaling)
   print("Distributed Run:", hparams.distributed_run)
@@ -305,3 +308,4 @@ if __name__ == '__main__':
   warm_start = str.lower(args.warm_start) == 'true'
   
   train(args.base_dir, args.checkpoint_path, speaker_dir, warm_start, args.n_gpus, args.rank, args.group_name, hparams)
+  print('Finished training.')

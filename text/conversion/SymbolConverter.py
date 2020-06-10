@@ -109,7 +109,10 @@ class SymbolConverter():
     return text_id is not self._pad_id and text_id is not self._eos_id
 
   def _is_valid_text_symbol(self, symbol: str) -> bool:
-    return symbol in self._id_to_symbol and symbol is not _pad and symbol is not _eos
+    is_valid = symbol in self._id_to_symbol and symbol is not _pad and symbol is not _eos
+    if not is_valid:
+      x = 1
+    return is_valid
 
   def _get_valid_symbolids(self, symbols):
     res = []

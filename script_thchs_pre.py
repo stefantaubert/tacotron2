@@ -8,36 +8,47 @@ import pandas as pd
 from tqdm import tqdm
 
 from ipa2symb import extract_from_sentence
-from paths import preprocessed_file_name, preprocessed_file_debug_name, symbols_path_name, symbols_path_info_name, pre_ds_thchs_dir
+from paths import preprocessed_file_name, preprocessed_file_debug_name, symbols_path_name, symbols_path_info_name, filelist_dir
 from text.adjustments import normalize_text
 from text.conversion.SymbolConverter import get_from_symbols
 from utils import csv_separator
 
+def chn_to_ipa(chn):
+  chn_words = chn.split(' ')
+  res = []
+  for w in chn_words:
+    chn_syll_ipa = hanzi.to_ipa(w)
+    chn_ipa = chn_syll_ipa.replace(' ', '')
+    res.append(chn_ipa)
+  res = ' '.join(res)
+  return res
+
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-  parser.add_argument('--data', type=str, help='THCHS dataset directory', default='/datasets/thchs_wav')
+  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory', default='/datasets/thchs_wav')
+  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', default='thchs')
   #parser.add_argument('--id', type=str, help='id which should be assigned to the dataset', default='2')
 
   args = parser.parse_args()
   #use_ipa = str.lower(args.ipa) == 'true'
 
-  parsed_data = parse_thchs(args.data)
+  parsed_data = parse_thchs(args.data_dir)
   data = {}
 
   ### normalize input
-  for _, speaker_name, basename, wav_path, pinyin in tqdm(parsed_data):
+  for _, speaker_name, basename, wav_path, chn in tqdm(parsed_data):
     try:
-      pinyin_ipa = hanzi.pinyin_to_ipa(pinyin)
+      chn_ipa = chn_to_ipa(chn)
     except Exception as e:
       # print("Error on:", x, e)
       continue
 
-    text_symbols = extract_from_sentence(pinyin_ipa)
+    text_symbols = extract_from_sentence(chn_ipa)
     if speaker_name not in data:
       data[speaker_name] = []
 
-    data[speaker_name].append((basename, pinyin, pinyin_ipa, text_symbols, wav_path))
+    data[speaker_name].append((basename, chn, chn_ipa, text_symbols, wav_path))
 
   for speaker, recordings in data.items():
     print("Processing speaker:", speaker)
@@ -50,7 +61,7 @@ if __name__ == "__main__":
 
     conv = get_from_symbols(symbols)
 
-    speaker_dir = os.path.join(args.base_dir, pre_ds_thchs_dir, speaker)
+    speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, speaker)
     os.makedirs(speaker_dir, exist_ok=True)
 
     conv.dump(os.path.join(speaker_dir, symbols_path_name))
