@@ -41,6 +41,28 @@ def init_distributed(hparams, n_gpus, rank, group_name):
   print("Done initializing distributed")
 
 
+def load_checkpoint(checkpoint_path, model, optimizer):
+  assert os.path.isfile(checkpoint_path)
+  print("Loading checkpoint '{}'".format(checkpoint_path))
+  checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
+  model.load_state_dict(checkpoint_dict['state_dict'])
+  optimizer.load_state_dict(checkpoint_dict['optimizer'])
+  learning_rate = checkpoint_dict['learning_rate']
+  iteration = checkpoint_dict['iteration']
+  print("Loaded checkpoint '{}' from iteration {}" .format(
+    checkpoint_path, iteration))
+  return model, optimizer, learning_rate, iteration
+
+
+def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
+  print("Saving model and optimizer state at iteration {} to {}".format(
+    iteration, filepath))
+  torch.save({'iteration': iteration,
+        'state_dict': model.state_dict(),
+        'optimizer': optimizer.state_dict(),
+        'learning_rate': learning_rate}, filepath)
+
+
 def prepare_dataloaders(hparams, speaker_dir):
   # Get data, data loaders and collate function ready
   trainset = SymbolsMelLoader(os.path.join(speaker_dir, training_file_name), hparams)
@@ -96,28 +118,6 @@ def warm_start_model(checkpoint_path, model, ignore_layers):
     model_dict = dummy_dict
   model.load_state_dict(model_dict)
   return model
-
-
-def load_checkpoint(checkpoint_path, model, optimizer):
-  assert os.path.isfile(checkpoint_path)
-  print("Loading checkpoint '{}'".format(checkpoint_path))
-  checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-  model.load_state_dict(checkpoint_dict['state_dict'])
-  optimizer.load_state_dict(checkpoint_dict['optimizer'])
-  learning_rate = checkpoint_dict['learning_rate']
-  iteration = checkpoint_dict['iteration']
-  print("Loaded checkpoint '{}' from iteration {}" .format(
-    checkpoint_path, iteration))
-  return model, optimizer, learning_rate, iteration
-
-
-def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
-  print("Saving model and optimizer state at iteration {} to {}".format(
-    iteration, filepath))
-  torch.save({'iteration': iteration,
-        'state_dict': model.state_dict(),
-        'optimizer': optimizer.state_dict(),
-        'learning_rate': learning_rate}, filepath)
 
 
 def validate(model, criterion, valset, iteration, batch_size, n_gpus,
@@ -202,7 +202,7 @@ def train(base_dir, checkpoint_path, speaker_dir, warm_start, n_gpus,
 
   model.train()
   is_overflow = False
-  # ================ MAIN TRAINNIG LOOP! ===================
+  # ================ MAIN TRAINING LOOP! ===================
   for epoch in range(epoch_offset, hparams.epochs):
     print("Epoch: {}".format(epoch))
     for i, batch in enumerate(train_loader):
@@ -253,7 +253,7 @@ def train(base_dir, checkpoint_path, speaker_dir, warm_start, n_gpus,
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
 
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
+  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms_learning')
   #parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
   #parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
   parser.add_argument('--checkpoint_path', type=str, required=False, help='checkpoint path')
@@ -262,8 +262,6 @@ if __name__ == '__main__':
   parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
   parser.add_argument('--group_name', type=str, default='group_name', required=False, help='Distributed group name')
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
-  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', default='thchs')
-  parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
 
 
   args = parser.parse_args()
@@ -271,18 +269,18 @@ if __name__ == '__main__':
   #args.checkpoint_path = '/datasets/models/pretrained/tacotron2_statedict.pt'
   #args.warm_start = 'false'
   #args.warm_start = 'true'
-
   hparams = create_hparams(args.hparams)
 
 
-  #hparams.iters_per_checkpoint = 500
+  hparams.iters_per_checkpoint = 10
   # hparams.epochs = 500
 
   # # TODO: as param
   # if args.ds_name == "thchs":
   #   # THCHS-30 has 16000
-  #   hparams.sampling_rate = 16000
-  #   #hparams.batch_size=22 only when on all speakers simultanously
+  hparams.sampling_rate = 16000
+  hparams.mask_padding=False
+  hparams.batch_size=30 #only when on all speakers simultanously
   #   hparams.batch_size=35
   # elif args.ds_name == 'ljs':
   #   hparams.sampling_rate = 22050
@@ -290,16 +288,16 @@ if __name__ == '__main__':
   # else: 
   #   raise Exception()
 
-  speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
-  conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
+  filelist_dir_path = os.path.join(args.base_dir, filelist_dir)
+  conv = get_from_file(os.path.join(filelist_dir_path, symbols_path_name))
   hparams.n_symbols = conv.get_symbols_count()
+  hparams.n_speakers = 3
 
   torch.backends.cudnn.enabled = hparams.cudnn_enabled
   torch.backends.cudnn.benchmark = hparams.cudnn_benchmark
 
   print("Epochs:", hparams.epochs)
   print("Batchsize:", hparams.batch_size)
-  print("Speaker:", speaker_dir)
   print("FP16 Run:", hparams.fp16_run)
   print("Dynamic Loss Scaling:", hparams.dynamic_loss_scaling)
   print("Distributed Run:", hparams.distributed_run)
@@ -307,6 +305,6 @@ if __name__ == '__main__':
   print("cuDNN Benchmark:", hparams.cudnn_benchmark)
 
   warm_start = str.lower(args.warm_start) == 'true'
-  
-  train(args.base_dir, args.checkpoint_path, speaker_dir, warm_start, args.n_gpus, args.rank, args.group_name, hparams)
+
+  train(args.base_dir, args.checkpoint_path, filelist_dir_path, warm_start, args.n_gpus, args.rank, args.group_name, hparams)
   print('Finished training.')

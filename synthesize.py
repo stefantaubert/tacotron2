@@ -6,7 +6,7 @@ import matplotlib.pylab as plt
 import numpy as np
 from scipy.io import wavfile
 
-from paths import savecheckpoints_dir, filelist_dir, input_symbols, wav_out_dir, symbols_path_name
+from paths import savecheckpoints_dir, filelist_dir, input_symbols, wav_out_dir, symbols_path_name, checkpoint_output_dir
 import os
 import torch
 from tqdm import tqdm
@@ -58,42 +58,45 @@ class Synthesizer():
       k.float()
     self.denoiser = Denoiser(self.waveglow)
 
-  def infer(self, symbols, dest_name):
+  def infer(self, symbols, dest_name, speaker_id):
     sequence = np.array([symbols])
     sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
-
+    speaker_id = torch.IntTensor([speaker_id]).cuda().long()
     # Decode text input and plot results
-    mel_outputs, mel_outputs_postnet, _, alignments = self.model.inference(sequence)
+    mel_outputs, mel_outputs_postnet, _, alignments = self.model.inference(sequence, speaker_id)
     # plot_data((mel_outputs.float().data.cpu().numpy()[0], mel_outputs_postnet.float().data.cpu().numpy()[0], alignments.float().data.cpu().numpy()[0].T))
 
     with torch.no_grad():
       audio = self.waveglow.infer(mel_outputs_postnet, sigma=0.666)
-    #res = audio[0].data.cpu().numpy()
-    #print("Saving {}...".format(dest_name))
-    #to_wav("/tmp/{}.wav".format(dest_name), res, self.hparams.sampling_rate)
 
-    # (Optional) Remove WaveGlow bias
-    audio_denoised = self.denoiser(audio, strength=10**-2)[:, 0]
-    res = audio_denoised.cpu().numpy()[0]
-    #to_wav("/tmp/{}_denoised.wav".format(dest_name), res, self.hparams.sampling_rate)
+    remove_bias = False
+
+    if remove_bias:
+      # (Optional) Remove WaveGlow bias
+      audio_denoised = self.denoiser(audio, strength=10**-2)[:, 0]
+      res = audio_denoised.cpu().numpy()[0]
+      #to_wav("/tmp/{}_denoised.wav".format(dest_name), res, self.hparams.sampling_rate)
+    else:
+      #print("Saving {}...".format(dest_name))
+      #to_wav("/tmp/{}.wav".format(dest_name), res, self.hparams.sampling_rate)
+      res = audio[0].data.cpu().numpy()
     return res
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-  parser.add_argument('--checkpoint', type=str, help='checkpoint name', default='thchs_A11_ipa_500')
+  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms_learning')
+  parser.add_argument('--checkpoint', type=str, help='checkpoint name', default='checkpoint_10')
   parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
   parser.add_argument('--waveglow', type=str, help='Path to pretrained waveglow file', default='/datasets/models/pretrained/waveglow_256channels_universal_v5.pt')
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
-  parser.add_argument('--ds_name', type=str, required=False, default='thchs', help='name of the dataset')
-  parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
+  parser.add_argument('--speaker', type=str, required=False, default='0', help='speaker')
 
   args = parser.parse_args()
 
-  speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
-  conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
+  symb_file = os.path.join(args.base_dir, filelist_dir, symbols_path_name)
+  conv = get_from_file(symb_file)
   n_symbols = conv.get_symbols_count()
-  print('Loaded {} symbols from {}'.format(n_symbols, speaker_dir))
+  print('Loaded {} symbols from {}'.format(n_symbols, symb_file))
 
   output = np.array([])
 
@@ -105,11 +108,13 @@ if __name__ == "__main__":
 
   hparams = create_hparams(args.hparams)
   #hparams.sampling_rate = 22050
-  #hparams.sampling_rate = 17000
+  hparams.sampling_rate = 16000
+  #hparams.mask_padding=False
   hparams.n_symbols = n_symbols
+  hparams.n_speakers = 3
 
   #checkpoint_path = os.path.join(args.base_dir, pretrained_dir, 'tacotron2_statedict.pt')
-  checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, args.checkpoint)
+  checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, args.checkpoint)
   print("Using model:", checkpoint_path)
   synt = Synthesizer(hparams, checkpoint_path, args.waveglow)
 
@@ -121,11 +126,12 @@ if __name__ == "__main__":
 
   # Speed is: 1min inference for 3min wav result
   print("Inferring...")
+  speaker_id = int(args.speaker)
   for i, sentence_symbols in tqdm(enumerate(sentences_symbols), total=len(sentences_symbols)):
     #print(sentence_symbols)
     origin_text = conv.sequence_to_original_text(sentence_symbols)
     print(origin_text, "({})".format(len(sentence_symbols)))
-    res = synt.infer(sentence_symbols, str(i))
+    res = synt.infer(sentence_symbols, str(i), speaker_id)
     output = np.concatenate((output, res), axis=0)
     sentence_pause = np.zeros(10**4)
     output = np.concatenate((output, sentence_pause), axis=0)

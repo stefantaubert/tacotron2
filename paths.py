@@ -29,7 +29,7 @@ def ensure_folders_exist(base_dir):
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
+  parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms_learning')
   
   args = parser.parse_args()
 

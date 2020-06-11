@@ -25,10 +25,10 @@ def chn_to_ipa(chn):
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
+  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms_learning')
   parser.add_argument('--data_dir', type=str, help='THCHS dataset directory', default='/datasets/thchs_wav')
   parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', default='thchs')
-  parser.add_argument('--ignore_tones', type=str, default='false')
+  parser.add_argument('--ignore_tones', type=str, default='true')
   #parser.add_argument('--id', type=str, help='id which should be assigned to the dataset', default='2')
 
   args = parser.parse_args()
@@ -73,9 +73,10 @@ if __name__ == "__main__":
     ### convert text to symbols
     result = []
     for bn, py, ipa_txt, sym, wav in recordings:
+      sym_str = ''.join(sym)
       seq = conv.text_to_sequence(sym)
       seq_str = ",".join([str(s) for s in seq])
-      result.append((bn, wav, py, ipa_txt, seq_str))
+      result.append((bn, wav, py, ipa_txt, seq_str, speaker, sym_str))
 
     ### save
     #dest_filename = os.path.join(dataset_path, 'preprocessed.txt')
@@ -84,6 +85,6 @@ if __name__ == "__main__":
     df1 = df.iloc[:, [1, 4]]
     df1.to_csv(os.path.join(speaker_dir, preprocessed_file_name), header=None, index=None, sep=csv_separator)
     print("Dataset saved.")
-    df2 = df.iloc[:, [0, 2, 3]]
+    df2 = df.iloc[:, [0, 2, 3, 6]]
     df2.to_csv(os.path.join(speaker_dir, preprocessed_file_debug_name), header=None, index=None, sep=csv_separator)
     print("Dataset preprocessing finished.")

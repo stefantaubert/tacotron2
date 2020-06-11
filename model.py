@@ -8,8 +8,7 @@ from utils import to_gpu, get_mask_from_lengths
 
 
 class LocationLayer(nn.Module):
-  def __init__(self, attention_n_filters, attention_kernel_size,
-         attention_dim):
+  def __init__(self, attention_n_filters, attention_kernel_size, attention_dim):
     super(LocationLayer, self).__init__()
     padding = int((attention_kernel_size - 1) / 2)
     self.location_conv = ConvNorm(2, attention_n_filters,
@@ -27,8 +26,7 @@ class LocationLayer(nn.Module):
 
 
 class Attention(nn.Module):
-  def __init__(self, attention_rnn_dim, embedding_dim, attention_dim,
-         attention_location_n_filters, attention_location_kernel_size):
+  def __init__(self, attention_rnn_dim, embedding_dim, attention_dim, attention_location_n_filters, attention_location_kernel_size):
     super(Attention, self).__init__()
     self.query_layer = LinearNorm(attention_rnn_dim, attention_dim,
                     bias=False, w_init_gain='tanh')
@@ -94,9 +92,17 @@ class Prenet(nn.Module):
       [LinearNorm(in_size, out_size, bias=False)
        for (in_size, out_size) in zip(in_sizes, sizes)])
 
-  def forward(self, x):
-    for linear in self.layers:
-      x = F.dropout(F.relu(linear(x)), p=0.5, training=True)
+  def forward(self, x, inference=False):
+    if inference:
+      for linear in self.layers:
+        x = F.relu(linear(x))
+        x0 = x[0].unsqueeze(0)
+        mask = Variable(torch.bernoulli(x0.data.new(x0.data.size()).fill_(0.5)))
+        mask = mask.expand(x.size(0), x.size(1))
+        x = x*mask*2
+    else:
+      for linear in self.layers:
+        x = F.dropout(F.relu(linear(x)), p=0.5, training=True)
     return x
 
 
@@ -202,11 +208,11 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-  def __init__(self, hparams):
+  def __init__(self, hparams, encoder_out_embedding_dim):
     super(Decoder, self).__init__()
     self.n_mel_channels = hparams.n_mel_channels
     self.n_frames_per_step = hparams.n_frames_per_step
-    self.encoder_embedding_dim = hparams.encoder_embedding_dim
+    self.encoder_embedding_dim = encoder_out_embedding_dim
     self.attention_rnn_dim = hparams.attention_rnn_dim
     self.decoder_rnn_dim = hparams.decoder_rnn_dim
     self.prenet_dim = hparams.prenet_dim
@@ -214,30 +220,31 @@ class Decoder(nn.Module):
     self.gate_threshold = hparams.gate_threshold
     self.p_attention_dropout = hparams.p_attention_dropout
     self.p_decoder_dropout = hparams.p_decoder_dropout
+    self.early_stopping = not hparams.decoder_no_early_stopping #new
 
     self.prenet = Prenet(
-      hparams.n_mel_channels * hparams.n_frames_per_step,
+      hparams.n_mel_channels, # * hparams.n_frames_per_step,
       [hparams.prenet_dim, hparams.prenet_dim])
 
     self.attention_rnn = nn.LSTMCell(
-      hparams.prenet_dim + hparams.encoder_embedding_dim,
+      hparams.prenet_dim + encoder_out_embedding_dim,
       hparams.attention_rnn_dim)
 
     self.attention_layer = Attention(
-      hparams.attention_rnn_dim, hparams.encoder_embedding_dim,
+      hparams.attention_rnn_dim, encoder_out_embedding_dim,
       hparams.attention_dim, hparams.attention_location_n_filters,
       hparams.attention_location_kernel_size)
 
     self.decoder_rnn = nn.LSTMCell(
-      hparams.attention_rnn_dim + hparams.encoder_embedding_dim,
+      hparams.attention_rnn_dim + encoder_out_embedding_dim,
       hparams.decoder_rnn_dim, 1)
 
     self.linear_projection = LinearNorm(
-      hparams.decoder_rnn_dim + hparams.encoder_embedding_dim,
+      hparams.decoder_rnn_dim + encoder_out_embedding_dim,
       hparams.n_mel_channels * hparams.n_frames_per_step)
 
     self.gate_layer = LinearNorm(
-      hparams.decoder_rnn_dim + hparams.encoder_embedding_dim, 1,
+      hparams.decoder_rnn_dim + encoder_out_embedding_dim, 1,
       bias=True, w_init_gain='sigmoid')
 
   def get_go_frame(self, memory):
@@ -300,7 +307,7 @@ class Decoder(nn.Module):
 
     """
     # (B, n_mel_channels, T_out) -> (B, T_out, n_mel_channels)
-    decoder_inputs = decoder_inputs.transpose(1, 2)
+    decoder_inputs = decoder_inputs.transpose(1, 2).contiguous()
     decoder_inputs = decoder_inputs.view(
       decoder_inputs.size(0),
       int(decoder_inputs.size(1)/self.n_frames_per_step), -1)
@@ -396,19 +403,36 @@ class Decoder(nn.Module):
     decoder_input = self.get_go_frame(memory).unsqueeze(0)
     decoder_inputs = self.parse_decoder_inputs(decoder_inputs)
     decoder_inputs = torch.cat((decoder_input, decoder_inputs), dim=0)
-    decoder_inputs = self.prenet(decoder_inputs)
+    #decoder_inputs = self.prenet(decoder_inputs)
+
+    decoder_input_frames = []
+    z = int(decoder_inputs.size(2) / self.n_frames_per_step)
+    for i in range(self.n_frames_per_step):
+        decoder_input_frames.append(self.prenet(decoder_inputs[:, :, i*z:(i+1)*z]))
 
     self.initialize_decoder_states(
       memory, mask=~get_mask_from_lengths(memory_lengths))
 
     mel_outputs, gate_outputs, alignments = [], [], []
-    while len(mel_outputs) < decoder_inputs.size(0) - 1:
-      decoder_input = decoder_inputs[len(mel_outputs)]
-      mel_output, gate_output, attention_weights = self.decode(
-        decoder_input)
+
+    # while len(mel_outputs) < decoder_inputs.size(0) - 1:
+    #   decoder_input = decoder_inputs[len(mel_outputs)]
+    #   mel_output, gate_output, attention_weights = self.decode(
+    #     decoder_input)
+    #   mel_outputs += [mel_output.squeeze(1)]
+    #   gate_outputs += [gate_output.squeeze(1)]
+    #   alignments += [attention_weights]
+
+    while len(mel_outputs) < decoder_input_frames[0].size(0) - 1:
+      for input_frame in decoder_input_frames:
+        decoder_input = input_frame[len(mel_outputs)]
+
+        mel_output, gate_output, attention_weights = self.decode(
+            decoder_input)
+        gate_outputs += [gate_output.squeeze() if memory.shape[0] > 1 else gate_output]
+        alignments += [attention_weights]
+
       mel_outputs += [mel_output.squeeze(1)]
-      gate_outputs += [gate_output.squeeze(1)]
-      alignments += [attention_weights]
 
     mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
       mel_outputs, gate_outputs, alignments)
@@ -431,22 +455,52 @@ class Decoder(nn.Module):
 
     self.initialize_decoder_states(memory, mask=None)
 
+    # mel_outputs, gate_outputs, alignments = [], [], []
+    # while True:
+    #   decoder_input = self.prenet(decoder_input)
+    #   mel_output, gate_output, alignment = self.decode(decoder_input)
+
+    #   mel_outputs += [mel_output.squeeze(1)]
+    #   gate_outputs += [gate_output]
+    #   alignments += [alignment]
+
+    #   if torch.sigmoid(gate_output.data) > self.gate_threshold:
+    #     break
+    #   elif len(mel_outputs) == self.max_decoder_steps:
+    #     print("Warning! Reached max decoder steps")
+    #     break
+
+    #   decoder_input = mel_output
+
+    mel_lengths = torch.zeros([memory.size(0)], dtype=torch.int32).cuda()
+    not_finished = torch.ones([memory.size(0)], dtype=torch.int32).cuda()
     mel_outputs, gate_outputs, alignments = [], [], []
+    z = int(decoder_input.size(1) / self.n_frames_per_step)
     while True:
-      decoder_input = self.prenet(decoder_input)
-      mel_output, gate_output, alignment = self.decode(decoder_input)
+      decoder_input_frames = []
+      for i in range(self.n_frames_per_step):
+        decoder_input_frames.append(decoder_input[:, i * z:(i + 1) * z])
+
+      for input_frame in decoder_input_frames:
+        mel_output, gate_output, alignment = self.decode(self.prenet(input_frame))
+        gate_outputs += [gate_output]
+        alignments += [alignment]
 
       mel_outputs += [mel_output.squeeze(1)]
-      gate_outputs += [gate_output]
-      alignments += [alignment]
 
-      if torch.sigmoid(gate_output.data) > self.gate_threshold:
+      dec = torch.le(torch.sigmoid(gate_output.data),
+                      self.gate_threshold).to(torch.int32).squeeze(1)
+
+      not_finished = not_finished*dec
+      mel_lengths += not_finished
+
+      if self.early_stopping and torch.sum(not_finished) == 0:
         break
-      elif len(mel_outputs) == self.max_decoder_steps:
+      if len(mel_outputs) == self.max_decoder_steps:
         print("Warning! Reached max decoder steps")
         break
 
-      decoder_input = mel_output
+        decoder_input = mel_output
 
     mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
       mel_outputs, gate_outputs, alignments)
@@ -465,23 +519,29 @@ class Tacotron2(nn.Module):
     std = sqrt(2.0 / (hparams.n_symbols + hparams.symbols_embedding_dim))
     val = sqrt(3.0) * std  # uniform bounds for std
     self.embedding.weight.data.uniform_(-val, val)
+
+    self.speakers_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
+    torch.nn.init.xavier_uniform_(self.speakers_embedding.weight)
+
+    encoder_out_embedding_dim = hparams.encoder_embedding_dim + hparams.speakers_embedding_dim
+
     self.encoder = Encoder(hparams)
-    self.decoder = Decoder(hparams)
+    self.decoder = Decoder(hparams, encoder_out_embedding_dim)
     self.postnet = Postnet(hparams)
 
   def parse_batch(self, batch):
-    text_padded, input_lengths, mel_padded, gate_padded, \
-      output_lengths = batch
+    #text_padded, input_lengths, mel_padded, gate_padded, output_lengths = batch
+    text_padded, input_lengths, mel_padded, gate_padded, output_lengths, speaker_ids = batch
     text_padded = to_gpu(text_padded).long()
     input_lengths = to_gpu(input_lengths).long()
     max_len = torch.max(input_lengths.data).item()
     mel_padded = to_gpu(mel_padded).float()
     gate_padded = to_gpu(gate_padded).float()
     output_lengths = to_gpu(output_lengths).long()
+    speaker_ids = to_gpu(speaker_ids).long() # new
 
-    return (
-      (text_padded, input_lengths, mel_padded, max_len, output_lengths),
-      (mel_padded, gate_padded))
+    #return ((text_padded, input_lengths, mel_padded, max_len, output_lengths), (mel_padded, gate_padded))
+    return ((text_padded, input_lengths, mel_padded, max_len, output_lengths, speaker_ids), (mel_padded, gate_padded))
 
   def parse_output(self, outputs, output_lengths=None):
     if self.mask_padding and output_lengths is not None:
@@ -496,15 +556,29 @@ class Tacotron2(nn.Module):
     return outputs
 
   def forward(self, inputs):
-    text_inputs, text_lengths, mels, max_len, output_lengths = inputs
-    text_lengths, output_lengths = text_lengths.data, output_lengths.data
+    #text_inputs, text_lengths, mels, max_len, output_lengths = inputs
+    text_inputs, input_lengths, targets, max_len, output_lengths, speaker_ids = inputs
+    input_lengths, output_lengths = input_lengths.data, output_lengths.data
+    
+    outputs = [] #new
 
     embedded_inputs = self.embedding(text_inputs).transpose(1, 2)
+    encoder_outputs = self.encoder(embedded_inputs, input_lengths)
+    outputs.append(encoder_outputs) #new
 
-    encoder_outputs = self.encoder(embedded_inputs, text_lengths)
+    # Extract speaker embeddings #new
+    speaker_ids = speaker_ids.unsqueeze(1)
+    embedded_speakers = self.speakers_embedding(speaker_ids)
+    embedded_speakers = embedded_speakers.expand(-1, max_len, -1)
+    outputs.append(embedded_speakers)
+
+    merged_outputs = torch.cat(outputs, -1) #new
+
+    # mel_outputs, gate_outputs, alignments = self.decoder(
+    #   encoder_outputs, targets, memory_lengths=input_lengths)
 
     mel_outputs, gate_outputs, alignments = self.decoder(
-      encoder_outputs, mels, memory_lengths=text_lengths)
+      merged_outputs, targets, memory_lengths=input_lengths)
 
     mel_outputs_postnet = self.postnet(mel_outputs)
     mel_outputs_postnet = mel_outputs + mel_outputs_postnet
@@ -513,15 +587,31 @@ class Tacotron2(nn.Module):
       [mel_outputs, mel_outputs_postnet, gate_outputs, alignments],
       output_lengths)
 
-  def inference(self, inputs):
+  def inference(self, inputs, speaker_id):
+    # Get symbols encoder output
     embedded_inputs = self.embedding(inputs).transpose(1, 2)
     encoder_outputs = self.encoder.inference(embedded_inputs)
-    mel_outputs, gate_outputs, alignments = self.decoder.inference(
-      encoder_outputs)
+    outputs = [] #new
+    outputs.append(encoder_outputs) #new
 
+    # Get speaker embedding #new
+    speaker_id = speaker_id.unsqueeze(1)
+    embedded_speaker = self.speakers_embedding(speaker_id)
+    embedded_speaker = embedded_speaker.expand(-1, encoder_outputs.shape[1], -1)
+    outputs.append(embedded_speaker)
+
+    # Merge embeddings
+    merged_outputs = torch.cat(outputs, -1) #new
+
+    # Decode
+    mel_outputs, gate_outputs, alignments = self.decoder.inference(
+      merged_outputs)
+
+    # Post
     mel_outputs_postnet = self.postnet(mel_outputs)
     mel_outputs_postnet = mel_outputs + mel_outputs_postnet
 
+    # Parse
     outputs = self.parse_output(
       [mel_outputs, mel_outputs_postnet, gate_outputs, alignments])
 

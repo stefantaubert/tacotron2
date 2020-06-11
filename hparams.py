@@ -5,6 +5,11 @@ def create_hparams(hparams_string=None, verbose=False):
   """Create model hyperparameters. Parse nondefault from given string."""
 
   hparams = tf.contrib.training.HParams(
+    #early_stopping=True,
+    n_speakers=128,
+    speakers_embedding_dim=16,
+    decoder_no_early_stopping=False,            # Stop decoding once all samples are finished
+    #speaker_coefficients=None,
     ################################
     # Experiment Parameters    #
     ################################
@@ -49,10 +54,11 @@ def create_hparams(hparams_string=None, verbose=False):
     encoder_embedding_dim=512,
 
     # Decoder parameters
-    n_frames_per_step=1,  # currently only 1 is supported
+    #n_frames_per_step=1,  # currently only 1 is supported
+    n_frames_per_step=2,
     decoder_rnn_dim=1024,
     prenet_dim=256,
-    max_decoder_steps=1000,
+    max_decoder_steps=2000,
     gate_threshold=0.5,
     p_attention_dropout=0.1,
     p_decoder_dropout=0.1,
@@ -78,7 +84,11 @@ def create_hparams(hparams_string=None, verbose=False):
     weight_decay=1e-6,
     grad_clip_thresh=1.0,
     batch_size=64,
-    mask_padding=True  # set model's padded outputs to padded values
+    mask_padding=True,  # set model's padded outputs to padded values
+    #mask_padding=False,  # set model's padded outputs to padded values
+    #new
+    #loss_scale=None,
+    #use_loss_coefficients=True,                 # Use balancing coefficients
   )
 
   if hparams_string:

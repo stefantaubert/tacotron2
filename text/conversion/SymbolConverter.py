@@ -8,6 +8,11 @@ _pad = '_'
 # end of string
 _eos = '~'
 
+def get_symbols_from_str(symbols_str: str):
+  sentences_symbols = symbols_str.split(',')
+  sentences_symbols = list(map(int, sentences_symbols))
+  return sentences_symbols
+  
 class SymbolConverter():
   '''
   Defines the set of symbols used in text input to the model.
@@ -88,9 +93,15 @@ class SymbolConverter():
 
     return result
 
-  def sequence_to_original_text(self, sequence):
+  def sequence_to_original_chars(self, sequence):
     '''Converts a sequence of IDs back to a string'''
     symbols = [self._get_symbol(s_id) for s_id in sequence if self._is_valid_text_symbol(self._get_symbol(s_id))]
+
+    return symbols
+
+  def sequence_to_original_text(self, sequence):
+    '''Converts a sequence of IDs back to a string'''
+    symbols = self.sequence_to_original_chars(sequence)
     result = ''.join(symbols)
 
     return result

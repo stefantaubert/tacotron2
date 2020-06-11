@@ -5,6 +5,7 @@ import torch.utils.data
 
 import layers
 from utils import load_wav_to_torch, load_filepaths_and_symbols
+from text.conversion.SymbolConverter import get_symbols_from_str
 
 
 class SymbolsMelLoader(torch.utils.data.Dataset):
@@ -27,10 +28,10 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
 
   def get_mel_symbols_pair(self, audiopath_and_text):
     # separate filename and text
-    audiopath, symbols_str = audiopath_and_text[0], audiopath_and_text[1]
+    audiopath, symbols_str, speaker_id = audiopath_and_text[0], audiopath_and_text[1], audiopath_and_text[2]
     symbols_tensor = self.get_symbols(symbols_str)
     mel_tensor = self.get_mel(audiopath)
-    return (symbols_tensor, mel_tensor)
+    return (symbols_tensor, mel_tensor, speaker_id)
 
   def get_mel(self, filename):
     if not self.load_mel_from_disk:
@@ -50,9 +51,9 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
           melspec.size(0), self.stft.n_mel_channels))
 
     return melspec
+
   def get_symbols(self, symbols_str):
-    symbols = symbols_str.split(',')
-    symbols = list(map(int, symbols))
+    symbols = get_symbols_from_str(symbols_str)
     symbols_tensor = torch.IntTensor(symbols)
     return symbols_tensor
 
@@ -105,5 +106,39 @@ class SymbolsMelCollate():
       gate_padded[i, mel.size(1)-1:] = 1
       output_lengths[i] = mel.size(1)
 
+    # count number of items - characters in text
+    #len_x = []
+    speaker_ids = []
+    for i in range(len(ids_sorted_decreasing)):
+      #len_symb = batch[ids_sorted_decreasing[i]][0].get_shape()[0]
+      #len_x.append(len_symb)
+      speaker_ids.append(batch[ids_sorted_decreasing[i]][2])
+
+    #len_x = torch.Tensor(len_x)
+    speaker_ids = torch.Tensor(speaker_ids)
+
     return text_padded, input_lengths, mel_padded, gate_padded, \
-      output_lengths
+      output_lengths, speaker_ids
+
+def batch_to_gpu(batch):
+  text_padded, input_lengths, mel_padded, gate_padded, \
+      output_lengths, len_x, speaker_ids = batch
+  text_padded = to_gpu(text_padded).long()
+  input_lengths = to_gpu(input_lengths).long()
+  max_len = torch.max(input_lengths.data).item()
+  mel_padded = to_gpu(mel_padded).float()
+  gate_padded = to_gpu(gate_padded).float()
+  output_lengths = to_gpu(output_lengths).long()
+  speaker_ids = to_gpu(speaker_ids).long()
+  x = (text_padded, input_lengths, mel_padded, max_len, output_lengths, speaker_ids)
+  y = (mel_padded, gate_padded)
+  len_x = torch.sum(output_lengths)
+
+  return x, y, len_x
+
+def to_gpu(x):
+  x = x.contiguous()
+
+  if torch.cuda.is_available():
+    x = x.cuda(non_blocking=True)
+  return torch.autograd.Variable(x)
