@@ -274,6 +274,7 @@ if __name__ == '__main__':
 
   hparams = create_hparams(args.hparams)
 
+
   #hparams.iters_per_checkpoint = 500
   # hparams.epochs = 500
 

@@ -1,5 +1,6 @@
 base_dir='/datasets/models/taco2pt_ms'
 checkpoint='thchs_A11_ipa_500'
+ds_name='thchs'
 speaker='A11'
 
 python paths.py --base_dir=$base_dir

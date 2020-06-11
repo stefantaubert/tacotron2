@@ -5,7 +5,7 @@ import string
 
 rx = '[{}]'.format(re.escape(string.punctuation))
 
-def extract_from_sentence(ipa_sentence: str):
+def extract_from_sentence(ipa_sentence: str, ignore_tones: bool = False):
   #words = ipa_sentence.split(' ')
 
   res = []
@@ -15,7 +15,7 @@ def extract_from_sentence(ipa_sentence: str):
       if len(tmp) > 0:
         raw_word = ''.join(tmp)
         s_ipa = IPAString(unicode_string=raw_word, ignore=False)
-        raw_word_symbols = extract_symbols(s_ipa)
+        raw_word_symbols = extract_symbols(s_ipa, ignore_tones)
         res.extend(raw_word_symbols)
         tmp.clear()
       res.append(c)
@@ -25,7 +25,7 @@ def extract_from_sentence(ipa_sentence: str):
   if len(tmp) > 0:
     raw_word = ''.join(tmp)
     s_ipa = IPAString(unicode_string=raw_word, ignore=False)
-    raw_word_symbols = extract_symbols(s_ipa)
+    raw_word_symbols = extract_symbols(s_ipa, ignore_tones)
     res.extend(raw_word_symbols)
     tmp.clear()
     
@@ -47,13 +47,16 @@ def extract_from_sentence(ipa_sentence: str):
   return res
 
 
-def extract_symbols(ipa: IPAString):
+def extract_symbols(ipa: IPAString, ignore_tones: bool):
   symbols = []
 
   for char in ipa.ipa_chars:
     if char.is_diacritic or char.is_tone:
       if len(symbols) > 0:
-        symbols[-1] += char.unicode_repr
+        if char.is_tone and ignore_tones:
+          continue
+        else:
+          symbols[-1] += char.unicode_repr
     else:
       symbols.append(char.unicode_repr)
 
@@ -62,13 +65,11 @@ def extract_symbols(ipa: IPAString):
 if __name__ == "__main__":
   y = u"ˈprɪnɪŋ, ɪn ðə ˈoʊnli sɛns wɪθ wɪʧ wi ər æt ˈprɛzənt kənˈsərnd, ˈdɪfərz frəm moʊst ɪf nɑt frəm ɔl ðə ɑrts ənd kræfts ˌrɛprɪˈzɛnɪd ɪn ðə ˌɛksəˈbɪʃən."
   y = u"naw, æz ɔl bʊks nɑt pɹajmɛɹəli ɪntɛndəd æz pɪkt͡ʃɹ̩-bʊks kənsɪst pɹɪnsɪpli ʌv tajps kəmpowzd tə fɔɹm lɛtɹ̩pɹɛs"
+  #y = u"tɕy˥˩ɕi˥ meɪ˧˩˧kwɔ˧˥ tsʰan˥i˥˩ɥœn˥˩ i˧˩˧ tsʰɑʊ˧˩˧ni˧˩˧ i˥ fən˥˩ ʈʂɨ˥ʈʂʰɨ˧˥ kʰɤ˥˩lin˧˥twən˥˩ ɕjɑŋ˥˩ pwɔ˥xeɪ˥ pʰaɪ˥˩piŋ˥ tɤ tɕɥœ˧˥i˥˩an˥˩ ʈʂwən˧˩˧peɪ˥˩ tsaɪ˥˩ pən˧˩˧ɥœ˥˩ ʂɑŋ˥˩ɕyn˧˥ tɕin˥˩ɕiŋ˧˥ pjɑʊ˧˩˧tɕɥœ˧˥"
   #y = u"wɪʧ"
   #y = "ɪʃn̩'"
-  res = extract_from_sentence(y)
+  res = extract_from_sentence(y, False)
   print(res)
   print(set(res))
-  s_ipa = IPAString(unicode_string=y, ignore=True)
-  for c in s_ipa.ipa_chars:
-    print(c.unicode_repr)
-  tmp = extract_symbols(y)
-  print(tmp)
+  print(len(set(res)))
+  

@@ -28,10 +28,12 @@ if __name__ == "__main__":
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
   parser.add_argument('--data_dir', type=str, help='THCHS dataset directory', default='/datasets/thchs_wav')
   parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', default='thchs')
+  parser.add_argument('--ignore_tones', type=str, default='false')
   #parser.add_argument('--id', type=str, help='id which should be assigned to the dataset', default='2')
 
   args = parser.parse_args()
   #use_ipa = str.lower(args.ipa) == 'true'
+  ignore_tones = str.lower(args.ignore_tones) == 'true'
 
   parsed_data = parse_thchs(args.data_dir)
   data = {}
@@ -44,7 +46,7 @@ if __name__ == "__main__":
       # print("Error on:", x, e)
       continue
 
-    text_symbols = extract_from_sentence(chn_ipa)
+    text_symbols = extract_from_sentence(chn_ipa, ignore_tones)
     if speaker_name not in data:
       data[speaker_name] = []
 
