@@ -2,7 +2,7 @@ base_dir='/datasets/models/taco2pt_ms'
 waveglow='/datasets/models/pretrained/waveglow_256channels_universal_v5.pt'
 ds_name='thchs_no_tone'
 speaker='C17'
-checkpoint_name='100'
+checkpoint_name='2999'
 checkpoint=${ds_name}_${speaker}_ipa_${checkpoint_name}
 
 python paths.py --base_dir=$base_dir
