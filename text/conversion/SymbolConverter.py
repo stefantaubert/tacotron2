@@ -8,6 +8,8 @@ _pad = '_'
 # end of string
 _eos = '~'
 
+_initial_subset_id = 0
+
 def get_symbols_from_str(symbols_str: str):
   sentences_symbols = symbols_str.split(',')
   sentences_symbols = list(map(int, sentences_symbols))
@@ -19,58 +21,89 @@ class SymbolConverter():
   '''
 
   def _init_from_symbols(self, symbols: set):
+    has_no_double_symbols = len(set(symbols)) == len(symbols)
+    assert has_no_double_symbols
     all_symbols = list(_pad) + list(_eos) + list(symbols)
     sorted_symbols = sorted(all_symbols)
     # set() because if pad and eos in symbols they were ignored
-    self._id_to_symbol = {s: i for i, s in enumerate(sorted_symbols)}
-    self._init_properties()
-  
+    self._id_symbol_dict = {i: (_initial_subset_id, s) for i, s in enumerate(sorted_symbols)}
+    self.actualize_symbol_id_dict()
+    self._pad_id = self._get_id_from_symbol(_pad)
+    self._eos_id = self._get_id_from_symbol(_eos)
+
+  def actualize_symbol_id_dict(self):
+    tmp = {}
+    for s_id, data in self._id_symbol_dict.items():
+      subset, symbol = data
+      if symbol not in tmp.keys():
+        tmp[symbol] = {}
+      tmp[symbol][subset] = s_id
+
+    self._symbol_id_dict = tmp
+
+  def _get_symbol_from_id(self, symbol_id: int):
+    subset, symbol = self._id_symbol_dict[symbol_id]
+    return symbol
+
+  def _get_id_from_symbol(self, symbol: str, subset_id_if_multiple: int = _initial_subset_id):
+    subsets = self._symbol_id_dict[symbol]
+    symbol_has_multiple_ids = len(subsets.keys()) > 1
+    if symbol_has_multiple_ids:
+      return self._symbol_id_dict[symbol][subset_id_if_multiple]
+    else:
+      return list(self._symbol_id_dict[symbol].values())[0]
+
   def get_symbols(self) -> set:
-    result = set(self._id_to_symbol.keys())
+    result = set(self._symbol_id_dict.keys())
     return result
 
-  def get_symbols_count(self) -> int:
-    result = len(self._id_to_symbol)
+  def get_symbol_ids_count(self) -> int:
+    result = len(self._id_symbol_dict)
     return result
-
-  def _init_properties(self):
-    self._symbol_to_id = {v: k for k, v in self._id_to_symbol.items()}
-    self._pad_id = self._id_to_symbol[_pad]
-    self._eos_id = self._id_to_symbol[_eos]
 
   def _init_from_file(self, from_file: str):
     self._parse_from_file(from_file)
 
   def _parse_from_file(self, file_path: str):
     with open(file_path, 'r', encoding='utf-8') as f:
-      self._id_to_symbol = json.load(f)
+      self._id_symbol_dict = json.load(f)
 
-    self._init_properties()
+    self.actualize_symbol_id_dict()
+    self._pad_id = self._get_id_from_symbol(_pad)
+    self._eos_id = self._get_id_from_symbol(_eos)
 
   def dump(self, file_path: str):
     with open(file_path, 'w', encoding='utf-8') as f:
-      json.dump(self._id_to_symbol, f)
+      json.dump(self._id_symbol_dict, f)
 
   def plot(self, file_path: str, sort=True):
     with open(file_path, 'w', encoding='utf-8') as f:
-      symbols = self.get_symbols()
+      symbols = []
+      for _, data in self._id_symbol_dict.items():
+        subset_id, symbol = data
+        symbols.append('{}{}'.format(subset_id, symbol))
+        
       if sort:
         symbols = list(sorted(symbols))
       res = '\n'.join(symbols)
       f.write(res)
     
   def remove_unknown_symbols(self, symbols):
-    result = [symbol for symbol in symbols if symbol in self._id_to_symbol.keys()]
+    result = [symbol for symbol in symbols if symbol in self._symbol_id_dict.keys()]
     return result
 
-  def add_symbols(self, symbols: set):
-    contains_already_existing_symbols = len(set(self._id_to_symbol.keys()).intersection(symbols)) > 0
-    assert not contains_already_existing_symbols
-    max_number = max(self._symbol_to_id.keys())
+  def add_symbols(self, symbols: set, ignore_existing: bool, subset_id: int):
+    #contains_already_existing_symbols = len(set(self._symbol_id_dict.keys()).intersection(symbols)) > 0
+    #assert not contains_already_existing_symbols
+    max_number = max(self._id_symbol_dict.keys())
     for i, new_symbol in enumerate(symbols):
       new_id = max_number + 1 + i
-      self._id_to_symbol[new_symbol] = new_id
-      self._symbol_to_id[new_id] = new_symbol
+      if new_symbol in self._symbol_id_dict.keys():
+        if ignore_existing:
+          continue
+      self._id_symbol_dict[new_id] = (subset_id, new_symbol)
+
+    self.actualize_symbol_id_dict()
 
   def get_unknown_symbols(self, chars):
     unknown_symbols = set([x for x in chars if not self._is_valid_text_symbol(x)])
@@ -161,16 +194,21 @@ def get_from_file(filepath: str) -> SymbolConverter:
 if __name__ == "__main__":
   symbols = set(['a', 'b', 'c', '!'])
   converter = get_from_symbols(symbols)
+  symbols2 = ['a', 'x']
+  converter.add_symbols(symbols2, ignore_existing=False, subset_id=2)
+
   x = converter.get_symbols()
-  filepath = '/datasets/tmp/dump.json'
+  filepath = '/tmp/dump.json'
   converter.dump(filepath)
+  converter.plot('/tmp/dump.txt')
   res = get_from_file(filepath)
   x = res.get_symbols()
-  print(res.get_symbols_count())
+  print(x)
+  print(res.get_symbol_ids_count())
 
   inp = "hello my name is mr. test"
   outp = converter.text_to_sequence(inp)
-  print(outp.get_symbols_count())
+  print(outp.get_symbol_ids_count())
   print(outp)
 
   outp_to_text = converter.sequence_to_text(outp)

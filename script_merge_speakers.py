@@ -49,7 +49,10 @@ if __name__ == "__main__":
     existing_symbols = pretrained_speaker_conv.get_symbols().intersection(new_speaker_conv.get_symbols())
     new_symbols = new_speaker_conv.get_symbols().difference(pretrained_speaker_conv.get_symbols())
     pretrained_speaker_conv.add_symbols(new_symbols)
-
+  elif args.model == 'separate':
+    existing_symbols = pretrained_speaker_conv.get_symbols()
+    new_symbols = new_speaker_conv.get_symbols()
+    all_symbols = 
   result = []
   for i, row in new_data.iterrows():
     symb_seq = row[1]
