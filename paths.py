@@ -7,6 +7,7 @@ wav_out_dir = "wav_out"
 log_dir = 'logs'
 checkpoint_output_dir = 'output'
 savecheckpoints_dir = 'saved_checkpoints'
+analysis_dir = 'analysis'
 
 symbols_path_name = 'symbols.json'
 symbols_path_info_name = 'symbols.txt'
@@ -26,6 +27,7 @@ def ensure_folders_exist(base_dir):
   os.makedirs(os.path.join(base_dir, log_dir), exist_ok=True)
   os.makedirs(os.path.join(base_dir, checkpoint_output_dir), exist_ok=True)
   os.makedirs(os.path.join(base_dir, savecheckpoints_dir), exist_ok=True)
+  os.makedirs(os.path.join(base_dir, analysis_dir), exist_ok=True)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()

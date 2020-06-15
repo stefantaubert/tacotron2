@@ -132,4 +132,6 @@ if __name__ == "__main__":
     #print(output)
 
   print("Saving...")
-  to_wav(os.path.join(args.base_dir, wav_out_dir, args.output_name + ".wav"), output, synt.hparams.sampling_rate)
+  out_path = os.path.join(args.base_dir, wav_out_dir, args.output_name + ".wav")
+  to_wav(out_path, output, synt.hparams.sampling_rate)
+  print("Finished. Output:", out_path)
