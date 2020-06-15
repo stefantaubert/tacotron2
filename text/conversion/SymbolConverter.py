@@ -8,6 +8,11 @@ _pad = '_'
 # end of string
 _eos = '~'
 
+def get_symbols_from_str(symbols_str: str):
+  sentences_symbols = symbols_str.split(',')
+  sentences_symbols = list(map(int, sentences_symbols))
+  return sentences_symbols
+  
 class SymbolConverter():
   '''
   Defines the set of symbols used in text input to the model.
@@ -46,14 +51,26 @@ class SymbolConverter():
     with open(file_path, 'w', encoding='utf-8') as f:
       json.dump(self._id_to_symbol, f)
 
-  def plot(self, file_path: str):
+  def plot(self, file_path: str, sort=True):
     with open(file_path, 'w', encoding='utf-8') as f:
-      res = '\n'.join(list(sorted(self.get_symbols())))
+      symbols = self.get_symbols()
+      if sort:
+        symbols = list(sorted(symbols))
+      res = '\n'.join(symbols)
       f.write(res)
     
   def remove_unknown_symbols(self, symbols):
     result = [symbol for symbol in symbols if symbol in self._id_to_symbol.keys()]
     return result
+
+  def add_symbols(self, symbols: set):
+    contains_already_existing_symbols = len(set(self._id_to_symbol.keys()).intersection(symbols)) > 0
+    assert not contains_already_existing_symbols
+    max_number = max(self._symbol_to_id.keys())
+    for i, new_symbol in enumerate(symbols):
+      new_id = max_number + 1 + i
+      self._id_to_symbol[new_symbol] = new_id
+      self._symbol_to_id[new_id] = new_symbol
 
   def get_unknown_symbols(self, chars):
     unknown_symbols = set([x for x in chars if not self._is_valid_text_symbol(x)])
@@ -88,9 +105,15 @@ class SymbolConverter():
 
     return result
 
-  def sequence_to_original_text(self, sequence):
+  def sequence_to_original_chars(self, sequence):
     '''Converts a sequence of IDs back to a string'''
     symbols = [self._get_symbol(s_id) for s_id in sequence if self._is_valid_text_symbol(self._get_symbol(s_id))]
+
+    return symbols
+
+  def sequence_to_original_text(self, sequence):
+    '''Converts a sequence of IDs back to a string'''
+    symbols = self.sequence_to_original_chars(sequence)
     result = ''.join(symbols)
 
     return result

@@ -9,6 +9,7 @@ checkpoint_output_dir = 'output'
 savecheckpoints_dir = 'saved_checkpoints'
 analysis_dir = 'analysis'
 
+weights_name = 'weights.npy'
 symbols_path_name = 'symbols.json'
 symbols_path_info_name = 'symbols.txt'
 

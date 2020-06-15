@@ -3,6 +3,7 @@ import time
 import argparse
 import math
 from numpy import finfo
+import numpy as np
 
 import torch
 from distributed import apply_gradient_allreduce
@@ -17,7 +18,7 @@ from logger import Tacotron2Logger
 from hparams import create_hparams
 
 from text.conversion.SymbolConverter import get_from_file
-from paths import checkpoint_output_dir, log_dir, training_file_name, validation_file_name, symbols_path_name, savecheckpoints_dir, filelist_dir
+from paths import checkpoint_output_dir, log_dir, training_file_name, validation_file_name, symbols_path_name, savecheckpoints_dir, filelist_dir, weights_name
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -97,11 +98,36 @@ def warm_start_model(checkpoint_path, model, ignore_layers):
   model.load_state_dict(model_dict)
   return model
 
+def init_weights(weights_path, model):
+  assert os.path.isfile(weights_path)
+  print("Init weights from '{}'".format(weights_path))
+  weights = np.load(weights_path)
+  weights = torch.from_numpy(weights)
+  dummy_dict = model.state_dict()
+  update = { 'embedding.weight': weights }
+  dummy_dict.update(update)
+  model_dict = dummy_dict
+  model.load_state_dict(model_dict)
+  return model
 
-def load_checkpoint(checkpoint_path, model, optimizer):
+
+def load_checkpoint(checkpoint_path, model, optimizer, weights_path, overwrite_weights):
   assert os.path.isfile(checkpoint_path)
   print("Loading checkpoint '{}'".format(checkpoint_path))
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
+  if overwrite_weights:
+    weights = np.load(weights_path)
+    weights = torch.from_numpy(weights)
+    dummy_dict = model.state_dict()
+    update = { 
+        'embedding.weight': weights 
+    }
+    checkpoint_dict.update({'iteration':0})
+    y_ref = weights[0]
+    x = checkpoint_dict['state_dict']['embedding.weight'][0]
+    checkpoint_dict['state_dict'].update(update)
+    y = checkpoint_dict['state_dict']['embedding.weight'][0]
+    #checkpoint_dict['state_dict']['embedding.weights'] = weights
   model.load_state_dict(checkpoint_dict['state_dict'])
   optimizer.load_state_dict(checkpoint_dict['optimizer'])
   learning_rate = checkpoint_dict['learning_rate']
@@ -148,7 +174,7 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
     logger.log_validation(val_loss, model, y, y_pred, iteration)
 
 
-def train(base_dir, checkpoint_path, speaker_dir, warm_start, n_gpus,
+def train(base_dir, checkpoint_path, speaker_dir, weights_path, overwrite_weights_in_checkpoint: bool, warm_start, n_gpus,
       rank, group_name, hparams):
   """Training and validation logging results to tensorboard and stdout
 
@@ -173,8 +199,7 @@ def train(base_dir, checkpoint_path, speaker_dir, warm_start, n_gpus,
 
   if hparams.fp16_run:
     from apex import amp
-    model, optimizer = amp.initialize(
-      model, optimizer, opt_level='O2')
+    model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
 
   if hparams.distributed_run:
     model = apply_gradient_allreduce(model)
@@ -193,12 +218,15 @@ def train(base_dir, checkpoint_path, speaker_dir, warm_start, n_gpus,
     full_checkpoint_path = os.path.join(base_dir, checkpoint_path)
     if warm_start:
       model = warm_start_model(full_checkpoint_path, model, hparams.ignore_layers)
+      init_weights(weights_path, model)
     else:
-      model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer)
+      model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer, weights_path, overwrite_weights_in_checkpoint)
       if hparams.use_saved_learning_rate:
         learning_rate = _learning_rate
       iteration += 1  # next iteration is iteration + 1
       epoch_offset = max(0, int(iteration / len(train_loader)))
+  else:
+    init_weights(weights_path, model)
 
   model.train()
   is_overflow = False
@@ -251,28 +279,46 @@ def train(base_dir, checkpoint_path, speaker_dir, warm_start, n_gpus,
   save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path)
 
 if __name__ == '__main__':
+  start = time.time()
+
   parser = argparse.ArgumentParser()
 
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
   #parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
   #parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
-  parser.add_argument('--checkpoint_path', type=str, required=False, help='checkpoint path')
+  parser.add_argument('--checkpoint_path', type=str)
+  parser.add_argument('--checkpoint_init_weights', type=str)
   parser.add_argument('--warm_start', help='load model weights only, ignore specified layers', default='false')
   parser.add_argument('--n_gpus', type=int, default=1, required=False, help='number of gpus')
   parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
   parser.add_argument('--group_name', type=str, default='group_name', required=False, help='Distributed group name')
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
-  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', default='thchs')
-  parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
 
 
   args = parser.parse_args()
+  hparams = create_hparams(args.hparams)
+
   #args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'checkpoint_49000')
   #args.checkpoint_path = '/datasets/models/pretrained/tacotron2_statedict.pt'
   #args.warm_start = 'false'
   #args.warm_start = 'true'
 
-  hparams = create_hparams(args.hparams)
+  debug = True
+
+  if debug:
+    weights_path = os.path.join(args.base_dir, weights_name)
+    hparams.sampling_rate = 16000
+    hparams.batch_size = 35
+    hparams.iters_per_checkpoint = 50
+    hparams.epochs = 42 # 250
+    #args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
+    if True:
+      args.warm_start = 'false'
+      args.checkpoint_init_weights = 'true'
+    else:
+      args.warm_start = 'true'
+
+  overwrite_weights_in_checkpoint = str.lower(args.checkpoint_init_weights) == 'true'
 
 
   #hparams.iters_per_checkpoint = 500
@@ -289,9 +335,8 @@ if __name__ == '__main__':
   #   hparams.batch_size=26
   # else: 
   #   raise Exception()
-
-  speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
-  conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
+  filelist_dir_path = os.path.join(args.base_dir, filelist_dir)
+  conv = get_from_file(os.path.join(filelist_dir_path, symbols_path_name))
   hparams.n_symbols = conv.get_symbols_count()
 
   torch.backends.cudnn.enabled = hparams.cudnn_enabled
@@ -299,7 +344,6 @@ if __name__ == '__main__':
 
   print("Epochs:", hparams.epochs)
   print("Batchsize:", hparams.batch_size)
-  print("Speaker:", speaker_dir)
   print("FP16 Run:", hparams.fp16_run)
   print("Dynamic Loss Scaling:", hparams.dynamic_loss_scaling)
   print("Distributed Run:", hparams.distributed_run)
@@ -308,5 +352,8 @@ if __name__ == '__main__':
 
   warm_start = str.lower(args.warm_start) == 'true'
   
-  train(args.base_dir, args.checkpoint_path, speaker_dir, warm_start, args.n_gpus, args.rank, args.group_name, hparams)
+  train(args.base_dir, args.checkpoint_path, filelist_dir_path, args.weights, overwrite_weights_in_checkpoint, warm_start, args.n_gpus, args.rank, args.group_name, hparams)
   print('Finished training.')
+  duration_s = time.time() - start
+  duration_m = duration_s / 60
+  print('Duration: {:.2f}min'.format(duration_m))

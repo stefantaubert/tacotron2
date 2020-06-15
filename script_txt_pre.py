@@ -11,16 +11,26 @@ from paths import input_symbols, input_dir, symbols_path_name, filelist_dir
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
+  parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--ipa', type=str, help='IPA-based', default='true')
   parser.add_argument('--text', type=str, help='path to text which should be synthesized', default='examples/north_chn.txt')
   parser.add_argument('--is_ipa', type=str, help='text is ipa', default='true')
-  parser.add_argument('--ds_name', type=str, required=False, default='thchs', help='thchs or ljs')
-  parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
+  parser.add_argument('--ds_name', type=str, required=False, help='thchs or ljs')
+  parser.add_argument('--speaker', type=str, required=False, help='speaker')
   parser.add_argument('--map', default='')
 
   args = parser.parse_args()
 
+  debug = True
+  if debug:
+    args.base_dir = '/datasets/models/taco2pt_ms'
+    args.ipa = 'true'
+    args.text = 'examples/north_sven_v2.txt'
+    args.is_ipa = 'true'
+    speaker_dir = os.path.join(args.base_dir, filelist_dir)
+  else:
+    speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
+    
   is_ipa = str.lower(args.is_ipa) == 'true'
   use_ipa = str.lower(args.ipa) == 'true' or is_ipa
   use_map = args.map != ''
@@ -33,7 +43,6 @@ if __name__ == "__main__":
   else:
     print("Using no mapping.")
 
-  speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
   conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
   base=os.path.basename(args.text)
   file_name = os.path.splitext(base)[0]

@@ -12,13 +12,23 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
   parser.add_argument('--seed', type=str, help='random seed', default='1234')
+  parser.add_argument('--speaker_based', default='true')
   parser.add_argument('--ds_name', default='thchs')
   parser.add_argument('--speaker', default='A11')
   
   args = parser.parse_args()
-  seed = int(args.seed)
+  debug = True
+  if debug:
+    args.speaker_based = 'false'
 
-  speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
+  seed = int(args.seed)
+  speaker_based = str.lower(args.speaker_based) == 'true'
+
+  if speaker_based:
+    speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
+  else:
+    speaker_dir = os.path.join(args.base_dir, filelist_dir)
+    
   prepr_path = os.path.join(speaker_dir, preprocessed_file_name)
 
   data = pd.read_csv(prepr_path, header=None, sep=csv_separator)
