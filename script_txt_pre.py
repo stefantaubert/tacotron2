@@ -5,6 +5,7 @@ import epitran
 from nltk.tokenize import sent_tokenize
 
 from ipa2symb import extract_from_sentence
+from utils import parse_map
 from text.adjustments import normalize_text
 from text.symbol_converter import load_from_file, serialize_symbol_ids
 from paths import input_symbols, input_dir, symbols_path_name, filelist_dir
@@ -89,24 +90,8 @@ if __name__ == "__main__":
     f.writelines(['{}\n'.format(s) for s in accented_sents])
 
   if use_map:
-    with open(args.map, 'r') as f:
-      tmp = f.readlines()
-    #ipa_mapping = {x.strip()[0]: x.strip()[-1] for x in tmp}
-    ipa_mapping = { }
-    for x in tmp:
-      if '->' in x:
-        from_to = x.rstrip('\n').replace(' -> ', '')
-        symbs = extract_from_sentence(from_to)
-        a = symbs[0]
-        if len(symbs) > 2:
-          b = symbs[1:]
-        else:
-          b = [symbs[1]]
-      else:
-        a = x.rstrip('\n')
-        b = ''
-      ipa_mapping[a] = b
-
+    ipa_mapping = parse_map(args.map)
+  
   # for k, v in ipa_mapping.items():
   #   for sy in v:
   #     if not conv._is_valid_text_symbol(sy):

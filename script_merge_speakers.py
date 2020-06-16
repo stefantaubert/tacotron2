@@ -7,6 +7,7 @@ from torch import nn
 import torch
 from math import sqrt
 import numpy as np
+from utils import parse_map
 
 from paths import preprocessed_file_name, test_file_name, training_file_name, validation_file_name, filelist_dir, symbols_path_name, symbols_path_info_name, savecheckpoints_dir, weights_name
 from text.symbol_converter import load_from_file, serialize_symbol_ids, deserialize_symbol_ids
@@ -22,6 +23,7 @@ if __name__ == "__main__":
   parser.add_argument('--ds_name', type=str)
   parser.add_argument('--speaker', type=str)
   parser.add_argument('--mode', type=str, help='separate,unify,map')
+  parser.add_argument('--map', type=str)
 
   args = parser.parse_args()
   debug = True
@@ -31,7 +33,9 @@ if __name__ == "__main__":
     args.pretrained_model_symbols = os.path.join(args.base_dir, filelist_dir, 'ljs_ipa/1/symbols.json')
     args.ds_name = 'thchs_no_tone'
     args.speaker = 'A11'
-    args.mode = 'separate'
+    args.mode = 'map'
+    args.map = 'maps/en_chn.txt'
+
 
   filelist_dir_path = os.path.join(args.base_dir, filelist_dir)
 
@@ -48,7 +52,7 @@ if __name__ == "__main__":
 
   if args.mode == 'unify':
     pretrained_speaker_conv.add_symbols(new_symbols, ignore_existing=True, subset_id=1)
-  elif args.mode == 'separate':
+  elif args.mode == 'separate' or args.mode == 'map':
     pretrained_speaker_conv.add_symbols(new_symbols, ignore_existing=False, subset_id=1)
 
   print("Resulting symbolset:")
@@ -81,9 +85,28 @@ if __name__ == "__main__":
   checkpoint_dict = torch.load(args.pretrained_model, map_location='cpu')
   pretrained_emb = checkpoint_dict['state_dict']['embedding.weight']
 
+  map_dataid_pretrainedid = []
+
   for symbol_id in pretrained_speaker_conv.get_symbol_ids():
     if symbol_id in pretrained_symbols_ids:
-      embedding.weight.data[symbol_id] = pretrained_emb[symbol_id]
+      map_dataid_pretrainedid.append((symbol_id, symbol_id))
+      
+  if args.mode == 'map':
+    # map: if destination occures multiple times, the last one is taken for initializing weights
+    ipa_mapping = parse_map(args.map)
+    for source_symbol, dest_symbol in ipa_mapping.items():
+      if dest_symbol == '':
+        continue
+      source_symbol_id = pretrained_speaker_conv.symbol_to_id(source_symbol, subset_id_if_multiple=0)
+      dest_symbol = dest_symbol[0]
+      dest_symbol_id = pretrained_speaker_conv.symbol_to_id(dest_symbol, subset_id_if_multiple=1)
+      map_dataid_pretrainedid.append((dest_symbol_id, source_symbol_id))
+
+  for data_id, pretrained_id in map_dataid_pretrainedid:
+    pretrained_symbol = pretrained_speaker_conv.id_to_symbol(pretrained_id)
+    dest_symbol = pretrained_speaker_conv.id_to_symbol(data_id)
+    print('Mapped pretrained weights from symbol {} to symbol {}'.format(pretrained_symbol, dest_symbol))
+    embedding.weight.data[data_id] = pretrained_emb[pretrained_id]
   
   print(embedding)
 
