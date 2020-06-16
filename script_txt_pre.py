@@ -27,10 +27,15 @@ if __name__ == "__main__":
   if debug:
     args.base_dir = '/datasets/models/taco2pt_ms'
     args.ipa = 'true'
-    args.text = 'examples/north_chn.txt'
-    args.map = 'maps/en_chn.txt'
+    if False:
+      args.text = 'examples/north_chn.txt'
+      args.map = 'maps/en_chn.txt'
+      args.subset_id = 1
+    else:
+      args.text = 'examples/north_sven_v2.txt'
+      args.map = ''
+      args.subset_id = 1
     args.is_ipa = 'true'
-    args.subset_id = 0
     speaker_dir = os.path.join(args.base_dir, filelist_dir)
   else:
     speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)

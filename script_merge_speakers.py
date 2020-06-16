@@ -52,8 +52,10 @@ if __name__ == "__main__":
 
   if args.mode == 'unify':
     pretrained_speaker_conv.add_symbols(new_symbols, ignore_existing=True, subset_id=1)
-  elif args.mode == 'separate' or args.mode == 'map':
+  elif args.mode == 'separate':
     pretrained_speaker_conv.add_symbols(new_symbols, ignore_existing=False, subset_id=1)
+  elif args.mode == 'map':
+    pretrained_speaker_conv.add_symbols(new_symbols, ignore_existing=True, subset_id=1)
 
   print("Resulting symbolset:")
   print('\n'.join(pretrained_speaker_conv.get_symbols(include_subset_id=True, include_id=True)))

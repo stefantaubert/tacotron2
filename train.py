@@ -315,7 +315,7 @@ if __name__ == '__main__':
     hparams.sampling_rate = 16000
     hparams.batch_size = 35
     hparams.iters_per_checkpoint = 50
-    hparams.epochs = 42 # 250
+    hparams.epochs = 250 # 250
     if False:
       args.warm_start = 'false'
       args.checkpoint_init_weights = 'true'
