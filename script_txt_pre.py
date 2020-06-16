@@ -6,18 +6,19 @@ from nltk.tokenize import sent_tokenize
 
 from ipa2symb import extract_from_sentence
 from text.adjustments import normalize_text
-from text.conversion.SymbolConverter import get_from_file
+from text.symbol_converter import load_from_file, serialize_symbol_ids
 from paths import input_symbols, input_dir, symbols_path_name, filelist_dir
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--ipa', type=str, help='IPA-based', default='true')
-  parser.add_argument('--text', type=str, help='path to text which should be synthesized', default='examples/north_chn.txt')
-  parser.add_argument('--is_ipa', type=str, help='text is ipa', default='true')
-  parser.add_argument('--ds_name', type=str, required=False, help='thchs or ljs')
-  parser.add_argument('--speaker', type=str, required=False, help='speaker')
+  parser.add_argument('--ipa', type=str, help='IPA-based')
+  parser.add_argument('--text', type=str, help='path to text which should be synthesized')
+  parser.add_argument('--is_ipa', type=str, help='text is ipa')
+  parser.add_argument('--ds_name', type=str)
+  parser.add_argument('--speaker', type=str)
   parser.add_argument('--map', default='')
+  parser.add_argument('--subset_id', type=int)
 
   args = parser.parse_args()
 
@@ -25,12 +26,14 @@ if __name__ == "__main__":
   if debug:
     args.base_dir = '/datasets/models/taco2pt_ms'
     args.ipa = 'true'
-    args.text = 'examples/north_sven_v2.txt'
+    args.text = 'examples/north_chn.txt'
+    args.map = 'maps/en_chn.txt'
     args.is_ipa = 'true'
+    args.subset_id = 0
     speaker_dir = os.path.join(args.base_dir, filelist_dir)
   else:
     speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
-    
+  subset_id = args.subset_id
   is_ipa = str.lower(args.is_ipa) == 'true'
   use_ipa = str.lower(args.ipa) == 'true' or is_ipa
   use_map = args.map != ''
@@ -43,8 +46,8 @@ if __name__ == "__main__":
   else:
     print("Using no mapping.")
 
-  conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
-  base=os.path.basename(args.text)
+  conv = load_from_file(os.path.join(speaker_dir, symbols_path_name))
+  base = os.path.basename(args.text)
   file_name = os.path.splitext(base)[0]
 
   lines = []
@@ -136,10 +139,10 @@ if __name__ == "__main__":
       mapped_symbols = symbols
 
     unknown_symbols = unknown_symbols.union(conv.get_unknown_symbols(mapped_symbols))
-    s_seq = conv.text_to_sequence(mapped_symbols)
     seq_sents_text.append(''.join(mapped_symbols))
-    s_seq_str = ','.join([str(x) for x in s_seq])
-    seq_sents.append('{}\n'.format(s_seq_str))
+    symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True, subset_id_if_multiple=subset_id) #TODO: experiment if pad yes no
+    serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
+    seq_sents.append('{}\n'.format(serialized_symbol_ids))
 
   with open(os.path.join(args.base_dir, input_symbols), 'w') as f:
     f.writelines(seq_sents)

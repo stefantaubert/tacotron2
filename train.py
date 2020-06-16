@@ -17,7 +17,7 @@ from loss_function import Tacotron2Loss
 from logger import Tacotron2Logger
 from hparams import create_hparams
 
-from text.conversion.SymbolConverter import get_from_file
+from text.symbol_converter import load_from_file
 from paths import checkpoint_output_dir, log_dir, training_file_name, validation_file_name, symbols_path_name, savecheckpoints_dir, filelist_dir, weights_name
 
 def reduce_tensor(tensor, n_gpus):
@@ -98,7 +98,8 @@ def warm_start_model(checkpoint_path, model, ignore_layers):
   model.load_state_dict(model_dict)
   return model
 
-def init_weights(weights_path, model):
+def init_weights(speaker_dir, model):
+  weights_path = os.path.join(speaker_dir, weights_name)
   assert os.path.isfile(weights_path)
   print("Init weights from '{}'".format(weights_path))
   weights = np.load(weights_path)
@@ -111,7 +112,9 @@ def init_weights(weights_path, model):
   return model
 
 
-def load_checkpoint(checkpoint_path, model, optimizer, weights_path, overwrite_weights):
+def load_checkpoint(checkpoint_path, model, optimizer, speaker_dir, overwrite_weights):
+  weights_path = os.path.join(speaker_dir, weights_name)
+  assert os.path.isfile(weights_path)
   assert os.path.isfile(checkpoint_path)
   print("Loading checkpoint '{}'".format(checkpoint_path))
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
@@ -174,7 +177,7 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
     logger.log_validation(val_loss, model, y, y_pred, iteration)
 
 
-def train(base_dir, checkpoint_path, speaker_dir, weights_path, overwrite_weights_in_checkpoint: bool, warm_start, n_gpus,
+def train(base_dir, checkpoint_path, speaker_dir, overwrite_weights_in_checkpoint: bool, warm_start, n_gpus,
       rank, group_name, hparams):
   """Training and validation logging results to tensorboard and stdout
 
@@ -197,9 +200,9 @@ def train(base_dir, checkpoint_path, speaker_dir, weights_path, overwrite_weight
   learning_rate = hparams.learning_rate
   optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=hparams.weight_decay)
 
-  if hparams.fp16_run:
-    from apex import amp
-    model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
+  # if hparams.fp16_run:
+  #   from apex import amp
+  #   model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
 
   if hparams.distributed_run:
     model = apply_gradient_allreduce(model)
@@ -218,15 +221,15 @@ def train(base_dir, checkpoint_path, speaker_dir, weights_path, overwrite_weight
     full_checkpoint_path = os.path.join(base_dir, checkpoint_path)
     if warm_start:
       model = warm_start_model(full_checkpoint_path, model, hparams.ignore_layers)
-      init_weights(weights_path, model)
+      init_weights(speaker_dir, model)
     else:
-      model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer, weights_path, overwrite_weights_in_checkpoint)
+      model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer, speaker_dir, overwrite_weights_in_checkpoint)
       if hparams.use_saved_learning_rate:
         learning_rate = _learning_rate
       iteration += 1  # next iteration is iteration + 1
       epoch_offset = max(0, int(iteration / len(train_loader)))
   else:
-    init_weights(weights_path, model)
+    init_weights(speaker_dir, model)
 
   model.train()
   is_overflow = False
@@ -247,18 +250,21 @@ def train(base_dir, checkpoint_path, speaker_dir, weights_path, overwrite_weight
         reduced_loss = reduce_tensor(loss.data, n_gpus).item()
       else:
         reduced_loss = loss.item()
-      if hparams.fp16_run:
-        with amp.scale_loss(loss, optimizer) as scaled_loss:
-          scaled_loss.backward()
-      else:
-        loss.backward()
 
-      if hparams.fp16_run:
-        grad_norm = torch.nn.utils.clip_grad_norm_(
-          amp.master_params(optimizer), hparams.grad_clip_thresh)
-        is_overflow = math.isnan(grad_norm)
-      else:
-        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), hparams.grad_clip_thresh)
+      # if hparams.fp16_run:
+      #   with amp.scale_loss(loss, optimizer) as scaled_loss:
+      #     scaled_loss.backward()
+      # else:
+      #   loss.backward()
+      loss.backward()
+
+      # if hparams.fp16_run:
+      #   grad_norm = torch.nn.utils.clip_grad_norm_(
+      #     amp.master_params(optimizer), hparams.grad_clip_thresh)
+      #   is_overflow = math.isnan(grad_norm)
+      # else:
+      #   grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), hparams.grad_clip_thresh)
+      grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), hparams.grad_clip_thresh)
 
       optimizer.step()
 
@@ -283,12 +289,10 @@ if __name__ == '__main__':
 
   parser = argparse.ArgumentParser()
 
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-  #parser.add_argument('-o', '--output_directory', type=str, help='directory to save checkpoints', default='/datasets/models/taco2pytorch')
-  #parser.add_argument('-l', '--log_directory', type=str, help='directory to save tensorboard logs', default='/datasets/models/taco2pytorchLogs')
+  parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--checkpoint_path', type=str)
   parser.add_argument('--checkpoint_init_weights', type=str)
-  parser.add_argument('--warm_start', help='load model weights only, ignore specified layers', default='false')
+  parser.add_argument('--warm_start', help='load model weights only, ignore specified layers')
   parser.add_argument('--n_gpus', type=int, default=1, required=False, help='number of gpus')
   parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
   parser.add_argument('--group_name', type=str, default='group_name', required=False, help='Distributed group name')
@@ -306,17 +310,20 @@ if __name__ == '__main__':
   debug = True
 
   if debug:
+    args.base_dir = '/datasets/models/taco2pt_ms'
     weights_path = os.path.join(args.base_dir, weights_name)
     hparams.sampling_rate = 16000
     hparams.batch_size = 35
     hparams.iters_per_checkpoint = 50
     hparams.epochs = 42 # 250
-    #args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
-    if True:
+    if False:
       args.warm_start = 'false'
       args.checkpoint_init_weights = 'true'
+      args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
     else:
       args.warm_start = 'true'
+      args.checkpoint_init_weights = 'false'
+      args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
 
   overwrite_weights_in_checkpoint = str.lower(args.checkpoint_init_weights) == 'true'
 
@@ -336,8 +343,8 @@ if __name__ == '__main__':
   # else: 
   #   raise Exception()
   filelist_dir_path = os.path.join(args.base_dir, filelist_dir)
-  conv = get_from_file(os.path.join(filelist_dir_path, symbols_path_name))
-  hparams.n_symbols = conv.get_symbols_count()
+  conv = load_from_file(os.path.join(filelist_dir_path, symbols_path_name))
+  hparams.n_symbols = conv.get_symbol_ids_count()
 
   torch.backends.cudnn.enabled = hparams.cudnn_enabled
   torch.backends.cudnn.benchmark = hparams.cudnn_benchmark
@@ -352,7 +359,7 @@ if __name__ == '__main__':
 
   warm_start = str.lower(args.warm_start) == 'true'
   
-  train(args.base_dir, args.checkpoint_path, filelist_dir_path, args.weights, overwrite_weights_in_checkpoint, warm_start, args.n_gpus, args.rank, args.group_name, hparams)
+  train(args.base_dir, args.checkpoint_path, filelist_dir_path, overwrite_weights_in_checkpoint, warm_start, args.n_gpus, args.rank, args.group_name, hparams)
   print('Finished training.')
   duration_s = time.time() - start
   duration_m = duration_s / 60

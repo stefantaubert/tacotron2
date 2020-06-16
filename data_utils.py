@@ -5,7 +5,7 @@ import torch.utils.data
 
 import layers
 from utils import load_wav_to_torch, load_filepaths_and_symbols
-
+from text.symbol_converter import deserialize_symbol_ids
 
 class SymbolsMelLoader(torch.utils.data.Dataset):
   """
@@ -27,8 +27,8 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
 
   def get_mel_symbols_pair(self, audiopath_and_text):
     # separate filename and text
-    audiopath, symbols_str = audiopath_and_text[0], audiopath_and_text[1]
-    symbols_tensor = self.get_symbols(symbols_str)
+    audiopath, serialized_symbol_ids = audiopath_and_text[0], audiopath_and_text[1]
+    symbols_tensor = self.get_symbols(serialized_symbol_ids)
     mel_tensor = self.get_mel(audiopath)
     return (symbols_tensor, mel_tensor)
 
@@ -50,12 +50,11 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
           melspec.size(0), self.stft.n_mel_channels))
 
     return melspec
-  def get_symbols(self, symbols_str):
-    symbols = symbols_str.split(',')
-    symbols = list(map(int, symbols))
-    symbols_tensor = torch.IntTensor(symbols)
-    return symbols_tensor
 
+  def get_symbols(self, serialized_symbol_ids):
+    symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
+    symbols_tensor = torch.IntTensor(symbol_ids)
+    return symbols_tensor
 
   def __getitem__(self, index):
     return self.get_mel_symbols_pair(self.audiopaths_and_symbols[index])

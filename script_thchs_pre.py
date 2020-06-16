@@ -10,7 +10,7 @@ from tqdm import tqdm
 from ipa2symb import extract_from_sentence
 from paths import preprocessed_file_name, preprocessed_file_debug_name, symbols_path_name, symbols_path_info_name, filelist_dir
 from text.adjustments import normalize_text
-from text.conversion.SymbolConverter import get_from_symbols
+from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
 
 def chn_to_ipa(chn):
@@ -61,21 +61,22 @@ if __name__ == "__main__":
       #print(current_symbols)
       symbols = symbols.union(current_symbols)
 
-    conv = get_from_symbols(symbols)
+    conv = init_from_symbols(symbols)
 
     speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, speaker)
     os.makedirs(speaker_dir, exist_ok=True)
 
     conv.dump(os.path.join(speaker_dir, symbols_path_name))
     conv.plot(os.path.join(speaker_dir, symbols_path_info_name))
-    print(conv.get_symbols())
+    print("Resulting symbolset:")
+    conv.print_symbols()
 
     ### convert text to symbols
     result = []
-    for bn, py, ipa_txt, sym, wav in recordings:
-      seq = conv.text_to_sequence(sym)
-      seq_str = ",".join([str(s) for s in seq])
-      result.append((bn, wav, py, ipa_txt, seq_str))
+    for bn, py, ipa_txt, syms, wav in recordings:
+      symbol_ids = conv.symbols_to_ids(syms, add_eos=True, replace_unknown_with_pad=True)
+      serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
+      result.append((bn, wav, py, ipa_txt, serialized_symbol_ids))
 
     ### save
     #dest_filename = os.path.join(dataset_path, 'preprocessed.txt')

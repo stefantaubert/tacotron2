@@ -12,7 +12,7 @@ import os
 import torch
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
-from text.conversion.SymbolConverter import get_from_file
+from text.symbol_converter import load_from_file, deserialize_symbol_ids
 
 # to load denoiser, glow etc.
 sys.path.append('waveglow/')
@@ -94,7 +94,7 @@ if __name__ == "__main__":
   debug = True
   if debug:
     speaker_dir = os.path.join(args.base_dir, filelist_dir)
-    checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, 'checkpoint_200')
+    checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, 'checkpoint_251')
     args.waveglow = '/datasets/models/pretrained/waveglow_256channels_universal_v5.pt'
     args.output_name = 'test'
     hparams.sampling_rate = 19000
@@ -102,17 +102,14 @@ if __name__ == "__main__":
     speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
     checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, args.checkpoint)
 
-  conv = get_from_file(os.path.join(speaker_dir, symbols_path_name))
-  n_symbols = conv.get_symbols_count()
+  conv = load_from_file(os.path.join(speaker_dir, symbols_path_name))
+  n_symbols = conv.get_symbol_ids_count()
   print('Loaded {} symbols from {}'.format(n_symbols, speaker_dir))
 
   output = np.array([])
 
-  sentences_symbols = []
   with open(os.path.join(args.base_dir, input_symbols), 'r') as f:
-    sentences_symbols = f.readlines()
-  sentences_symbols = [x.split(',') for x in sentences_symbols]
-  sentences_symbols = [list(map(int, l)) for l in sentences_symbols]
+    serialized_symbol_ids_sentences = f.readlines()
 
   #hparams.sampling_rate = 22050
   hparams.n_symbols = n_symbols
@@ -128,18 +125,20 @@ if __name__ == "__main__":
   #print("exit")
 
   # Speed is: 1min inference for 3min wav result
+
+  sentence_pause = np.zeros(10**4)
+
   print("Inferring...")
-  for i, sentence_symbols in tqdm(enumerate(sentences_symbols), total=len(sentences_symbols)):
+
+  for i, serialized_symbol_ids in tqdm(enumerate(serialized_symbol_ids_sentences), total=len(serialized_symbol_ids_sentences)):
     #print(sentence_symbols)
-    origin_text = conv.sequence_to_original_text(sentence_symbols)
-    print(origin_text, "({})".format(len(sentence_symbols)))
-    res = synt.infer(sentence_symbols, str(i))
-    output = np.concatenate((output, res), axis=0)
-    sentence_pause = np.zeros(10**4)
-    output = np.concatenate((output, sentence_pause), axis=0)
+    symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
+    print("{} ({})".format(conv.ids_to_text(symbol_ids), len(symbol_ids)))
+    synthesized_sentence = synt.infer(symbol_ids, str(i))
+    output = np.concatenate((output, synthesized_sentence, sentence_pause), axis=0)
     #print(output)
 
   print("Saving...")
   out_path = os.path.join(args.base_dir, wav_out_dir, args.output_name + ".wav")
   to_wav(out_path, output, synt.hparams.sampling_rate)
-  print("Finished. Output:", out_path)
+  print("Finished. Saved to:", out_path)

@@ -1,8 +1,9 @@
 import json
 
 import numpy as np
-
+from shutil import copyfile
 from collections import OrderedDict 
+import os
 
 def deserialize_symbol_ids(searialized_str: str):
   sentences_symbols = searialized_str.split(',')
@@ -10,7 +11,8 @@ def deserialize_symbol_ids(searialized_str: str):
   return sentences_symbols
 
 def serialize_symbol_ids(symbol_ids: list):
-  sentences_symbols = ','.join(symbol_ids)
+  sentences_symbols = list(map(str, symbol_ids))
+  sentences_symbols = ','.join(sentences_symbols)
   return sentences_symbols
 
 # padding
@@ -36,7 +38,7 @@ def _get_symbol_id_dict(id_symbol_dict: OrderedDict) -> OrderedDict:
     tmp[symbol][subset] = s_id
   return tmp
 
-def _symbols_to_dict(symbols: set) -> OrderedDict:
+def _get_all_symbols(symbols: set) -> list:
   has_no_double_symbols = len(set(symbols)) == len(symbols)
   assert has_no_double_symbols
   if _pad in symbols:
@@ -44,7 +46,10 @@ def _symbols_to_dict(symbols: set) -> OrderedDict:
   if _eos in symbols:
     symbols.remove(_eos)
   all_symbols = list(_pad) + list(_eos) + list(sorted(set(symbols)))
-  # set() because if pad and eos in symbols they were ignored
+  return all_symbols
+
+def _symbols_to_dict(symbols: set) -> OrderedDict:
+  all_symbols = _get_all_symbols(symbols)
   id_symbol_dict = _get_id_symbol_dict(all_symbols)
   return id_symbol_dict
 
@@ -54,10 +59,6 @@ def _file_to_dict(filepath: str) -> OrderedDict:
   return id_symbol_dict
 
 class SymbolConverter():
-
-  '''
-  Defines the set of symbols used in text input to the model.
-  '''
   def __init__(self, id_symbol_dict: OrderedDict):
     super().__init__()
     self._id_symbol_dict = id_symbol_dict
@@ -77,7 +78,10 @@ class SymbolConverter():
     else:
       return list(self._symbol_id_dict[symbol].values())[0]
 
-  def get_symbols(self, include_subset_id: bool = True, include_id: bool = True) -> list:
+  def print_symbols(self):
+    print('\n'.join(self.get_symbols(include_subset_id=True, include_id=True)))
+
+  def get_symbols(self, include_subset_id: bool = False, include_id: bool = False) -> list:
     symbols = []
     for symbol_id, data in self._id_symbol_dict.items():
       subset_id, symbol = data
@@ -90,6 +94,9 @@ class SymbolConverter():
       symbols.append(tmp)
     return symbols
 
+  def get_symbol_ids(self) -> list:
+    return list(self._id_symbol_dict.keys())
+
   def get_symbol_ids_count(self) -> int:
     result = len(self._id_symbol_dict)
     return result
@@ -98,11 +105,9 @@ class SymbolConverter():
     with open(file_path, 'w', encoding='utf-8') as f:
       json.dump(self._id_symbol_dict, f)
 
-  def plot(self, file_path: str, sort=True):
+  def plot(self, file_path: str):
     with open(file_path, 'w', encoding='utf-8') as f:
       symbols = self.get_symbols(include_id=True, include_subset_id=True)
-      if sort:
-        symbols = list(sorted(symbols))
       res = '\n'.join(symbols)
       f.write(res)
     
@@ -117,11 +122,9 @@ class SymbolConverter():
     return result
 
   def add_symbols(self, symbols: set, ignore_existing: bool, subset_id: int):
-    #contains_already_existing_symbols = len(set(self._symbol_id_dict.keys()).intersection(symbols)) > 0
-    #assert not contains_already_existing_symbols
-    sorted_symbols = list(sorted(symbols))
+    all_new_symbols = _get_all_symbols(symbols)
     next_id = self.get_symbol_ids_count()
-    for i, new_symbol in enumerate(sorted_symbols):
+    for i, new_symbol in enumerate(all_new_symbols):
       symbol_already_exists_and_should_be_ignored = new_symbol in self._symbol_id_dict.keys() and ignore_existing
       if symbol_already_exists_and_should_be_ignored:
         continue
@@ -131,17 +134,15 @@ class SymbolConverter():
     self._symbol_id_dict = _get_symbol_id_dict(self._id_symbol_dict)
 
   def get_unknown_symbols(self, symbols: list):
-    unknown_symbols = set([x for x in symbols if not self.__is_text_symbol(x)])
+    unknown_symbols = set([x for x in symbols if x not in self._symbol_id_dict.keys()])
     return unknown_symbols
 
   def symbols_to_ids(self, symbols: list, subset_id_if_multiple: int = _initial_subset_id, add_eos: bool = True, replace_unknown_with_pad: bool = True) -> np.ndarray:
     valid_symbols = self.__replace_unknown_symbols(symbols, _pad if replace_unknown_with_pad else None)
-    # Append EOS token
     if add_eos:
       valid_symbols.append(_eos)
     ids = [self.symbol_to_id(x, subset_id_if_multiple) for x in valid_symbols]
-    result = np.asarray(ids, dtype=np.int32)
-    return result
+    return ids
 
   def ids_to_symbols(self, symbol_ids: list) -> list:
     symbols = [self.id_to_symbol(s_id) for s_id in symbol_ids]
@@ -160,9 +161,11 @@ def load_from_file_v1(filepath: str) -> SymbolConverter:
   return SymbolConverter(new_dict)
 
 def load_from_file_v2(filepath: str) -> SymbolConverter:
-  return SymbolConverter(_file_to_dict(filepath))
+  d = _file_to_dict(filepath)
+  d_int = OrderedDict([(int(k), v) for k, v in d.items()])
+  return SymbolConverter(d_int)
 
-def load_from_file(filepath: str) -> SymbolConverter:
+def load_from_file(filepath: str, convert_v1_to_v2: bool = True) -> SymbolConverter:
   d = _file_to_dict(filepath)
   values = list(d.values())
   assert len(values) > 0
@@ -170,9 +173,15 @@ def load_from_file(filepath: str) -> SymbolConverter:
   if dtype_of_values_is_list:
     return load_from_file_v2(filepath)
   else:
-    return load_from_file_v1(filepath)
+    res = load_from_file_v1(filepath)
+    if convert_v1_to_v2:
+      # make backup of old version
+      file_name = os.path.splitext(os.path.basename(filepath))[0]
+      backup_path = os.path.join(os.path.dirname(filepath), "{}.v1.json".format(file_name))
+      copyfile(filepath, backup_path)
+      res.dump(filepath)
+    return res
 
-  return SymbolConverter(_file_to_dict(filepath))
 
 def init_from_symbols(symbols: set) -> SymbolConverter:
   return SymbolConverter(_symbols_to_dict(symbols))
