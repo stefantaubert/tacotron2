@@ -15,9 +15,11 @@ if __name__ == "__main__":
   parser.add_argument('--speaker_based', default='true')
   parser.add_argument('--ds_name', default='thchs')
   parser.add_argument('--speaker', default='A11')
+  parser.add_argument('--debug', type=str, default='true')
   
   args = parser.parse_args()
-  debug = True
+  debug = str.lower(args.debug) == 'true'
+  
   if debug:
     args.speaker_based = 'false'
 

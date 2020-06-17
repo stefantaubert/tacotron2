@@ -112,25 +112,26 @@ def init_weights(speaker_dir, model):
   return model
 
 
-def load_checkpoint(checkpoint_path, model, optimizer, speaker_dir, overwrite_weights):
+def load_checkpoint(checkpoint_path, model, optimizer, speaker_dir):
   weights_path = os.path.join(speaker_dir, weights_name)
   assert os.path.isfile(weights_path)
   assert os.path.isfile(checkpoint_path)
   print("Loading checkpoint '{}'".format(checkpoint_path))
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-  if overwrite_weights:
-    weights = np.load(weights_path)
-    weights = torch.from_numpy(weights)
-    dummy_dict = model.state_dict()
-    update = { 
-        'embedding.weight': weights 
-    }
-    checkpoint_dict.update({'iteration':0})
-    y_ref = weights[0]
-    x = checkpoint_dict['state_dict']['embedding.weight'][0]
-    checkpoint_dict['state_dict'].update(update)
-    y = checkpoint_dict['state_dict']['embedding.weight'][0]
-    #checkpoint_dict['state_dict']['embedding.weights'] = weights
+  ### Didn't worked out bc the optimizer has old weight size
+  # if overwrite_weights:
+  #   weights = np.load(weights_path)
+  #   weights = torch.from_numpy(weights)
+  #   dummy_dict = model.state_dict()
+  #   update = { 
+  #       'embedding.weight': weights 
+  #   }
+  #   checkpoint_dict.update({'iteration':0})
+  #   y_ref = weights[0]
+  #   x = checkpoint_dict['state_dict']['embedding.weight'][0]
+  #   checkpoint_dict['state_dict'].update(update)
+  #   y = checkpoint_dict['state_dict']['embedding.weight'][0]
+  #   #checkpoint_dict['state_dict']['embedding.weights'] = weights
   model.load_state_dict(checkpoint_dict['state_dict'])
   optimizer.load_state_dict(checkpoint_dict['optimizer'])
   learning_rate = checkpoint_dict['learning_rate']
@@ -177,7 +178,7 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
     logger.log_validation(val_loss, model, y, y_pred, iteration)
 
 
-def train(base_dir, checkpoint_path, speaker_dir, overwrite_weights_in_checkpoint: bool, warm_start, n_gpus,
+def train(base_dir, checkpoint_path, speaker_dir, use_pretrained_weights: bool, warm_start, n_gpus,
       rank, group_name, hparams):
   """Training and validation logging results to tensorboard and stdout
 
@@ -221,15 +222,17 @@ def train(base_dir, checkpoint_path, speaker_dir, overwrite_weights_in_checkpoin
     full_checkpoint_path = os.path.join(base_dir, checkpoint_path)
     if warm_start:
       model = warm_start_model(full_checkpoint_path, model, hparams.ignore_layers)
-      init_weights(speaker_dir, model)
+      if use_pretrained_weights:
+        init_weights(speaker_dir, model)
     else:
-      model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer, speaker_dir, overwrite_weights_in_checkpoint)
+      model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer, speaker_dir)
       if hparams.use_saved_learning_rate:
         learning_rate = _learning_rate
       iteration += 1  # next iteration is iteration + 1
       epoch_offset = max(0, int(iteration / len(train_loader)))
   else:
-    init_weights(speaker_dir, model)
+    if use_pretrained_weights:
+      init_weights(speaker_dir, model)
 
   model.train()
   is_overflow = False
@@ -291,13 +294,13 @@ if __name__ == '__main__':
 
   parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--checkpoint_path', type=str)
-  parser.add_argument('--checkpoint_init_weights', type=str)
+  parser.add_argument('--use_pretrained_weights', type=str)
   parser.add_argument('--warm_start', help='load model weights only, ignore specified layers')
   parser.add_argument('--n_gpus', type=int, default=1, required=False, help='number of gpus')
   parser.add_argument('--rank', type=int, default=0, required=False, help='rank of current gpu')
   parser.add_argument('--group_name', type=str, default='group_name', required=False, help='Distributed group name')
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
-
+  parser.add_argument('--debug', type=str, default='true')
 
   args = parser.parse_args()
   hparams = create_hparams(args.hparams)
@@ -307,7 +310,7 @@ if __name__ == '__main__':
   #args.warm_start = 'false'
   #args.warm_start = 'true'
 
-  debug = True
+  debug = str.lower(args.debug) == 'true'
 
   if debug:
     args.base_dir = '/datasets/models/taco2pt_ms'
@@ -316,16 +319,16 @@ if __name__ == '__main__':
     hparams.batch_size = 35
     hparams.iters_per_checkpoint = 50
     hparams.epochs = 250 # 250
+    args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
     if False:
       args.warm_start = 'false'
-      args.checkpoint_init_weights = 'true'
-      args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
+      args.use_pretrained_weights = 'true'
     else:
       args.warm_start = 'true'
-      args.checkpoint_init_weights = 'false'
+      args.use_pretrained_weights = 'false'
       args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
 
-  overwrite_weights_in_checkpoint = str.lower(args.checkpoint_init_weights) == 'true'
+  use_pretrained_weights = str.lower(args.use_pretrained_weights) == 'true'
 
 
   #hparams.iters_per_checkpoint = 500
@@ -359,7 +362,7 @@ if __name__ == '__main__':
 
   warm_start = str.lower(args.warm_start) == 'true'
   
-  train(args.base_dir, args.checkpoint_path, filelist_dir_path, overwrite_weights_in_checkpoint, warm_start, args.n_gpus, args.rank, args.group_name, hparams)
+  train(args.base_dir, args.checkpoint_path, filelist_dir_path, use_pretrained_weights, warm_start, args.n_gpus, args.rank, args.group_name, hparams)
   print('Finished training.')
   duration_s = time.time() - start
   duration_m = duration_s / 60

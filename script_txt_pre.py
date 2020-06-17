@@ -20,22 +20,22 @@ if __name__ == "__main__":
   parser.add_argument('--speaker', type=str)
   parser.add_argument('--map', default='')
   parser.add_argument('--subset_id', type=int)
+  parser.add_argument('--debug', type=str, default='true')
 
   args = parser.parse_args()
 
-  debug = True
+  debug = str.lower(args.debug) == 'true'
   if debug:
     args.base_dir = '/datasets/models/taco2pt_ms'
     args.ipa = 'true'
-    if False:
-      args.text = 'examples/north_chn.txt'
+    args.text = 'examples/grandfather.txt'
+    args.is_ipa = 'false'
+    if True:
       args.map = 'maps/en_chn.txt'
       args.subset_id = 1
     else:
-      args.text = 'examples/north_sven_v2.txt'
       args.map = ''
       args.subset_id = 1
-    args.is_ipa = 'true'
     speaker_dir = os.path.join(args.base_dir, filelist_dir)
   else:
     speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
@@ -47,6 +47,7 @@ if __name__ == "__main__":
   
   if use_ipa:
     epi = epitran.Epitran('eng-Latn')
+
   if use_map:
     print("Using mapping from:", args.map)
   else:
@@ -130,7 +131,10 @@ if __name__ == "__main__":
 
     unknown_symbols = unknown_symbols.union(conv.get_unknown_symbols(mapped_symbols))
     seq_sents_text.append(''.join(mapped_symbols))
-    symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True, subset_id_if_multiple=subset_id) #TODO: experiment if pad yes no
+    if subset_id != None:
+      symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True, subset_id_if_multiple=subset_id) #TODO: experiment if pad yes no
+    else:  
+      symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True) #TODO: experiment if pad yes no
     serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
     seq_sents.append('{}\n'.format(serialized_symbol_ids))
 

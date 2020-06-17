@@ -7,20 +7,21 @@ import json
 from scipy.spatial import distance
 import torch
 from sklearn.preprocessing import normalize
+from text.symbol_converter import load_from_file
 from paths import analysis_dir, savecheckpoints_dir, filelist_dir
 import os
 import argparse
 
 def analyse(models: list, base_dir: str, include_plotting: bool):
   for name, model_path, symbols_path in models:
-    with open(symbols_path, 'r', encoding='utf-8') as f:
-      id_to_symbol = json.load(f)
+    conv = load_from_file(symbols_path)
+    symbols = conv.get_symbols(include_subset_id=False, include_id=False)
 
     checkpoint_dict = torch.load(model_path, map_location='cpu')
 
-    symbols = [(v,k) for k, v in id_to_symbol.items()]
-    symbols.sort()
-    symbols = [x[1] for x in symbols]
+    #symbols = [(v,k) for k, v in id_to_symbol.items()]
+    #xsymbols.sort()
+    #symbols = [x[1] for x in symbols]
     arr = np.empty((0, 512), dtype='f')
     emb = checkpoint_dict['state_dict']['embedding.weight']
     print("Emb len", len(emb))
@@ -90,10 +91,11 @@ if __name__ == "__main__":
   args = parser.parse_args()
   
   models = [
+    ('ljs_ipa_thchs_no_tone_A11', os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499'), os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499.json')),
     ('ljs_en', os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_en_1_ipa_51500'), os.path.join(args.base_dir, filelist_dir, 'ljs_en/1/symbols.json')),
     ('thchs_no_tone', os.path.join(args.base_dir, savecheckpoints_dir, 'thchs_no_tone_C17_ipa_2999'), os.path.join(args.base_dir, filelist_dir, 'thchs_no_tone/C17/symbols.json')),
     ('ljs_ipa', os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000'), os.path.join(args.base_dir, filelist_dir, 'ljs_ipa/1/symbols.json')),
     ('thchs', os.path.join(args.base_dir, savecheckpoints_dir, 'thchs_C17_ipa_2999'), os.path.join(args.base_dir, filelist_dir, 'thchs/C17/symbols.json')),
   ]
 
-  analyse(models, args.base_dir, include_plotting=True)
+  analyse(models, args.base_dir, include_plotting=False)

@@ -81,20 +81,23 @@ class Synthesizer():
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-  parser.add_argument('--checkpoint', type=str, help='checkpoint name', default='thchs_A11_ipa_500')
+  parser.add_argument('--base_dir', type=str, help='base directory')
+  parser.add_argument('--checkpoint', type=str, help='checkpoint name')
   parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
   parser.add_argument('--waveglow', type=str, help='Path to pretrained waveglow file')
   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
-  parser.add_argument('--ds_name', type=str, required=False, default='thchs', help='name of the dataset')
-  parser.add_argument('--speaker', type=str, required=False, default='A11', help='speaker')
+  parser.add_argument('--ds_name', type=str, required=False)
+  parser.add_argument('--speaker', type=str, required=False)
+  parser.add_argument('--debug', type=str, default='true')
 
   args = parser.parse_args()
   hparams = create_hparams(args.hparams)
-  debug = True
+  debug = str.lower(args.debug) == 'true'
   if debug:
+    args.base_dir = '/datasets/models/taco2pt_ms'
     speaker_dir = os.path.join(args.base_dir, filelist_dir)
-    checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, 'checkpoint_251')
+    checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499')
+    #checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, 'checkpoint_1499')
     args.waveglow = '/datasets/models/pretrained/waveglow_256channels_universal_v5.pt'
     args.output_name = 'test'
     hparams.sampling_rate = 19000
