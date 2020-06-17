@@ -16,6 +16,7 @@ filelist_test_file_name = 'audio_text_test_filelist.csv'
 filelist_validation_file_name = 'audio_text_val_filelist.csv'
 filelist_symbols_file_name = 'symbols.json'
 filelist_symbols_log_file_name = 'symbols.log'
+filelist_file_name = 'filelist.csv'
 filelist_weights_file_name = 'weights.npy'
 # TODO: include debug file split
 
@@ -76,11 +77,11 @@ def get_inference_dir(training_dir_path: str, input_name: str, create: bool = Tr
   subdir_name = "{}_{}".format(input_name, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
   return __get_subdir(training_dir_path, os.path.join(inference_dir, subdir_name), create)
 
-def log_train_config(training_dir_path: str, config: str):
-  copyfile(config, os.path.join(training_dir_path, train_config_log_file))
+def log_train_config(training_dir_path: str, config_path: str):
+  copyfile(config_path, os.path.join(training_dir_path, train_config_log_file))
 
-def log_inference_config(inference_dir: str, config: str):
-  copyfile(config, os.path.join(inference_dir, inference_config_log_file))
+def log_inference_config(inference_dir: str, config_path: str):
+  copyfile(config_path, os.path.join(inference_dir, inference_config_log_file))
 
 def create_description_file(training_dir_path: str):
   desc_file = os.path.join(training_dir_path, description_txt_file)

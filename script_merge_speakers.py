@@ -9,52 +9,29 @@ from math import sqrt
 import numpy as np
 from utils import parse_map
 
-from paths import preprocessed_file_name, test_file_name, training_file_name, validation_file_name, filelist_dir, symbols_path_name, symbols_path_info_name, savecheckpoints_dir, weights_name
+from paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_symbols_log_file_name, filelist_file_name, filelist_weights_file_name
 from text.symbol_converter import load_from_file, serialize_symbol_ids, deserialize_symbol_ids
 from utils import csv_separator
 from hparams import create_hparams
 
-if __name__ == "__main__":
-
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--pretrained_model', type=str)
-  parser.add_argument('--pretrained_model_symbols', type=str)
-  parser.add_argument('--ds_name', type=str)
-  parser.add_argument('--speaker', type=str)
-  parser.add_argument('--mode', type=str, help='separate,unify,map')
-  parser.add_argument('--map', type=str)
-
-  args = parser.parse_args()
-  debug = True
-  if debug:
-    args.base_dir = '/datasets/models/taco2pt_ms'
-    args.pretrained_model = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
-    args.pretrained_model_symbols = os.path.join(args.base_dir, filelist_dir, 'ljs_ipa/1/symbols.json')
-    args.ds_name = 'thchs_no_tone'
-    args.speaker = 'A11'
-    args.mode = 'map'
-    args.map = 'maps/en_chn.txt'
-
-
-  filelist_dir_path = os.path.join(args.base_dir, filelist_dir)
-
-  new_speaker_dir = os.path.join(filelist_dir_path, args.ds_name, args.speaker)
-  new_prepr_path = os.path.join(new_speaker_dir, preprocessed_file_name)
-  new_symbols_path = os.path.join(new_speaker_dir, symbols_path_name)
+def merge_speakers(base_dir: str, training_dir_path: str, config: dict):
+  ds_dir = get_ds_dir(base_dir, config["ds_name"], config["speaker"])
   
-  pretrained_speaker_conv = load_from_file(args.pretrained_model_symbols)
+  new_prepr_path = os.path.join(ds_dir, ds_preprocessed_file_name)
+  new_symbols_path = os.path.join(ds_dir, ds_preprocessed_symbols_name)
+  
+  pretrained_speaker_conv = load_from_file(config["pretrained_model_symbols"])
   new_speaker_conv = load_from_file(new_symbols_path)
 
   new_data = pd.read_csv(new_prepr_path, header=None, sep=csv_separator)
   pretrained_symbols_ids = pretrained_speaker_conv.get_symbol_ids()
   new_symbols = set(new_speaker_conv.get_symbols())
 
-  if args.mode == 'unify':
+  if config["weights_mode"] == 'unify':
     pretrained_speaker_conv.add_symbols(new_symbols, ignore_existing=True, subset_id=1)
-  elif args.mode == 'separate':
+  elif config["weights_mode"] == 'separate':
     pretrained_speaker_conv.add_symbols(new_symbols, ignore_existing=False, subset_id=1)
-  elif args.mode == 'map':
+  elif config["weights_mode"] == 'map':
     pretrained_speaker_conv.add_symbols(new_symbols, ignore_existing=True, subset_id=1)
 
   print("Resulting symbolset:")
@@ -70,13 +47,13 @@ if __name__ == "__main__":
     row[1] = serialized_updated_ids
     result.append(row)
 
-  pretrained_speaker_conv.dump(os.path.join(filelist_dir_path, symbols_path_name))
-  pretrained_speaker_conv.plot(os.path.join(filelist_dir_path, symbols_path_info_name))
+  pretrained_speaker_conv.dump(os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name))
+  pretrained_speaker_conv.plot(os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_log_file_name))
   df = pd.DataFrame(result)
   print(df.head())
-  df.to_csv(os.path.join(filelist_dir_path, preprocessed_file_name), header=None, index=None, sep=csv_separator)
+  df.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_file_name), header=None, index=None, sep=csv_separator)
 
-  hparams = create_hparams('')
+  hparams = create_hparams(config["hparams"])
 
   n_symbols = pretrained_speaker_conv.get_symbol_ids_count()
   embedding = nn.Embedding(n_symbols, hparams.symbols_embedding_dim)
@@ -84,7 +61,7 @@ if __name__ == "__main__":
   val = sqrt(3.0) * std  # uniform bounds for std
   embedding.weight.data.uniform_(-val, val)
 
-  checkpoint_dict = torch.load(args.pretrained_model, map_location='cpu')
+  checkpoint_dict = torch.load(config["pretrained_model"], map_location='cpu')
   pretrained_emb = checkpoint_dict['state_dict']['embedding.weight']
 
   map_dataid_pretrainedid = []
@@ -93,9 +70,9 @@ if __name__ == "__main__":
     if symbol_id in pretrained_symbols_ids:
       map_dataid_pretrainedid.append((symbol_id, symbol_id))
       
-  if args.mode == 'map':
+  if config["weights_mode"] == 'map':
     # map: if destination occures multiple times, the last one is taken for initializing weights
-    ipa_mapping = parse_map(args.map)
+    ipa_mapping = parse_map(config["map"])
     for source_symbol, dest_symbol in ipa_mapping.items():
       if dest_symbol == '':
         continue
@@ -112,7 +89,30 @@ if __name__ == "__main__":
   
   print(embedding)
 
-  weights_path = os.path.join(filelist_dir_path, weights_name)
+  weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
   np.save(weights_path, embedding.weight.data.numpy())
 
   print("Done.")
+
+# if __name__ == "__main__":
+
+#   parser = argparse.ArgumentParser()
+#   parser.add_argument('--base_dir', type=str, help='base directory')
+#   parser.add_argument('--pretrained_model', type=str)
+#   parser.add_argument('--pretrained_model_symbols', type=str)
+#   parser.add_argument('--ds_name', type=str)
+#   parser.add_argument('--speaker', type=str)
+#   parser.add_argument('--mode', type=str, help='separate,unify,map')
+#   parser.add_argument('--map', type=str)
+
+#   args = parser.parse_args()
+#   debug = True
+#   if debug:
+#     args.base_dir = '/datasets/models/taco2pt_ms'
+#     args.pretrained_model = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
+#     args.pretrained_model_symbols = os.path.join(args.base_dir, filelist_dir, 'ljs_ipa/1/symbols.json')
+#     args.ds_name = 'thchs_no_tone'
+#     args.speaker = 'A11'
+#     args.mode = 'map'
+#     args.map = 'maps/en_chn.txt'
+

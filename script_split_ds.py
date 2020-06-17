@@ -11,16 +11,6 @@ from utils import csv_separator
 def split_ds(base_dir, training_dir_path: str, config: dict):
   speaker_dir_path = get_ds_dir(base_dir, config["ds_name"], config["speaker"])
 
-  # copy symbols.json
-  a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_name)
-  b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name)
-  copyfile(a, b)
-
-  # copy symbols.log
-  a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_log_name)
-  b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_log_file_name)
-  copyfile(a, b)
-
   preprocessed_path = os.path.join(speaker_dir_path, ds_preprocessed_file_name)
 
   data = pd.read_csv(preprocessed_path, header=None, sep=csv_separator)
