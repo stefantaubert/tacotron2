@@ -1,39 +1,29 @@
 import argparse
 import os
+from shutil import copyfile
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from paths import preprocessed_file_name, test_file_name, training_file_name, validation_file_name, filelist_dir
+from paths import ds_preprocessed_symbols_name, ds_preprocessed_file_name, ds_preprocessed_symbols_log_name, filelist_symbols_log_file_name, filelist_symbols_file_name, filelist_test_file_name, filelist_training_file_name, filelist_validation_file_name, get_filelist_dir, get_ds_dir
 from utils import csv_separator
 
-if __name__ == "__main__":
+def split_ds(base_dir, training_dir_path: str, config: dict):
+  speaker_dir_path = get_ds_dir(base_dir, config["ds_name"], config["speaker"])
 
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-  parser.add_argument('--seed', type=str, help='random seed', default='1234')
-  parser.add_argument('--speaker_based', default='true')
-  parser.add_argument('--ds_name', default='thchs')
-  parser.add_argument('--speaker', default='A11')
-  parser.add_argument('--debug', type=str, default='true')
-  
-  args = parser.parse_args()
-  debug = str.lower(args.debug) == 'true'
-  
-  if debug:
-    args.speaker_based = 'false'
+  # copy symbols.json
+  a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_name)
+  b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name)
+  copyfile(a, b)
 
-  seed = int(args.seed)
-  speaker_based = str.lower(args.speaker_based) == 'true'
+  # copy symbols.log
+  a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_log_name)
+  b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_log_file_name)
+  copyfile(a, b)
 
-  if speaker_based:
-    speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
-  else:
-    speaker_dir = os.path.join(args.base_dir, filelist_dir)
-    
-  prepr_path = os.path.join(speaker_dir, preprocessed_file_name)
+  preprocessed_path = os.path.join(speaker_dir_path, ds_preprocessed_file_name)
 
-  data = pd.read_csv(prepr_path, header=None, sep=csv_separator)
+  data = pd.read_csv(preprocessed_path, header=None, sep=csv_separator)
   print(data)
 
   # train, test = train_test_split(data, test_size=500, random_state=1234)
@@ -42,12 +32,12 @@ if __name__ == "__main__":
   # train, test = train_test_split(data, test_size=0.04, random_state=1234)
   # train, val = train_test_split(train, test_size=0.01, random_state=1234)
 
-  train, test = train_test_split(data, test_size=0.02, random_state=seed)
-  test, val = train_test_split(test, test_size=0.5, random_state=seed)
+  train, test = train_test_split(data, test_size=0.02, random_state=config["seed"])
+  test, val = train_test_split(test, test_size=0.5, random_state=config["seed"])
 
-  train.to_csv(os.path.join(speaker_dir, training_file_name), header=None, index=None, sep=csv_separator)
-  test.to_csv(os.path.join(speaker_dir, test_file_name), header=None, index=None, sep=csv_separator)
-  val.to_csv(os.path.join(speaker_dir, validation_file_name), header=None, index=None, sep=csv_separator)
+  train.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_training_file_name), header=None, index=None, sep=csv_separator)
+  test.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_test_file_name), header=None, index=None, sep=csv_separator)
+  val.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_validation_file_name), header=None, index=None, sep=csv_separator)
   print("Dataset is splitted in train-, val- and test-set.")
 
   print("Total:", len(data))

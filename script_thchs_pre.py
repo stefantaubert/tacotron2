@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ipa2symb import extract_from_sentence
-from paths import preprocessed_file_name, preprocessed_file_debug_name, symbols_path_name, symbols_path_info_name, filelist_dir
+from paths import get_ds_dir, ds_preprocessed_file_log_name, ds_preprocessed_file_name, ds_preprocessed_symbols_log_name, ds_preprocessed_symbols_name
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
@@ -23,19 +23,8 @@ def chn_to_ipa(chn):
   res = ' '.join(res)
   return res
 
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory', default='/datasets/thchs_wav')
-  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', default='thchs')
-  parser.add_argument('--ignore_tones', type=str, default='false')
-  #parser.add_argument('--id', type=str, help='id which should be assigned to the dataset', default='2')
-
-  args = parser.parse_args()
-  #use_ipa = str.lower(args.ipa) == 'true'
-  ignore_tones = str.lower(args.ignore_tones) == 'true'
-
-  parsed_data = parse_thchs(args.data_dir)
+def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool):
+  parsed_data = parse_thchs(data_dir)
   data = {}
 
   ### normalize input
@@ -63,11 +52,10 @@ if __name__ == "__main__":
 
     conv = init_from_symbols(symbols)
 
-    speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, speaker)
-    os.makedirs(speaker_dir, exist_ok=True)
+    ds_dir = get_ds_dir(base_dir, ds_name, speaker, create=True)
 
-    conv.dump(os.path.join(speaker_dir, symbols_path_name))
-    conv.plot(os.path.join(speaker_dir, symbols_path_info_name))
+    conv.dump(os.path.join(ds_dir, ds_preprocessed_symbols_name))
+    conv.plot(os.path.join(ds_dir, ds_preprocessed_symbols_log_name))
     print("Resulting symbolset:")
     conv.print_symbols()
 
@@ -83,8 +71,31 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(result)
     df1 = df.iloc[:, [1, 4]]
-    df1.to_csv(os.path.join(speaker_dir, preprocessed_file_name), header=None, index=None, sep=csv_separator)
+    df1.to_csv(os.path.join(ds_dir, ds_preprocessed_file_name), header=None, index=None, sep=csv_separator)
     print("Dataset saved.")
     df2 = df.iloc[:, [0, 2, 3]]
-    df2.to_csv(os.path.join(speaker_dir, preprocessed_file_debug_name), header=None, index=None, sep=csv_separator)
+    df2.to_csv(os.path.join(ds_dir, ds_preprocessed_file_log_name), header=None, index=None, sep=csv_separator)
     print("Dataset preprocessing finished.")
+
+
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--base_dir', type=str, help='base directory')
+  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
+  parser.add_argument('--ignore_tones', type=str)
+  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
+  parser.add_argument('--debug', type=str, default="true")
+
+  args = parser.parse_args()
+
+  debug = str.lower(args.debug) == 'true'
+
+  if debug:
+    args.base_dir = '/datasets/models/taco2pt_v2'
+    args.data_dir = '/datasets/thchs_wav'
+    args.ds_name = 'thchs_toneless_ipa'
+    args.ignore_tones = 'true'
+  
+  ignore_tones = str.lower(args.ignore_tones) == 'true'
+
+  preprocess(args.base_dir, args.data_dir, args.ds_name, ignore_tones)
