@@ -8,58 +8,22 @@ from ipa2symb import extract_from_sentence
 from utils import parse_map
 from text.adjustments import normalize_text
 from text.symbol_converter import load_from_file, serialize_symbol_ids
-from paths import input_symbols, input_dir, symbols_path_name, filelist_dir
+from paths import get_symbols_path, inference_input_normalized_sentences_file_name, inference_input_sentences_file_name, inference_input_sentences_mapped_file_name, inference_input_symbols_file_name, inference_input_file_name, inference_input_map_file_name
 
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--ipa', type=str, help='IPA-based')
-  parser.add_argument('--text', type=str, help='path to text which should be synthesized')
-  parser.add_argument('--is_ipa', type=str, help='text is ipa')
-  parser.add_argument('--ds_name', type=str)
-  parser.add_argument('--speaker', type=str)
-  parser.add_argument('--map', default='')
-  parser.add_argument('--subset_id', type=int)
-  parser.add_argument('--debug', type=str, default='true')
-
-  args = parser.parse_args()
-
-  debug = str.lower(args.debug) == 'true'
-  if debug:
-    args.base_dir = '/datasets/models/taco2pt_ms'
-    args.ipa = 'true'
-    args.text = 'examples/grandfather.txt'
-    args.is_ipa = 'false'
-    if True:
-      args.map = 'maps/en_chn.txt'
-      args.subset_id = 1
-    else:
-      args.map = ''
-      args.subset_id = 1
-    speaker_dir = os.path.join(args.base_dir, filelist_dir)
-  else:
-    speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
-  subset_id = args.subset_id
-  is_ipa = str.lower(args.is_ipa) == 'true'
-  use_ipa = str.lower(args.ipa) == 'true' or is_ipa
-  use_map = args.map != ''
-  print("Processing text from", args.text)
+def process_input_text(training_dir_path: str, infer_dir_path: str, config: dict):
+  subset_id = config["subset_id"]
+  is_ipa = config["is_ipa"]
+  use_ipa = config["ipa"]
   
   if use_ipa:
     epi = epitran.Epitran('eng-Latn')
 
-  if use_map:
-    print("Using mapping from:", args.map)
-  else:
-    print("Using no mapping.")
-
-  conv = load_from_file(os.path.join(speaker_dir, symbols_path_name))
-  base = os.path.basename(args.text)
-  file_name = os.path.splitext(base)[0]
-
+  conv = load_from_file(get_symbols_path(training_dir_path))
+  
   lines = []
 
-  with open(args.text, 'r') as f:
+  input_file = os.path.join(infer_dir_path, inference_input_file_name)
+  with open(input_file, 'r') as f:
     lines = f.readlines()
 
   sentences = []
@@ -80,7 +44,7 @@ if __name__ == "__main__":
       cleaned_sent = normalize_text(s)
       cleaned_sents.append(cleaned_sent)
 
-    with open(os.path.join(args.base_dir, input_dir, "normalized_sentences_{}.txt".format(file_name)), 'w') as f:
+    with open(os.path.join(infer_dir_path, inference_input_normalized_sentences_file_name), 'w') as f:
       f.writelines(['{}\n'.format(s) for s in cleaned_sents])
    
     accented_sents = []
@@ -92,11 +56,14 @@ if __name__ == "__main__":
         accented_sentence = s
       accented_sents.append(accented_sentence)
 
-  with open(os.path.join(args.base_dir, input_dir, "input_sentences_{}.txt".format(file_name)), 'w') as f:
+  with open(os.path.join(infer_dir_path, inference_input_sentences_file_name), 'w') as f:
     f.writelines(['{}\n'.format(s) for s in accented_sents])
 
+  use_map = config["map"] != ''
+  
   if use_map:
-    ipa_mapping = parse_map(args.map)
+    map_path = os.path.join(infer_dir_path, inference_input_map_file_name)
+    ipa_mapping = parse_map(map_path)
   
   # for k, v in ipa_mapping.items():
   #   for sy in v:
@@ -138,11 +105,11 @@ if __name__ == "__main__":
     serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
     seq_sents.append('{}\n'.format(serialized_symbol_ids))
 
-  with open(os.path.join(args.base_dir, input_symbols), 'w') as f:
+  with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'w') as f:
     f.writelines(seq_sents)
   
   if use_map:
-    with open(os.path.join(args.base_dir, input_dir, "input_sentences_mapped_{}.txt".format(file_name)), 'w') as f:
+    with open(os.path.join(infer_dir_path, inference_input_sentences_mapped_file_name), 'w') as f:
       f.writelines(['{}\n'.format(s) for s in seq_sents_text])
 
   if len(unknown_symbols) > 0:
@@ -151,3 +118,35 @@ if __name__ == "__main__":
     print('There were no unknown symbols.')
 
   print("Text to synthesize processed.")
+
+
+# if __name__ == "__main__":
+#   parser = argparse.ArgumentParser()
+#   parser.add_argument('--base_dir', type=str, help='base directory')
+#   parser.add_argument('--ipa', type=str, help='IPA-based')
+#   parser.add_argument('--text', type=str, help='path to text which should be synthesized')
+#   parser.add_argument('--is_ipa', type=str, help='text is ipa')
+#   parser.add_argument('--ds_name', type=str)
+#   parser.add_argument('--speaker', type=str)
+#   parser.add_argument('--map', default='')
+#   parser.add_argument('--subset_id', type=int)
+#   parser.add_argument('--debug', type=str, default='true')
+
+#   args = parser.parse_args()
+
+#   debug = str.lower(args.debug) == 'true'
+#   if debug:
+#     args.base_dir = '/datasets/models/taco2pt_ms'
+#     args.ipa = 'true'
+#     args.text = 'examples/grandfather.txt'
+#     args.is_ipa = 'false'
+#     if True:
+#       args.map = 'maps/en_chn.txt'
+#       args.subset_id = 1
+#     else:
+#       args.map = ''
+#       args.subset_id = 1
+#     speaker_dir = os.path.join(args.base_dir, filelist_dir)
+#   else:
+#     speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
+ 

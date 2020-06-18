@@ -4,11 +4,12 @@ from shutil import copyfile
 import argparse
 
 log_dir = 'logs'
+log_train_file_name = 'log.txt'
 
 analysis_dir = 'analysis'
-analysis_sims_file = os.path.join(analysis_dir, 'sims.log')
-analysis_2d_file = os.path.join(analysis_dir, '2d.html')
-analysis_3d_file = os.path.join(analysis_dir, '3d.html')
+analysis_sims_file_name = 'similarities.txt'
+analysis_2d_file_name = '2d.html'
+analysis_3d_file_name = '3d.html'
 
 filelist_dir = "filelist"
 filelist_training_file_name = 'audio_text_train_filelist.csv'
@@ -27,18 +28,18 @@ ds_preprocessed_symbols_name = 'symbols.json'
 ds_preprocessed_symbols_log_name = 'symbols.log'
 
 inference_dir = 'inference'
-inference_input_file_name = 'input.log'
-inference_input_map_file_name = 'input_map.log'
+inference_input_file_name = 'input.txt'
+inference_input_map_file_name = 'input_map.txt'
 inference_input_normalized_sentences_file_name = '1_input_normalized_sentences.txt'
 inference_input_sentences_file_name = '2_input_sentences.txt'
 inference_input_sentences_mapped_file_name = '3_input_sentences_mapped.txt'
 inference_input_symbols_file_name = '4_input_symbols.txt'
 inference_output_file_name = 'output.wav'
-inference_config_log_file = 'config.log'
+inference_config_file = 'config.json'
 
 checkpoint_dir = 'checkpoints'
 
-train_config_log_file = 'train_config.log'
+train_config_file = 'config.json'
 description_txt_file = 'description.txt'
 
 def get_training_dir(base_dir: str, create: bool = True) -> str:
@@ -73,15 +74,21 @@ def get_checkpoint_dir(training_dir_path: str, create: bool = True) -> str:
 def get_log_dir(training_dir_path: str, create: bool = True) -> str:
   return __get_subdir(training_dir_path, log_dir, create)
 
-def get_inference_dir(training_dir_path: str, input_name: str, create: bool = True) -> str:
-  subdir_name = "{}_{}".format(input_name, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+def get_inference_dir(training_dir_path: str, input_name: str, checkpoint: str, create: bool = True) -> str:
+  subdir_name = "{}_{}_{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), input_name, checkpoint)
   return __get_subdir(training_dir_path, os.path.join(inference_dir, subdir_name), create)
 
 def log_train_config(training_dir_path: str, config_path: str):
-  copyfile(config_path, os.path.join(training_dir_path, train_config_log_file))
+  copyfile(config_path, os.path.join(training_dir_path, train_config_file))
 
-def log_inference_config(inference_dir: str, config_path: str):
-  copyfile(config_path, os.path.join(inference_dir, inference_config_log_file))
+def log_inference_config(infer_dir_path: str, config_path: str):
+  copyfile(config_path, os.path.join(infer_dir_path, inference_config_file))
+
+def log_input_file(infer_dir_path: str, input_file: str):
+  copyfile(input_file, os.path.join(infer_dir_path, inference_input_file_name))
+
+def log_map_file(infer_dir_path: str, map_file: str):
+  copyfile(map_file, os.path.join(infer_dir_path, inference_input_map_file_name))
 
 def create_description_file(training_dir_path: str):
   desc_file = os.path.join(training_dir_path, description_txt_file)

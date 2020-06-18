@@ -18,7 +18,8 @@ from logger import Tacotron2Logger
 from hparams import create_hparams
 
 from text.symbol_converter import load_from_file
-from paths import filelist_training_file_name, filelist_validation_file_name
+from paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
+from train_log import log
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -27,9 +28,9 @@ def reduce_tensor(tensor, n_gpus):
   return rt
 
 
-def init_distributed(hparams, n_gpus, rank, group_name):
+def init_distributed(hparams, n_gpus, rank, group_name, training_dir_path):
   assert torch.cuda.is_available(), "Distributed mode requires CUDA."
-  print("Initializing Distributed")
+  log(training_dir_path, "Initializing Distributed")
 
   # Set cuda device so everything is done on the right GPU.
   torch.cuda.set_device(rank % torch.cuda.device_count())
@@ -39,7 +40,7 @@ def init_distributed(hparams, n_gpus, rank, group_name):
     backend=hparams.dist_backend, init_method=hparams.dist_url,
     world_size=n_gpus, rank=rank, group_name=group_name)
 
-  print("Done initializing distributed")
+  log(training_dir_path, "Done initializing distributed")
 
 
 def prepare_dataloaders(hparams, filelist_dir_path):
@@ -83,10 +84,9 @@ def load_model(hparams):
 
   return model
 
-
-def warm_start_model(checkpoint_path, model, ignore_layers):
+def warm_start_model(checkpoint_path, model, ignore_layers, training_dir_path):
   assert os.path.isfile(checkpoint_path)
-  print("Warm starting model from checkpoint '{}'".format(checkpoint_path))
+  log(training_dir_path, "Warm starting model from checkpoint '{}'".format(checkpoint_path))
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
   model_dict = checkpoint_dict['state_dict']
   if len(ignore_layers) > 0:
@@ -96,11 +96,10 @@ def warm_start_model(checkpoint_path, model, ignore_layers):
     dummy_dict.update(model_dict)
     model_dict = dummy_dict
   model.load_state_dict(model_dict)
-  return model
 
-def init_weights(weights_path, model):
+def init_weights(weights_path, model, training_dir_path):
   assert os.path.isfile(weights_path)
-  print("Init weights from '{}'".format(weights_path))
+  log(training_dir_path, "Init weights from '{}'".format(weights_path))
   weights = np.load(weights_path)
   weights = torch.from_numpy(weights)
   dummy_dict = model.state_dict()
@@ -108,14 +107,12 @@ def init_weights(weights_path, model):
   dummy_dict.update(update)
   model_dict = dummy_dict
   model.load_state_dict(model_dict)
-  return model
 
-
-def load_checkpoint(checkpoint_path, model, optimizer):
+def load_checkpoint(checkpoint_path, model, optimizer, training_dir_path):
   #weights_path = os.path.join(speaker_dir, weights_name)
   #assert os.path.isfile(weights_path)
   assert os.path.isfile(checkpoint_path)
-  print("Loading checkpoint '{}'".format(checkpoint_path))
+  log(training_dir_path, "Loading checkpoint '{}'".format(checkpoint_path))
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
   ### Didn't worked out bc the optimizer has old weight size
   # if overwrite_weights:
@@ -135,22 +132,24 @@ def load_checkpoint(checkpoint_path, model, optimizer):
   optimizer.load_state_dict(checkpoint_dict['optimizer'])
   learning_rate = checkpoint_dict['learning_rate']
   iteration = checkpoint_dict['iteration']
-  print("Loaded checkpoint '{}' from iteration {}" .format(
+  log(training_dir_path, "Loaded checkpoint '{}' from iteration {}" .format(
     checkpoint_path, iteration))
   return model, optimizer, learning_rate, iteration
 
 
-def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
-  print("Saving model and optimizer state at iteration {} to {}".format(
-    iteration, filepath))
-  torch.save({'iteration': iteration,
-        'state_dict': model.state_dict(),
-        'optimizer': optimizer.state_dict(),
-        'learning_rate': learning_rate}, filepath)
+def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, training_dir_path):
+  log(training_dir_path, "Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
+  torch.save(
+    {
+      'iteration': iteration,
+      'state_dict': model.state_dict(),
+      'optimizer': optimizer.state_dict(),
+      'learning_rate': learning_rate
+    }, filepath)
 
 
 def validate(model, criterion, valset, iteration, batch_size, n_gpus,
-       collate_fn, logger, distributed_run, rank):
+       collate_fn, logger, distributed_run, rank, training_dir_path):
   """Handles all the validation scoring and printing"""
   model.eval()
   with torch.no_grad():
@@ -173,12 +172,21 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
 
   model.train()
   if rank == 0:
-    print("Validation loss {}: {:9f}  ".format(iteration, val_loss))
+    log(training_dir_path, "Validation loss {}: {:9f}  ".format(iteration, val_loss))
     logger.log_validation(val_loss, model, y, y_pred, iteration)
 
-from paths import get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
 
-def train(pretrained_path, use_pretrained_weights: bool, warm_start, n_gpus,
+def get_last_checkpoint(training_dir_path: str):
+  checkpoint_dir = get_checkpoint_dir(training_dir_path)
+  _, _, filenames = next(os.walk(checkpoint_dir))
+  at_least_one_checkpoint_exists = len(filenames) > 0
+  if at_least_one_checkpoint_exists:
+    last_checkpoint = list(sorted(filenames))[-1]
+    return last_checkpoint
+  else:
+    return None
+
+def train(pretrained_path, merge_symbols: bool, warm_start, n_gpus,
       rank, group_name, hparams, continue_training, training_dir_path):
   """Training and validation logging results to tensorboard and stdout
 
@@ -192,7 +200,7 @@ def train(pretrained_path, use_pretrained_weights: bool, warm_start, n_gpus,
   hparams (object): comma separated list of "name=value" pairs.
   """
   if hparams.distributed_run:
-    init_distributed(hparams, n_gpus, rank, group_name)
+    init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
 
   torch.manual_seed(hparams.seed)
   torch.cuda.manual_seed(hparams.seed)
@@ -220,46 +228,34 @@ def train(pretrained_path, use_pretrained_weights: bool, warm_start, n_gpus,
   # Load checkpoint if one exists
   iteration = 0
   epoch_offset = 0
-  checkpoint_loaded = False
+
   if continue_training:
-    full_checkpoint_path = ''
+    last_checkpoint = get_last_checkpoint(training_dir_path)
 
-    # TODO try get last iteration
+    if last_checkpoint == None:
+      raise Exception("No checkpoint was found to continue training!")
 
-    if full_checkpoint_path != '':
-      model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer)
-      if hparams.use_saved_learning_rate:
-        learning_rate = _learning_rate
-      iteration += 1  # next iteration is iteration + 1
-      epoch_offset = max(0, int(iteration / len(train_loader)))
-      checkpoint_loaded = True
-  
-  if not checkpoint_loaded and pretrained_path != None and warm_start:
-    model = warm_start_model(pretrained_path, model, hparams.ignore_layers)
-  
-  # if checkpoint_path is not None:
-  #   full_checkpoint_path = os.path.join(base_dir, checkpoint_path)
-  #   if warm_start:
-  #     model = warm_start_model(pretrained_path, model, hparams.ignore_layers)
-  #     if use_pretrained_weights:
-  #       init_weights(speaker_dir, model)
-  #   else:
-  #     model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer, speaker_dir)
-  #     if hparams.use_saved_learning_rate:
-  #       learning_rate = _learning_rate
-  #     iteration += 1  # next iteration is iteration + 1
-  #     epoch_offset = max(0, int(iteration / len(train_loader)))
-  # else:
-  
-  if not checkpoint_loaded and use_pretrained_weights:
-    weight_file = os.path.join(filelist_dir_path, filelist_weights_file_name)
-    init_weights(weight_file, model)
+    full_checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), last_checkpoint)
+    model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer, training_dir_path)
+    if hparams.use_saved_learning_rate:
+      learning_rate = _learning_rate
+    iteration += 1  # next iteration is iteration + 1
+    epoch_offset = max(0, int(iteration / len(train_loader)))
+  else:
+    if warm_start:
+      if pretrained_path == None:
+        raise Exception("Warm start was not possible because the path to the model was not valid.")
+      warm_start_model(pretrained_path, model, hparams.ignore_layers, training_dir_path)
+    
+    if merge_symbols:
+      weight_file = os.path.join(filelist_dir_path, filelist_weights_file_name)
+      init_weights(weight_file, model, training_dir_path)
 
   model.train()
   is_overflow = False
   # ================ MAIN TRAINNIG LOOP! ===================
   for epoch in range(epoch_offset, hparams.epochs):
-    print("Epoch: {}".format(epoch))
+    log(training_dir_path, "Epoch: {}".format(epoch))
     for i, batch in enumerate(train_loader):
       start = time.perf_counter()
       for param_group in optimizer.param_groups:
@@ -294,87 +290,51 @@ def train(pretrained_path, use_pretrained_weights: bool, warm_start, n_gpus,
 
       if not is_overflow and rank == 0:
         duration = time.perf_counter() - start
-        print("Train loss {} {:.6f} Grad Norm {:.6f} {:.2f}s/it".format(iteration, reduced_loss, grad_norm, duration))
+        log(training_dir_path, "Train loss {} {:.6f} Grad Norm {:.6f} {:.2f}s/it".format(iteration, reduced_loss, grad_norm, duration))
         logger.log_training(reduced_loss, grad_norm, learning_rate, duration, iteration)
 
       if not is_overflow and (iteration % hparams.iters_per_checkpoint == 0):
-        validate(model, criterion, valset, iteration, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank)
+        validate(model, criterion, valset, iteration, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank, training_dir_path)
         if rank == 0:
-          checkpoint_path = os.path.join(output_directory, "checkpoint_{}".format(iteration))
-          save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
+          checkpoint_path = os.path.join(output_directory, str(iteration))
+          save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path, training_dir_path)
 
       iteration += 1
 
-  checkpoint_path = os.path.join(output_directory, "checkpoint_{}".format(iteration - 1))
-  save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path)
+  checkpoint_path = os.path.join(output_directory,  str(iteration - 1))
+  save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
 
-def start_train(base_dir: str, training_dir_path: str, config: dict):
+def start_train(training_dir_path: str, config: dict):
   start = time.time()
   conv = load_from_file(get_symbols_path(training_dir_path))
 
   hparams = create_hparams(config["hparams"])
+  
   hparams.n_symbols = conv.get_symbol_ids_count()
+  log(training_dir_path, 'Final parsed hparams:')
+  x = '\n'.join(str(hparams.values()).split(','))
+  log(training_dir_path, x)
 
   torch.backends.cudnn.enabled = hparams.cudnn_enabled
   torch.backends.cudnn.benchmark = hparams.cudnn_benchmark
 
-  print("Epochs:", hparams.epochs)
-  print("Batchsize:", hparams.batch_size)
-  print("FP16 Run:", hparams.fp16_run)
-  print("Dynamic Loss Scaling:", hparams.dynamic_loss_scaling)
-  print("Distributed Run:", hparams.distributed_run)
-  print("cuDNN Enabled:", hparams.cudnn_enabled)
-  print("cuDNN Benchmark:", hparams.cudnn_benchmark)
+  log(training_dir_path, "Epochs:" + str(hparams.epochs))
+  log(training_dir_path, "Batchsize:" + str(hparams.batch_size))
+  log(training_dir_path, "FP16 Run:" + str(hparams.fp16_run))
+  log(training_dir_path, "Dynamic Loss Scaling:" + str(hparams.dynamic_loss_scaling))
+  log(training_dir_path, "Distributed Run:" + str(hparams.distributed_run))
+  log(training_dir_path, "cuDNN Enabled:" + str(hparams.cudnn_enabled))
+  log(training_dir_path, "cuDNN Benchmark:" + str(hparams.cudnn_benchmark))
 
   rank = 0 # 'rank of current gpu'
   n_gpus = 1 # 'number of gpus'
   group_name = "group_name" # 'Distributed group name'
 
-  train(config["pretrained_path"], config["use_pretrained_weights"], config["warm_start"], n_gpus, rank, group_name, hparams, config["continue_training"], training_dir_path)
+  train(config["pretrained_path"], config["merge_symbols"], config["warm_start"], n_gpus, rank, group_name, hparams, config["continue_training"], training_dir_path)
 
-  print('Finished training.')
+  log(training_dir_path, 'Finished training.')
   duration_s = time.time() - start
   duration_m = duration_s / 60
-  print('Duration: {:.2f}min'.format(duration_m))
+  log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
+# #   #hparams.batch_size=22 only when on all speakers simultanously thchs
 
-
-# #args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'checkpoint_49000')
-# #args.checkpoint_path = '/datasets/models/pretrained/tacotron2_statedict.pt'
-# #args.warm_start = 'false'
-# #args.warm_start = 'true'
-
-# debug = str.lower(args.debug) == 'true'
-
-# if debug:
-#   args.base_dir = '/datasets/models/taco2pt_ms'
-#   weights_path = os.path.join(args.base_dir, weights_name)
-#   hparams.sampling_rate = 16000
-#   hparams.batch_size = 35
-#   hparams.iters_per_checkpoint = 50
-#   hparams.epochs = 250 # 250
-#   args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
-#   if False:
-#     args.warm_start = 'false'
-#     args.use_pretrained_weights = 'true'
-#   else:
-#     args.warm_start = 'true'
-#     args.use_pretrained_weights = 'false'
-#     args.checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
-
-# use_pretrained_weights = str.lower(args.use_pretrained_weights) == 'true'
-
-
-# #hparams.iters_per_checkpoint = 500
-# # hparams.epochs = 500
-
-# # # TODO: as param
-# # if args.ds_name == "thchs":
-# #   # THCHS-30 has 16000
-# #   hparams.sampling_rate = 16000
-# #   #hparams.batch_size=22 only when on all speakers simultanously
-# #   hparams.batch_size=35
-# # elif args.ds_name == 'ljs':
-# #   hparams.sampling_rate = 22050
-# #   hparams.batch_size=26
-# # else: 
-# #   raise Exception()

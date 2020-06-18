@@ -47,7 +47,7 @@ train.json
   "hparams"
   "warm_start"
   "checkpoint_path"
-  "use_pretrained_weights"
+  "merge_symbols"
   "pretrained_model"
   "pretrained_model_symbols"
   "ds_name"
@@ -70,5 +70,5 @@ north_sven_v2.json
   "waveglow"
   "speaker"
   "ds_name"
-  "checkpoint"
+  "custom_checkpoint"
 }

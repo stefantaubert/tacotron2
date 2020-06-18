@@ -1,0 +1,10 @@
+{
+  "ipa": true,
+  "text": "examples/north_sven_v2.txt",
+  "is_ipa": true,
+  "map": "",
+  "subset_id": 0,
+  "hparams": "sampling_rate=22050",
+  "waveglow": "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt",
+  "custom_checkpoint": ""
+}

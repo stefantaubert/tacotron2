@@ -7,12 +7,13 @@ import numpy as np
 from scipy.io import wavfile
 import time
 
-from paths import savecheckpoints_dir, filelist_dir, input_symbols, wav_out_dir, symbols_path_name, checkpoint_output_dir
 import os
 import torch
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from text.symbol_converter import load_from_file, deserialize_symbol_ids
+from paths import get_symbols_path, inference_input_symbols_file_name, inference_output_file_name, get_checkpoint_dir
+from train import get_last_checkpoint
 
 # to load denoiser, glow etc.
 sys.path.append('waveglow/')
@@ -79,47 +80,25 @@ class Synthesizer():
     #to_wav("/tmp/{}_denoised.wav".format(dest_name), res, self.hparams.sampling_rate)
     return res
 
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--checkpoint', type=str, help='checkpoint name')
-  parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
-  parser.add_argument('--waveglow', type=str, help='Path to pretrained waveglow file')
-  parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
-  parser.add_argument('--ds_name', type=str, required=False)
-  parser.add_argument('--speaker', type=str, required=False)
-  parser.add_argument('--debug', type=str, default='true')
+def infer(training_dir_path: str, infer_dir_path: str, config: dict):
+  hparams = create_hparams(config["hparams"])
 
-  args = parser.parse_args()
-  hparams = create_hparams(args.hparams)
-  debug = str.lower(args.debug) == 'true'
-  if debug:
-    args.base_dir = '/datasets/models/taco2pt_ms'
-    speaker_dir = os.path.join(args.base_dir, filelist_dir)
-    checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499')
-    #checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, 'checkpoint_1499')
-    args.waveglow = '/datasets/models/pretrained/waveglow_256channels_universal_v5.pt'
-    args.output_name = 'test'
-    hparams.sampling_rate = 19000
-  else:
-    speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
-    checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, args.checkpoint)
-
-  conv = load_from_file(os.path.join(speaker_dir, symbols_path_name))
+  conv = load_from_file(get_symbols_path(training_dir_path))
   n_symbols = conv.get_symbol_ids_count()
-  print('Loaded {} symbols from {}'.format(n_symbols, speaker_dir))
+  print('Loaded {} symbols'.format(n_symbols))
 
-  output = np.array([])
 
-  with open(os.path.join(args.base_dir, input_symbols), 'r') as f:
+  with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'r') as f:
     serialized_symbol_ids_sentences = f.readlines()
 
-  #hparams.sampling_rate = 22050
   hparams.n_symbols = n_symbols
 
-  #checkpoint_path = os.path.join(args.base_dir, pretrained_dir, 'tacotron2_statedict.pt')
+  checkpoint = get_last_checkpoint(training_dir_path)
+  if config["custom_checkpoint"] != '':
+    checkpoint = config["custom_checkpoint"]
+  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   print("Using model:", checkpoint_path)
-  synt = Synthesizer(hparams, checkpoint_path, args.waveglow)
+  synt = Synthesizer(hparams, checkpoint_path, config["waveglow"])
 
   #complete_text = [item for sublist in sentences_symbols for item in sublist]
   #print(complete_text)
@@ -133,6 +112,8 @@ if __name__ == "__main__":
 
   print("Inferring...")
 
+  output = np.array([])
+
   for i, serialized_symbol_ids in tqdm(enumerate(serialized_symbol_ids_sentences), total=len(serialized_symbol_ids_sentences)):
     #print(sentence_symbols)
     symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
@@ -142,6 +123,33 @@ if __name__ == "__main__":
     #print(output)
 
   print("Saving...")
-  out_path = os.path.join(args.base_dir, wav_out_dir, args.output_name + ".wav")
+  out_path = os.path.join(infer_dir_path, inference_output_file_name)
   to_wav(out_path, output, synt.hparams.sampling_rate)
   print("Finished. Saved to:", out_path)
+
+
+# if __name__ == "__main__":
+#   parser = argparse.ArgumentParser()
+#   parser.add_argument('--base_dir', type=str, help='base directory')
+#   parser.add_argument('--checkpoint', type=str, help='checkpoint name')
+#   parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
+#   parser.add_argument('--waveglow', type=str, help='Path to pretrained waveglow file')
+#   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
+#   parser.add_argument('--ds_name', type=str, required=False)
+#   parser.add_argument('--speaker', type=str, required=False)
+#   parser.add_argument('--debug', type=str, default='true')
+
+#   args = parser.parse_args()
+#   hparams = create_hparams(args.hparams)
+#   debug = str.lower(args.debug) == 'true'
+#   if debug:
+#     args.base_dir = '/datasets/models/taco2pt_ms'
+#     speaker_dir = os.path.join(args.base_dir, filelist_dir)
+#     checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499')
+#     #checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, 'checkpoint_1499')
+#     args.waveglow = '/datasets/models/pretrained/waveglow_256channels_universal_v5.pt'
+#     args.output_name = 'test'
+#     hparams.sampling_rate = 19000
+#   else:
+#     speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
+#     checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, args.checkpoint)
