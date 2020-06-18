@@ -1,0 +1,17 @@
+{
+  "continue_training": false,
+  "seed": 1234,
+  "warm_start": true,
+  "pretrained_path": "/datasets/models/taco2pt_v2/ljs_ipa_baseline/checkpoints/49000",
+  "ds_name": "thchs_toneless_ipa",
+  "speaker": "A11",
+  "train_size": 0.9,
+  "validation_size": 1.0,
+  "hparams": "batch_size=26,iters_per_checkpoint=500,epochs=2000",
+  "merge_symbols": true,
+  "merge_mode": "unify",
+  "pretrained_model": "/datasets/models/taco2pt_v2/ljs_ipa_baseline/checkpoints/49000",
+  "pretrained_model_symbols": "/datasets/models/taco2pt_v2/ljs_ipa_baseline/filelist/symbols.json",
+  "map_pretrained_weights": true,
+  "map": "maps/en_chn_weights.txt"
+}

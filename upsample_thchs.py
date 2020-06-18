@@ -7,6 +7,7 @@ from scipy.io import wavfile
 import scipy.signal as sps
 import os
 from pathlib import Path
+import numpy as np
 
 def create_parent_folder(file: str):
   path = Path(file)
@@ -27,9 +28,20 @@ def convert(origin, dest):
   new_rate = 22050
 
   for _, speaker_name, basename, wav_path, chn in tqdm(parsed_data):
+    #if speaker_name != 'A11':
+    #  continue
+
     dest_wav_path = wav_path.replace(origin, dest)
     create_parent_folder(dest_wav_path)
-    new_data, _ = librosa.load(wav_path, sr=new_rate)
+
+    new_data, _ = librosa.load(wav_path, sr=new_rate, mono=True, dtype=np.float32)
+    #new_data = new_data.astype(np.uint16)
+
+    new_data = (new_data * 32767).astype(np.int16)
+    #new_data = ints.astype('<u2')
+    #new_data = little_endian.tostring()
+    #sf.write(tmp_file, audio, rate, subtype='PCM_16')
+    #librosa.output.write_wav(dest_wav_path, new_data, new_rate)
     wavfile.write(dest_wav_path, new_rate, new_data)
 
 

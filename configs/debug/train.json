@@ -13,5 +13,5 @@
   "pretrained_model": "/datasets/models/taco2pt_ms/saved_checkpoints/ljs_ipa_49000",
   "pretrained_model_symbols": "/datasets/models/taco2pt_ms/filelist/ljs_ipa/1/symbols.json",
   "map_pretrained_weights": true,
-  "map": "maps/en_chn.txt"
+  "map": "maps/en_chn_weights.txt"
 }
