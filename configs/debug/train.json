@@ -7,7 +7,7 @@
   "speaker": "A11",
   "train_size": 0.9,
   "validation_size": 1.0,
-  "hparams": "sampling_rate=16000,batch_size=35,iters_per_checkpoint=5,epochs=1",
+  "hparams": "batch_size=35,iters_per_checkpoint=5,epochs=1",
   "merge_symbols": true,
   "merge_mode": "unify",
   "pretrained_model": "/datasets/models/taco2pt_ms/saved_checkpoints/ljs_ipa_49000",

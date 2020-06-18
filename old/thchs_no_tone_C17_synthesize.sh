@@ -15,4 +15,4 @@ fi
 
 python script_txt_pre.py --base_dir=$base_dir --ipa='true' --text='examples/north_sven_v2.txt' --is_ipa='true' --speaker=$speaker --ds_name=$ds_name --speaker=$speaker --map='maps/en_chn.txt' --debug='false'
 
-python synthesize.py --base_dir=$base_dir --checkpoint=$checkpoint --output_name=north_chn_${ds_name}_${speaker}_${checkpoint_name} --waveglow=$waveglow --ds_name=$ds_name --speaker=$speaker --hparams='sampling_rate=19000' --debug='false'
+python synthesize.py --base_dir=$base_dir --checkpoint=$checkpoint --output_name=north_chn_${ds_name}_${speaker}_${checkpoint_name} --waveglow=$waveglow --ds_name=$ds_name --speaker=$speaker --hparams='' --debug='false'

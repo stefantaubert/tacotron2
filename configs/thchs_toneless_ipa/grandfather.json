@@ -4,7 +4,7 @@
   "is_ipa": false,
   "map": "maps/en_chn.txt",
   "subset_id": 1,
-  "hparams": "sampling_rate=19000",
+  "hparams": "",
   "waveglow": "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt",
   "custom_checkpoint": ""
 }

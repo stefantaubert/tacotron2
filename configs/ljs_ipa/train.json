@@ -7,6 +7,6 @@
   "speaker": "1",
   "train_size": 0.9,
   "validation_size": 1.0,
-  "hparams": "sampling_rate=22050,batch_size=26,iters_per_checkpoint=500,epochs=500",
+  "hparams": "batch_size=26,iters_per_checkpoint=500,epochs=500",
   "merge_symbols": false
 }
