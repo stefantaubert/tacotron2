@@ -30,16 +30,17 @@ ds_preprocessed_symbols_log_name = 'symbols.log'
 inference_dir = 'inference'
 inference_input_file_name = 'input.txt'
 inference_input_map_file_name = 'input_map.txt'
-inference_input_normalized_sentences_file_name = '1_input_normalized_sentences.txt'
-inference_input_sentences_file_name = '2_input_sentences.txt'
-inference_input_sentences_mapped_file_name = '3_input_sentences_mapped.txt'
-inference_input_symbols_file_name = '4_input_symbols.txt'
+inference_input_normalized_sentences_file_name = 'input_normalized_sentences.txt'
+inference_input_sentences_file_name = 'input_sentences.txt'
+inference_input_sentences_mapped_file_name = 'input_sentences_mapped.txt'
+inference_input_symbols_file_name = 'input_symbols.txt'
 inference_output_file_name = 'output.wav'
 inference_config_file = 'config.json'
 
 checkpoint_dir = 'checkpoints'
 
 train_config_file = 'config.json'
+train_map_file = 'weights_map.txt'
 description_txt_file = 'description.txt'
 
 def get_training_dir(base_dir: str, create: bool = True) -> str:
@@ -80,6 +81,9 @@ def get_inference_dir(training_dir_path: str, input_name: str, checkpoint: str, 
 
 def log_train_config(training_dir_path: str, config_path: str):
   copyfile(config_path, os.path.join(training_dir_path, train_config_file))
+
+def log_train_map(training_dir_path: str, map_path: str):
+  copyfile(map_path, os.path.join(training_dir_path, train_map_file))
 
 def log_inference_config(infer_dir_path: str, config_path: str):
   copyfile(config_path, os.path.join(infer_dir_path, inference_config_file))

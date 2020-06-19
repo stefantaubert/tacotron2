@@ -8,7 +8,7 @@ from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_log_name,
                    filelist_symbols_file_name, filelist_symbols_log_file_name,
                    get_ds_dir, get_filelist_dir, get_inference_dir,
                    inference_config_file, log_inference_config, log_input_file,
-                   log_map_file, log_train_config, train_config_file)
+                   log_map_file, log_train_config, train_config_file, log_train_map)
 from script_merge_speakers import merge_speakers
 from script_split_ds import split_ds
 from script_txt_pre import process_input_text
@@ -18,6 +18,7 @@ from train_log import reset_log
 from plot_embeddings import analyse
 
 def start_training(base_dir: str, training_dir_path: str):
+
   config_path = os.path.join(training_dir_path, train_config_file)
 
   with open(config_path, 'r', encoding='utf-8') as f:
@@ -26,6 +27,7 @@ def start_training(base_dir: str, training_dir_path: str):
   speaker_dir_path = get_ds_dir(base_dir, config["ds_name"], config["speaker"])
   if not config["continue_training"]:
     if config["merge_symbols"]:
+
       merge_speakers(base_dir, training_dir_path, config)
     else:
       # copy symbols.json
@@ -84,15 +86,17 @@ if __name__ == "__main__":
   for arg, value in sorted(vars(args).items()):
     print("Argument {}: {}".format(arg, value))
 
+  with open(args.config, 'r', encoding='utf-8') as f:
+    config = json.load(f)
+
   if args.mode == 'train':
     reset_log(training_dir_path)
     log_train_config(training_dir_path, args.config)
+    if config["merge_symbols"] and config["map_pretrained_weights"]:
+      log_train_map(training_dir_path, config["map"])
     start_training(args.base_dir, training_dir_path)
     analyse(training_dir_path)
   else:
-    with open(args.config, 'r', encoding='utf-8') as f:
-      config = json.load(f)
-
     input_file = config["text"]
     print("Infering text from:", input_file)
     input_name = os.path.splitext(os.path.basename(input_file))[0]

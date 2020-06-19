@@ -9,7 +9,7 @@ from math import sqrt
 import numpy as np
 from utils import parse_map
 
-from paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_symbols_log_file_name, filelist_file_name, filelist_weights_file_name
+from paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_symbols_log_file_name, filelist_file_name, filelist_weights_file_name, train_map_file
 from text.symbol_converter import load_from_file, serialize_symbol_ids, deserialize_symbol_ids
 from utils import csv_separator
 from hparams import create_hparams
@@ -74,7 +74,8 @@ def merge_speakers(base_dir: str, training_dir_path: str, config: dict):
       
   if config["map_pretrained_weights"]:
     # map: if destination occures multiple times, the last one is taken for initializing weights
-    ipa_mapping = parse_map(config["map"])
+    map_path = os.path.join(base_dir, train_map_file)
+    ipa_mapping = parse_map(map_path)
     for source_symbol, dest_symbol in ipa_mapping.items():
       if dest_symbol == '':
         continue
