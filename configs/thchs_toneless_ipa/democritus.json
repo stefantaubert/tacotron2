@@ -1,8 +1,8 @@
 {
   "ipa": true,
-  "text": "examples/en/grandfather.txt",
+  "text": "examples/en/democritus.txt",
   "is_ipa": false,
-  "map": "maps/en_chn_v3.txt",
+  "map": "maps/inference/en_chn_v3.txt",
   "subset_id": 1,
   "hparams": "",
   "waveglow": "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt",

@@ -8,6 +8,7 @@ import scipy.signal as sps
 import os
 from pathlib import Path
 import numpy as np
+from synthesize import to_wav
 
 def create_parent_folder(file: str):
   path = Path(file)
@@ -35,14 +36,16 @@ def convert(origin, dest):
     create_parent_folder(dest_wav_path)
 
     new_data, _ = librosa.load(wav_path, sr=new_rate, mono=True, dtype=np.float32)
-    #new_data = new_data.astype(np.uint16)
+    to_wav(dest_wav_path, new_data, new_rate)
 
-    new_data = (new_data * 32767).astype(np.int16)
+    #new_data = new_data.astype(np.uint16)
+    #new_data = (new_data * 32767).astype(np.int16)
+    #wavfile.write(dest_wav_path, new_rate, new_data)
+
     #new_data = ints.astype('<u2')
     #new_data = little_endian.tostring()
     #sf.write(tmp_file, audio, rate, subtype='PCM_16')
     #librosa.output.write_wav(dest_wav_path, new_data, new_rate)
-    wavfile.write(dest_wav_path, new_rate, new_data)
 
 
 if __name__ == "__main__":
@@ -57,6 +60,6 @@ if __name__ == "__main__":
 
   if debug:
     args.data_src_dir = '/datasets/thchs_wav'
-    args.data_dest_dir = '/datasets/thchs_wav_22050'
+    args.data_dest_dir = '/datasets/thchs_16bit_22050kHz'
   
   convert(args.data_src_dir, args.data_dest_dir)

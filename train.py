@@ -181,7 +181,7 @@ def get_last_checkpoint(training_dir_path: str):
   _, _, filenames = next(os.walk(checkpoint_dir))
   at_least_one_checkpoint_exists = len(filenames) > 0
   if at_least_one_checkpoint_exists:
-    last_checkpoint = list(sorted(filenames))[-1]
+    last_checkpoint = str(max(list(map(int, filenames))))
     return last_checkpoint
   else:
     return None

@@ -35,6 +35,7 @@ def to_wav(path, data, sr):
   wav = data
   wav_max = np.max(np.abs(wav))
   amp = (2**15 - 1) / max(10**-2, wav_max)
+  # to prevent overmodulation
   wav *= amp
   #wavfile.write(path, rate=sr, data=wav.astype(np.int16))
   wav_int = wav.astype(np.int16)
