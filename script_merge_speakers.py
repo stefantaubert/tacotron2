@@ -74,7 +74,7 @@ def merge_speakers(base_dir: str, training_dir_path: str, config: dict):
       
   if config["map_pretrained_weights"]:
     # map: if destination occures multiple times, the last one is taken for initializing weights
-    map_path = os.path.join(base_dir, train_map_file)
+    map_path = os.path.join(training_dir_path, train_map_file)
     ipa_mapping = parse_map(map_path)
     for source_symbol, dest_symbol in ipa_mapping.items():
       if dest_symbol == '':

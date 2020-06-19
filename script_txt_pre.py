@@ -78,7 +78,7 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, config: dict
   unknown_symbols = set()
   for s in accented_sents:
     if use_ipa:
-      symbols = extract_from_sentence(s)
+      symbols = extract_from_sentence(s, ignore_tones=config["ignore_tones"], ignore_arcs=config["ignore_arcs"])
     else:
       symbols = list(s)
 

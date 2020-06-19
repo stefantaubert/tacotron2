@@ -12,7 +12,7 @@ from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
 
-def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool):
+def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arcs: bool):
   epi = epitran.Epitran('eng-Latn')
   p = LJSpeechDatasetParser(data_dir)
   p.parse()
@@ -28,7 +28,7 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool):
     normalized_text = normalize_text(text)
     if use_ipa:
       ipa_text = epi.transliterate(normalized_text)
-      text_symbols = extract_from_sentence(ipa_text)
+      text_symbols = extract_from_sentence(ipa_text, ignore_tones=False, ignore_arcs=ignore_arcs)
     else:
       ipa_text = ''
       text_symbols = list(normalized_text)
@@ -72,6 +72,7 @@ if __name__ == "__main__":
   parser.add_argument('--data_dir', type=str, help='LJSpeech dataset directory')
   parser.add_argument('--ipa', type=str, help='transcribe to IPA')
   parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
+  parser.add_argument('--ignore_arcs', type=str, help='the name you want to call the dataset')
   parser.add_argument('--debug', type=str, default="true")
 
   args = parser.parse_args()
@@ -83,9 +84,11 @@ if __name__ == "__main__":
     args.data_dir = '/datasets/LJSpeech-1.1'
     args.ipa = 'false'
     args.ds_name = 'ljs_en'
+    args.ignore_arcs = 'false'
   
+  ignore_arcs = str.lower(args.ignore_arcs) == 'true'
   use_ipa = str.lower(args.ipa) == 'true'
 
-  preprocess(args.base_dir, args.data_dir, args.ds_name, use_ipa)
+  preprocess(args.base_dir, args.data_dir, args.ds_name, use_ipa, ignore_arcs)
 
   

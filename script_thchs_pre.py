@@ -1,7 +1,6 @@
 import argparse
 import os
 from parser.thchs_parser import parse as parse_thchs
-from dragonmapper import hanzi
 
 import epitran
 import pandas as pd
@@ -12,30 +11,22 @@ from paths import get_ds_dir, ds_preprocessed_file_log_name, ds_preprocessed_fil
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
+from text.chn_tools import chn_to_ipa
 
-def chn_to_ipa(chn):
-  chn_words = chn.split(' ')
-  res = []
-  for w in chn_words:
-    chn_syll_ipa = hanzi.to_ipa(w)
-    chn_ipa = chn_syll_ipa.replace(' ', '')
-    res.append(chn_ipa)
-  res = ' '.join(res)
-  return res
 
-def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool):
+def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool):
   parsed_data = parse_thchs(data_dir)
   data = {}
 
   ### normalize input
   for _, speaker_name, basename, wav_path, chn in tqdm(parsed_data):
     try:
-      chn_ipa = chn_to_ipa(chn)
+      chn_ipa = chn_to_ipa(chn, add_period=True)
     except Exception as e:
-      # print("Error on:", x, e)
+      print("Error on:", chn, e)
       continue
 
-    text_symbols = extract_from_sentence(chn_ipa, ignore_tones)
+    text_symbols = extract_from_sentence(chn_ipa, ignore_tones, ignore_arcs)
     if speaker_name not in data:
       data[speaker_name] = []
 
@@ -64,7 +55,7 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool):
     for bn, py, ipa_txt, syms, wav in recordings:
       symbol_ids = conv.symbols_to_ids(syms, add_eos=True, replace_unknown_with_pad=True)
       serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
-      result.append((bn, wav, py, ipa_txt, serialized_symbol_ids))
+      result.append((bn, wav, py, ipa_txt, serialized_symbol_ids, ''.join(syms)))
 
     ### save
     #dest_filename = os.path.join(dataset_path, 'preprocessed.txt')
@@ -73,7 +64,7 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool):
     df1 = df.iloc[:, [1, 4]]
     df1.to_csv(os.path.join(ds_dir, ds_preprocessed_file_name), header=None, index=None, sep=csv_separator)
     print("Dataset saved.")
-    df2 = df.iloc[:, [0, 2, 3]]
+    df2 = df.iloc[:, [0, 2, 3, 5]]
     df2.to_csv(os.path.join(ds_dir, ds_preprocessed_file_log_name), header=None, index=None, sep=csv_separator)
     print("Dataset preprocessing finished.")
 
@@ -83,6 +74,7 @@ if __name__ == "__main__":
   parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
   parser.add_argument('--ignore_tones', type=str)
+  parser.add_argument('--ignore_arcs', type=str)
   parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
   parser.add_argument('--debug', type=str, default="true")
 
@@ -92,10 +84,12 @@ if __name__ == "__main__":
 
   if debug:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.data_dir = '/datasets/thchs_wav'
-    args.ds_name = 'thchs_toneless_ipa'
+    args.data_dir = '/datasets/thchs_16bit_22050kHz'
+    args.ds_name = 'thchs_test'
     args.ignore_tones = 'true'
+    args.ignore_arcs = 'true'
   
   ignore_tones = str.lower(args.ignore_tones) == 'true'
+  ignore_arcs = str.lower(args.ignore_arcs) == 'true'
 
-  preprocess(args.base_dir, args.data_dir, args.ds_name, ignore_tones)
+  preprocess(args.base_dir, args.data_dir, args.ds_name, ignore_tones, ignore_arcs)

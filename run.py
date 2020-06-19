@@ -27,7 +27,6 @@ def start_training(base_dir: str, training_dir_path: str):
   speaker_dir_path = get_ds_dir(base_dir, config["ds_name"], config["speaker"])
   if not config["continue_training"]:
     if config["merge_symbols"]:
-
       merge_speakers(base_dir, training_dir_path, config)
     else:
       # copy symbols.json

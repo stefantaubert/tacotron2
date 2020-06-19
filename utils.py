@@ -15,7 +15,7 @@ def parse_map(path: str) -> OrderedDict:
   for x in tmp:
     if '->' in x:
       from_to = x.rstrip('\n').replace(' -> ', '')
-      symbs = extract_from_sentence(from_to)
+      symbs = extract_from_sentence(from_to, ignore_tones=False, ignore_arcs=False)
       a = symbs[0]
       if len(symbs) > 2:
         b = symbs[1:]
