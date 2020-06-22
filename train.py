@@ -186,7 +186,7 @@ def get_last_checkpoint(training_dir_path: str):
   else:
     return None
 
-def train(pretrained_path, merge_symbols: bool, warm_start, n_gpus,
+def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
       rank, group_name, hparams, continue_training, training_dir_path):
   """Training and validation logging results to tensorboard and stdout
 
@@ -247,7 +247,7 @@ def train(pretrained_path, merge_symbols: bool, warm_start, n_gpus,
         raise Exception("Warm start was not possible because the path to the model was not valid.")
       warm_start_model(pretrained_path, model, hparams.ignore_layers, training_dir_path)
     
-    if merge_symbols:
+    if use_weights:
       weight_file = os.path.join(filelist_dir_path, filelist_weights_file_name)
       init_weights(weight_file, model, training_dir_path)
 
@@ -330,7 +330,8 @@ def start_train(training_dir_path: str, config: dict):
   n_gpus = 1 # 'number of gpus'
   group_name = "group_name" # 'Distributed group name'
 
-  train(config["pretrained_path"], config["merge_symbols"], config["warm_start"], n_gpus, rank, group_name, hparams, config["continue_training"], training_dir_path)
+  use_weights = config["weight_map_mode"] != 'none'
+  train(config["pretrained_path"], use_weights, config["warm_start"], n_gpus, rank, group_name, hparams, config["continue_training"], training_dir_path)
 
   log(training_dir_path, 'Finished training.')
   duration_s = time.time() - start

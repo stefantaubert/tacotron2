@@ -69,6 +69,9 @@ class SymbolConverter():
     subset, symbol = self._id_symbol_dict[symbol_id]
     return symbol
 
+  def symbol_exists(self, symbol: str):
+    return symbol in self._symbol_id_dict.keys()
+
   def symbol_to_id(self, symbol: str, subset_id_if_multiple: int = _initial_subset_id):
     subsets = self._symbol_id_dict[symbol]
     symbol_has_multiple_ids = len(subsets.keys()) > 1

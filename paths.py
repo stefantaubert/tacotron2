@@ -18,12 +18,13 @@ filelist_validation_file_name = 'audio_text_val_filelist.csv'
 filelist_symbols_file_name = 'symbols.json'
 filelist_symbols_log_file_name = 'symbols.log'
 filelist_file_name = 'filelist.csv'
+filelist_file_log_name = 'filelist_log.csv'
 filelist_weights_file_name = 'weights.npy'
-# TODO: include debug file split
 
+# TODO: include debug file split
 ds_dir = 'ds'
 ds_preprocessed_file_name = 'filelist.csv'
-ds_preprocessed_file_log_name = 'filelist_log.csv'
+#ds_preprocessed_file_log_name = 'filelist_log.csv'
 ds_preprocessed_symbols_name = 'symbols.json'
 ds_preprocessed_symbols_log_name = 'symbols.log'
 
@@ -115,7 +116,7 @@ if __name__ == "__main__":
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.custom_training_name = 'debug'
   
-  if args.custom_training_name != None:
+  if args.custom_training_name != None and args.custom_training_name != "":
     train_dir_path = os.path.join(args.base_dir, args.custom_training_name)
     os.makedirs(train_dir_path, exist_ok=True)
     train_dir_name = args.custom_training_name

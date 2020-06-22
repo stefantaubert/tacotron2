@@ -8,6 +8,9 @@ from collections import OrderedDict
 
 csv_separator = '\t'
 
+wavpath_col = 1
+symbols_str_col = 2
+
 def parse_map_json(path: str) -> dict:
   with open(path, 'r') as f:
     tmp = json.load(f)
@@ -47,10 +50,9 @@ def load_wav_to_torch(full_path):
 
 def load_filepaths_and_symbols(filename):
   data = pd.read_csv(filename, header=None, sep=csv_separator)
-  #wavpath_col = 0
-  #symbols_str_col = 1
-  #data = data.iloc[:,[wavpath_col, symbols_str_col]]
-  return data.values
+  data = data.iloc[:, [wavpath_col, symbols_str_col]]
+  data = data.values
+  return data
 
 
 def to_gpu(x):

@@ -9,7 +9,7 @@ from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_log_name,
                    get_ds_dir, get_filelist_dir, get_inference_dir,
                    inference_config_file, log_inference_config, log_input_file,
                    log_map_file, log_train_config, train_config_file, log_train_map)
-from script_merge_speakers import merge_speakers
+from script_prepare_ds import prepare
 from script_split_ds import split_ds
 from script_txt_pre import process_input_text
 from synthesize import infer
@@ -26,24 +26,7 @@ def start_training(base_dir: str, training_dir_path: str):
 
   speaker_dir_path = get_ds_dir(base_dir, config["ds_name"], config["speaker"])
   if not config["continue_training"]:
-    if config["merge_symbols"]:
-      merge_speakers(base_dir, training_dir_path, config)
-    else:
-      # copy symbols.json
-      a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_name)
-      b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name)
-      copyfile(a, b)
-
-      # copy symbols.log
-      a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_log_name)
-      b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_log_file_name)
-      copyfile(a, b)
-
-      # copy filelist.csv
-      a = os.path.join(speaker_dir_path, ds_preprocessed_file_name)
-      b = os.path.join(get_filelist_dir(training_dir_path), filelist_file_name)
-      copyfile(a, b)
-
+    prepare(base_dir, training_dir_path, config)
     split_ds(base_dir, training_dir_path, config)
     
   start_train(training_dir_path, config)
@@ -73,7 +56,7 @@ if __name__ == "__main__":
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.training_dir = 'debug'
     train = True
-    train = False
+    #train = False
     if train:
       args.mode = 'train'
       args.config = "configs/debug/train.json"
@@ -93,7 +76,7 @@ if __name__ == "__main__":
   if args.mode == 'train':
     reset_log(training_dir_path)
     log_train_config(training_dir_path, args.config)
-    if config["merge_symbols"] and config["map_pretrained_weights"]:
+    if config["weight_map_mode"] != 'none':
       log_train_map(training_dir_path, config["map"])
     start_training(args.base_dir, training_dir_path)
     analyse(training_dir_path)

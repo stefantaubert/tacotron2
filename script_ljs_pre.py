@@ -5,9 +5,10 @@ from parser.LJSpeechDatasetParser import LJSpeechDatasetParser
 import epitran
 import pandas as pd
 from tqdm import tqdm
+import librosa
 
 from ipa2symb import extract_from_sentence
-from paths import get_ds_dir, ds_preprocessed_file_log_name, ds_preprocessed_file_name, ds_preprocessed_symbols_log_name, ds_preprocessed_symbols_name
+from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_log_name, ds_preprocessed_symbols_name
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
@@ -49,20 +50,27 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arc
 
   ### convert text to symbols
   result = []
-  for bn, norm_text, ipa_txt, syms, wav in data:
+  for bn, norm_eng, eng_ipa, syms, wav in tqdm(data):
     symbol_ids = conv.symbols_to_ids(syms, add_eos=True, replace_unknown_with_pad=True)
     serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
-    result.append((bn, wav, norm_text, ipa_txt, serialized_symbol_ids))
+    duration = librosa.get_duration(filename=wav)
+    symbols_str = ''.join(syms)
+    result.append((bn, wav, serialized_symbol_ids, duration, norm_eng, eng_ipa, symbols_str))
+    #result.append((bn, wav, norm_text, ipa_txt, serialized_symbol_ids, duration))
 
   ### save
   #dest_filename = os.path.join(dataset_path, 'preprocessed.txt')
  
   df = pd.DataFrame(result)
-  df1 = df.iloc[:, [1, 4]]
-  df1.to_csv(os.path.join(ds_dir, ds_preprocessed_file_name), header=None, index=None, sep=csv_separator)
+  df.to_csv(os.path.join(ds_dir, ds_preprocessed_file_name), header=None, index=None, sep=csv_separator)
   print("Dataset saved.")
-  df2 = df.iloc[:, [0, 2, 3]]
-  df2.to_csv(os.path.join(ds_dir, ds_preprocessed_file_log_name), header=None, index=None, sep=csv_separator)
+
+  # df = pd.DataFrame(result)
+  # df1 = df.iloc[:, [1, 4]]
+  # df1.to_csv(os.path.join(ds_dir, ds_preprocessed_file_name), header=None, index=None, sep=csv_separator)
+  # print("Dataset saved.")
+  # df2 = df.iloc[:, [0, 2, 3, 5]]
+  # df2.to_csv(os.path.join(ds_dir, ds_preprocessed_file_log_name), header=None, index=None, sep=csv_separator)
   print("Dataset preprocessing finished.")
 
 
@@ -82,9 +90,9 @@ if __name__ == "__main__":
   if debug:
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.data_dir = '/datasets/LJSpeech-1.1'
-    args.ipa = 'false'
-    args.ds_name = 'ljs_en'
-    args.ignore_arcs = 'false'
+    args.ipa = 'true'
+    args.ds_name = 'ljs_ipa_v2'
+    args.ignore_arcs = 'true'
   
   ignore_arcs = str.lower(args.ignore_arcs) == 'true'
   use_ipa = str.lower(args.ipa) == 'true'
