@@ -1,8 +1,10 @@
 {
   "ipa": true,
-  "text": "examples/grandfather.txt",
-  "is_ipa": false,
-  "map": "maps/en_chn.txt",
+  "text": "examples/ipa/north_sven_v2.txt",
+  "is_ipa": true,
+  "ignore_tones": true,
+  "ignore_arcs": true,
+  "map": "maps/inference/en_chn_v4.json",
   "subset_id": 1,
   "hparams": "",
   "waveglow": "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt",

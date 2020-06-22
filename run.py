@@ -72,12 +72,14 @@ if __name__ == "__main__":
   if debug:
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.training_dir = 'debug'
-    if True:
+    train = True
+    train = False
+    if train:
       args.mode = 'train'
-      args.config = "configs/thchs_toneless_ipa/train.json"
+      args.config = "configs/debug/train.json"
     else:
       args.mode = 'infer'
-      args.config = "configs/thchs_toneless_ipa/infer.json"
+      args.config = "configs/debug/infer.json"
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 

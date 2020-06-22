@@ -7,7 +7,7 @@ from torch import nn
 import torch
 from math import sqrt
 import numpy as np
-from utils import parse_map
+from utils import parse_map_json
 
 from paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_symbols_log_file_name, filelist_file_name, filelist_weights_file_name, train_map_file
 from text.symbol_converter import load_from_file, serialize_symbol_ids, deserialize_symbol_ids
@@ -66,25 +66,23 @@ def merge_speakers(base_dir: str, training_dir_path: str, config: dict):
   checkpoint_dict = torch.load(config["pretrained_model"], map_location='cpu')
   pretrained_emb = checkpoint_dict['state_dict']['embedding.weight']
 
-  map_dataid_pretrainedid = []
+  map_dataid_pretrainedid = {}
 
   for symbol_id in pretrained_speaker_conv.get_symbol_ids():
     if symbol_id in pretrained_symbols_ids:
-      map_dataid_pretrainedid.append((symbol_id, symbol_id))
+      map_dataid_pretrainedid[symbol_id] = symbol_id
       
   if config["map_pretrained_weights"]:
     # map: if destination occures multiple times, the last one is taken for initializing weights
     map_path = os.path.join(training_dir_path, train_map_file)
-    ipa_mapping = parse_map(map_path)
-    for source_symbol, dest_symbol in ipa_mapping.items():
-      if dest_symbol == '':
-        continue
+    ipa_mapping = parse_map_json(map_path)
+    for dest_symbol, source_symbol in ipa_mapping.items():
       source_symbol_id = pretrained_speaker_conv.symbol_to_id(source_symbol, subset_id_if_multiple=0)
       dest_symbol = dest_symbol[0]
       dest_symbol_id = pretrained_speaker_conv.symbol_to_id(dest_symbol, subset_id_if_multiple=1)
-      map_dataid_pretrainedid.append((dest_symbol_id, source_symbol_id))
+      map_dataid_pretrainedid[dest_symbol_id] = source_symbol_id
 
-  for data_id, pretrained_id in map_dataid_pretrainedid:
+  for data_id, pretrained_id in map_dataid_pretrainedid.items():
     pretrained_symbol = pretrained_speaker_conv.id_to_symbol(pretrained_id)
     dest_symbol = pretrained_speaker_conv.id_to_symbol(data_id)
     log(training_dir_path, 'Mapped pretrained weights from symbol {} to symbol {}'.format(pretrained_symbol, dest_symbol))

@@ -2,30 +2,36 @@ import numpy as np
 import pandas as pd
 from scipy.io.wavfile import read
 import torch
+import json
 from ipa2symb import extract_from_sentence
 from collections import OrderedDict
 
 csv_separator = '\t'
 
-def parse_map(path: str) -> OrderedDict:
+def parse_map_json(path: str) -> dict:
   with open(path, 'r') as f:
-    tmp = f.readlines()
-  #ipa_mapping = {x.strip()[0]: x.strip()[-1] for x in tmp}
-  ipa_mapping = OrderedDict()
-  for x in tmp:
-    if '->' in x:
-      from_to = x.rstrip('\n').replace(' -> ', '')
-      symbs = extract_from_sentence(from_to, ignore_tones=False, ignore_arcs=False)
-      a = symbs[0]
-      if len(symbs) > 2:
-        b = symbs[1:]
-      else:
-        b = [symbs[1]]
-    else:
-      a = x.rstrip('\n')
-      b = ''
-    ipa_mapping[a] = b
-  return ipa_mapping
+    tmp = json.load(f)
+  return tmp
+
+# def parse_map(path: str) -> OrderedDict:
+#   with open(path, 'r') as f:
+#     tmp = f.readlines()
+#   #ipa_mapping = {x.strip()[0]: x.strip()[-1] for x in tmp}
+#   ipa_mapping = OrderedDict()
+#   for x in tmp:
+#     if '->' in x:
+#       from_to = x.rstrip('\n').replace(' -> ', '')
+#       symbs = extract_from_sentence(from_to, ignore_tones=False, ignore_arcs=False)
+#       a = symbs[0]
+#       if len(symbs) > 2:
+#         b = symbs[1:]
+#       else:
+#         b = [symbs[1]]
+#     else:
+#       a = x.rstrip('\n')
+#       b = ''
+#     ipa_mapping[a] = b
+#   return ipa_mapping
 
 def get_mask_from_lengths(lengths):
   max_len = torch.max(lengths).item()
