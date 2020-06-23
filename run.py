@@ -24,7 +24,6 @@ def start_training(base_dir: str, training_dir_path: str):
   with open(config_path, 'r', encoding='utf-8') as f:
     config = json.load(f)
 
-  speaker_dir_path = get_ds_dir(base_dir, config["ds_name"], config["speaker"])
   if not config["continue_training"]:
     prepare(base_dir, training_dir_path, config)
     split_ds(base_dir, training_dir_path, config)
