@@ -1,12 +1,12 @@
 {
   "ipa": true,
-  "text": "examples/ipa/north_sven_v2.txt",
+  "text": "examples/ipa/thchs_toneless.txt",
   "is_ipa": true,
   "ignore_tones": true,
   "ignore_arcs": true,
-  "map": "maps/inference/en_chn_v5.json",
+  "map": "",
   "subset_id": 0,
-  "speaker_id": 0,
+  "speaker": "thchs_v5,A23",
   "hparams": "",
   "waveglow": "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt",
   "custom_checkpoint": ""

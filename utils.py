@@ -12,6 +12,12 @@ wavpath_col = 1
 symbols_str_col = 2
 speaker_id_col = 4
 
+
+def parse_ds_speakers(ds_speakers: str):
+  speakers = ds_speakers.split(';')
+  ds_speakers = [x.split(',') + [i] for i, x in enumerate(speakers)]
+  return ds_speakers
+
 def parse_map_json(path: str) -> dict:
   with open(path, 'r') as f:
     tmp = json.load(f)

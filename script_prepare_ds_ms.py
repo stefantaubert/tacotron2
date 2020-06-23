@@ -15,14 +15,13 @@ from utils import csv_separator
 from hparams import create_hparams
 from train_log import log
 from shutil import copyfile
-from utils import symbols_str_col
+from utils import symbols_str_col, parse_ds_speakers
 
 def prepare(base_dir: str, training_dir_path: str, config: dict):
-  speakers = config["speakers"].split(';')
-  ds_speakers = [x.split(',') for x in speakers]
+  ds_speakers = parse_ds_speakers(config["speakers"])
   final_conv = init_from_symbols(set())
   
-  for ds, speaker in ds_speakers:
+  for ds, speaker, _ in ds_speakers:
     speaker_dir_path = get_ds_dir(base_dir, ds, speaker)
     symbols_path = os.path.join(speaker_dir_path, ds_preprocessed_symbols_name)
     speaker_conv = load_from_file(symbols_path)
@@ -37,8 +36,7 @@ def prepare(base_dir: str, training_dir_path: str, config: dict):
 
   result = []
 
-  for speaker_id, ds_speaker in enumerate(ds_speakers):
-    ds, speaker = ds_speaker
+  for ds, speaker, speaker_id in ds_speakers:
     speaker_dir_path = get_ds_dir(base_dir, ds, speaker)
     prepr_path = os.path.join(speaker_dir_path, ds_preprocessed_file_name)
     symbols_path = os.path.join(speaker_dir_path, ds_preprocessed_symbols_name)

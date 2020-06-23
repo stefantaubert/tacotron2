@@ -16,6 +16,7 @@ from data_utils import SymbolsMelLoader, SymbolsMelCollate
 from loss_function import Tacotron2Loss
 from logger import Tacotron2Logger
 from hparams import create_hparams
+from utils import parse_ds_speakers
 
 from text.symbol_converter import load_from_file
 from paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
@@ -311,7 +312,7 @@ def start_train(training_dir_path: str, config: dict):
   hparams = create_hparams(config["hparams"])
   
   hparams.n_symbols = conv.get_symbol_ids_count()
-  n_speakers = len(config["speakers"].split(';'))
+  n_speakers = len(parse_ds_speakers(config["speakers"]))
   hparams.n_speakers = n_speakers
   log(training_dir_path, 'Final parsed hparams:')
   x = '\n'.join(str(hparams.values()).split(','))

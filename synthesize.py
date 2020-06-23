@@ -14,6 +14,7 @@ from nltk.tokenize import sent_tokenize
 from text.symbol_converter import load_from_file, deserialize_symbol_ids
 from paths import get_symbols_path, inference_input_symbols_file_name, inference_output_file_name, get_checkpoint_dir
 from train import get_last_checkpoint
+from utils import parse_ds_speakers
 
 # to load denoiser, glow etc.
 sys.path.append('waveglow/')
@@ -88,7 +89,8 @@ def infer(training_dir_path: str, infer_dir_path: str, config: dict, train_confi
   conv = load_from_file(get_symbols_path(training_dir_path))
   n_symbols = conv.get_symbol_ids_count()
   print('Loaded {} symbols'.format(n_symbols))
-  n_speakers = len(train_config["speakers"].split(';'))
+  ds_speakers = parse_ds_speakers(train_config["speakers"])
+  n_speakers = len(ds_speakers)
   print('Loaded {} speakers'.format(n_speakers))
 
   with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'r') as f:
@@ -118,11 +120,20 @@ def infer(training_dir_path: str, infer_dir_path: str, config: dict, train_confi
 
   output = np.array([])
 
+  final_speaker_id = -1
+  dest_ds, dest_speaker = config["speaker"].split(',')
+  for ds, speaker, speaker_id in ds_speakers:
+    if speaker == dest_speaker and ds == dest_ds:
+      final_speaker_id = speaker_id
+      break
+  if final_speaker_id == -1:
+    raise Exception("Speaker {} not available!".format(speaker))
+
   for i, serialized_symbol_ids in tqdm(enumerate(serialized_symbol_ids_sentences), total=len(serialized_symbol_ids_sentences)):
     #print(sentence_symbols)
     symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
     print("{} ({})".format(conv.ids_to_text(symbol_ids), len(symbol_ids)))
-    synthesized_sentence = synt.infer(symbol_ids, str(i), config["speaker_id"])
+    synthesized_sentence = synt.infer(symbol_ids, str(i), final_speaker_id)
     output = np.concatenate((output, synthesized_sentence, sentence_pause), axis=0)
     #print(output)
 
