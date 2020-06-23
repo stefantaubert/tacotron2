@@ -90,8 +90,8 @@ if __name__ == "__main__":
   if debug:
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.data_dir = '/datasets/LJSpeech-1.1'
-    args.ipa = 'true'
-    args.ds_name = 'ljs_ipa_v2'
+    args.ipa = 'false'
+    args.ds_name = 'ljs_en_v2'
     args.ignore_arcs = 'true'
   
   ignore_arcs = str.lower(args.ignore_arcs) == 'true'

@@ -30,7 +30,7 @@ ds_preprocessed_symbols_log_name = 'symbols.log'
 
 inference_dir = 'inference'
 inference_input_file_name = 'input.txt'
-inference_input_map_file_name = 'input_map.txt'
+inference_input_map_file_name = 'input_map.json'
 inference_input_normalized_sentences_file_name = 'input_normalized_sentences.txt'
 inference_input_sentences_file_name = 'input_sentences.txt'
 inference_input_sentences_mapped_file_name = 'input_sentences_mapped.txt'
@@ -41,7 +41,7 @@ inference_config_file = 'config.json'
 checkpoint_dir = 'checkpoints'
 
 train_config_file = 'config.json'
-train_map_file = 'weights_map.txt'
+train_map_file = 'weights_map.json'
 description_txt_file = 'description.txt'
 
 def get_training_dir(base_dir: str, create: bool = True) -> str:
