@@ -311,6 +311,8 @@ def start_train(training_dir_path: str, config: dict):
   hparams = create_hparams(config["hparams"])
   
   hparams.n_symbols = conv.get_symbol_ids_count()
+  n_speakers = len(config["speakers"].split(';'))
+  hparams.n_speakers = n_speakers
   log(training_dir_path, 'Final parsed hparams:')
   x = '\n'.join(str(hparams.values()).split(','))
   log(training_dir_path, x)

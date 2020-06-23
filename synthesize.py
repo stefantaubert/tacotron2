@@ -61,12 +61,13 @@ class Synthesizer():
       k.float()
     self.denoiser = Denoiser(self.waveglow)
 
-  def infer(self, symbols, dest_name):
+  def infer(self, symbols, dest_name, speaker_id: int):
     sequence = np.array([symbols])
     sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
+    speaker_id = torch.IntTensor([speaker_id]).cuda().long()
 
     # Decode text input and plot results
-    mel_outputs, mel_outputs_postnet, _, alignments = self.model.inference(sequence)
+    mel_outputs, mel_outputs_postnet, _, alignments = self.model.inference(sequence, speaker_id)
     # plot_data((mel_outputs.float().data.cpu().numpy()[0], mel_outputs_postnet.float().data.cpu().numpy()[0], alignments.float().data.cpu().numpy()[0].T))
 
     with torch.no_grad():
@@ -81,18 +82,20 @@ class Synthesizer():
     #to_wav("/tmp/{}_denoised.wav".format(dest_name), res, self.hparams.sampling_rate)
     return res
 
-def infer(training_dir_path: str, infer_dir_path: str, config: dict):
+def infer(training_dir_path: str, infer_dir_path: str, config: dict, train_config: dict):
   hparams = create_hparams(config["hparams"])
 
   conv = load_from_file(get_symbols_path(training_dir_path))
   n_symbols = conv.get_symbol_ids_count()
   print('Loaded {} symbols'.format(n_symbols))
-
+  n_speakers = len(train_config["speakers"].split(';'))
+  print('Loaded {} speakers'.format(n_speakers))
 
   with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'r') as f:
     serialized_symbol_ids_sentences = f.readlines()
 
   hparams.n_symbols = n_symbols
+  hparams.n_speakers = n_speakers
 
   checkpoint = get_last_checkpoint(training_dir_path)
   if config["custom_checkpoint"] != '':
@@ -119,7 +122,7 @@ def infer(training_dir_path: str, infer_dir_path: str, config: dict):
     #print(sentence_symbols)
     symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
     print("{} ({})".format(conv.ids_to_text(symbol_ids), len(symbol_ids)))
-    synthesized_sentence = synt.infer(symbol_ids, str(i))
+    synthesized_sentence = synt.infer(symbol_ids, str(i), config["speaker_id"])
     output = np.concatenate((output, synthesized_sentence, sentence_pause), axis=0)
     #print(output)
 

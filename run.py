@@ -37,8 +37,13 @@ def start_inference(training_dir_path: str, infer_dir_path: str):
   with open(config_path, 'r', encoding='utf-8') as f:
     config = json.load(f)
 
+  train_config_path = os.path.join(training_dir_path, train_config_file)
+
+  with open(train_config_path, 'r', encoding='utf-8') as f:
+    train_config = json.load(f)
+
   process_input_text(training_dir_path, infer_dir_path, config)
-  infer(training_dir_path, infer_dir_path, config)
+  infer(training_dir_path, infer_dir_path, config, train_config)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -55,8 +60,8 @@ if __name__ == "__main__":
   if debug:
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.training_dir = 'debug_ms'
+    train = False
     train = True
-    #train = False
     if train:
       args.mode = 'train'
       args.config = "configs/debug/train.json"

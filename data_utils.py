@@ -27,10 +27,10 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
 
   def get_mel_symbols_pair(self, audiopath_and_text):
     # separate filename and text
-    audiopath, serialized_symbol_ids = audiopath_and_text[0], audiopath_and_text[1]
+    audiopath, serialized_symbol_ids, speaker_id = audiopath_and_text[0], audiopath_and_text[1], audiopath_and_text[2]
     symbols_tensor = self.get_symbols(serialized_symbol_ids)
     mel_tensor = self.get_mel(audiopath)
-    return (symbols_tensor, mel_tensor)
+    return (symbols_tensor, mel_tensor, speaker_id)
 
   def get_mel(self, filename):
     if not self.load_mel_from_disk:
@@ -103,6 +103,22 @@ class SymbolsMelCollate():
       mel_padded[i, :, :mel.size(1)] = mel
       gate_padded[i, mel.size(1)-1:] = 1
       output_lengths[i] = mel.size(1)
+
+
+    # count number of items - characters in text
+    #len_x = []
+    speaker_ids = []
+    for i in range(len(ids_sorted_decreasing)):
+      #len_symb = batch[ids_sorted_decreasing[i]][0].get_shape()[0]
+      #len_x.append(len_symb)
+      speaker_ids.append(batch[ids_sorted_decreasing[i]][2])
+
+    #len_x = torch.Tensor(len_x)
+    speaker_ids = torch.Tensor(speaker_ids)
+
+    return text_padded, input_lengths, mel_padded, gate_padded, \
+      output_lengths, speaker_ids
+
 
     return text_padded, input_lengths, mel_padded, gate_padded, \
       output_lengths

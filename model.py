@@ -204,9 +204,11 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
   def __init__(self, hparams):
     super(Decoder, self).__init__()
+    encoder_out_embedding_dim = hparams.encoder_embedding_dim + hparams.speakers_embedding_dim
+
     self.n_mel_channels = hparams.n_mel_channels
     self.n_frames_per_step = hparams.n_frames_per_step
-    self.encoder_embedding_dim = hparams.encoder_embedding_dim
+    self.encoder_embedding_dim = encoder_out_embedding_dim
     self.attention_rnn_dim = hparams.attention_rnn_dim
     self.decoder_rnn_dim = hparams.decoder_rnn_dim
     self.prenet_dim = hparams.prenet_dim
@@ -220,24 +222,24 @@ class Decoder(nn.Module):
       [hparams.prenet_dim, hparams.prenet_dim])
 
     self.attention_rnn = nn.LSTMCell(
-      hparams.prenet_dim + hparams.encoder_embedding_dim,
+      hparams.prenet_dim + encoder_out_embedding_dim,
       hparams.attention_rnn_dim)
 
     self.attention_layer = Attention(
-      hparams.attention_rnn_dim, hparams.encoder_embedding_dim,
+      hparams.attention_rnn_dim, encoder_out_embedding_dim,
       hparams.attention_dim, hparams.attention_location_n_filters,
       hparams.attention_location_kernel_size)
 
     self.decoder_rnn = nn.LSTMCell(
-      hparams.attention_rnn_dim + hparams.encoder_embedding_dim,
+      hparams.attention_rnn_dim + encoder_out_embedding_dim,
       hparams.decoder_rnn_dim, 1)
 
     self.linear_projection = LinearNorm(
-      hparams.decoder_rnn_dim + hparams.encoder_embedding_dim,
+      hparams.decoder_rnn_dim + encoder_out_embedding_dim,
       hparams.n_mel_channels * hparams.n_frames_per_step)
 
     self.gate_layer = LinearNorm(
-      hparams.decoder_rnn_dim + hparams.encoder_embedding_dim, 1,
+      hparams.decoder_rnn_dim + encoder_out_embedding_dim, 1,
       bias=True, w_init_gain='sigmoid')
 
   def get_go_frame(self, memory):
@@ -465,22 +467,27 @@ class Tacotron2(nn.Module):
     std = sqrt(2.0 / (hparams.n_symbols + hparams.symbols_embedding_dim))
     val = sqrt(3.0) * std  # uniform bounds for std
     self.embedding.weight.data.uniform_(-val, val)
+
+    self.speakers_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
+    torch.nn.init.xavier_uniform_(self.speakers_embedding.weight)
+
     self.encoder = Encoder(hparams)
     self.decoder = Decoder(hparams)
     self.postnet = Postnet(hparams)
 
   def parse_batch(self, batch):
     text_padded, input_lengths, mel_padded, gate_padded, \
-      output_lengths = batch
+      output_lengths, speaker_ids = batch
     text_padded = to_gpu(text_padded).long()
     input_lengths = to_gpu(input_lengths).long()
     max_len = torch.max(input_lengths.data).item()
     mel_padded = to_gpu(mel_padded).float()
     gate_padded = to_gpu(gate_padded).float()
     output_lengths = to_gpu(output_lengths).long()
+    speaker_ids = to_gpu(speaker_ids).long()
 
     return (
-      (text_padded, input_lengths, mel_padded, max_len, output_lengths),
+      (text_padded, input_lengths, mel_padded, max_len, output_lengths, speaker_ids),
       (mel_padded, gate_padded))
 
   def parse_output(self, outputs, output_lengths=None):
@@ -496,15 +503,25 @@ class Tacotron2(nn.Module):
     return outputs
 
   def forward(self, inputs):
-    text_inputs, text_lengths, mels, max_len, output_lengths = inputs
+    text_inputs, text_lengths, mels, max_len, output_lengths, speaker_ids = inputs
     text_lengths, output_lengths = text_lengths.data, output_lengths.data
 
     embedded_inputs = self.embedding(text_inputs).transpose(1, 2)
 
     encoder_outputs = self.encoder(embedded_inputs, text_lengths)
 
+    # Extract speaker embeddings
+    speaker_ids = speaker_ids.unsqueeze(1)
+    embedded_speakers = self.speakers_embedding(speaker_ids)
+    embedded_speakers = embedded_speakers.expand(-1, max_len, -1)
+    
+    outputs = []
+    outputs.append(encoder_outputs)
+    outputs.append(embedded_speakers)
+    merged_outputs = torch.cat(outputs, -1)
+
     mel_outputs, gate_outputs, alignments = self.decoder(
-      encoder_outputs, mels, memory_lengths=text_lengths)
+      merged_outputs, mels, memory_lengths=text_lengths)
 
     mel_outputs_postnet = self.postnet(mel_outputs)
     mel_outputs_postnet = mel_outputs + mel_outputs_postnet
@@ -513,11 +530,22 @@ class Tacotron2(nn.Module):
       [mel_outputs, mel_outputs_postnet, gate_outputs, alignments],
       output_lengths)
 
-  def inference(self, inputs):
+  def inference(self, inputs, speaker_id):
     embedded_inputs = self.embedding(inputs).transpose(1, 2)
     encoder_outputs = self.encoder.inference(embedded_inputs)
+
+    # Extract speaker embeddings
+    speaker_id = speaker_id.unsqueeze(1)
+    embedded_speaker = self.speakers_embedding(speaker_id)
+    embedded_speaker = embedded_speaker.expand(-1, encoder_outputs.shape[1], -1)
+    
+    outputs = []
+    outputs.append(encoder_outputs)
+    outputs.append(embedded_speaker)
+    merged_outputs = torch.cat(outputs, -1)
+
     mel_outputs, gate_outputs, alignments = self.decoder.inference(
-      encoder_outputs)
+      merged_outputs)
 
     mel_outputs_postnet = self.postnet(mel_outputs)
     mel_outputs_postnet = mel_outputs + mel_outputs_postnet
