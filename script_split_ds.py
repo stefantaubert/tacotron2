@@ -9,13 +9,12 @@ from paths import ds_preprocessed_symbols_name, ds_preprocessed_file_name, filel
 from utils import csv_separator
 from train_log import log
 
-__wav_symids_cols = [1, 2]
 __duration_col = [3]
 
 def __save(train, training_dir_path, fn):
-  df = train.iloc[:, __wav_symids_cols]
+  #df = train.iloc[:, __wav_symids_cols]
   total_dur_min = float(train.iloc[:, __duration_col].sum(axis=0)) / 60
-  df.to_csv(os.path.join(get_filelist_dir(training_dir_path), fn), header=None, index=None, sep=csv_separator)
+  train.to_csv(os.path.join(get_filelist_dir(training_dir_path), fn), header=None, index=None, sep=csv_separator)
   log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min".format(fn, len(train), total_dur_min))
   return total_dur_min
 
