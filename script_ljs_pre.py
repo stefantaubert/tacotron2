@@ -30,10 +30,10 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arc
     if use_ipa:
       ipa_text = epi.transliterate(normalized_text)
       text_symbols = extract_from_sentence(ipa_text, ignore_tones=False, ignore_arcs=ignore_arcs)
+      data.append((basename, normalized_text, ipa_text, text_symbols, wav_path))
     else:
-      ipa_text = ''
       text_symbols = list(normalized_text)
-    data.append((basename, normalized_text, ipa_text, text_symbols, wav_path))
+      data.append((basename, normalized_text, text_symbols, wav_path))
 
   ### get all symbols
   symbols = set()
