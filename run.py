@@ -9,7 +9,8 @@ from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_log_name,
                    get_ds_dir, get_filelist_dir, get_inference_dir,
                    inference_config_file, log_inference_config, log_input_file,
                    log_map_file, log_train_config, train_config_file, log_train_map)
-from script_prepare_ds import prepare
+#from script_prepare_ds import prepare
+from script_prepare_ds_ms import prepare
 from script_split_ds import split_ds
 from script_txt_pre import process_input_text
 from synthesize import infer
@@ -24,7 +25,6 @@ def start_training(base_dir: str, training_dir_path: str):
   with open(config_path, 'r', encoding='utf-8') as f:
     config = json.load(f)
 
-  speaker_dir_path = get_ds_dir(base_dir, config["ds_name"], config["speaker"])
   if not config["continue_training"]:
     prepare(base_dir, training_dir_path, config)
     split_ds(base_dir, training_dir_path, config)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
   if debug:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.training_dir = 'debug'
+    args.training_dir = 'debug_ms'
     train = True
     #train = False
     if train:

@@ -3,14 +3,14 @@
   "seed": 1234,
   "warm_start": true,
   "pretrained_path": "/datasets/models/taco2pt_v2/ljs_ipa_baseline/checkpoints/49000",
-  "ds_name": "thchs_v5",
-  "speaker": "A23",
+  "ds_name": "",
+  "speakers": "thchs_v5,A23;thchs_v5,A11",
   "train_size": 0.9,
   "validation_size": 1.0,
   "hparams": "batch_size=24,iters_per_checkpoint=50,epochs=2000",
-  "merge_mode": "b_only",
-  "pretrained_model": "/datasets/models/taco2pt_v2/ljs_ipa_baseline/checkpoints/49000",
-  "pretrained_model_symbols": "/datasets/models/taco2pt_v2/ljs_ipa_baseline/filelist/symbols.json",
+  "merge_mode": "",
+  "pretrained_model": "",
+  "pretrained_model_symbols": "",
   "weight_map_mode": "none",
-  "map": "maps/weights/chn_en_v4.json"
+  "map": ""
 }
