@@ -7,6 +7,6 @@
   "map": "",
   "subset_id": 0,
   "hparams": "",
-  "waveglow": "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt",
+  "waveglow": "/home/stefan_taubert/pretrained/waveglow_256channels_universal_v5.pt",
   "custom_checkpoint": ""
 }

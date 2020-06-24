@@ -13,10 +13,9 @@ if __name__ == "__main__":
   if debug:
     args.pretrained_dir = '/tmp'
 
+  # Download waveglow_universal_256channels_v5.pt (644M)
   download_url = "https://drive.google.com/uc?id=1rpK8CzAAirq9sWZhe9nlfvxMF1dRgFbF"
-  res = gdown.download(download_url)
-  
-  shutil.move(res, os.path.join(args.pretrained_dir, res))
+  filename = gdown.download(download_url)
 
-  print(res)
-    
+  os.makedirs(args.pretrained_dir)
+  shutil.move(filename, os.path.join(args.pretrained_dir, filename))
