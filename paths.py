@@ -119,6 +119,7 @@ if __name__ == "__main__":
   if args.custom_training_name != None and args.custom_training_name != "":
     train_dir_path = os.path.join(args.base_dir, args.custom_training_name)
     os.makedirs(train_dir_path, exist_ok=True)
+    print("Ensured folder {} exists.".format(train_dir_path))
     train_dir_name = args.custom_training_name
   else:
     train_dir_name = get_training_dir(args.base_dir, create=True)

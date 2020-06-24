@@ -1,7 +1,8 @@
 # Tacotron 2
 
+# Setup
 
-## Setup
+## Checkout repo
 
 ```bash
 git clone git@github.com:stefantaubert/tacotron2.git
@@ -11,11 +12,53 @@ git submodule update
 conda create -n taco2pytorch python=3.6 -y
 conda activate taco2pytorch
 pip install -r reqmin.txt
-export base_dir="~/taco2pt_v2"
+```
+
+## IPA synthesis using LJSpeech-1.1 dataset
+
+### Install flite
+
+If you want to train on IPA-Symbols you need to install [flite](https://github.com/festvox/flite) for G2P conversion of english text:
+
+```bash
+git clone https://github.com/festvox/flite.git
+cd flite
+./configure && make
+sudo make install
+cd testsuite
+make lex_lookup
+sudo cp lex_lookup /usr/local/bin
+```
+
+### Init folders
+
+```bash
+export base_dir="/home/stefan_taubert/taco2pt_v2"
 export custom_training_name="ljs_ipa_from_scratch"
 python paths.py --debug='false' --base_dir=$base_dir --custom_training_name=$custom_training_name
+```
+
+### Download and prepare dataset
+
+```bash
+export ljs_dir="/home/stefan_taubert/datasets/ljs"
+export ds_name="ljs_ipa"
+python script_ljs_pre.py --debug='false' --base_dir=$base_dir --data_dir=$ljs_dir --ipa='true' --ds_name=$ds_name --ignore_arcs='true'
+```
+
+### Start training
+
+```bash
+python run.py --debug='false' --base_dir=$base_dir --training_dir=$custom_training_name --mode='train' --config='configs/ljs_ipa/train.json'
+```
+
+### Synthesize example
+
+```bash
+python run.py --debug='false' --base_dir=$base_dir --training_dir=$custom_training_name --mode='infer' --config='configs/ljs_ipa/grandfather.json'
 
 ```
+
 
 ## Installation for Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
 

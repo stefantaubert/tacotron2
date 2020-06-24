@@ -2,6 +2,8 @@
   "ipa": true,
   "text": "examples/north_sven_v2.txt",
   "is_ipa": true,
+  "ignore_tones": true,
+  "ignore_arcs": true,
   "map": "",
   "subset_id": 0,
   "hparams": "",

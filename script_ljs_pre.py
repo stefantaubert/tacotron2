@@ -123,7 +123,7 @@ if __name__ == "__main__":
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.data_dir = '/datasets/LJSpeech-1.1-tmp'
     args.ipa = 'false'
-    args.ds_name = 'ljs__v2'
+    args.ds_name = 'ljs_en_v2'
     args.ignore_arcs = 'true'
   
   ensure_downloaded(args.data_dir)

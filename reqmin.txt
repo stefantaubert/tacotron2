@@ -3,6 +3,8 @@ epitran==1.8
 dragonmapper==0.2.6
 plotly==4.8.1
 wget==3.2
+ipapy==0.0.9.0
+gdown==3.11.1
 
 jupyter==1.0.0
 librosa==0.6.0
