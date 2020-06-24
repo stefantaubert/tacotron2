@@ -59,9 +59,9 @@ if __name__ == "__main__":
 
   if debug:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.training_dir = 'debug_ms'
+    args.training_dir = 'thchs_ms_from_scratch'
     train = False
-    train = True
+    #train = True
     if train:
       args.mode = 'train'
       args.config = "configs/debug/train.json"
