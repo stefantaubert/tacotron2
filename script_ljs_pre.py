@@ -1,6 +1,9 @@
 import argparse
 import os
-from parser.LJSpeechDatasetParser import LJSpeechDatasetParser
+from parser.LJSpeechDatasetParser import LJSpeechDatasetParser, get_metadata_filepath
+import wget
+import tarfile
+import shutil
 
 import epitran
 import pandas as pd
@@ -12,6 +15,35 @@ from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
+
+def __download_ljs(dir_path: str):
+  print("LJSpeech is not downloaded yet.")
+  print("Starting download...")
+  os.makedirs(dir_path, exist_ok=True)
+  download_url = "https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2"
+  dest = wget.download(download_url, dir_path)
+  downloaded_file = os.path.join(dir_path, dest)
+  print("\nFinished download to {}".format(downloaded_file))
+  print("Unpacking...")
+  tar = tarfile.open(downloaded_file, "r:bz2")  
+  tar.extractall(dir_path)
+  tar.close()
+  print("Done.")
+  print("Moving files...")
+  dir_name = "LJSpeech-1.1"
+  ljs_data_dir = os.path.join(dir_path, dir_name)
+  files = os.listdir(ljs_data_dir)
+  for f in tqdm(files):
+    shutil.move(os.path.join(ljs_data_dir, f), dir_path)
+  print("Done.")
+  os.remove(downloaded_file)
+  os.rmdir(ljs_data_dir)
+
+def ensure_downloaded(dir_path: str):
+  metadata_filepath = get_metadata_filepath(dir_path)
+  metadata_file_exists = os.path.exists(metadata_filepath)
+  if not metadata_file_exists:
+    __download_ljs(dir_path)
 
 def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arcs: bool):
   epi = epitran.Epitran('eng-Latn')
@@ -89,11 +121,13 @@ if __name__ == "__main__":
 
   if debug:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.data_dir = '/datasets/LJSpeech-1.1'
+    args.data_dir = '/datasets/LJSpeech-1.1-tmp'
     args.ipa = 'false'
-    args.ds_name = 'ljs_en_v2'
+    args.ds_name = 'ljs__v2'
     args.ignore_arcs = 'true'
   
+  ensure_downloaded(args.data_dir)
+
   ignore_arcs = str.lower(args.ignore_arcs) == 'true'
   use_ipa = str.lower(args.ipa) == 'true'
 

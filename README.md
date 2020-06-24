@@ -1,25 +1,42 @@
 # Tacotron 2
 
-## Installation for Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
+
+## Setup
+
+```bash
+git clone git@github.com:stefantaubert/tacotron2.git
+cd tacotron2
+git submodule init
+git submodule update
+conda create -n taco2pytorch python=3.6 -y
+conda activate taco2pytorch
+pip install -r reqmin.txt
+export base_dir="~/taco2pt_v2"
+export custom_training_name="ljs_ipa_from_scratch"
+python paths.py --debug='false' --base_dir=$base_dir --custom_training_name=$custom_training_name
 
 ```
+
+## Installation for Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
+
+```bash
 ./init.sh /datasets/models/taco2
 ```
+
 examples:
 north wind and the sun: from [wiki](https://en.wikipedia.org/wiki/The_North_Wind_and_the_Sun) and replace ɚ by ɹ̩ [see](https://en.wikipedia.org/wiki/R-colored_vowel)
 narrow: ɾ do not exist
 primary and secondary stress is not supported currently
 
 
-```
-$ git clone git@github.com:stefantaubert/tacotron2.git
-$ cd tacotron2
-$ git submodule init
-$ git submodule update
-$ sed -i -- 's,DUMMY,/datasets/LJSpeech-1.1/wavs,g' filelists/*.txt
-$ conda create -n taco2pytorch python=3.6 -y
-$ conda activate taco2pytorch
-$ pip install -r req.txt
+```bash
+git clone git@github.com:stefantaubert/tacotron2.git
+cd tacotron2
+git submodule init
+git submodule update
+conda create -n taco2pytorch python=3.6 -y
+conda activate taco2pytorch
+pip install -r reqmin.txt
 ```
 
 ## FYI
