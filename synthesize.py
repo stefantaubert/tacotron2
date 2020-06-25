@@ -83,8 +83,8 @@ class Synthesizer():
     #to_wav("/tmp/{}_denoised.wav".format(dest_name), res, self.hparams.sampling_rate)
     return res
 
-def infer(training_dir_path: str, infer_dir_path: str, config: dict):
-  hparams = create_hparams(config["hparams"])
+def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, custom_checkpoint: str):
+  hparams = create_hparams(hparams)
 
   conv = load_from_file(get_symbols_path(training_dir_path))
   n_symbols = conv.get_symbol_ids_count()
@@ -96,12 +96,14 @@ def infer(training_dir_path: str, infer_dir_path: str, config: dict):
 
   hparams.n_symbols = n_symbols
 
-  checkpoint = get_last_checkpoint(training_dir_path)
-  if config["custom_checkpoint"] != '':
-    checkpoint = config["custom_checkpoint"]
+  if custom_checkpoint:
+    checkpoint = custom_checkpoint
+  else:
+    checkpoint = get_last_checkpoint(training_dir_path)
+
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   print("Using model:", checkpoint_path)
-  synt = Synthesizer(hparams, checkpoint_path, config["waveglow"])
+  synt = Synthesizer(hparams, checkpoint_path, waveglow)
 
   #complete_text = [item for sublist in sentences_symbols for item in sublist]
   #print(complete_text)
@@ -142,17 +144,17 @@ def infer(training_dir_path: str, infer_dir_path: str, config: dict):
 #   parser.add_argument('--speaker', type=str, required=False)
 #   parser.add_argument('--debug', type=str, default='true')
 
-#   args = parser.parse_args()
-#   hparams = create_hparams(args.hparams)
-#   debug = str.lower(args.debug) == 'true'
+#   = parser.parse_)
+#   hparams = create_hparams(hparams)
+#   debug = str.lower(debug) == 'true'
 #   if debug:
-#     args.base_dir = '/datasets/models/taco2pt_ms'
-#     speaker_dir = os.path.join(args.base_dir, filelist_dir)
-#     checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499')
-#     #checkpoint_path = os.path.join(args.base_dir, checkpoint_output_dir, 'checkpoint_1499')
-#     args.waveglow = '/datasets/models/pretrained/waveglow_256channels_universal_v5.pt'
-#     args.output_name = 'test'
+#     base_dir = '/datasets/models/taco2pt_ms'
+#     speaker_dir = os.path.join(base_dir, filelist_dir)
+#     checkpoint_path = os.path.join(base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499')
+#     #checkpoint_path = os.path.join(base_dir, checkpoint_output_dir, 'checkpoint_1499')
+#     waveglow = '/datasets/models/pretrained/waveglow_256channels_universal_v5.pt'
+#     output_name = 'test'
 #     hparams.sampling_rate = 19000
 #   else:
-#     speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
-#     checkpoint_path = os.path.join(args.base_dir, savecheckpoints_dir, args.checkpoint)
+#     speaker_dir = os.path.join(base_dir, filelist_dir, ds_name, speaker)
+#     checkpoint_path = os.path.join(base_dir, savecheckpoints_dir, checkpoint)

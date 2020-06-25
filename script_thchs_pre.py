@@ -14,7 +14,6 @@ from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
 from text.chn_tools import chn_to_ipa
 
-
 def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool):
   parsed_data = parse_thchs(data_dir)
   data = {}
@@ -77,23 +76,18 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
-  parser.add_argument('--ignore_tones', type=str)
-  parser.add_argument('--ignore_arcs', type=str)
+  parser.add_argument('--ignore_tones', action='store_true')
+  parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
-  parser.add_argument('--debug', type=str, default="true")
+  parser.add_argument('--no_debugging', action='store_true')
 
   args = parser.parse_args()
 
-  debug = str.lower(args.debug) == 'true'
-
-  if debug:
+  if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.data_dir = '/datasets/thchs_16bit_22050kHz'
     args.ds_name = 'thchs_v5'
-    args.ignore_tones = 'true'
-    args.ignore_arcs = 'true'
+    args.ignore_tones = True
+    args.ignore_arcs = True
   
-  ignore_tones = str.lower(args.ignore_tones) == 'true'
-  ignore_arcs = str.lower(args.ignore_arcs) == 'true'
-
-  preprocess(args.base_dir, args.data_dir, args.ds_name, ignore_tones, ignore_arcs)
+  preprocess(args.base_dir, args.data_dir, args.ds_name, args.ignore_tones, args.ignore_arcs)

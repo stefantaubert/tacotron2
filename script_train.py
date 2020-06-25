@@ -14,30 +14,18 @@ from script_split_ds import split_ds
 from script_txt_pre import process_input_text
 from synthesize import infer
 from train import start_train, get_last_checkpoint
-from train_log import reset_log
 from plot_embeddings import analyse
-
-def start_training(base_dir: str, training_dir_path: str):
-
-  config_path = os.path.join(training_dir_path, train_config_file)
-
-  with open(config_path, 'r', encoding='utf-8') as f:
-    config = json.load(f)
-
-  if not config["continue_training"]:
-    prepare(base_dir, training_dir_path, config)
-    split_ds(base_dir, training_dir_path, config)
-    
-  start_train(training_dir_path, config)
+from utils import args_to_str
+from train_log import reset_log
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--debug', type=str, default="true")
+  parser.add_argument('--no_debugging', action='store_true')
   parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--continue_training', type=str)
+  parser.add_argument('--continue_training', action='store_true')
   parser.add_argument('--seed', type=str, default=1234)
-  parser.add_argument('--warm_start', type=str)
+  parser.add_argument('--warm_start', action='store_true')
   parser.add_argument('--pretrained_path', type=str)
   parser.add_argument('--ds_name', type=str)
   parser.add_argument('--speaker', type=str)
@@ -52,27 +40,27 @@ if __name__ == "__main__":
 
   args = parser.parse_args()
 
-  debug = str.lower(args.debug) == 'true'
-
-  if debug:
+  if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
+    args.ds_name = 'ljs_ipa_v2'
+    args.speaker = '1'
+    args.hparams = 'batch_size=26,iters_per_checkpoint=500'
     args.training_dir = 'debug'
-    train = True
-    #train = False
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 
-  print("Given arguments:")
-  for arg, value in sorted(vars(args).items()):
-    print("Argument {}: {}".format(arg, value))
-
-  with open(args.config, 'r', encoding='utf-8') as f:
-    config = json.load(f)
-
   reset_log(training_dir_path)
-  log_train_config(training_dir_path, args.config)
-  if config["weight_map_mode"] != 'none':
-    log_train_map(training_dir_path, config["map"])
-  start_training(args.base_dir, training_dir_path)
+  log_train_config(training_dir_path, args)
+
+  use_weights = bool(args.weight_map_mode)
+  if use_weights:
+    log_train_map(training_dir_path, args.map)
+
+  if not args.continue_training:
+    prepare(args.base_dir, training_dir_path, merge_mode=args.merge_mode, pretrained_model_symbols=args.pretrained_model_symbols, ds_name=args.ds_name, speaker=args.speaker, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams)
+    split_ds(args.base_dir, training_dir_path, train_size=args.train_size, validation_size=args.validation_size, seed=args.seed)
+    
+  start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training)
+
   analyse(training_dir_path)
  

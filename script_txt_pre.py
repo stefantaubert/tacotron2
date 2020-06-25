@@ -10,12 +10,8 @@ from text.adjustments import normalize_text
 from text.symbol_converter import load_from_file, serialize_symbol_ids
 from paths import get_symbols_path, inference_input_normalized_sentences_file_name, inference_input_sentences_file_name, inference_input_sentences_mapped_file_name, inference_input_symbols_file_name, inference_input_file_name, inference_input_map_file_name
 
-def process_input_text(training_dir_path: str, infer_dir_path: str, config: dict):
-  subset_id = config["subset_id"]
-  is_ipa = config["is_ipa"]
-  use_ipa = config["ipa"]
-  
-  if use_ipa:
+def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, ignore_tones: bool, ignore_arcs: bool, subset_id: int, is_ipa: bool, use_map: bool):
+  if ipa:
     epi = epitran.Epitran('eng-Latn')
 
   conv = load_from_file(get_symbols_path(training_dir_path))
@@ -50,7 +46,7 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, config: dict
     accented_sents = []
     for s in cleaned_sents:
       ### TODO include rules in next step under if block
-      if use_ipa:
+      if ipa:
         accented_sentence = epi.transliterate(s)
       else:
         accented_sentence = s
@@ -59,19 +55,17 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, config: dict
   with open(os.path.join(infer_dir_path, inference_input_sentences_file_name), 'w') as f:
     f.writelines(['{}\n'.format(s) for s in accented_sents])
 
-  use_map = config["map"] != ''
-  
   if use_map:
     map_path = os.path.join(infer_dir_path, inference_input_map_file_name)
     ipa_mapping = parse_map_json(map_path)
-    ipa_mapping = { k: extract_from_sentence(v, ignore_tones=config["ignore_tones"], ignore_arcs=config["ignore_arcs"]) for k, v in ipa_mapping.items() }
+    ipa_mapping = { k: extract_from_sentence(v, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs) for k, v in ipa_mapping.items() }
 
   
   # for k, v in ipa_mapping.items():
   #   for sy in v:
   #     if not conv._is_valid_text_symbol(sy):
   #       print(k, '->', v, ',', sy, 'not in symbols')
-  # with open(os.path.join(args.base_dir, input_dir, "input_sentences_mapped_{}.txt".format(file_name)), 'w') as f:
+  # with open(os.path.join(base_dir, input_dir, "input_sentences_mapped_{}.txt".format(file_name)), 'w') as f:
   #   f.writelines(['{}\n'.format(s) for s in res])
 
   #print('\n'.join(sentences))
@@ -79,8 +73,8 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, config: dict
   seq_sents_text = []
   unknown_symbols = set()
   for s in accented_sents:
-    if use_ipa:
-      symbols = extract_from_sentence(s, ignore_tones=config["ignore_tones"], ignore_arcs=config["ignore_arcs"])
+    if ipa:
+      symbols = extract_from_sentence(s, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs)
     else:
       symbols = list(s)
 
@@ -134,21 +128,21 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, config: dict
 #   parser.add_argument('--subset_id', type=int)
 #   parser.add_argument('--debug', type=str, default='true')
 
-#   args = parser.parse_args()
+#   = parser.parse_)
 
-#   debug = str.lower(args.debug) == 'true'
+#   debug = str.lower(debug) == 'true'
 #   if debug:
-#     args.base_dir = '/datasets/models/taco2pt_ms'
-#     args.ipa = 'true'
-#     args.text = 'examples/grandfather.txt'
-#     args.is_ipa = 'false'
+#     base_dir = '/datasets/models/taco2pt_ms'
+#     ipa = 'true'
+#     text = 'examples/grandfather.txt'
+#     is_ipa = 'false'
 #     if True:
-#       args.map = 'maps/en_chn.txt'
-#       args.subset_id = 1
+#       map = 'maps/en_chn.txt'
+#       subset_id = 1
 #     else:
-#       args.map = ''
-#       args.subset_id = 1
-#     speaker_dir = os.path.join(args.base_dir, filelist_dir)
+#       map = ''
+#       subset_id = 1
+#     speaker_dir = os.path.join(base_dir, filelist_dir)
 #   else:
-#     speaker_dir = os.path.join(args.base_dir, filelist_dir, args.ds_name, args.speaker)
+#     speaker_dir = os.path.join(base_dir, filelist_dir, ds_name, speaker)
  

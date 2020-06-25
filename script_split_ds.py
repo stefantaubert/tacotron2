@@ -18,14 +18,14 @@ def __save(train, training_dir_path, fn):
   log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min".format(fn, len(train), total_dur_min))
   return total_dur_min
 
-def split_ds(base_dir, training_dir_path: str, config: dict):
+def split_ds(base_dir, training_dir_path: str, train_size: float, validation_size: float, seed: int):
   preprocessed_path = os.path.join(get_filelist_dir(training_dir_path), ds_preprocessed_file_name)
   log(training_dir_path, "Split data into different sets from: " + preprocessed_path)
   data = pd.read_csv(preprocessed_path, header=None, sep=csv_separator)
   print(data.head())
   total_duration = 0
 
-  train, val = train_test_split(data, train_size=config["train_size"], random_state=config["seed"])
+  train, val = train_test_split(data, train_size=train_size, random_state=seed)
   
   d = __save(train, training_dir_path, filelist_training_file_name)
   total_duration = total_duration + d
@@ -41,8 +41,8 @@ def split_ds(base_dir, training_dir_path: str, config: dict):
   #df.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_training_file_name), header=None, index=None, sep=csv_separator)
   #log(training_dir_path, "Trainsize: {}, Duration: {:.2f}".format(len(train), total_dur_min))
 
-  if config["validation_size"] < 1.0:
-    test, val = train_test_split(val, test_size=config["validation_size"], random_state=config["seed"])
+  if validation_size < 1.0:
+    test, val = train_test_split(val, test_size=validation_size, random_state=seed)
     d = __save(test, training_dir_path, filelist_test_file_name)
     total_duration = total_duration + d
   else:
