@@ -252,6 +252,9 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
       weight_file = os.path.join(filelist_dir_path, filelist_weights_file_name)
       init_weights(weight_file, model, training_dir_path)
 
+  log(training_dir_path, "Modelweights:")
+  log(training_dir_path, str(model.state_dict()['embedding.weight']))
+
   model.train()
   is_overflow = False
   # ================ MAIN TRAINING LOOP! ===================

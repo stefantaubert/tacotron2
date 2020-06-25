@@ -47,22 +47,27 @@ if __name__ == "__main__":
     args.speakers = 'ljs_ipa_v2,1'
     args.hparams = 'batch_size=26,iters_per_checkpoint=500'
     args.training_dir = 'debug_ljs_ms'
+    #args.weight_map_mode = 'same_symbols_only'
+    args.pretrained_model = "/datasets/models/taco2pt_v2/ljs_ipa_baseline/checkpoints/49000"
+    args.pretrained_model_symbols = "/datasets/models/taco2pt_v2/ljs_ipa_baseline/filelist/symbols.json"
+
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 
   reset_log(training_dir_path)
   log_train_config(training_dir_path, args)
 
-  use_weights = bool(args.weight_map_mode)
-  if use_weights:
+  use_weights_map = args.weight_map_mode == 'use_map'
+  if use_weights_map:
     log_train_map(training_dir_path, args.map)
 
   if not args.continue_training:
     #prepare(args.base_dir, training_dir_path, merge_mode=args.merge_mode, pretrained_model_symbols=args.pretrained_model_symbols, ds_name=args.ds_name, speaker=args.speaker, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams)
-    prepare_ms(args.base_dir, training_dir_path, speakers=args.speakers)
+    prepare_ms(args.base_dir, training_dir_path, speakers=args.speakers, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams, pretrained_model_symbols=args.pretrained_model_symbols)
     split_ds(args.base_dir, training_dir_path, train_size=args.train_size, validation_size=args.validation_size, seed=args.seed)
     
   #start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training)
+  use_weights = bool(args.weight_map_mode)
   start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training, speakers=args.speakers)
 
   analyse(training_dir_path)

@@ -17,6 +17,12 @@ export speakers='ljs_ipa_v2,1'
 python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --ds_name=$ds_name --speakers=$speakers --hparams=$hparams --no_debugging
 
+## Using pretrained model weights
+export pretrained_path="/datasets/models/taco2pt_v2/ljs_ipa_baseline/checkpoints/49000"
+export pretrained_model_symbols="/datasets/models/taco2pt_v2/ljs_ipa_baseline/filelist/symbols.json"
+python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
+python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --ds_name=$ds_name --speakers=$speakers --hparams=$hparams --weight_map_mode='same_symbols_only' --pretrained_model=$pretrained_path --pretrained_model_symbols=$pretrained_model_symbols  --no_debugging
+
 ## Using pretrained model
 export pretrained_path="/datasets/models/pretrained/tacotron2_statedict.pt"
 python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
