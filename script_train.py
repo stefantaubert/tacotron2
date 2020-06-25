@@ -9,6 +9,7 @@ from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_log_name,
                    get_ds_dir, get_filelist_dir, get_inference_dir,
                    inference_config_file, log_inference_config, log_input_file,
                    log_map_file, log_train_config, train_config_file, log_train_map)
+from script_prepare_ds_ms import prepare as prepare_ms
 from script_prepare_ds import prepare
 from script_split_ds import split_ds
 from script_txt_pre import process_input_text
@@ -27,8 +28,9 @@ if __name__ == "__main__":
   parser.add_argument('--seed', type=str, default=1234)
   parser.add_argument('--warm_start', action='store_true')
   parser.add_argument('--pretrained_path', type=str)
-  parser.add_argument('--ds_name', type=str)
-  parser.add_argument('--speaker', type=str)
+  #parser.add_argument('--ds_name', type=str)
+  #parser.add_argument('--speaker', type=str)
+  parser.add_argument('--speakers', type=str)
   parser.add_argument('--train_size', type=str, default=0.9)
   parser.add_argument('--validation_size', type=str, default=1.0)
   parser.add_argument('--hparams', type=str)
@@ -42,10 +44,9 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.ds_name = 'ljs_ipa_v2'
-    args.speaker = '1'
+    args.speakers = 'ljs_ipa_v2,1'
     args.hparams = 'batch_size=26,iters_per_checkpoint=500'
-    args.training_dir = 'debug'
+    args.training_dir = 'debug_ljs_ms'
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 
@@ -57,10 +58,12 @@ if __name__ == "__main__":
     log_train_map(training_dir_path, args.map)
 
   if not args.continue_training:
-    prepare(args.base_dir, training_dir_path, merge_mode=args.merge_mode, pretrained_model_symbols=args.pretrained_model_symbols, ds_name=args.ds_name, speaker=args.speaker, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams)
+    #prepare(args.base_dir, training_dir_path, merge_mode=args.merge_mode, pretrained_model_symbols=args.pretrained_model_symbols, ds_name=args.ds_name, speaker=args.speaker, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams)
+    prepare_ms(args.base_dir, training_dir_path, speakers=args.speakers)
     split_ds(args.base_dir, training_dir_path, train_size=args.train_size, validation_size=args.validation_size, seed=args.seed)
     
-  start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training)
+  #start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training)
+  start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training, speakers=args.speakers)
 
   analyse(training_dir_path)
  

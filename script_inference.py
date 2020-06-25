@@ -28,6 +28,8 @@ if __name__ == "__main__":
   parser.add_argument('--ignore_tones', action='store_true')
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--map', type=str)
+  parser.add_argument('--speakers', type=str)
+  parser.add_argument('--speaker', type=str)
   parser.add_argument('--subset_id', type=str)
   parser.add_argument('--hparams', type=str)
   parser.add_argument('--waveglow', type=str)
@@ -37,12 +39,14 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.training_dir = 'debug'
+    args.training_dir = 'debug_ljs_ms'
     args.ipa = True
     args.text = "examples/ipa/north_sven_v2.txt"
     args.is_ipa = True
     args.ignore_tones = True
     args.ignore_arcs = True
+    args.speakers = 'ljs_ipa_v2,1'
+    args.speaker = 'ljs_ipa_v2,1'
     args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
@@ -68,4 +72,4 @@ if __name__ == "__main__":
     print("Using no mapping.")
 
   process_input_text(training_dir_path, infer_dir_path, ipa=args.ipa, ignore_tones=args.ignore_tones, ignore_arcs=args.ignore_arcs, subset_id=args.subset_id, is_ipa=args.is_ipa, use_map=bool(args.map))
-  infer(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, custom_checkpoint=args.custom_checkpoint)
+  infer(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, custom_checkpoint=args.custom_checkpoint, speakers=args.speakers, speaker=args.speaker)

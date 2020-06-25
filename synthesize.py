@@ -85,13 +85,13 @@ class Synthesizer():
     #to_wav("/tmp/{}_denoised.wav".format(dest_name), res, self.hparams.sampling_rate)
     return res
 
-def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, custom_checkpoint: str):
+def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, custom_checkpoint: str, speakers: str, speaker: str):
   hparams = create_hparams(hparams)
 
   conv = load_from_file(get_symbols_path(training_dir_path))
   n_symbols = conv.get_symbol_ids_count()
   print('Loaded {} symbols'.format(n_symbols))
-  ds_speakers = parse_ds_speakers(train_config["speakers"])
+  ds_speakers = parse_ds_speakers(speakers)
   n_speakers = len(ds_speakers)
   print('Loaded {} speakers'.format(n_speakers))
 
@@ -125,7 +125,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   output = np.array([])
 
   final_speaker_id = -1
-  dest_ds, dest_speaker = config["speaker"].split(',')
+  dest_ds, dest_speaker = speaker.split(',')
   for ds, speaker, speaker_id in ds_speakers:
     if speaker == dest_speaker and ds == dest_ds:
       final_speaker_id = speaker_id

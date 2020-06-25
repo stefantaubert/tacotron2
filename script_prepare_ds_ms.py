@@ -17,8 +17,8 @@ from train_log import log
 from shutil import copyfile
 from utils import symbols_str_col, parse_ds_speakers
 
-def prepare(base_dir: str, training_dir_path: str, config: dict):
-  ds_speakers = parse_ds_speakers(args.speakers)
+def prepare(base_dir: str, training_dir_path: str, speakers: str):
+  ds_speakers = parse_ds_speakers(speakers)
   final_conv = init_from_symbols(set())
   
   for ds, speaker, _ in ds_speakers:
@@ -61,26 +61,3 @@ def prepare(base_dir: str, training_dir_path: str, config: dict):
   df.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_file_name), header=None, index=None, sep=csv_separator)
 
   log(training_dir_path, "Done.")
-
-# if __name__ == "__main__":
-
-#   parser = argparse.ArgumentParser()
-#   parser.add_argument('--base_dir', type=str, help='base directory')
-#   parser.add_argument('--pretrained_model', type=str)
-#   parser.add_argument('--pretrained_model_symbols', type=str)
-#   parser.add_argument('--ds_name', type=str)
-#   parser.add_argument('--speaker', type=str)
-#   parser.add_argument('--mode', type=str, help='separate,unify,map')
-#   parser.add_argument('--map', type=str)
-
-#   args = parser.parse_args()
-#   debug = True
-#   if debug:
-#     args.base_dir = '/datasets/models/taco2pt_ms'
-#     args.pretrained_model = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
-#     args.pretrained_model_symbols = os.path.join(args.base_dir, filelist_dir, 'ljs_ipa/1/symbols.json')
-#     args.ds_name = 'thchs_no_tone'
-#     args.speaker = 'A11'
-#     args.mode = 'map'
-#     args.map = 'maps/en_chn.txt'
-

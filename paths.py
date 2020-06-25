@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.custom_training_name = 'debug_ms'
+    args.custom_training_name = 'debug_ljs_ms'
   
   if args.custom_training_name != None and args.custom_training_name != "":
     train_dir_path = os.path.join(args.base_dir, args.custom_training_name)

@@ -305,14 +305,14 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   checkpoint_path = os.path.join(output_directory,  str(iteration - 1))
   save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
 
-def start_train(training_dir_path: str, hparams: str, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool):
+def start_train(training_dir_path: str, hparams: str, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool, speakers: str):
   start = time.time()
   conv = load_from_file(get_symbols_path(training_dir_path))
 
   hparams = create_hparams(hparams)
   
   hparams.n_symbols = conv.get_symbol_ids_count()
-  n_speakers = len(parse_ds_speakers(config["speakers"]))
+  n_speakers = len(parse_ds_speakers(speakers))
   hparams.n_speakers = n_speakers
   log(training_dir_path, 'Final parsed hparams:')
   x = '\n'.join(str(hparams.values()).split(','))
