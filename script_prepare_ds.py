@@ -83,6 +83,8 @@ def prepare(base_dir: str, training_dir_path: str, merge_mode: str, pretrained_m
     # copyfile(a, b)
 
   if weight_map_mode != None:
+    assert pretrained_model
+    assert pretrained_model_symbols
     pretrained_speaker_conv = load_from_file(pretrained_model_symbols)
 
     hparams = create_hparams(hparams)
