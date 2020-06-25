@@ -15,7 +15,7 @@ export speakers="ljs,1"
 ## From scratch
 export custom_training_name="ljs_ipa_ms_from_scratch"
 python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
-python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --ds_name=$ds_name --speakers=$speakers --hparams=$hparams --no_debugging
+python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --no_debugging
 
 ## Continue training
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --speakers=$speakers --continue_training --no_debugging
