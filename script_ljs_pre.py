@@ -1,6 +1,9 @@
 import argparse
 import os
-from parser.LJSpeechDatasetParser import LJSpeechDatasetParser
+from parser.LJSpeechDatasetParser import LJSpeechDatasetParser, get_metadata_filepath
+import wget
+import tarfile
+import shutil
 
 import epitran
 import pandas as pd
@@ -12,6 +15,35 @@ from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
+
+def __download_ljs(dir_path: str):
+  print("LJSpeech is not downloaded yet.")
+  print("Starting download...")
+  os.makedirs(dir_path, exist_ok=True)
+  download_url = "https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2"
+  dest = wget.download(download_url, dir_path)
+  downloaded_file = os.path.join(dir_path, dest)
+  print("\nFinished download to {}".format(downloaded_file))
+  print("Unpacking...")
+  tar = tarfile.open(downloaded_file, "r:bz2")  
+  tar.extractall(dir_path)
+  tar.close()
+  print("Done.")
+  print("Moving files...")
+  dir_name = "LJSpeech-1.1"
+  ljs_data_dir = os.path.join(dir_path, dir_name)
+  files = os.listdir(ljs_data_dir)
+  for f in tqdm(files):
+    shutil.move(os.path.join(ljs_data_dir, f), dir_path)
+  print("Done.")
+  os.remove(downloaded_file)
+  os.rmdir(ljs_data_dir)
+
+def ensure_downloaded(dir_path: str):
+  metadata_filepath = get_metadata_filepath(dir_path)
+  metadata_file_exists = os.path.exists(metadata_filepath)
+  if not metadata_file_exists:
+    __download_ljs(dir_path)
 
 def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arcs: bool):
   epi = epitran.Epitran('eng-Latn')
@@ -27,7 +59,7 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arc
   ### normalize input
   for basename, text, wav_path in tqdm(p.data):
     normalized_text = normalize_text(text)
-    if use_ipa:
+    if ipa:
       ipa_text = epi.transliterate(normalized_text)
       text_symbols = extract_from_sentence(ipa_text, ignore_tones=False, ignore_arcs=ignore_arcs)
       data.append((basename, normalized_text, ipa_text, text_symbols, wav_path))
@@ -78,25 +110,20 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--data_dir', type=str, help='LJSpeech dataset directory')
-  parser.add_argument('--ipa', type=str, help='transcribe to IPA')
+  parser.add_argument('--ipa', action='store_true', help='transcribe to IPA')
+  parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
-  parser.add_argument('--ignore_arcs', type=str, help='the name you want to call the dataset')
-  parser.add_argument('--debug', type=str, default="true")
+  parser.add_argument('--no_debugging', action='store_true')
 
   args = parser.parse_args()
 
-  debug = str.lower(args.debug) == 'true'
-
-  if debug:
+  if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.data_dir = '/datasets/LJSpeech-1.1'
-    args.ipa = 'false'
+    args.data_dir = '/datasets/LJSpeech-1.1-tmp'
+    args.ipa = False
+    args.ignore_arcs = True
     args.ds_name = 'ljs_en_v2'
-    args.ignore_arcs = 'true'
   
-  ignore_arcs = str.lower(args.ignore_arcs) == 'true'
-  use_ipa = str.lower(args.ipa) == 'true'
+  ensure_downloaded(args.data_dir)
 
-  preprocess(args.base_dir, args.data_dir, args.ds_name, use_ipa, ignore_arcs)
-
-  
+  preprocess(args.base_dir, args.data_dir, args.ds_name, args.ipa, args.ignore_arcs)

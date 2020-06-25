@@ -52,13 +52,11 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
   parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
-  parser.add_argument('--debug', type=str, default="true")
+  parser.add_argument('--no_debugging', action='store_true')
 
   args = parser.parse_args()
 
-  debug = str.lower(args.debug) == 'true'
-
-  if debug:
+  if not args.no_debugging:
     args.data_src_dir = '/datasets/thchs_wav'
     args.data_dest_dir = '/datasets/thchs_16bit_22050kHz'
   

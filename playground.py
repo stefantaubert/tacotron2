@@ -1,11 +1,50 @@
-import pandas as pd
-import numpy as np
-s = "/datasets/models/taco2pt_v2/ds/thchs_v5/A23/filelist.csv"
-data = pd.read_csv(s, header=None, sep="\t")
-x = float(data.iloc[:, [3]].sum(axis=0)) / 60
-print(x)
 
-wavpath_col = 1
-symbols_str_col = 2
-data = data.iloc[:,[wavpath_col, symbols_str_col]]
-print(data.values)
+x = None
+assert not x
+if x:
+  print("1")
+else:
+  print('0')
+y = bool(x)
+print(y)
+
+x = ''
+assert not x
+if x:
+  print("1")
+else:
+  print('0')
+y = bool(x)
+print(y)
+
+x = ' '
+assert x
+if x:
+  print("1")
+else:
+  print('0')
+y = bool(x)
+print(y)
+
+
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--no_debugging', action='store_true')
+parser.add_argument('--base_dir', type=str, help='base directory')
+parser.add_argument('--training_dir', type=str)
+parser.add_argument('--continue_training', action='store_true')
+parser.add_argument('--seed', type=int, default=1234)
+parser.add_argument('--train_size', type=float, default=1234.5)
+
+args = parser.parse_args()
+
+print(args)
+print(args.no_debugging)
+print(args.continue_training)
+print(args.seed, type(args.seed))
+print(args.train_size, type(args.train_size))
+print(args.training_dir, type(args.training_dir))
+x = not args.training_dir
+
+print(x)

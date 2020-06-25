@@ -17,9 +17,9 @@ from train_log import log
 from shutil import copyfile
 from utils import symbols_str_col
 
-def prepare(base_dir: str, training_dir_path: str, config: dict):
+def prepare(base_dir: str, training_dir_path: str, merge_mode: str, pretrained_model_symbols: str, ds_name: str, speaker: str, pretrained_model: str, weight_map_mode: str, hparams):
   log(training_dir_path, "Merging symbols...")
-  speaker_dir_path = get_ds_dir(base_dir, config["ds_name"], config["speaker"])
+  speaker_dir_path = get_ds_dir(base_dir, ds_name, speaker)
   
   new_prepr_path = os.path.join(speaker_dir_path, ds_preprocessed_file_name)
   new_symbols_path = os.path.join(speaker_dir_path, ds_preprocessed_symbols_name)
@@ -27,35 +27,16 @@ def prepare(base_dir: str, training_dir_path: str, config: dict):
 
   new_data = pd.read_csv(new_prepr_path, header=None, sep=csv_separator)
   new_symbols = set(new_speaker_conv.get_symbols())
-  # b_only, a_concat_b, a_union_b
-  if config["merge_mode"] == 'b_only':
-    # copy symbols.json
-    a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_name)
-    b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name)
-    copyfile(a, b)
-
-    # copy symbols.log
-    a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_log_name)
-    b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_log_file_name)
-    copyfile(a, b)
-
-    # copy filelist.csv
-    a = os.path.join(speaker_dir_path, ds_preprocessed_file_name)
-    b = os.path.join(get_filelist_dir(training_dir_path), filelist_file_name)
-    copyfile(a, b)
-
-    # # copy filelist_log.csv
-    # a = os.path.join(speaker_dir_path, ds_preprocessed_file_log_name)
-    # b = os.path.join(get_filelist_dir(training_dir_path), filelist_file_log_name)
-    # copyfile(a, b)
-  else:
-    final_conv = load_from_file(config["pretrained_model_symbols"])
-    if config["merge_mode"] == 'a_union_b':
+  # a_concat_b, a_union_b
+  if merge_mode:
+    assert pretrained_model_symbols
+    final_conv = load_from_file(pretrained_model_symbols)
+    if merge_mode == 'a_union_b':
       final_conv.add_symbols(new_symbols, ignore_existing=True, subset_id=1)
-    elif config["merge_mode"] == 'a_concat_b':
+    elif merge_mode == 'a_concat_b':
       final_conv.add_symbols(new_symbols, ignore_existing=False, subset_id=1)
     else:
-      raise Exception('merge_mode not supported', config["merge_mode"])
+      raise Exception('merge_mode not supported:', merge_mode)
 
     log(training_dir_path, "Resulting symbolset:")
     log(training_dir_path, '\n'.join(final_conv.get_symbols(include_subset_id=True, include_id=True)))
@@ -80,11 +61,33 @@ def prepare(base_dir: str, training_dir_path: str, config: dict):
     df = pd.DataFrame(result)
     print(df.head())
     df.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_file_name), header=None, index=None, sep=csv_separator)
-  
-  if config["weight_map_mode"] != 'none':
-    pretrained_speaker_conv = load_from_file(config["pretrained_model_symbols"])
+  else:
+    # copy symbols.json
+    a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_name)
+    b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name)
+    copyfile(a, b)
 
-    hparams = create_hparams(config["hparams"])
+    # copy symbols.log
+    a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_log_name)
+    b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_log_file_name)
+    copyfile(a, b)
+
+    # copy filelist.csv
+    a = os.path.join(speaker_dir_path, ds_preprocessed_file_name)
+    b = os.path.join(get_filelist_dir(training_dir_path), filelist_file_name)
+    copyfile(a, b)
+
+    # # copy filelist_log.csv
+    # a = os.path.join(speaker_dir_path, ds_preprocessed_file_log_name)
+    # b = os.path.join(get_filelist_dir(training_dir_path), filelist_file_log_name)
+    # copyfile(a, b)
+
+  if weight_map_mode != None:
+    assert pretrained_model
+    assert pretrained_model_symbols
+    pretrained_speaker_conv = load_from_file(pretrained_model_symbols)
+
+    hparams = create_hparams(hparams)
     final_conv = load_from_file(os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name))
     n_symbols = final_conv.get_symbol_ids_count()
     embedding = nn.Embedding(n_symbols, hparams.symbols_embedding_dim)
@@ -92,20 +95,20 @@ def prepare(base_dir: str, training_dir_path: str, config: dict):
     val = sqrt(3.0) * std  # uniform bounds for std
     embedding.weight.data.uniform_(-val, val)
 
-    checkpoint_dict = torch.load(config["pretrained_model"], map_location='cpu')
+    checkpoint_dict = torch.load(pretrained_model, map_location='cpu')
     pretrained_emb = checkpoint_dict['state_dict']['embedding.weight']
 
-    if config["weight_map_mode"] == 'same_symbols_only':
+    if weight_map_mode == 'same_symbols_only':
       a = set(pretrained_speaker_conv.get_symbols())
       b = set(final_conv.get_symbols())
       a_intersect_b = a.intersection(b)
       log(training_dir_path, "intersecting symbols {}".format(str(a_intersect_b)))
       ipa_mapping = { a: a for a in a_intersect_b }
-    elif config["weight_map_mode"] == 'use_map':
+    elif weight_map_mode == 'use_map':
       map_path = os.path.join(training_dir_path, train_map_file)
       ipa_mapping = parse_map_json(map_path)
     else:
-      raise Exception('weight_map_mode not supported', config["weight_map_mode"])
+      raise Exception('weight_map_mode not supported', weight_map_mode)
     
     not_mapped = set()
     for final_symbol, source_symbol in ipa_mapping.items():
@@ -147,14 +150,14 @@ def prepare(base_dir: str, training_dir_path: str, config: dict):
 #   parser.add_argument('--mode', type=str, help='separate,unify,map')
 #   parser.add_argument('--map', type=str)
 
-#   args = parser.parse_args()
+#   = parser.parse_)
 #   debug = True
 #   if debug:
-#     args.base_dir = '/datasets/models/taco2pt_ms'
-#     args.pretrained_model = os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
-#     args.pretrained_model_symbols = os.path.join(args.base_dir, filelist_dir, 'ljs_ipa/1/symbols.json')
-#     args.ds_name = 'thchs_no_tone'
-#     args.speaker = 'A11'
-#     args.mode = 'map'
-#     args.map = 'maps/en_chn.txt'
+#     base_dir = '/datasets/models/taco2pt_ms'
+#     pretrained_model = os.path.join(base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
+#     pretrained_model_symbols = os.path.join(base_dir, filelist_dir, 'ljs_ipa/1/symbols.json')
+#     ds_name = 'thchs_no_tone'
+#     speaker = 'A11'
+#     mode = 'map'
+#     map = 'maps/en_chn.txt'
 

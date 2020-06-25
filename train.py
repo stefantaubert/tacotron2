@@ -233,7 +233,7 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   if continue_training:
     last_checkpoint = get_last_checkpoint(training_dir_path)
 
-    if last_checkpoint == None:
+    if not last_checkpoint:
       raise Exception("No checkpoint was found to continue training!")
 
     full_checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), last_checkpoint)
@@ -244,8 +244,8 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
     epoch_offset = max(0, int(iteration / len(train_loader)))
   else:
     if warm_start:
-      if pretrained_path == None:
-        raise Exception("Warm start was not possible because the path to the model was not valid.")
+      assert pretrained_path
+      # raise Exception("Warm start was not possible because the path to the model was not valid.")
       warm_start_model(pretrained_path, model, hparams.ignore_layers, training_dir_path)
     
     if use_weights:
@@ -254,7 +254,7 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
 
   model.train()
   is_overflow = False
-  # ================ MAIN TRAINNIG LOOP! ===================
+  # ================ MAIN TRAINING LOOP! ===================
   for epoch in range(epoch_offset, hparams.epochs):
     log(training_dir_path, "Epoch: {}".format(epoch))
     for i, batch in enumerate(train_loader):
@@ -305,11 +305,11 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   checkpoint_path = os.path.join(output_directory,  str(iteration - 1))
   save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
 
-def start_train(training_dir_path: str, config: dict):
+def start_train(training_dir_path: str, hparams: str, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool):
   start = time.time()
   conv = load_from_file(get_symbols_path(training_dir_path))
 
-  hparams = create_hparams(config["hparams"])
+  hparams = create_hparams(hparams)
   
   hparams.n_symbols = conv.get_symbol_ids_count()
   n_speakers = len(parse_ds_speakers(config["speakers"]))
@@ -333,8 +333,7 @@ def start_train(training_dir_path: str, config: dict):
   n_gpus = 1 # 'number of gpus'
   group_name = "group_name" # 'Distributed group name'
 
-  use_weights = config["weight_map_mode"] != 'none'
-  train(config["pretrained_path"], use_weights, config["warm_start"], n_gpus, rank, group_name, hparams, config["continue_training"], training_dir_path)
+  train(pretrained_path, use_weights, warm_start, n_gpus, rank, group_name, hparams, continue_training, training_dir_path)
 
   log(training_dir_path, 'Finished training.')
   duration_s = time.time() - start

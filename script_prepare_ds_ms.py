@@ -18,7 +18,7 @@ from shutil import copyfile
 from utils import symbols_str_col, parse_ds_speakers
 
 def prepare(base_dir: str, training_dir_path: str, config: dict):
-  ds_speakers = parse_ds_speakers(config["speakers"])
+  ds_speakers = parse_ds_speakers(args.speakers)
   final_conv = init_from_symbols(set())
   
   for ds, speaker, _ in ds_speakers:

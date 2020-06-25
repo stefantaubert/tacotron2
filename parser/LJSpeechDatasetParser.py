@@ -11,6 +11,7 @@ def get_wav_dirpath(root_dir) -> str:
   result = os.path.join(root_dir, 'wavs')
   return result
 
+
 class LJSpeechDatasetParser(DatasetParserBase):
   def __init__(self, path: str):
     super().__init__(path)
@@ -49,6 +50,10 @@ class LJSpeechDatasetParser(DatasetParserBase):
     return tmp
 
 if __name__ == "__main__":
-  parser = LJSpeechDatasetParser('/datasets/LJSpeech-1.1-test')
-  result = parser.parse()
-  print(result)
+  import sys
+  sys.path.append('../../tacotron2')
+
+  ensure_downloaded('/datasets/LJSpeech-1.1-tmp')
+  #parser = LJSpeechDatasetParser('/datasets/LJSpeech-1.1-test')
+  #result = parser.parse()
+  #print(result)

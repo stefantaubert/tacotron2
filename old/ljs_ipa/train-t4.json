@@ -1,0 +1,16 @@
+{
+  "continue_training": false,
+  "seed": 1234,
+  "warm_start": false,
+  "pretrained_path": "",
+  "ds_name": "ljs_ipa",
+  "speaker": "1",
+  "train_size": 0.9,
+  "validation_size": 1.0,
+  "hparams": "batch_size=52,iters_per_checkpoint=500,epochs=500",
+  "merge_mode": "b_only",
+  "pretrained_model": "",
+  "pretrained_model_symbols": "",
+  "weight_map_mode": "none",
+  "map": ""
+}

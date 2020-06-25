@@ -18,30 +18,16 @@ def parse_ds_speakers(ds_speakers: str):
   ds_speakers = [x.split(',') + [i] for i, x in enumerate(speakers)]
   return ds_speakers
 
+def args_to_str(args):
+  res = ""
+  for arg, value in sorted(vars(args).items()):
+    res += "{}: {}\n".format(arg, value)
+  return res
+
 def parse_map_json(path: str) -> dict:
   with open(path, 'r') as f:
     tmp = json.load(f)
   return tmp
-
-# def parse_map(path: str) -> OrderedDict:
-#   with open(path, 'r') as f:
-#     tmp = f.readlines()
-#   #ipa_mapping = {x.strip()[0]: x.strip()[-1] for x in tmp}
-#   ipa_mapping = OrderedDict()
-#   for x in tmp:
-#     if '->' in x:
-#       from_to = x.rstrip('\n').replace(' -> ', '')
-#       symbs = extract_from_sentence(from_to, ignore_tones=False, ignore_arcs=False)
-#       a = symbs[0]
-#       if len(symbs) > 2:
-#         b = symbs[1:]
-#       else:
-#         b = [symbs[1]]
-#     else:
-#       a = x.rstrip('\n')
-#       b = ''
-#     ipa_mapping[a] = b
-#   return ipa_mapping
 
 def get_mask_from_lengths(lengths):
   max_len = torch.max(lengths).item()
