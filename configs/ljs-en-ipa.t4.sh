@@ -5,6 +5,10 @@
 
 export base_dir="/home/stefan_taubert/taco2pt_v2"
 
+screen / screen -r
+source activate taco2pytorch
+cd tacotron2
+
 # Preprocessing
 export ljs_dir="/home/stefan_taubert/datasets/LJSpeech-1.1"
 export ds_name="ljs"
@@ -26,6 +30,7 @@ python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_nam
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --ds_name=$ds_name --speaker='1' --hparams=$hparams --warm_start --pretrained_path=$pretrained_path --no_debugging
 
 ## Continue training
+export custom_training_name="ljs_ipa_from_scratch"
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --continue_training --no_debugging
 
 # Inference
