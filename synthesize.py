@@ -118,7 +118,8 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
 
   # Speed is: 1min inference for 3min wav result
 
-  sentence_pause = np.zeros(10**4)
+  sentence_pause_sec = 0.5
+  sentence_pause_samples = np.zeros(hparams.sampling_rate * sentence_pause_sec)
 
   print("Inferring...")
 
@@ -138,12 +139,12 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
     symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
     print("{} ({})".format(conv.ids_to_text(symbol_ids), len(symbol_ids)))
     synthesized_sentence = synt.infer(symbol_ids, str(i), final_speaker_id)
-    output = np.concatenate((output, synthesized_sentence, sentence_pause), axis=0)
+    output = np.concatenate((output, synthesized_sentence, sentence_pause_samples), axis=0)
     #print(output)
 
   print("Saving...")
   out_path = os.path.join(infer_dir_path, inference_output_file_name)
-  to_wav(out_path, output, synt.hparams.sampling_rate)
+  to_wav(out_path, output, hparams.sampling_rate)
   print("Finished. Saved to:", out_path)
 
 

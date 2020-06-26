@@ -51,17 +51,14 @@ if __name__ == "__main__":
     args.pretrained_model = "/datasets/models/taco2pt_v2/ljs_ipa_baseline/checkpoints/49000"
     args.pretrained_model_symbols = "/datasets/models/taco2pt_v2/ljs_ipa_baseline/filelist/symbols.json"
 
-
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 
-  reset_log(training_dir_path)
-  log_train_config(training_dir_path, args)
-
-  use_weights_map = args.weight_map_mode == 'use_map'
-  if use_weights_map:
-    log_train_map(training_dir_path, args.map)
-
   if not args.continue_training:
+    use_weights_map = args.weight_map_mode == 'use_map'
+    if use_weights_map:
+      log_train_map(training_dir_path, args.map)
+
+    reset_log(training_dir_path)
     #prepare(args.base_dir, training_dir_path, merge_mode=args.merge_mode, pretrained_model_symbols=args.pretrained_model_symbols, ds_name=args.ds_name, speaker=args.speaker, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams)
     prepare_ms(args.base_dir, training_dir_path, speakers=args.speakers, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams, pretrained_model_symbols=args.pretrained_model_symbols)
     split_ds(args.base_dir, training_dir_path, train_size=args.train_size, validation_size=args.validation_size, seed=args.seed)
