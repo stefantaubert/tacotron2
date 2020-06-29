@@ -119,7 +119,8 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   # Speed is: 1min inference for 3min wav result
 
   sentence_pause_sec = 0.5
-  sentence_pause_samples = np.zeros(hparams.sampling_rate * sentence_pause_sec)
+  sentence_pause_samples_count = int(round(hparams.sampling_rate * sentence_pause_sec, 0))
+  sentence_pause_samples = np.zeros(shape=sentence_pause_samples_count)
 
   print("Inferring...")
 
