@@ -3,6 +3,7 @@ import os
 
 import epitran
 from nltk.tokenize import sent_tokenize
+from nltk import download
 
 from ipa2symb import extract_from_sentence
 from utils import parse_map_json
@@ -21,7 +22,8 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
   input_file = os.path.join(infer_dir_path, inference_input_file_name)
   with open(input_file, 'r') as f:
     lines = f.readlines()
-
+  if not is_ipa:
+    download('punkt', quiet=True)
   sentences = []
   for line in lines:
     if is_ipa:
