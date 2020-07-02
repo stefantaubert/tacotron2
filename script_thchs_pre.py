@@ -81,7 +81,7 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
     conv.dump(os.path.join(ds_dir, ds_preprocessed_symbols_name))
     conv.plot(os.path.join(ds_dir, ds_preprocessed_symbols_log_name))
     print("Resulting symbolset:")
-    #conv.print_symbols()
+    conv.print_symbols()
 
     ### convert text to symbols
     result = []
@@ -127,4 +127,4 @@ if __name__ == "__main__":
   ensure_downloaded(args.data_dir)
   ensure_is_22050kHz(args.data_dir, args.data_conversion_dir)
 
-  preprocess(args.base_dir, args.data_dir, args.ds_name, args.ignore_tones, args.ignore_arcs)
+  preprocess(args.base_dir, args.data_conversion_dir, args.ds_name, args.ignore_tones, args.ignore_arcs)
