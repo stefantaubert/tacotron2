@@ -10,16 +10,18 @@ from pathlib import Path
 import numpy as np
 from synthesize import to_wav
 
+
 def create_parent_folder(file: str):
   path = Path(file)
   os.makedirs(path.parent, exist_ok=True)
 
 def convert(origin, dest):
   parsed_data = parse_thchs(origin)
+  
+  create_parent_folder(b)
 
   a = os.path.join(origin, 'doc/trans/train.word.txt')
   b = os.path.join(dest, 'doc/trans/train.word.txt')
-  create_parent_folder(b)
   copyfile(a, b)
 
   a = os.path.join(origin, 'doc/trans/test.word.txt')

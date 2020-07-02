@@ -1,7 +1,7 @@
 import os
 
 def exists(dir_path: str):
-  path_to_check = os.path.join(dir_path, 'README.html')
+  path_to_check = os.path.join(dir_path, 'doc/trans/train.word.txt')
   result = os.path.exists(path_to_check)
   return result
 
