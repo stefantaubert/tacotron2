@@ -14,15 +14,16 @@ python script_thchs_pre.py --base_dir=$base_dir --data_dir=$thchs_orig_dir --dat
 
 # Training
 export custom_training_name="thchs_en_ipa"
-export hparams="batch_size=52,iters_per_checkpoint=500,epochs=2000"
-export speaker="thchs_v5,B2;thchs_v5,A2"
+export hparams="batch_size=50,iters_per_checkpoint=500,epochs=2000"
+#export speaker="thchs_v5,B2;thchs_v5,A2"
+export speaker="thchs_v5,B2"
 export model_with_weights="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/checkpoints/80000"
 export model_with_weights_symbols="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
 export map="maps/weights/chn_en_v4.json"
 
 ## Using pretrained model
 python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
-python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --ds_name=$ds_name --speaker=$speaker --hparams=$hparams --weight_map_mode='use_map' --map=$map --warm_start --pretrained_path=$model_with_weights --no_debugging
+python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --speaker=$speaker --hparams=$hparams --pretrained_model=$model_with_weights --pretrained_model_symbols=$model_with_weights_symbols --weight_map_mode='use_map' --map=$map --warm_start --pretrained_path=$model_with_weights --no_debugging
 
 ## Continue training
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --continue_training --no_debugging

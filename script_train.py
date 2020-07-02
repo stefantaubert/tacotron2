@@ -8,7 +8,7 @@ from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_log_name,
                    filelist_symbols_file_name, filelist_symbols_log_file_name,
                    get_ds_dir, get_filelist_dir, get_inference_dir,
                    inference_config_file, log_inference_config, log_input_file,
-                   log_map_file, log_train_config, train_config_file, log_train_map)
+                   log_map_file, log_train_config, train_config_file, log_train_map, train_map_file, filelist_weights_file_name)
 from script_prepare_ds_ms import prepare as prepare_ms
 from script_prepare_ds import prepare
 from script_split_ds import split_ds
@@ -54,9 +54,12 @@ if __name__ == "__main__":
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 
   if not args.continue_training:
-    use_weights_map = args.weight_map_mode == 'use_map'
-    if use_weights_map:
+    use_map = args.weight_map_mode == 'use_map'
+    map_path = os.path.join(training_dir_path, train_map_file)
+    if use_map:
       log_train_map(training_dir_path, args.map)
+    elif os.path.exists(map_path):
+      os.remove(map_path)
 
     reset_log(training_dir_path)
     #prepare(args.base_dir, training_dir_path, merge_mode=args.merge_mode, pretrained_model_symbols=args.pretrained_model_symbols, ds_name=args.ds_name, speaker=args.speaker, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams)
@@ -64,8 +67,10 @@ if __name__ == "__main__":
     split_ds(args.base_dir, training_dir_path, train_size=args.train_size, validation_size=args.validation_size, seed=args.seed)
     
   #start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training)
-  use_weights = bool(args.weight_map_mode)
-  start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training, speakers=args.speakers)
+  weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
+  use_weights_map = os.path.exists(weights_path)
+  # need this parameter also in continue training bc you can use also 1:1 mapping so mapping path checking is not enough
+  start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights_map, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training, speakers=args.speakers)
 
   analyse(training_dir_path)
  
