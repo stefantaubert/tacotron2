@@ -20,7 +20,7 @@ def __parse_dataset__(words_path, wavs_dir):
     wav_path = os.path.join(wavs_dir, speaker_name, name + '.wav')
     exists = os.path.exists(wav_path)
     if not exists:
-      print(wav_path)
+      print("Not found wav file:", wav_path)
       continue
 
     # remove "=" from chinese transcription because it is not correct 
