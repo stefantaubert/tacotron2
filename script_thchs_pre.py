@@ -1,18 +1,53 @@
 import argparse
 import os
-from parser.thchs_parser import parse as parse_thchs
+from parser.thchs_parser import parse as parse_thchs, exists
 
 import epitran
 import pandas as pd
 from tqdm import tqdm
 import librosa
+import tarfile
+import shutil
 
 from ipa2symb import extract_from_sentence
 from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_log_name, ds_preprocessed_symbols_name
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
+import wget
 from text.chn_tools import chn_to_ipa
+
+def ensure_downloaded(dir_path: str):
+  is_downloaded = exists(dir_path)
+  if not is_downloaded:
+    __download_dataset(dir_path)
+
+def __download_dataset(dir_path: str):
+  print("THCHS-30 is not downloaded yet.")
+  print("Starting download...")
+  os.makedirs(dir_path, exist_ok=True)
+  download_url = "http://www.openslr.org/resources/18/data_thchs30.tgz"
+  wav_url = "http://data.cslt.org/thchs30/zip/wav.tgz"
+  transcription_url = "http://data.cslt.org/thchs30/zip/doc.tgz"
+  #dest = wget.download(download_url, dir_path)
+  #downloaded_file = os.path.join(dir_path, dest)
+  downloaded_file = "/home/mi/Downloads/data_thchs30.tgz"
+
+  print("\nFinished download to {}".format(downloaded_file))
+  print("Unpacking...")
+  tar = tarfile.open(downloaded_file, "r:gz")  
+  tar.extractall(dir_path)
+  tar.close()
+  print("Done.")
+  print("Moving files...")
+  dir_name = "THCHS-30"
+  data_dir = os.path.join(dir_path, dir_name)
+  files = os.listdir(data_dir)
+  for f in tqdm(files):
+    shutil.move(os.path.join(data_dir, f), dir_path)
+  print("Done.")
+  os.remove(downloaded_file)
+  os.rmdir(data_dir)
 
 def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool):
   parsed_data = parse_thchs(data_dir)
@@ -85,9 +120,11 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.data_dir = '/datasets/thchs_16bit_22050kHz'
+    args.data_dir = '/datasets/thchs_test'
     args.ds_name = 'thchs_v5'
     args.ignore_tones = True
     args.ignore_arcs = True
   
+  ensure_downloaded(args.data_dir)
+
   preprocess(args.base_dir, args.data_dir, args.ds_name, args.ignore_tones, args.ignore_arcs)

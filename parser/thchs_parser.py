@@ -1,5 +1,10 @@
 import os
 
+def exists(dir_path: str):
+  path_to_check = os.path.join(dir_path, 'README.html')
+  result = os.path.exists(path_to_check)
+  return result
+
 def __parse_dataset__(words_path, wavs_dir):
   with open(words_path, 'r', encoding='utf-8') as f:
     lines = f.readlines()
