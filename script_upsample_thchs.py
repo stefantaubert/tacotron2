@@ -18,15 +18,6 @@ def create_parent_folder(file: str):
 def convert(origin, dest):
   parsed_data = parse_thchs(origin)
 
-  a = os.path.join(origin, 'doc/trans/train.word.txt')
-  b = os.path.join(dest, 'doc/trans/train.word.txt')
-  create_parent_folder(b)
-  copyfile(a, b)
-
-  a = os.path.join(origin, 'doc/trans/test.word.txt')
-  b = os.path.join(dest, 'doc/trans/test.word.txt')
-  copyfile(a, b)
-
   new_rate = 22050
 
   for _, speaker_name, basename, wav_path, chn in tqdm(parsed_data):
@@ -48,6 +39,14 @@ def convert(origin, dest):
     #sf.write(tmp_file, audio, rate, subtype='PCM_16')
     #librosa.output.write_wav(dest_wav_path, new_data, new_rate)
 
+  a = os.path.join(origin, 'doc/trans/test.word.txt')
+  b = os.path.join(dest, 'doc/trans/test.word.txt')
+  create_parent_folder(b)
+  copyfile(a, b)
+
+  a = os.path.join(origin, 'doc/trans/train.word.txt')
+  b = os.path.join(dest, 'doc/trans/train.word.txt')
+  copyfile(a, b)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
