@@ -75,6 +75,9 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
     checkpoint_dict = torch.load(pretrained_model, map_location='cpu')
     pretrained_emb = checkpoint_dict['state_dict']['embedding.weight']
 
+    symbols_match_model = len(pretrained_emb) == pretrained_speaker_conv.get_symbol_ids_count()
+    assert symbols_match_model
+
     if weight_map_mode == 'same_symbols_only':
       a = set(pretrained_speaker_conv.get_symbols())
       b = set(final_conv.get_symbols())
