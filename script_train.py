@@ -3,22 +3,24 @@ import json
 import os
 from shutil import copyfile
 
+from hparams import create_hparams
 from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_log_name,
                    ds_preprocessed_symbols_name, filelist_file_name,
                    filelist_symbols_file_name, filelist_symbols_log_file_name,
-                   get_ds_dir, get_filelist_dir, get_inference_dir,
-                   inference_config_file, log_inference_config, log_input_file,
-                   log_map_file, log_train_config, train_config_file, log_train_map, train_map_file, filelist_weights_file_name)
-from script_prepare_ds_ms import prepare as prepare_ms
+                   filelist_weights_file_name, get_ds_dir, get_filelist_dir,
+                   get_inference_dir, inference_config_file,
+                   log_inference_config, log_input_file, log_map_file,
+                   log_train_config, log_train_map, train_config_file,
+                   train_map_file)
+from plot_embeddings import analyse
 from script_prepare_ds import prepare
+from script_prepare_ds_ms import prepare as prepare_ms
 from script_split_ds import split_ds
 from script_txt_pre import process_input_text
 from synthesize import infer
-from train import start_train, get_last_checkpoint
-from plot_embeddings import analyse
-from utils import args_to_str
+from train import get_last_checkpoint, start_train
 from train_log import reset_log
-from hparams import create_hparams
+from utils import args_to_str
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -29,16 +31,13 @@ if __name__ == "__main__":
   parser.add_argument('--seed', type=str, default=1234)
   parser.add_argument('--warm_start', action='store_true')
   parser.add_argument('--pretrained_path', type=str)
-  #parser.add_argument('--ds_name', type=str)
-  #parser.add_argument('--speaker', type=str)
   parser.add_argument('--speakers', type=str)
   parser.add_argument('--train_size', type=str, default=0.9)
   parser.add_argument('--validation_size', type=str, default=1.0)
   parser.add_argument('--hparams', type=str)
-  parser.add_argument('--merge_mode', type=str)
   parser.add_argument('--pretrained_model', type=str)
   parser.add_argument('--pretrained_model_symbols', type=str)
-  parser.add_argument('--weight_map_mode', type=str)
+  parser.add_argument('--weight_map_mode', type=str, choices=['', 'same_symbols_only', 'use_map'])
   parser.add_argument('--map', type=str)
 
   args = parser.parse_args()
@@ -58,8 +57,10 @@ if __name__ == "__main__":
 
   if not args.base_dir:
     raise Exception("Argument 'base_dir' is required.")
-  if not args.training_dir:
+  elif not args.training_dir:
     raise Exception("Argument 'training_dir' is required.")
+  elif not args.speakers:
+    raise Exception("Argument 'speakers' is required.")
 
   hparams = create_hparams(args.hparams)
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
@@ -73,15 +74,11 @@ if __name__ == "__main__":
       os.remove(map_path)
 
     reset_log(training_dir_path)
-    #prepare(args.base_dir, training_dir_path, merge_mode=args.merge_mode, pretrained_model_symbols=args.pretrained_model_symbols, ds_name=args.ds_name, speaker=args.speaker, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams)
     prepare_ms(args.base_dir, training_dir_path, speakers=args.speakers, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=hparams, pretrained_model_symbols=args.pretrained_model_symbols)
     split_ds(args.base_dir, training_dir_path, train_size=args.train_size, validation_size=args.validation_size, seed=args.seed)
     
-  #start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training)
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
   use_weights_map = os.path.exists(weights_path)
-  # need this parameter also in continue training bc you can use also 1:1 mapping so mapping path checking is not enough
   start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training, speakers=args.speakers)
 
   analyse(training_dir_path)
- 
