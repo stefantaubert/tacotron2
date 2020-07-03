@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.speakers = 'thchs_v5,B2;thchs_v5,A2'
+    args.speaker = 'thchs_v5,B2;thchs_v5,A2'
     args.hparams = 'batch_size=20,iters_per_checkpoint=500,ignore_layers=[embedding.weight, speakers_embedding.weight]'
     args.training_dir = 'debug_ljs_ms'
     args.pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
