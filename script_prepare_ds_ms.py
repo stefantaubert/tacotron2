@@ -76,7 +76,9 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
     pretrained_emb = checkpoint_dict['state_dict']['embedding.weight']
 
     symbols_match_model = len(pretrained_emb) == pretrained_speaker_conv.get_symbol_ids_count()
-    assert symbols_match_model
+    if not symbols_match_model:
+      error_msg = "Weights mapping: symbol space from pretrained model ({}) did not match size of symbols ({})".format(len(pretrained_emb), pretrained_speaker_conv.get_symbol_ids_count())
+      raise Exception(error_msg)
 
     if weight_map_mode == 'same_symbols_only':
       a = set(pretrained_speaker_conv.get_symbols())
@@ -88,7 +90,7 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
       map_path = os.path.join(training_dir_path, train_map_file)
       ipa_mapping = parse_map_json(map_path)
     else:
-      raise Exception('weight_map_mode not supported', weight_map_mode)
+      raise Exception('weight_map_mode not supported {}'.format(weight_map_mode))
     
     not_mapped = set()
     for final_symbol, source_symbol in ipa_mapping.items():
