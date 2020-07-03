@@ -48,6 +48,7 @@ gcloud compute instances create $INSTANCE_NAME \
     --boot-disk-size=120GB \
     --metadata="install-nvidia-driver=True"
 ```
+
 - [More information on templates](https://cloud.google.com/ai-platform/deep-learning-vm/docs/quickstart-cli)
 - [More information on the parameters](https://cloud.google.com/sdk/gcloud/reference/compute/instances/create)
 
