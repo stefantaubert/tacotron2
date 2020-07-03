@@ -33,6 +33,7 @@ python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name
 export base_dir="/home/stefan_taubert/taco2pt_v2"
 export pretrained="/home/stefan_taubert/taco2pt_v2/pretrained"
 python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained --no_debugging
+export custom_training_name="ljs_ipa_ms_from_scratch"
 export waveglow="/home/stefan_taubert/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt"
 export speakers="ljs_ipa,1"
 export speaker="ljs_ipa,1"

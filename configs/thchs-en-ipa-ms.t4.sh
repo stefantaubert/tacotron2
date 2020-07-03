@@ -19,9 +19,9 @@ python script_thchs_pre.py --base_dir=$base_dir --data_dir=$thchs_orig_dir --dat
 # Training
 #export speaker="thchs_v5,B2;thchs_v5,A2"
 export base_dir="/home/stefan_taubert/taco2pt_v2"
-export custom_training_name="thchs_en_ipa"
-export hparams="batch_size=41,iters_per_checkpoint=500,epochs=2000,ignore_layers=[embedding.weight,speakers_embedding.weight]"
-export speakers="thchs_v5,B2"
+export custom_training_name="thchs_en_ipa_ms"
+export hparams="batch_size=35,iters_per_checkpoint=500,epochs=2000,ignore_layers=[embedding.weight,speakers_embedding.weight]"
+export speakers="thchs_v5,B8;thchs_v5,B2;thchs_v5,A2"
 export model_with_weights="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/checkpoints/80000"
 export model_with_weights_symbols="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
 export map="maps/weights/chn_en_v4.json"
@@ -30,20 +30,20 @@ python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name
 
 ## Continue training
 export base_dir="/home/stefan_taubert/taco2pt_v2"
-export custom_training_name="thchs_en_ipa"
+export custom_training_name="thchs_en_ipa_ms"
 export hparams="batch_size=41,iters_per_checkpoint=500,epochs=2000,ignore_layers=[embedding.weight,speakers_embedding.weight]"
-export speakers="thchs_v5,B2"
+export speakers="thchs_v5,B8;thchs_v5,B2;thchs_v5,A2"
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --continue_training --speakers=$speakers --no_debugging
 
 # Inference
 export base_dir="/home/stefan_taubert/taco2pt_v2"
-export custom_training_name="thchs_en_ipa"
+export custom_training_name="thchs_en_ipa_ms"
 export pretrained="/home/stefan_taubert/taco2pt_v2/pretrained"
 python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained --no_debugging
 export waveglow="/home/stefan_taubert/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt"
 export text_map="maps/inference/en_chn_v5.json"
-export speakers="thchs_v5,B2"
-export speaker="thchs_v5,B2"
+export speakers="thchs_v5,B8;thchs_v5,B2;thchs_v5,A2"
+export speaker="thchs_v5,B8"
 
 export text="examples/ipa/north_sven_v2.txt"
 python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --is_ipa --ignore_tones --ignore_arcs --waveglow=$waveglow --map=$text_map --speakers=$speakers --speaker=$speaker --no_debugging
