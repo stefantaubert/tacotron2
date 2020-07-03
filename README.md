@@ -136,6 +136,64 @@ export text="examples/en/democritus_v2.txt"
 python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --no_debugging
 ```
 
+## Filestructure
+
+```
+$base_dir
+├── pretrained
+│  ├── waveglow_256channels_universal_v5.pt
+├── datasets
+│  ├── LJSpeech-1.1
+│  ├── THCHS-30
+│  ├── THCHS-30-22050kHz
+├── ds
+│  ├── ljs_ipa
+│  │  ├── 1
+│  │  │  ├── symbols.log
+│  │  │  ├── symbols.json
+│  │  │  └── filelist.csv
+│  ├── thchs_ipa
+│  │  ├── A11
+│  │  │  ├── symbols.log
+│  │  │  ├── symbols.json
+│  │  │  └── filelist.csv
+├── training_2020-06-17_11-11-03
+│  ├── logs
+│  │  └── log.txt
+│  ├── inference
+│  │  ├── 2020-06-17_11-11-03_500_democritus
+│  │  │  ├── config.log
+│  │  │  ├── input.txt
+│  │  │  ├── input_sentences.txt
+│  │  │  ├── input_sentences_mapped.t
+│  │  │  ├── input_symbols.txt
+│  │  │  ├── input_map.json
+│  │  │  └── output.wav
+│  │  ├── ...
+│  ├── analysis
+│  │  ├── sims.log
+│  │  ├── 3d.html
+│  │  └── 2d.html
+│  ├── filelist
+│  │  ├── weights.npy
+│  │  ├── symbols.json
+│  │  ├── symbols.log
+│  │  ├── filelist.csv
+│  │  ├── audio_text_train_filelist.csv
+│  │  ├── audio_text_test_filelist.csv
+│  │  └── audio_text_val_filelist.csv
+│  ├── checkpoints
+│  │  ├── 0
+│  │  ├── 500
+│  │  ├── 1000
+│  │  └── ...
+│  ├── config.log
+│  ├── weights_map.json
+│  └── description.txt
+│── training_...
+│── training_...
+```
+
 # Notes
 
 I also successfylly tryed this configurations:
