@@ -1,6 +1,7 @@
 ########################################################################################
 # THCHS-30 based IPA Synthesis
 ########################################################################################
+# old and not tested
 # Config: toneless, without arcs, no mapping
 
 export base_dir="/datasets/models/taco2pt_v2"

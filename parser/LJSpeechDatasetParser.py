@@ -53,7 +53,6 @@ if __name__ == "__main__":
   import sys
   sys.path.append('../../tacotron2')
 
-  ensure_downloaded('/datasets/LJSpeech-1.1-tmp')
   #parser = LJSpeechDatasetParser('/datasets/LJSpeech-1.1-test')
   #result = parser.parse()
   #print(result)

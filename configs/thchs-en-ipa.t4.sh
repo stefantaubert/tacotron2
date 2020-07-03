@@ -4,7 +4,6 @@
 # Config: toneless, without arcs
 # you have to first train ljs-en-ipa
 
-
 # Init
 screen -r
 cd tacotron2
@@ -38,13 +37,15 @@ python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name
 
 # Inference
 export base_dir="/home/stefan_taubert/taco2pt_v2"
+export pretrained="/home/stefan_taubert/taco2pt_v2/pretrained"
+python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained --no_debugging
 export waveglow="/home/stefan_taubert/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt"
 export text_map="maps/inference/en_chn_v5.json"
 export speakers="thchs_v5,B2"
 export speaker="thchs_v5,B2"
 
 export text="examples/ipa/north_sven_v2.txt"
-python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --is_ipa --ignore_tones --ignore_arcs --waveglow=$waveglow --map=$text_map --speakers=$speakers --speaker=$speaker  --no_debugging
+python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --is_ipa --ignore_tones --ignore_arcs --waveglow=$waveglow --map=$text_map --speakers=$speakers --speaker=$speaker --no_debugging
 
 export text="examples/en/north.txt"
 python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --ignore_tones --ignore_arcs --waveglow=$waveglow --map=$text_map --no_debugging

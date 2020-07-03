@@ -1,6 +1,8 @@
 ########################################################################################
 # LJSpeech based Synthesis of English Characters
 ########################################################################################
+# old and not tested
+
 export base_dir="/datasets/models/taco2pt_v2"
 
 # Preprocessing
