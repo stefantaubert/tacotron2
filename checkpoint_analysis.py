@@ -39,4 +39,4 @@ def load_checkpoint(checkpoint_path):
 
 if __name__ == "__main__":
   #load_checkpoint('/datasets/models/pretrained/tacotron2_statedict.pt')
-  load_checkpoint('/datasets/models/taco2pt_ms/saved_checkpoints/ljs_1_ipa_49000')
+  load_checkpoint('/datasets/models/pretrained/ljs_ipa_scratch_80000')

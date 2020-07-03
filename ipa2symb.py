@@ -8,10 +8,9 @@ rx = '[{}]'.format(re.escape(string.punctuation))
 arc = '͡'
 
 def extract_from_sentence(ipa_sentence: str, ignore_tones: bool = False, ignore_arcs: bool = False):
-  #words = ipa_sentence.split(' ')
-
   res = []
   tmp = []
+
   for c in ipa_sentence:
     if c in string.punctuation or c in string.whitespace:
       if len(tmp) > 0:
@@ -31,21 +30,6 @@ def extract_from_sentence(ipa_sentence: str, ignore_tones: bool = False, ignore_
     res.extend(raw_word_symbols)
     tmp.clear()
     
-  # for w in words:
-  #   #replace_punctuation = string.maketrans(string.punctuation, ' ' * len(string.punctuation))
-  #   #raw_word = w.maketrans(string.punctuation, ' ' * len(string.punctuation))
-  #   #raw_word = w.strip(string.punctuation)
-  #   #raw_word
-  #   raw_word_parts = re.split(rx, w)
-  #   for part in raw_word_parts:
-  #     part_len = len(part)
-  #     s_ipa = IPAString(unicode_string=part, ignore=False)
-  #     raw_word_symbols = extract_symbols(s_ipa)
-  #     #w.replace(raw_word, s_ipa)
-  #     res.append(raw_word_symbols)
-  #   #test = w.split(string.punctuation)
-  #   #w.replace(raw_word, s_ipa)
-  #   #res.append(raw_word_symbols)
   return res
 
 

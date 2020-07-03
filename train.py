@@ -91,8 +91,7 @@ def warm_start_model(checkpoint_path, model, ignore_layers, training_dir_path):
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
   model_dict = checkpoint_dict['state_dict']
   if len(ignore_layers) > 0:
-    model_dict = {k: v for k, v in model_dict.items()
-            if k not in ignore_layers}
+    model_dict = {k: v for k, v in model_dict.items() if k not in ignore_layers}
     dummy_dict = model.state_dict()
     dummy_dict.update(model_dict)
     model_dict = dummy_dict
@@ -308,11 +307,9 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   checkpoint_path = os.path.join(output_directory,  str(iteration - 1))
   save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
 
-def start_train(training_dir_path: str, hparams: str, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool, speakers: str):
+def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool, speakers: str):
   start = time.time()
   conv = load_from_file(get_symbols_path(training_dir_path))
-
-  hparams = create_hparams(hparams)
   
   hparams.n_symbols = conv.get_symbol_ids_count()
   n_speakers = len(parse_ds_speakers(speakers))
@@ -324,13 +321,13 @@ def start_train(training_dir_path: str, hparams: str, use_weights: str, pretrain
   torch.backends.cudnn.enabled = hparams.cudnn_enabled
   torch.backends.cudnn.benchmark = hparams.cudnn_benchmark
 
-  log(training_dir_path, "Epochs:" + str(hparams.epochs))
-  log(training_dir_path, "Batchsize:" + str(hparams.batch_size))
-  log(training_dir_path, "FP16 Run:" + str(hparams.fp16_run))
-  log(training_dir_path, "Dynamic Loss Scaling:" + str(hparams.dynamic_loss_scaling))
-  log(training_dir_path, "Distributed Run:" + str(hparams.distributed_run))
-  log(training_dir_path, "cuDNN Enabled:" + str(hparams.cudnn_enabled))
-  log(training_dir_path, "cuDNN Benchmark:" + str(hparams.cudnn_benchmark))
+  log(training_dir_path, "Epochs: {}".format(hparams.epochs))
+  log(training_dir_path, "Batchsize: {}".format(hparams.batch_size))
+  log(training_dir_path, "FP16 Run: {}".format(hparams.fp16_run))
+  log(training_dir_path, "Dynamic Loss Scaling: {}".format(hparams.dynamic_loss_scaling))
+  log(training_dir_path, "Distributed Run: {}".format(hparams.distributed_run))
+  log(training_dir_path, "cuDNN Enabled: {}".format(hparams.cudnn_enabled))
+  log(training_dir_path, "cuDNN Benchmark: {}".format(hparams.cudnn_benchmark))
 
   rank = 0 # 'rank of current gpu'
   n_gpus = 1 # 'number of gpus'
@@ -343,4 +340,3 @@ def start_train(training_dir_path: str, hparams: str, use_weights: str, pretrain
   duration_m = duration_s / 60
   log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
 # #   #hparams.batch_size=22 only when on all speakers simultanously thchs
-

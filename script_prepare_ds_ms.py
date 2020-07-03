@@ -70,10 +70,9 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
     assert pretrained_model_symbols
     pretrained_speaker_conv = load_from_file(pretrained_model_symbols)
 
-    hp = create_hparams(hparams)
     n_symbols = final_conv.get_symbol_ids_count()
-    embedding = nn.Embedding(n_symbols, hp.symbols_embedding_dim)
-    std = sqrt(2.0 / (n_symbols + hp.symbols_embedding_dim))
+    embedding = nn.Embedding(n_symbols, hparams.symbols_embedding_dim)
+    std = sqrt(2.0 / (n_symbols + hparams.symbols_embedding_dim))
     val = sqrt(3.0) * std  # uniform bounds for std
     embedding.weight.data.uniform_(-val, val)
 

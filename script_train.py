@@ -18,6 +18,7 @@ from train import start_train, get_last_checkpoint
 from plot_embeddings import analyse
 from utils import args_to_str
 from train_log import reset_log
+from hparams import create_hparams
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -44,13 +45,23 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.speakers = 'ljs_ipa_v2,1'
-    args.hparams = 'batch_size=26,iters_per_checkpoint=500'
+    args.speakers = 'thchs_v5,B2;thchs_v5,A2'
+    args.hparams = 'batch_size=20,iters_per_checkpoint=500,ignore_layers=[embedding.weight, speakers_embedding.weight]'
     args.training_dir = 'debug_ljs_ms'
+    args.pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
+    args.warm_start = True
     #args.weight_map_mode = 'same_symbols_only'
-    args.pretrained_model = "/datasets/models/taco2pt_v2/ljs_ipa_baseline/checkpoints/49000"
-    args.pretrained_model_symbols = "/datasets/models/taco2pt_v2/ljs_ipa_baseline/filelist/symbols.json"
+    args.weight_map_mode = 'use_map'
+    args.map = "maps/weights/chn_en_v4.json"
+    args.pretrained_model = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
+    args.pretrained_model_symbols = "/datasets/models/pretrained/ljs_ipa_scratch.json"
 
+  if not args.base_dir:
+    raise Exception("Argument 'base_dir' is required.")
+  if not args.training_dir:
+    raise Exception("Argument 'training_dir' is required.")
+
+  hparams = create_hparams(args.hparams)
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 
   if not args.continue_training:
@@ -63,14 +74,14 @@ if __name__ == "__main__":
 
     reset_log(training_dir_path)
     #prepare(args.base_dir, training_dir_path, merge_mode=args.merge_mode, pretrained_model_symbols=args.pretrained_model_symbols, ds_name=args.ds_name, speaker=args.speaker, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams)
-    prepare_ms(args.base_dir, training_dir_path, speakers=args.speakers, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=args.hparams, pretrained_model_symbols=args.pretrained_model_symbols)
+    prepare_ms(args.base_dir, training_dir_path, speakers=args.speakers, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=hparams, pretrained_model_symbols=args.pretrained_model_symbols)
     split_ds(args.base_dir, training_dir_path, train_size=args.train_size, validation_size=args.validation_size, seed=args.seed)
     
   #start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training)
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
   use_weights_map = os.path.exists(weights_path)
   # need this parameter also in continue training bc you can use also 1:1 mapping so mapping path checking is not enough
-  start_train(training_dir_path, hparams=args.hparams, use_weights=use_weights_map, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training, speakers=args.speakers)
+  start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training, speakers=args.speakers)
 
   analyse(training_dir_path)
  
