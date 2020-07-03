@@ -6,14 +6,13 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from paths import ds_preprocessed_symbols_name, ds_preprocessed_file_name, filelist_symbols_log_file_name, filelist_symbols_file_name, filelist_test_file_name, filelist_training_file_name, filelist_validation_file_name, get_filelist_dir, get_ds_dir
-from utils import csv_separator
+from utils import csv_separator, get_total_duration_min
 from train_log import log
 
-__duration_col = [3]
 
 def __save(train, training_dir_path, fn):
   #df = train.iloc[:, __wav_symids_cols]
-  total_dur_min = float(train.iloc[:, __duration_col].sum(axis=0)) / 60
+  total_dur_min = get_total_duration_min(train)
   train.to_csv(os.path.join(get_filelist_dir(training_dir_path), fn), header=None, index=None, sep=csv_separator)
   log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min".format(fn, len(train), total_dur_min))
   return total_dur_min

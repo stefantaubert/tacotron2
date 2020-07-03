@@ -10,8 +10,16 @@ csv_separator = '\t'
 
 wavpath_col = 1
 symbols_str_col = 2
+duration_col = 3
 speaker_id_col = 4
 
+def get_total_duration_min_df(csv_file) -> float:
+  data = pd.read_csv(csv_file, header=None, sep=csv_separator)
+  return get_total_duration_min(data)
+
+def get_total_duration_min(dataset_csv) -> float:
+  total_dur_min = float(dataset_csv.iloc[:, [duration_col]].sum(axis=0)) / 60
+  return total_dur_min
 
 def parse_ds_speakers(ds_speakers: str):
   speakers = ds_speakers.split(';')

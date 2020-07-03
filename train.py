@@ -16,7 +16,7 @@ from data_utils import SymbolsMelLoader, SymbolsMelCollate
 from loss_function import Tacotron2Loss
 from logger import Tacotron2Logger
 from hparams import create_hparams
-from utils import parse_ds_speakers
+from utils import parse_ds_speakers, get_total_duration_min_df
 
 from text.symbol_converter import load_from_file
 from paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
@@ -46,8 +46,12 @@ def init_distributed(hparams, n_gpus, rank, group_name, training_dir_path):
 
 def prepare_dataloaders(hparams, filelist_dir_path):
   # Get data, data loaders and collate function ready
-  trainset = SymbolsMelLoader(os.path.join(filelist_dir_path, filelist_training_file_name), hparams)
-  valset = SymbolsMelLoader(os.path.join(filelist_dir_path, filelist_validation_file_name), hparams)
+  trainset_path = os.path.join(filelist_dir_path, filelist_training_file_name)
+  print("Duration trainset {:.2f}min".format(get_total_duration_min_df(trainset_path)))
+  trainset = SymbolsMelLoader(trainset_path, hparams)
+  valset_path = os.path.join(filelist_dir_path, filelist_validation_file_name)
+  print("Duration valset {:.2f}min".format(get_total_duration_min_df(valset_path)))
+  valset = SymbolsMelLoader(valset_path, hparams)
   collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
 
   if hparams.distributed_run:
