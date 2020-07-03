@@ -60,7 +60,12 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
   print(df.head())
   df.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_file_name), header=None, index=None, sep=csv_separator)
 
-  if weight_map_mode != None:
+  weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
+
+  if weight_map_mode == None:
+    if os.path.exists(weights_path):
+      os.remove(weights_path)
+  else:
     assert pretrained_model
     assert pretrained_model_symbols
     pretrained_speaker_conv = load_from_file(pretrained_model_symbols)
@@ -77,7 +82,7 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
 
     symbols_match_model = len(pretrained_emb) == pretrained_speaker_conv.get_symbol_ids_count()
     if not symbols_match_model:
-      error_msg = "Weights mapping: symbol space from pretrained model ({}) did not match size of symbols ({})".format(len(pretrained_emb), pretrained_speaker_conv.get_symbol_ids_count())
+      error_msg = "Weights mapping: symbol space from pretrained model ({}) did not match amount of symbols ({}).".format(len(pretrained_emb), pretrained_speaker_conv.get_symbol_ids_count())
       raise Exception(error_msg)
 
     if weight_map_mode == 'same_symbols_only':
@@ -115,8 +120,6 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
       log(training_dir_path, "Symbols without initialized mapping: {}".format(str(unmapped_symbols)))
 
     log(training_dir_path, str(embedding))
-
-    weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
     np.save(weights_path, embedding.weight.data.numpy())
 
   log(training_dir_path, "Done.")

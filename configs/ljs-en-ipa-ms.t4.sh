@@ -1,23 +1,26 @@
 ########################################################################################
 # LJSpeech based IPA Synthesis
 ########################################################################################
-export base_dir="/home/stefan_taubert/taco2pt_v2"
 
 # Preprocessing
+export base_dir="/home/stefan_taubert/taco2pt_v2"
 export ljs_dir="/home/stefan_taubert/datasets/LJSpeech-1.1"
 export ds_name="ljs_ipa"
 python script_ljs_pre.py --base_dir=$base_dir --data_dir=$ljs_dir --ipa --ignore_arcs --ds_name=$ds_name --no_debugging
 
-# Training
+# Training from scratch
+export base_dir="/home/stefan_taubert/taco2pt_v2"
 export hparams="batch_size=52,iters_per_checkpoint=500,epochs=500"
 export speakers="ljs_ipa,1"
-
-## From scratch
 export custom_training_name="ljs_ipa_ms_from_scratch"
 python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --no_debugging
 
 ## Continue training
+export base_dir="/home/stefan_taubert/taco2pt_v2"
+export hparams="batch_size=52,iters_per_checkpoint=500,epochs=500"
+export speakers="ljs_ipa,1"
+export custom_training_name="ljs_ipa_ms_from_scratch"
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --speakers=$speakers --continue_training --no_debugging
 
 # Inference
