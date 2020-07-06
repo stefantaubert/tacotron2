@@ -28,22 +28,18 @@ from train import load_model, prepare_directories_and_logger, get_last_checkpoin
 
 def eval_chkpoints(hparams, training_dir_path, select: int, min_it: int, max_it: int):
   n_gpus = 1
-  criterion = Tacotron2Loss()
-  torch.manual_seed(hparams.seed)
-  torch.cuda.manual_seed(hparams.seed)
-
   filelist_dir_path = get_filelist_dir(training_dir_path)
-
-  model = load_model(hparams)
-  learning_rate = hparams.learning_rate
-  optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=hparams.weight_decay)
   _, valset, collate_fn = prepare_dataloaders(hparams, filelist_dir_path)
   
   checkpoint_dir = get_checkpoint_dir(training_dir_path)
   _, _, checkpoints = next(os.walk(checkpoint_dir))
   checkpoints = list(sorted(list(map(int, checkpoints))))
+  
   print("Available checkpoints")
   print(checkpoints)
+
+  if not select:
+    select = 0
   if not min_it:
     min_it = 0
   if not max_it:
@@ -57,6 +53,12 @@ def eval_chkpoints(hparams, training_dir_path, select: int, min_it: int, max_it:
   result = []
   print("Validating...")
   for checkpoint in tqdm(process_checkpoints):
+    criterion = Tacotron2Loss()
+    torch.manual_seed(hparams.seed)
+    torch.cuda.manual_seed(hparams.seed)
+    model = load_model(hparams)
+    learning_rate = hparams.learning_rate
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=hparams.weight_decay)
     full_checkpoint_path = os.path.join(checkpoint_dir, str(checkpoint))
     model, _, _, _ = load_checkpoint(full_checkpoint_path, model, optimizer, training_dir_path)
     val_loss, _, _, _ = validate_core(model, criterion, valset, hparams.batch_size, n_gpus, collate_fn, hparams.distributed_run)
@@ -96,7 +98,7 @@ if __name__ == "__main__":
     args.training_dir = 'debug_ljs_ms'
     args.hparams = 'batch_size=20'
     args.select = 500
-    args.min = 5
+    args.min = 0
 
 
   hparams = create_hparams(args.hparams)

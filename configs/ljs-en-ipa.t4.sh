@@ -53,4 +53,4 @@ export hparams="batch_size=52"
 export speakers="ljs_ipa,1"
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export select_pattern=10000
-python script_eval_checkpoints.py --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --select=$select_pattern --no_debugging
+python script_eval_checkpoints.py --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --select=2000 --min=70000 --no_debugging
