@@ -116,7 +116,6 @@ def load_checkpoint(checkpoint_path, model, optimizer, training_dir_path):
   #weights_path = os.path.join(speaker_dir, weights_name)
   #assert os.path.isfile(weights_path)
   assert os.path.isfile(checkpoint_path)
-  log(training_dir_path, "Loading checkpoint '{}'".format(checkpoint_path))
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
   ### Didn't worked out bc the optimizer has old weight size
   # if overwrite_weights:
@@ -136,8 +135,6 @@ def load_checkpoint(checkpoint_path, model, optimizer, training_dir_path):
   optimizer.load_state_dict(checkpoint_dict['optimizer'])
   learning_rate = checkpoint_dict['learning_rate']
   iteration = checkpoint_dict['iteration']
-  log(training_dir_path, "Loaded checkpoint '{}' from iteration {}" .format(
-    checkpoint_path, iteration))
   return model, optimizer, learning_rate, iteration
 
 
@@ -152,8 +149,8 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, traini
     }, filepath)
 
 
-def validate(model, criterion, valset, iteration, batch_size, n_gpus,
-       collate_fn, logger, distributed_run, rank, training_dir_path):
+def validate_core(model, criterion, valset, batch_size, n_gpus,
+       collate_fn, distributed_run):
   """Handles all the validation scoring and printing"""
   model.eval()
   with torch.no_grad():
@@ -175,6 +172,12 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
     val_loss = val_loss / (i + 1)
 
   model.train()
+  return val_loss, model, y, y_pred
+
+def validate(model, criterion, valset, iteration, batch_size, n_gpus,
+       collate_fn, logger, distributed_run, rank, training_dir_path):
+  val_loss, model, y, y_pred = validate_core(model, criterion, valset, batch_size, n_gpus, collate_fn, distributed_run)
+
   if rank == 0:
     log(training_dir_path, "Validation loss {}: {:9f}  ".format(iteration, val_loss))
     logger.log_validation(val_loss, model, y, y_pred, iteration)
@@ -240,7 +243,13 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
       raise Exception("No checkpoint was found to continue training!")
 
     full_checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), last_checkpoint)
+
+    log(training_dir_path, "Loading checkpoint '{}'".format(full_checkpoint_path))
+    
     model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer, training_dir_path)
+
+    log(training_dir_path, "Loaded checkpoint '{}' from iteration {}" .format(full_checkpoint_path, iteration))
+
     if hparams.use_saved_learning_rate:
       learning_rate = _learning_rate
     iteration += 1  # next iteration is iteration + 1

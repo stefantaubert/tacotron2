@@ -19,7 +19,7 @@ python script_thchs_pre.py --base_dir=$base_dir --data_dir=$thchs_orig_dir --dat
 # Training from scratch
 export base_dir="/home/stefan_taubert/taco2pt_v2"
 export custom_training_name="thchs_ipa_scratch"
-export hparams="batch_size=41,iters_per_checkpoint=500,epochs=2000"
+export hparams="batch_size=35,iters_per_checkpoint=500,epochs=2000"
 export speakers="thchs_v5,B8;thchs_v5,B2;thchs_v5,A2"
 python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --no_debugging
@@ -27,7 +27,7 @@ python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name
 ## Continue training
 export base_dir="/home/stefan_taubert/taco2pt_v2"
 export custom_training_name="thchs_ipa_scratch"
-export hparams="batch_size=41,iters_per_checkpoint=500,epochs=2000"
+export hparams="batch_size=35,iters_per_checkpoint=500,epochs=2000"
 export speakers="thchs_v5,B8;thchs_v5,B2;thchs_v5,A2"
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --continue_training --speakers=$speakers --no_debugging
 

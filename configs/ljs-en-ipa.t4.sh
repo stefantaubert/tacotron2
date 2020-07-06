@@ -46,3 +46,10 @@ python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_
 
 export text="examples/en/democritus_v2.txt"
 python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --no_debugging
+
+# Validate
+export base_dir="/home/stefan_taubert/taco2pt_v2"
+export hparams="batch_size=52"
+export speakers="ljs_ipa,1"
+export custom_training_name="ljs_ipa_ms_from_scratch"
+python script_eval_checkpoints.py --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --no_debugging
