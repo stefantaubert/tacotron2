@@ -24,7 +24,7 @@ export hparams="batch_size=41,iters_per_checkpoint=500,epochs=2000,ignore_layers
 export speakers="thchs_v5,B2"
 export model_with_weights="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/checkpoints/80000"
 export model_with_weights_symbols="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
-export map="maps/weights/chn_en_v4.json"
+export map="maps/weights/chn_en_v1.json"
 python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --pretrained_model=$model_with_weights --pretrained_model_symbols=$model_with_weights_symbols --weight_map_mode='use_map' --map=$map --warm_start --pretrained_path=$model_with_weights --no_debugging
 
@@ -41,7 +41,7 @@ export custom_training_name="thchs_en_ipa"
 export pretrained="/home/stefan_taubert/taco2pt_v2/pretrained"
 python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained --no_debugging
 export waveglow="/home/stefan_taubert/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt"
-export text_map="maps/inference/en_chn_v5.json"
+export text_map="maps/inference/en_chn_v1.json"
 export speakers="thchs_v5,B2"
 export speaker="thchs_v5,B2"
 

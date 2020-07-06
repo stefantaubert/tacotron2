@@ -51,7 +51,7 @@ if __name__ == "__main__":
     args.warm_start = True
     #args.weight_map_mode = 'same_symbols_only'
     args.weight_map_mode = 'use_map'
-    args.map = "maps/weights/chn_en_v4.json"
+    args.map = "maps/chn_en_v1.json"
     args.pretrained_model = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
     args.pretrained_model_symbols = "/datasets/models/pretrained/ljs_ipa_scratch.json"
 

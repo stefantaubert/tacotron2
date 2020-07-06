@@ -1,2 +1,0 @@
-- includes all symbols which were not in chinese ipa's
-- theoretically one could include conversion of for example d͡b with tp

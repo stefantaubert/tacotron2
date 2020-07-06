@@ -54,3 +54,8 @@ export speakers="ljs_ipa,1"
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export select_pattern=10000
 python script_eval_checkpoints.py --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --select=2000 --min=70000 --no_debugging
+
+# Plot Embeddings
+export base_dir="/home/stefan_taubert/taco2pt_v2"
+export custom_training_name="ljs_ipa_ms_from_scratch"
+python plot_embeddings.py --base_dir=$base_dir --training_dir=$custom_training_name --no_debugging

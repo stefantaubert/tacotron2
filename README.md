@@ -149,35 +149,32 @@ $base_dir
 ├── ds
 │  ├── ljs_ipa
 │  │  ├── 1
-│  │  │  ├── symbols.log
 │  │  │  ├── symbols.json
 │  │  │  └── filelist.csv
 │  ├── thchs_ipa
 │  │  ├── A11
-│  │  │  ├── symbols.log
 │  │  │  ├── symbols.json
 │  │  │  └── filelist.csv
 ├── training_2020-06-17_11-11-03
 │  ├── logs
 │  │  └── log.txt
 │  ├── inference
-│  │  ├── 2020-06-17_11-11-03_500_democritus
+│  │  ├── 2020-06-17_11-11-03_democritus_A11_500
 │  │  │  ├── config.log
 │  │  │  ├── input.txt
 │  │  │  ├── input_sentences.txt
 │  │  │  ├── input_sentences_mapped.t
 │  │  │  ├── input_symbols.txt
 │  │  │  ├── input_map.json
-│  │  │  └── output.wav
+│  │  │  └── 2020-06-17_11-11-03_democritus_A11_500.wav
 │  │  ├── ...
 │  ├── analysis
-│  │  ├── sims.log
-│  │  ├── 3d.html
-│  │  └── 2d.html
+│  │  ├── 500_sims.log
+│  │  ├── 500_3d.html
+│  │  └── 500_2d.html
 │  ├── filelist
 │  │  ├── weights.npy
 │  │  ├── symbols.json
-│  │  ├── symbols.log
 │  │  ├── filelist.csv
 │  │  ├── audio_text_train_filelist.csv
 │  │  ├── audio_text_test_filelist.csv
@@ -193,6 +190,18 @@ $base_dir
 │── training_...
 │── training_...
 ```
+
+# Maps
+
+Maps can be created with `script_create_map_template.py`.
+
+## Weight maps
+
+These maps are used to map weights from a pretrained model to a new model where the two symbolsets differ.
+
+## Inference maps
+
+These maps are used to translate unknown symbols in the text which should be infered to symbols known to the model.
 
 # Notes
 

@@ -18,18 +18,18 @@ def comp(symA, symB, out, out_symbols):
   symbolsA = set(conv_a.get_symbols(include_subset_id=False, include_id=False))
   symbolsB = set(conv_b.get_symbols(include_subset_id=False, include_id=False))
   
-  sym_mapping = OrderedDict()
-  for b in symbolsB:
-    if b in symbolsA:
-      sym_mapping[b] = b
+  only_a = list(sorted(list(symbolsA)))
+  in_a_and_b = list(sorted(list(symbolsA.intersection(symbolsB))))
+  only_in_b = list(sorted(list(symbolsB.difference(symbolsA))))
   
-  for b in symbolsB:
-    if b not in symbolsA:
-      sym_mapping[b] = ""
+  sym_mapping = OrderedDict([(a, a) for a in in_a_and_b])
+
+  for b in only_in_b:
+    sym_mapping[b] = ""
 
   save_map_json(out, sym_mapping)
   with open(out_symbols, 'w', encoding='utf-8') as f:
-    f.write('\n'.join(list(sorted(list(symbolsA)))))
+    f.write('\n'.join(only_a))
 
   print("A:\n", set_to_str(symbolsA))
   print("B:\n", set_to_str(symbolsB))
@@ -43,8 +43,8 @@ if __name__ == "__main__":
   parser.add_argument('--no_debugging', action='store_true')
   parser.add_argument('--a', type=str)
   parser.add_argument('--b', type=str)
-  parser.add_argument('--out', type=str)
-  parser.add_argument('--out_symbols', type=str)
+  parser.add_argument('--out', type=str, default='/tmp/map.json')
+  parser.add_argument('--out_symbols', type=str, default='/tmp/symbols.txt')
   parser.add_argument('--reverse', action='store_true')
 
   args = parser.parse_args()
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     args.b = "/datasets/models/symbols/ipa_chn.json"
     args.out = "/datasets/models/symbols/map.json"
     args.out_symbols = "/datasets/models/symbols/symbols.txt"
-    args.reverse = True
+    #args.reverse = True
   
   if args.reverse:
     comp(args.b, args.a, args.out, args.out_symbols)

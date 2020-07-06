@@ -13,11 +13,16 @@ import os
 import argparse
 from train import get_last_checkpoint
 
-def analyse(training_dir_path: str):
+def analyse(training_dir_path: str, custom_checkpoint: int):
   conv = load_from_file(get_symbols_path(training_dir_path))
   symbols = conv.get_symbols(include_subset_id=False, include_id=False)
-  last_checkpoint = get_last_checkpoint(training_dir_path)
-  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), last_checkpoint)
+
+  if custom_checkpoint:
+    checkpoint = custom_checkpoint
+  else:
+    checkpoint = get_last_checkpoint(training_dir_path)
+  print("Analyzing checkpoint {}...".format(str(checkpoint)))
+  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
 
   #symbols = [(v,k) for k, v in id_to_symbol.items()]
@@ -51,7 +56,7 @@ def analyse(training_dir_path: str):
   res = ''
   for symbol, s in sims.items():
     res += "{}\t->\t{} ({:.2f})\t->\t{} ({:.2f})\t->\t{} ({:.2f})\n".format(symbol, s[0][1], s[0][0], s[1][1], s[1][0], s[2][1], s[2][0])
-  dest_txt = os.path.join(get_analysis_dir(training_dir_path), analysis_sims_file_name)
+  dest_txt = os.path.join(get_analysis_dir(training_dir_path), "{}_{}".format(str(checkpoint), analysis_sims_file_name))
   with open(dest_txt, 'w', encoding='utf-8') as f:
     f.write(res)
 
@@ -67,7 +72,7 @@ def analyse(training_dir_path: str):
 
   layout = go.Layout(title='Embeddings')
   fig = go.Figure(data=plot, layout=layout)
-  plt.plot(fig, filename=os.path.join(get_analysis_dir(training_dir_path), analysis_3d_file_name))
+  plt.plot(fig, filename=os.path.join(get_analysis_dir(training_dir_path), "{}_{}".format(str(checkpoint), analysis_3d_file_name)))
 
   # 2D
   tsne = TSNE(n_components=2, random_state=0)
@@ -80,16 +85,25 @@ def analyse(training_dir_path: str):
 
   layout = go.Layout(title='Embeddings')
   fig = go.Figure(data=plot, layout=layout)
-  plt.plot(fig, filename=os.path.join(get_analysis_dir(training_dir_path), analysis_2d_file_name))
+  plt.plot(fig, filename=os.path.join(get_analysis_dir(training_dir_path), "{}_{}".format(str(checkpoint), analysis_2d_file_name)))
 
 if __name__ == "__main__":
-  analyse("/datasets/models/taco2pt_v2/training_2020-06-18_12-37-40/")
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--no_debugging', action='store_true')
+  parser.add_argument('--base_dir', type=str, help='base directory')
+  parser.add_argument('--training_dir', type=str)
+  parser.add_argument('--custom_checkpoint', type=str)
 
-# if __name__ == "__main__":
-#   parser = argparse.ArgumentParser()
-#   parser.add_argument('-b', '--base_dir', type=str, help='base directory', default='/datasets/models/taco2pt_ms')
-#   args = parser.parse_args()
+  args = parser.parse_args()
   
+  if not args.no_debugging:
+    args.base_dir = '/datasets/models/taco2pt_v2'
+    args.training_dir = 'debug_ljs_ms'
+    #args.custom_checkpoint = 0
+
+  training_dir_path = os.path.join(args.base_dir, args.training_dir)
+  analyse(training_dir_path, args.custom_checkpoint)
+
 #   models = [
 #     ('ljs_ipa_thchs_no_tone_A11', os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499'), os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499.json')),
 #     ('ljs_en', os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_en_1_ipa_51500'), os.path.join(args.base_dir, filelist_dir, 'ljs_en/1/symbols.json')),
