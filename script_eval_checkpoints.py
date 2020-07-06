@@ -26,7 +26,7 @@ from train_log import log
 
 from train import load_model, prepare_directories_and_logger, get_last_checkpoint, validate_core, prepare_dataloaders, load_checkpoint
 
-def eval_chkpoints(hparams, training_dir_path):
+def eval_chkpoints(hparams, training_dir_path, select: int):
   n_gpus = 1
   criterion = Tacotron2Loss()
   torch.manual_seed(hparams.seed)
@@ -42,14 +42,22 @@ def eval_chkpoints(hparams, training_dir_path):
   checkpoint_dir = get_checkpoint_dir(training_dir_path)
   _, _, checkpoints = next(os.walk(checkpoint_dir))
   checkpoints = list(sorted(list(map(int, checkpoints))))
+  print("Available checkpoints")
+  print(checkpoints)
+  process_checkpoints = [checkpoint for checkpoint in checkpoints if checkpoint % select == 0]
+  print("Selected checkpoints")
+  print(process_checkpoints)
   result = []
-  for checkpoint in tqdm(checkpoints):
+  print("Validating...")
+  for checkpoint in tqdm(process_checkpoints):
     full_checkpoint_path = os.path.join(checkpoint_dir, str(checkpoint))
     model, _, _, _ = load_checkpoint(full_checkpoint_path, model, optimizer, training_dir_path)
     val_loss, _, _, _ = validate_core(model, criterion, valset, hparams.batch_size, n_gpus, collate_fn, hparams.distributed_run)
     result.append((checkpoint, val_loss))
+    print("Validation loss {}: {:9f}".format(checkpoint, val_loss))
 
   result.sort()
+  print("Result...")
   print("Sorted after checkpoints:")
   for cp, loss in result:
     print("Validation loss {}: {:9f}".format(cp, loss))
@@ -69,6 +77,7 @@ if __name__ == "__main__":
   parser.add_argument('--training_dir', type=str)
   parser.add_argument('--speakers', type=str)
   parser.add_argument('--hparams', type=str)
+  parser.add_argument('--select', type=int)
 
   args = parser.parse_args()
 
@@ -77,6 +86,7 @@ if __name__ == "__main__":
     args.speakers = 'thchs_v5,B2;thchs_v5,A2'
     args.training_dir = 'debug_ljs_ms'
     args.hparams = 'batch_size=20'
+    args.select = 500
 
 
   hparams = create_hparams(args.hparams)
@@ -90,4 +100,4 @@ if __name__ == "__main__":
   hparams.n_speakers = n_speakers
 
 
-  eval_chkpoints(hparams, training_dir_path)
+  eval_chkpoints(hparams, training_dir_path, select=args.select)
