@@ -38,10 +38,17 @@ export pretrained="/home/stefan_taubert/taco2pt_v2/pretrained"
 python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained --no_debugging
 export waveglow="/home/stefan_taubert/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt"
 export speakers="thchs_v5,B8;thchs_v5,B2;thchs_v5,A2"
-export speaker="thchs_v5,B8"
+export speaker="thchs_v5,A2"
+export text_map="maps/inference/chn_v1.json"
 
 export text="examples/ipa/thchs_toneless.txt"
-python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --is_ipa --ignore_tones --ignore_arcs --waveglow=$waveglow --speakers=$speakers --speaker=$speaker --no_debugging
+python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --is_ipa --map=$text_map --ignore_tones --ignore_arcs --waveglow=$waveglow --speakers=$speakers --speaker=$speaker --no_debugging
+
+export text="examples/ipa/north_sven_v2.txt"
+python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --is_ipa --map=$text_map --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --no_debugging
+
+export text="examples/ipa/north_ger_orig.txt"
+python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --is_ipa --map=$text_map --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --no_debugging
 
 # Create Inference Map Template
 export model_symbols="/home/stefan_taubert/taco2pt_v2/thchs_ipa_scratch/filelist/symbols.json"

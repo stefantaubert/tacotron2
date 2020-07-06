@@ -54,6 +54,9 @@ python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_
 export text="examples/en/democritus_v2.txt"
 python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging
 
+export text="examples/ipa/north_ger_orig.txt"
+python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --is_ipa --map=$text_map --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --no_debugging
+
 # Create Weight Map Template
 export model_symbols="/home/stefan_taubert/taco2pt_v2/thchs_en_ipa_ms/filelist/symbols.json"
 export model_with_weights_symbols="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
