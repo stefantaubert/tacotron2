@@ -159,14 +159,14 @@ $base_dir
 │  ├── logs
 │  │  └── log.txt
 │  ├── inference
-│  │  ├── 2020-06-17_11-11-03_democritus_A11_500
+│  │  ├── 2020-06-18_11-11-03_democritus_A11_500
 │  │  │  ├── config.log
 │  │  │  ├── input.txt
 │  │  │  ├── input_sentences.txt
 │  │  │  ├── input_sentences_mapped.t
 │  │  │  ├── input_symbols.txt
 │  │  │  ├── input_map.json
-│  │  │  └── 2020-06-17_11-11-03_democritus_A11_500.wav
+│  │  │  └── 2020-06-17_18-11-03_democritus_A11_500.wav
 │  │  ├── ...
 │  ├── analysis
 │  │  ├── 500_sims.log

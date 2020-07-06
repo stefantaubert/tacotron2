@@ -59,3 +59,8 @@ python script_eval_checkpoints.py --base_dir=$base_dir --training_dir=$custom_tr
 export base_dir="/home/stefan_taubert/taco2pt_v2"
 export custom_training_name="ljs_ipa_ms_from_scratch"
 python plot_embeddings.py --base_dir=$base_dir --training_dir=$custom_training_name --no_debugging
+
+# Create Inference Map
+export model_symbols="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
+export corpora="examples/ipa/corpora.txt"
+python script_create_map_template.py --a=$model_symbols --b=$corpora --no_debugging

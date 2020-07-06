@@ -42,3 +42,8 @@ export speaker="thchs_v5,B8"
 
 export text="examples/ipa/thchs_toneless.txt"
 python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --is_ipa --ignore_tones --ignore_arcs --waveglow=$waveglow --speakers=$speakers --speaker=$speaker --no_debugging
+
+# Create Inference Map Template
+export model_symbols="/home/stefan_taubert/taco2pt_v2/thchs_ipa_scratch/filelist/symbols.json"
+export corpora="examples/ipa/corpora.txt"
+python script_create_map_template.py --mode=infer --a=$model_symbols --b=$corpora --no_debugging

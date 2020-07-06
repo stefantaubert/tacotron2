@@ -41,7 +41,7 @@ export custom_training_name="thchs_en_ipa_ms"
 export pretrained="/home/stefan_taubert/taco2pt_v2/pretrained"
 python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained --no_debugging
 export waveglow="/home/stefan_taubert/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt"
-export text_map="maps/inference/en_chn_v1.json"
+export text_map="maps/inference/chn_v1.json"
 export speakers="thchs_v5,B8;thchs_v5,B2;thchs_v5,A2"
 export speaker="thchs_v5,A2"
 
@@ -54,3 +54,7 @@ python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_
 export text="examples/en/democritus_v2.txt"
 python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging
 
+# Create Weight Map Template
+export model_symbols="/home/stefan_taubert/taco2pt_v2/thchs_en_ipa_ms/filelist/symbols.json"
+export model_with_weights_symbols="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
+python script_create_map_template.py --mode=weights --a=$model_with_weights_symbols --b=$model_symbols --no_debugging

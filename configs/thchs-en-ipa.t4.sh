@@ -41,7 +41,7 @@ export custom_training_name="thchs_en_ipa"
 export pretrained="/home/stefan_taubert/taco2pt_v2/pretrained"
 python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained --no_debugging
 export waveglow="/home/stefan_taubert/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt"
-export text_map="maps/inference/en_chn_v1.json"
+export text_map="maps/inference/chn_v1.json"
 export speakers="thchs_v5,B2"
 export speaker="thchs_v5,B2"
 
