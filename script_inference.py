@@ -3,9 +3,9 @@ import json
 import os
 from shutil import copyfile
 
-from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_log_name,
+from paths import (ds_preprocessed_file_name,
                    ds_preprocessed_symbols_name, filelist_file_name,
-                   filelist_symbols_file_name, filelist_symbols_log_file_name,
+                   filelist_symbols_file_name,
                    get_ds_dir, get_filelist_dir, get_inference_dir,
                    inference_config_file, log_inference_config, log_input_file,
                    log_map_file, log_train_config, train_config_file, log_train_map)

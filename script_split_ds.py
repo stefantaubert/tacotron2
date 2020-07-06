@@ -5,7 +5,7 @@ from shutil import copyfile
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from paths import ds_preprocessed_symbols_name, ds_preprocessed_file_name, filelist_symbols_log_file_name, filelist_symbols_file_name, filelist_test_file_name, filelist_training_file_name, filelist_validation_file_name, get_filelist_dir, get_ds_dir
+from paths import ds_preprocessed_symbols_name, ds_preprocessed_file_name, filelist_symbols_file_name, filelist_test_file_name, filelist_training_file_name, filelist_validation_file_name, get_filelist_dir, get_ds_dir
 from utils import csv_separator, get_total_duration_min
 from train_log import log
 

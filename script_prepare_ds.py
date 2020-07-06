@@ -9,7 +9,7 @@ from math import sqrt
 import numpy as np
 from utils import parse_map_json
 
-from paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_symbols_log_file_name, filelist_file_name, filelist_weights_file_name, train_map_file, ds_preprocessed_symbols_log_name, filelist_file_log_name
+from paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_file_name, filelist_weights_file_name, train_map_file, filelist_file_log_name
 from text.symbol_converter import load_from_file, serialize_symbol_ids, deserialize_symbol_ids
 from utils import csv_separator
 from hparams import create_hparams
@@ -54,9 +54,6 @@ def prepare(base_dir: str, training_dir_path: str, merge_mode: str, pretrained_m
     # symbols.json
     final_conv.dump(os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name))
 
-    # symbols.log
-    final_conv.plot(os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_log_file_name))
-
     # filelist.csv
     df = pd.DataFrame(result)
     print(df.head())
@@ -65,11 +62,6 @@ def prepare(base_dir: str, training_dir_path: str, merge_mode: str, pretrained_m
     # copy symbols.json
     a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_name)
     b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name)
-    copyfile(a, b)
-
-    # copy symbols.log
-    a = os.path.join(speaker_dir_path, ds_preprocessed_symbols_log_name)
-    b = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_log_file_name)
     copyfile(a, b)
 
     # copy filelist.csv

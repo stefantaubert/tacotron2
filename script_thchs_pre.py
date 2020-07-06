@@ -10,7 +10,7 @@ import tarfile
 import shutil
 
 from ipa2symb import extract_from_sentence
-from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_log_name, ds_preprocessed_symbols_name
+from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
@@ -79,7 +79,6 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
     ds_dir = get_ds_dir(base_dir, ds_name, speaker, create=True)
 
     conv.dump(os.path.join(ds_dir, ds_preprocessed_symbols_name))
-    conv.plot(os.path.join(ds_dir, ds_preprocessed_symbols_log_name))
     print("Resulting symbolset:")
     conv.print_symbols()
 

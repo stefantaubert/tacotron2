@@ -106,14 +106,8 @@ class SymbolConverter():
 
   def dump(self, file_path: str):
     with open(file_path, 'w', encoding='utf-8') as f:
-      json.dump(self._id_symbol_dict, f)
+      json.dump(self._id_symbol_dict, f, ensure_ascii=False, indent=2)
 
-  def plot(self, file_path: str):
-    with open(file_path, 'w', encoding='utf-8') as f:
-      symbols = self.get_symbols(include_id=True, include_subset_id=True)
-      res = '\n'.join(symbols)
-      f.write(res)
-    
   def __replace_unknown_symbols(self, symbols: list, replace_with_symbol: str = None) -> list:
     assert replace_with_symbol == None or replace_with_symbol in self._symbol_id_dict.keys()
     result = []

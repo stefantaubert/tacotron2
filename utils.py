@@ -40,6 +40,10 @@ def parse_map_json(path: str) -> dict:
     tmp = json.load(f)
   return tmp
 
+def save_map_json(path: str, mapping_dict: dict):
+  with open(path, 'w', encoding='utf-8') as f:
+    json.dump(mapping_dict, f, ensure_ascii=False, indent=2)
+
 def get_mask_from_lengths(lengths):
   max_len = torch.max(lengths).item()
   ids = torch.arange(0, max_len, out=torch.cuda.LongTensor(max_len))
