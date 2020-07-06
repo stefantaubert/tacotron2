@@ -34,7 +34,7 @@ inference_input_normalized_sentences_file_name = 'input_normalized_sentences.txt
 inference_input_sentences_file_name = 'input_sentences.txt'
 inference_input_sentences_mapped_file_name = 'input_sentences_mapped.txt'
 inference_input_symbols_file_name = 'input_symbols.txt'
-inference_output_file_name = 'output.wav'
+#inference_output_file_name = 'output.wav'
 inference_config_file = 'config.log'
 
 checkpoint_dir = 'checkpoints'
@@ -75,8 +75,8 @@ def get_checkpoint_dir(training_dir_path: str, create: bool = True) -> str:
 def get_log_dir(training_dir_path: str, create: bool = True) -> str:
   return __get_subdir(training_dir_path, log_dir, create)
 
-def get_inference_dir(training_dir_path: str, input_name: str, checkpoint: str, create: bool = True) -> str:
-  subdir_name = "{}_{}_{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), input_name, checkpoint)
+def get_inference_dir(training_dir_path: str, input_name: str, checkpoint: str, speaker: str, create: bool = True) -> str:
+  subdir_name = "{}_{}_{}_{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), input_name, speaker, checkpoint)
   return __get_subdir(training_dir_path, os.path.join(inference_dir, subdir_name), create)
 
 def log_train_config(training_dir_path: str, args):

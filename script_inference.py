@@ -16,6 +16,7 @@ from synthesize import infer
 from train import start_train, get_last_checkpoint
 from train_log import reset_log
 from plot_embeddings import analyse
+from utils import parse_ds_speaker
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -60,7 +61,8 @@ if __name__ == "__main__":
     checkpoint = args.custom_checkpoint
   else:
     checkpoint = get_last_checkpoint(training_dir_path)
-  infer_dir_path = get_inference_dir(training_dir_path, checkpoint, input_name)
+  speaker = parse_ds_speaker(args.speaker)[1]
+  infer_dir_path = get_inference_dir(training_dir_path, input_name, checkpoint, speaker)
   log_inference_config(infer_dir_path, args)
   log_input_file(infer_dir_path, args.text)
 

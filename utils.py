@@ -21,9 +21,12 @@ def get_total_duration_min(dataset_csv) -> float:
   total_dur_min = float(dataset_csv.iloc[:, [duration_col]].sum(axis=0)) / 60
   return total_dur_min
 
+def parse_ds_speaker(ds_speaker: str):
+  return ds_speaker.split(',')
+
 def parse_ds_speakers(ds_speakers: str):
   speakers = ds_speakers.split(';')
-  ds_speakers = [x.split(',') + [i] for i, x in enumerate(speakers)]
+  ds_speakers = [parse_ds_speaker(x) + [i] for i, x in enumerate(speakers)]
   return ds_speakers
 
 def args_to_str(args):

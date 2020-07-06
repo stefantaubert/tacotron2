@@ -14,13 +14,14 @@ import torch
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from text.symbol_converter import load_from_file, deserialize_symbol_ids
-from paths import get_symbols_path, inference_input_symbols_file_name, inference_output_file_name, get_checkpoint_dir
+from paths import get_symbols_path, inference_input_symbols_file_name, get_checkpoint_dir
 from train import get_last_checkpoint
 from utils import parse_ds_speakers
 
 # to load denoiser, glow etc.
 sys.path.append('waveglow/')
 from denoiser import Denoiser
+from pathlib import Path
 
 from hparams import create_hparams
 from model import Tacotron2
@@ -144,7 +145,9 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
     #print(output)
 
   print("Saving...")
-  out_path = os.path.join(infer_dir_path, inference_output_file_name)
+  last_dir_name = Path(infer_dir_path).parts[-1]
+  output_name = "{}.wav".format(last_dir_name)
+  out_path = os.path.join(infer_dir_path, output_name)
   to_wav(out_path, output, hparams.sampling_rate)
   print("Finished. Saved to:", out_path)
 
