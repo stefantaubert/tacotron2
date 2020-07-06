@@ -26,7 +26,7 @@ from train_log import log
 
 from train import load_model, prepare_directories_and_logger, get_last_checkpoint, validate_core, prepare_dataloaders, load_checkpoint
 
-def eval_chkpoints(hparams, training_dir_path, select: int):
+def eval_chkpoints(hparams, training_dir_path, select: int, min_it: int, max_it: int):
   n_gpus = 1
   criterion = Tacotron2Loss()
   torch.manual_seed(hparams.seed)
@@ -44,7 +44,14 @@ def eval_chkpoints(hparams, training_dir_path, select: int):
   checkpoints = list(sorted(list(map(int, checkpoints))))
   print("Available checkpoints")
   print(checkpoints)
-  process_checkpoints = [checkpoint for checkpoint in checkpoints if checkpoint % select == 0]
+  if not min_it:
+    min_it = 0
+  if not max_it:
+    max_it = max(checkpoints)
+  process_checkpoints = [checkpoint for checkpoint in checkpoints if checkpoint % select == 0 and checkpoint >= min_it and checkpoint <= max_it]
+  if len(process_checkpoints) == 0:
+    print("None selected. Exiting.")
+    return
   print("Selected checkpoints")
   print(process_checkpoints)
   result = []
@@ -78,6 +85,8 @@ if __name__ == "__main__":
   parser.add_argument('--speakers', type=str)
   parser.add_argument('--hparams', type=str)
   parser.add_argument('--select', type=int)
+  parser.add_argument('--min', type=int)
+  parser.add_argument('--max', type=int)
 
   args = parser.parse_args()
 
@@ -87,6 +96,7 @@ if __name__ == "__main__":
     args.training_dir = 'debug_ljs_ms'
     args.hparams = 'batch_size=20'
     args.select = 500
+    args.min = 5
 
 
   hparams = create_hparams(args.hparams)
@@ -100,4 +110,4 @@ if __name__ == "__main__":
   hparams.n_speakers = n_speakers
 
 
-  eval_chkpoints(hparams, training_dir_path, select=args.select)
+  eval_chkpoints(hparams, training_dir_path, select=args.select, min_it=args.min, max_it=args.max)
