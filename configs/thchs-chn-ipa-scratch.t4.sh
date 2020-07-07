@@ -14,7 +14,7 @@ export base_dir="/datasets/models/taco2pt_v2"
 export thchs_orig_dir="/home/stefan_taubert/datasets/thchs"
 export thchs_dir="/home/stefan_taubert/datasets/thchs_16bit_22050kHz"
 export ds_name="thchs_v5"
-python script_thchs_pre.py --base_dir=$base_dir --data_dir=$thchs_orig_dir --data_conversion_dir=$thchs_dir --ignore_arcs --ignore_tones --ds_name=$ds_name --no_debugging
+python script_thchs_pre.py --base_dir=$base_dir --data_dir=$thchs_orig_dir --data_conversion_dir=$thchs_dir --ignore_arcs --ignore_tones --auto_dl --auto_convert --ds_name=$ds_name --no_debugging
 
 # Training from scratch
 export base_dir="/home/stefan_taubert/taco2pt_v2"

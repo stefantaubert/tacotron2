@@ -6,7 +6,7 @@ from nltk.tokenize import sent_tokenize
 from nltk import download
 
 from ipa2symb import extract_from_sentence
-from utils import parse_map_json
+from utils import parse_json
 from text.adjustments import normalize_text
 from text.symbol_converter import load_from_file, serialize_symbol_ids
 from paths import get_symbols_path, inference_input_normalized_sentences_file_name, inference_input_sentences_file_name, inference_input_sentences_mapped_file_name, inference_input_symbols_file_name, inference_input_file_name, inference_input_map_file_name
@@ -59,7 +59,7 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
 
   if use_map:
     map_path = os.path.join(infer_dir_path, inference_input_map_file_name)
-    ipa_mapping = parse_map_json(map_path)
+    ipa_mapping = parse_json(map_path)
     ipa_mapping = { k: extract_from_sentence(v, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs) for k, v in ipa_mapping.items() }
 
   

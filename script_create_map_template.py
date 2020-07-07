@@ -1,5 +1,5 @@
 import argparse
-from utils import save_map_json, parse_map_json
+from utils import save_json, parse_json
 from text.symbol_converter import load_from_file
 from collections import OrderedDict
 from ipa2symb import extract_from_sentence
@@ -21,11 +21,11 @@ def read_symbols_from_text(corpora_path: str) -> set:
   return symbols
 
 def read_symbols_from_file(path: str) -> set:
-  conv = load_from_file(path)
-  syms = set(conv.get_symbols(include_subset_id=False, include_id=False))
+  parsed = parse_json(path)
+  syms = set(parsed.keys())
   return syms
 
-def comp(symbolsA, symbolsB, out):
+def comp(symbolsA: set, symbolsB: set, out: str):
   only_a = list(sorted(list(symbolsA)))
   in_a_and_b = list(sorted(list(symbolsA.intersection(symbolsB))))
   only_in_b = list(sorted(list(symbolsB.difference(symbolsA))))
@@ -35,7 +35,7 @@ def comp(symbolsA, symbolsB, out):
   for b in only_in_b:
     sym_mapping[b] = ""
 
-  save_map_json(out, sym_mapping)
+  save_json(out, sym_mapping)
   symbols_out_file = "{}.symbols".format(out)
   with open(symbols_out_file, 'w', encoding='utf-8') as f:
     f.write('\n'.join(only_a))
@@ -61,17 +61,17 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.mode = "weights"
-    args.mode = "infer"
+    #args.mode = "infer"
     if args.mode == "weights":
-      args.a = "/datasets/models/symbols/ipa_en.json"
-      args.b = "/datasets/models/symbols/ipa_chn.json"
-      args.out = "/datasets/models/symbols/map.json"
+      args.a = "/datasets/models/taco2pt_v2/ds/ljs_ipa_v2/all_symbols.json"
+      args.b = "/datasets/models/taco2pt_v2/ds/thchs_v5/all_symbols.json"
+      #args.out = "/datasets/models/symbols/map.json"
       #args.reverse = True
     else:
-      args.a = "/datasets/models/symbols/ipa_en.json"
-      #args.a = "/datasets/models/symbols/ipa_chn.json"
+      args.a = "/datasets/models/taco2pt_v2/ds/ljs_ipa_v2/all_symbols.json"
+      #args.a = "/datasets/models/taco2pt_v2/ds/thchs_v5/all_symbols.json"
       args.b = "examples/ipa/corpora.txt"
-      args.out = "/datasets/models/symbols/en_v1.json"
+      #args.out = "/datasets/models/symbols/en_v1.json"
       #args.existing_map = "/datasets/models/symbols/test.json"
   
   a = args.a
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     syms_a = read_symbols_from_file(a)
     syms_b = read_symbols_from_text(b)
     if args.existing_map:
-      existing_map = parse_map_json(args.existing_map)
+      existing_map = parse_json(args.existing_map)
       existing_syms = set(existing_map.keys())
       print("Ignoring existing symbols: {}".format(set_to_str(existing_syms)))
       syms_b = syms_b.difference(existing_syms)

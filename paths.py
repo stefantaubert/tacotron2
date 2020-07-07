@@ -24,6 +24,7 @@ filelist_weights_file_name = 'weights.npy'
 ds_dir = 'ds'
 ds_preprocessed_file_name = 'filelist.csv'
 ds_preprocessed_symbols_name = 'symbols.json'
+ds_preprocessed_all_symbols_name = 'all_symbols.json'
 
 inference_dir = 'inference'
 inference_input_file_name = 'input.txt'
@@ -55,6 +56,10 @@ def __get_subdir(training_dir_path: str, subdir: str, create: bool = True) -> st
 
 def get_symbols_path(training_dir_path: str) -> str:
   path = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name)
+  return path
+
+def get_all_symbols_path(base_dir: str, name: str, create: bool = True) -> str:
+  path = os.path.join(__get_subdir(base_dir, os.path.join(ds_dir, name), create), ds_preprocessed_all_symbols_name)
   return path
 
 def get_ds_dir(base_dir: str, name: str, speaker: str, create: bool = True) -> str:

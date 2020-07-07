@@ -35,12 +35,12 @@ def args_to_str(args):
     res += "{}: {}\n".format(arg, value)
   return res
 
-def parse_map_json(path: str) -> dict:
+def parse_json(path: str) -> dict:
   with open(path, 'r') as f:
     tmp = json.load(f)
   return tmp
 
-def save_map_json(path: str, mapping_dict: dict):
+def save_json(path: str, mapping_dict: dict):
   with open(path, 'w', encoding='utf-8') as f:
     json.dump(mapping_dict, f, ensure_ascii=False, indent=2)
 

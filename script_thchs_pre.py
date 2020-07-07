@@ -10,13 +10,15 @@ import tarfile
 import shutil
 
 from ipa2symb import extract_from_sentence
-from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name
+from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
 import wget
 from text.chn_tools import chn_to_ipa
 from script_upsample_thchs import convert
+from collections import Counter, OrderedDict
+from utils import save_json
 
 def ensure_downloaded(dir_path: str):
   is_downloaded = exists(dir_path)
@@ -52,6 +54,7 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
   data = {}
 
   ### normalize input
+  symbol_counter = Counter()
   for _, speaker_name, basename, wav_path, chn in tqdm(parsed_data):
     try:
       chn_ipa = chn_to_ipa(chn, add_period=True)
@@ -63,7 +66,12 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
     if speaker_name not in data:
       data[speaker_name] = []
 
+    symbol_counter.update(text_symbols)
     data[speaker_name].append((basename, chn, chn_ipa, text_symbols, wav_path))
+
+  all_symbols = OrderedDict(symbol_counter.most_common())
+  all_symbols_path = get_all_symbols_path(base_dir, ds_name)
+  save_json(all_symbols_path, all_symbols)
 
   for speaker, recordings in tqdm(data.items()):
     print("Processing speaker:", speaker)
@@ -101,7 +109,9 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
     #df1 = df.iloc[:, [1, 4, 0, 2, 3, 5, 6]]
     #df2 = df.iloc[:, []]
     #df2.to_csv(os.path.join(ds_dir, ds_preprocessed_file_log_name), header=None, index=None, sep=csv_separator)
-    print("Dataset preprocessing finished.")
+
+  
+  print("Dataset preprocessing finished.")
 
 
 if __name__ == "__main__":
@@ -112,18 +122,26 @@ if __name__ == "__main__":
   parser.add_argument('--ignore_tones', action='store_true')
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
+  parser.add_argument('--auto_dl', action='store_true')
+  parser.add_argument('--auto_convert', action='store_true')
   parser.add_argument('--no_debugging', action='store_true')
 
   args = parser.parse_args()
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.data_dir = '/datasets/thchs_test'
+    args.data_dir = '/datasets/thchs_wav'
+    args.data_conversion_dir = '/datasets/thchs_16bit_22050kHz'
     args.ds_name = 'thchs_v5'
     args.ignore_tones = True
     args.ignore_arcs = True
+    args.auto_dl = False
+    args.auto_convert = False
   
-  ensure_downloaded(args.data_dir)
-  ensure_is_22050kHz(args.data_dir, args.data_conversion_dir)
+  if args.auto_dl:
+    ensure_downloaded(args.data_dir)
+
+  if args.auto_convert:
+    ensure_is_22050kHz(args.data_dir, args.data_conversion_dir)
 
   preprocess(args.base_dir, args.data_conversion_dir, args.ds_name, args.ignore_tones, args.ignore_arcs)

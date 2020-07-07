@@ -7,7 +7,7 @@ from torch import nn
 import torch
 from math import sqrt
 import numpy as np
-from utils import parse_map_json
+from utils import parse_json
 
 from paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_file_name, filelist_weights_file_name, train_map_file, filelist_file_log_name
 from text.symbol_converter import load_from_file, serialize_symbol_ids, deserialize_symbol_ids, init_from_symbols
@@ -89,7 +89,7 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
       ipa_mapping = { a: a for a in a_intersect_b }
     elif weight_map_mode == 'use_map':
       map_path = os.path.join(training_dir_path, train_map_file)
-      ipa_mapping = parse_map_json(map_path)
+      ipa_mapping = parse_json(map_path)
     else:
       raise Exception('weight_map_mode not supported {}'.format(weight_map_mode))
     
