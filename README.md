@@ -155,6 +155,7 @@ $base_dir
 │  │  ├── A11
 │  │  │  ├── symbols.json
 │  │  │  └── filelist.csv
+│  │  ├── ...
 ├── training_2020-06-17_11-11-03
 │  ├── logs
 │  │  └── log.txt
@@ -171,7 +172,8 @@ $base_dir
 │  ├── analysis
 │  │  ├── 500_sims.log
 │  │  ├── 500_3d.html
-│  │  └── 500_2d.html
+│  │  ├── 500_2d.html
+│  │  ├── ...
 │  ├── filelist
 │  │  ├── weights.npy
 │  │  ├── symbols.json
