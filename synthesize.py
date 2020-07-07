@@ -94,7 +94,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   print('Loaded {} symbols'.format(n_symbols))
   ds_speakers = parse_ds_speakers(speakers)
   n_speakers = len(ds_speakers)
-  print('Loaded {} speakers'.format(n_speakers))
+  print('Loaded {} speaker(s)'.format(n_speakers))
 
   with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'r') as f:
     serialized_symbol_ids_sentences = f.readlines()
