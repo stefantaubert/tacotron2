@@ -10,10 +10,14 @@ from utils import parse_json
 from text.adjustments import normalize_text
 from text.symbol_converter import load_from_file, serialize_symbol_ids
 from paths import get_symbols_path, inference_input_normalized_sentences_file_name, inference_input_sentences_file_name, inference_input_sentences_mapped_file_name, inference_input_symbols_file_name, inference_input_file_name, inference_input_map_file_name
+from text.chn_tools import chn_to_ipa
 
-def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, ignore_tones: bool, ignore_arcs: bool, subset_id: int, is_ipa: bool, use_map: bool):
+def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, ignore_tones: bool, ignore_arcs: bool, subset_id: int, lang: str, use_map: bool):
   if ipa:
-    epi = epitran.Epitran('eng-Latn')
+    if lang == "en":
+      epi = epitran.Epitran('eng-Latn')
+    elif lang == "ger":
+      epi = epitran.Epitran('deu-Latn')
 
   conv = load_from_file(get_symbols_path(training_dir_path))
   
@@ -22,21 +26,44 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
   input_file = os.path.join(infer_dir_path, inference_input_file_name)
   with open(input_file, 'r') as f:
     lines = f.readlines()
+  
+  is_ipa = lang == "ipa"
   if not is_ipa:
     download('punkt', quiet=True)
+
   sentences = []
   for line in lines:
-    if is_ipa:
+    if lang == "chn" or lang == "ipa":
       sents = line.split('.')
       sents = [x.strip() for x in sents]
       sents = [x + '.' for x in sents if x != '']
+    elif lang == "en":
+      sents = sent_tokenize(line, language="english")
+    elif lang == "ger":
+      sents = sent_tokenize(line, language="german")
     else:
-      sents = sent_tokenize(line)
+      raise Exception("Unknown input language!")
     sentences.extend(sents)
 
   if is_ipa:
     accented_sents = sentences
-  else:
+  elif lang == "chn":
+    accented_sents = sentences
+    if ipa:
+      tmp = []
+      for s in sentences:
+        chn_ipa = chn_to_ipa(s, add_period=False)
+        tmp.append(chn_ipa)
+      accented_sents = tmp
+  elif lang == "ger":
+    accented_sents = sentences
+    if ipa:
+      tmp = []
+      for s in sentences:
+        chn_ipa = epi.transliterate(s)
+        tmp.append(chn_ipa)
+      accented_sents = tmp
+  elif lang == "en":
     cleaned_sents = []
     for s in sentences:
       cleaned_sent = normalize_text(s)
@@ -61,14 +88,6 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
     map_path = os.path.join(infer_dir_path, inference_input_map_file_name)
     ipa_mapping = parse_json(map_path)
     ipa_mapping = { k: extract_from_sentence(v, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs) for k, v in ipa_mapping.items() }
-
-  
-  # for k, v in ipa_mapping.items():
-  #   for sy in v:
-  #     if not conv._is_valid_text_symbol(sy):
-  #       print(k, '->', v, ',', sy, 'not in symbols')
-  # with open(os.path.join(base_dir, input_dir, "input_sentences_mapped_{}.txt".format(file_name)), 'w') as f:
-  #   f.writelines(['{}\n'.format(s) for s in res])
 
   #print('\n'.join(sentences))
   seq_sents = []
@@ -123,7 +142,7 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
 #   parser.add_argument('--base_dir', type=str, help='base directory')
 #   parser.add_argument('--ipa', type=str, help='IPA-based')
 #   parser.add_argument('--text', type=str, help='path to text which should be synthesized')
-#   parser.add_argument('--is_ipa', type=str, help='text is ipa')
+#   parser.add_argument('--lang=ipa', type=str, help='text is ipa')
 #   parser.add_argument('--ds_name', type=str)
 #   parser.add_argument('--speaker', type=str)
 #   parser.add_argument('--map', default='')

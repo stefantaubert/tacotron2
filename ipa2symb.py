@@ -42,7 +42,14 @@ def extract_symbols(ipa: IPAString, ignore_tones: bool, ignore_arcs: bool):
         if char.is_tone and ignore_tones:
           continue
         else:
-          symbols[-1] += char.unicode_repr
+          # I think it is a bug in IPAString that the arc sometimes gets classified as diacritic and sometimes not
+          if char.unicode_repr == arc:
+            if ignore_arcs:
+              continue
+            else:
+              symbols.append(arc)
+          else:
+            symbols[-1] += char.unicode_repr
     else:
       uc = char.unicode_repr
       if ignore_arcs:
@@ -54,21 +61,25 @@ def extract_symbols(ipa: IPAString, ignore_tones: bool, ignore_arcs: bool):
   return symbols
 
 if __name__ == "__main__":
+  y = u"p͡f"
+  res = extract_from_sentence(y, ignore_tones=True, ignore_arcs=True)
+
+
   #y = u"ˈprɪnɪŋ, ɪn ðə ˈoʊnli sɛns wɪθ wɪʧ wi ər æt ˈprɛzənt kənˈsərnd, ˈdɪfərz frəm moʊst ɪf nɑt frəm ɔl ðə ɑrts ənd kræfts ˌrɛprɪˈzɛnɪd ɪn ðə ˌɛksəˈbɪʃən."
   #y = u"naw, æz ɔl bʊks nɑt pɹajmɛɹəli ɪntɛndəd æz pɪkt͡ʃɹ̩-bʊks kənsɪst pɹɪnsɪpli ʌv tajps kəmpowzd tə fɔɹm lɛtɹ̩pɹɛs"
-  y = u"ɪʧ kt͡ʃɹ̩?"
+  #y = u"ɪʧ kt͡ʃɹ̩?"
   #y = u"tɕy˥˩ɕi˥ meɪ˧˩˧kwɔ˧˥ tsʰan˥i˥˩ɥœn˥˩ i˧˩˧ tsʰɑʊ˧˩˧ni˧˩˧ i˥ fən˥˩ ʈʂɨ˥ʈʂʰɨ˧˥ kʰɤ˥˩lin˧˥twən˥˩ ɕjɑŋ˥˩ pwɔ˥xeɪ˥ pʰaɪ˥˩piŋ˥ tɤ tɕɥœ˧˥i˥˩an˥˩ ʈʂwən˧˩˧peɪ˥˩ tsaɪ˥˩ pən˧˩˧ɥœ˥˩ ʂɑŋ˥˩ɕyn˧˥ tɕin˥˩ɕiŋ˧˥ pjɑʊ˧˩˧tɕɥœ˧˥ t˥˩ʃ˥˩"
   #y = "t˥˩ʃ˥˩?"
   #y = u"wɪʧ"
   #y = "ɪʃn̩'"
 
-  res = extract_from_sentence(y, ignore_tones=False, ignore_arcs=False)
-  print(''.join(res))
-  res = extract_from_sentence(y, ignore_tones=True, ignore_arcs=False)
-  print(''.join(res))
-  res = extract_from_sentence(y, ignore_tones=False, ignore_arcs=True)
-  print(''.join(res))
-  print(res)
-  print(set(res))
-  print(len(set(res)))
+  #res = extract_from_sentence(y, ignore_tones=False, ignore_arcs=False)
+  #print(''.join(res))
+  #res = extract_from_sentence(y, ignore_tones=True, ignore_arcs=False)
+  #print(''.join(res))
+  #res = extract_from_sentence(y, ignore_tones=False, ignore_arcs=True)
+  # print(''.join(res))
+  # print(res)
+  # print(set(res))
+  # print(len(set(res)))
   
