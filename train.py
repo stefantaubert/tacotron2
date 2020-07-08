@@ -148,6 +148,10 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, traini
       'learning_rate': learning_rate
     }, filepath)
 
+def save_checkpoint_score(checkpoint_path, gradloss, trainloss, valloss):
+  name = "{}_{:.6f}_{:.6f}_{:.6f}.log".format(checkpoint_path, gradloss, trainloss, valloss)
+  with open(name, mode='w') as f:
+    f.write("Training Grad Norm: {:.6f}\nTraining Loss: {:.6f}\nValidation Loss: {:.6f}".format(gradloss, trainloss, valloss))
 
 def validate_core(model, criterion, valset, batch_size, n_gpus,
        collate_fn, distributed_run):
@@ -181,11 +185,13 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
   if rank == 0:
     log(training_dir_path, "Validation loss {}: {:9f}  ".format(iteration, val_loss))
     logger.log_validation(val_loss, model, y, y_pred, iteration)
-
+  
+  return val_loss
 
 def get_last_checkpoint(training_dir_path: str):
   checkpoint_dir = get_checkpoint_dir(training_dir_path)
   _, _, filenames = next(os.walk(checkpoint_dir))
+  filenames = [x for x in filenames if ".log" not in x]
   at_least_one_checkpoint_exists = len(filenames) > 0
   if at_least_one_checkpoint_exists:
     last_checkpoint = str(max(list(map(int, filenames))))
@@ -310,15 +316,17 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
         logger.log_training(reduced_loss, grad_norm, learning_rate, duration, iteration)
 
       if not is_overflow and (iteration % hparams.iters_per_checkpoint == 0):
-        validate(model, criterion, valset, iteration, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank, training_dir_path)
+        valloss = validate(model, criterion, valset, iteration, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank, training_dir_path)
         if rank == 0:
           checkpoint_path = os.path.join(output_directory, str(iteration))
           save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path, training_dir_path)
-
+          save_checkpoint_score(checkpoint_path, grad_norm, reduced_loss, valloss)
       iteration += 1
 
+  valloss = validate(model, criterion, valset, iteration, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank, training_dir_path)
   checkpoint_path = os.path.join(output_directory,  str(iteration - 1))
   save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
+  save_checkpoint_score(checkpoint_path, grad_norm, reduced_loss, valloss)
 
 def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool, speakers: str):
   start = time.time()

@@ -13,7 +13,7 @@ import os
 import argparse
 from train import get_last_checkpoint
 
-def analyse(training_dir_path: str, custom_checkpoint: int):
+def analyse(training_dir_path: str, custom_checkpoint: int = None):
   conv = load_from_file(get_symbols_path(training_dir_path))
   symbols = conv.get_symbols(include_subset_id=False, include_id=False)
 
