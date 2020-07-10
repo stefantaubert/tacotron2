@@ -216,28 +216,36 @@ class Encoder(nn.Module):
         dilation=1,
         w_init_gain='relu'
       )
+
       batch_norm = nn.BatchNorm1d(hparams.encoder_embedding_dim)
       conv_layer = nn.Sequential(conv_norm, batch_norm)
       convolutions.append(conv_layer)
+
     self.convolutions = nn.ModuleList(convolutions)
 
     self.lstm = nn.LSTM(
-      input_size=hparams.encoder_embedding_dim,
+      input_size=hparams.encoder_embedding_dim + hparams.speakers_embedding_dim,
       hidden_size=int(hparams.encoder_embedding_dim / 2),
       num_layers=1,
       batch_first=True,
       bidirectional=True
     )
 
-  def forward(self, x, input_lengths):
+  def forward(self, x, input_lengths, speaker_enc_emb):
     for conv in self.convolutions:
       x = F.dropout(F.relu(conv(x)), 0.5, self.training)
 
+    # [20, 512, 159] to [20, 159, 512]
     x = x.transpose(1, 2)
+
+    outputs = []
+    outputs.append(x) # [20, 159, 512]
+    outputs.append(speaker_enc_emb) # [20, 159, 16]
+    merged_outputs = torch.cat(outputs, -1)
 
     # pytorch tensor are not reversible, hence the conversion
     input_lengths = input_lengths.cpu().numpy()
-    x = nn.utils.rnn.pack_padded_sequence(x, input_lengths, batch_first=True)
+    x = nn.utils.rnn.pack_padded_sequence(merged_outputs, input_lengths, batch_first=True)
 
     self.lstm.flatten_parameters()
     outputs, _ = self.lstm(x)
@@ -245,14 +253,19 @@ class Encoder(nn.Module):
 
     return outputs
 
-  def inference(self, x):
+  def inference(self, x, speaker_enc_emb):
     for conv in self.convolutions:
       x = F.dropout(F.relu(conv(x)), 0.5, self.training)
 
     x = x.transpose(1, 2)
 
+    outputs = []
+    outputs.append(x)
+    outputs.append(speaker_enc_emb)
+    merged_outputs = torch.cat(outputs, -1)
+
     self.lstm.flatten_parameters()
-    outputs, _ = self.lstm(x)
+    outputs, _ = self.lstm(merged_outputs)
 
     return outputs
 
@@ -281,7 +294,6 @@ class Decoder(nn.Module):
 
     self.attention_layer = Attention(hparams)
 
-    # Deep Voice 2: "one site-speciﬁc embedding as the initial decoder GRU hidden state" -> is in Tacotron 2 now a LSTM
     self.decoder_rnn = nn.LSTMCell(
       input_size=hparams.attention_rnn_dim + hparams.encoder_embedding_dim + hparams.speakers_embedding_dim,
       hidden_size=hparams.decoder_rnn_dim,
@@ -501,6 +513,9 @@ class Tacotron2(nn.Module):
     self.speakers_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
     torch.nn.init.xavier_uniform_(self.speakers_embedding.weight)
 
+    self.speakers_enc_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
+    torch.nn.init.xavier_uniform_(self.speakers_enc_embedding.weight)
+
     self.encoder = Encoder(hparams)
     self.decoder = Decoder(hparams)
     self.postnet = Postnet(hparams)
@@ -534,12 +549,20 @@ class Tacotron2(nn.Module):
     text_lengths, output_lengths = text_lengths.data, output_lengths.data
 
     embedded_inputs = self.embedding(input=text_inputs)
-    # from [20, 133, 512]) to [20, 512, 133]
+    # from [20, 159, 512] to [20, 512, 159]
     embedded_inputs = embedded_inputs.transpose(1, 2)
+
+    enc_speaker_ids = speaker_ids.unsqueeze(1)
+
+    enc_embedded_speakers = self.speakers_enc_embedding(input=enc_speaker_ids)
+    # From [20, 1, 16] to [20, 133, 16]
+    # copies the values from one speaker to all max_len dimension arrays
+    enc_embedded_speakers = enc_embedded_speakers.expand(-1, max_len, -1)
 
     encoder_outputs = self.encoder(
       x=embedded_inputs,
-      input_lengths=text_lengths
+      input_lengths=text_lengths,
+      speaker_enc_emb=enc_embedded_speakers
     )
 
     # Extract speaker embeddings
@@ -572,7 +595,12 @@ class Tacotron2(nn.Module):
 
   def inference(self, inputs, speaker_id):
     embedded_inputs = self.embedding(inputs).transpose(1, 2)
-    encoder_outputs = self.encoder.inference(embedded_inputs)
+
+    enc_speaker_id = speaker_id.unsqueeze(1)
+    enc_embedded_speaker = self.speakers_enc_embedding(input=enc_speaker_id)
+    enc_embedded_speaker = enc_embedded_speaker.expand(-1, embedded_inputs.shape[-1], -1)
+
+    encoder_outputs = self.encoder.inference(embedded_inputs, enc_embedded_speaker)
 
     # Extract speaker embeddings
     speaker_id = speaker_id.unsqueeze(1)
@@ -584,8 +612,7 @@ class Tacotron2(nn.Module):
     outputs.append(embedded_speaker)
     merged_outputs = torch.cat(outputs, -1)
 
-    mel_outputs, gate_outputs, alignments = self.decoder.inference(
-      merged_outputs)
+    mel_outputs, gate_outputs, alignments = self.decoder.inference(merged_outputs)
 
     mel_outputs_postnet = self.postnet(mel_outputs)
     mel_outputs_postnet = mel_outputs + mel_outputs_postnet
