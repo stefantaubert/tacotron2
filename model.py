@@ -87,7 +87,7 @@ class Attention(nn.Module):
     PARAMS
     ------
     attention_hidden_state: attention rnn last output
-    memory: encoder outputs
+    memory: encoder outputs + speaker embeddings
     processed_memory: processed encoder outputs
     attention_weights_cat: previous and cummulative attention weights
     mask: binary mask for padded data
@@ -108,13 +108,23 @@ class Prenet(nn.Module):
   def __init__(self, hparams):
     super(Prenet, self).__init__()
     self.layers = nn.ModuleList([
-      LinearNorm(hparams.n_mel_channels * hparams.n_frames_per_step, hparams.prenet_dim, bias=False),
-      LinearNorm(hparams.prenet_dim, hparams.prenet_dim, bias=False),
+      LinearNorm(
+        in_dim=hparams.n_mel_channels * hparams.n_frames_per_step,
+        out_dim=hparams.prenet_dim,
+        bias=False
+      ),
+      LinearNorm(
+        in_dim=hparams.prenet_dim,
+        out_dim=hparams.prenet_dim,
+        bias=False
+      ),
     ])
 
   def forward(self, x):
-    for linear in self.layers:
-      x = F.dropout(F.relu(linear(x)), p=0.5, training=True)
+    for layer in self.layers:
+      x = layer(x)
+      x = F.relu(x)
+      x = F.dropout(x, p=0.5, training=True)
     return x
 
 
@@ -227,14 +237,11 @@ class Encoder(nn.Module):
 
     # pytorch tensor are not reversible, hence the conversion
     input_lengths = input_lengths.cpu().numpy()
-    x = nn.utils.rnn.pack_padded_sequence(
-      x, input_lengths, batch_first=True)
+    x = nn.utils.rnn.pack_padded_sequence(x, input_lengths, batch_first=True)
 
     self.lstm.flatten_parameters()
     outputs, _ = self.lstm(x)
-
-    outputs, _ = nn.utils.rnn.pad_packed_sequence(
-      outputs, batch_first=True)
+    outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True)
 
     return outputs
 
@@ -274,6 +281,7 @@ class Decoder(nn.Module):
 
     self.attention_layer = Attention(hparams)
 
+    # Deep Voice 2: "one site-speciﬁc embedding as the initial decoder GRU hidden state" -> is in Tacotron 2 now a LSTM
     self.decoder_rnn = nn.LSTMCell(
       input_size=hparams.attention_rnn_dim + hparams.encoder_embedding_dim + hparams.speakers_embedding_dim,
       hidden_size=hparams.decoder_rnn_dim,
@@ -326,6 +334,7 @@ class Decoder(nn.Module):
 
     self.attention_weights = Variable(memory.data.new(B, MAX_TIME).zero_())
     self.attention_weights_cum = Variable(memory.data.new(B, MAX_TIME).zero_())
+
     self.attention_context = Variable(memory.data.new(B, self.encoder_embedding_dim + self.speakers_embedding_dim).zero_())
 
     self.memory = memory
@@ -412,7 +421,7 @@ class Decoder(nn.Module):
     """ Decoder forward pass for training
     PARAMS
     ------
-    memory: Encoder outputs
+    memory: Encoder outputs + speaker embeddings
     decoder_inputs: Decoder inputs for teacher forcing. i.e. mel-specs
     memory_lengths: Encoder output lengths for attention masking.
 
@@ -422,8 +431,10 @@ class Decoder(nn.Module):
     gate_outputs: gate outputs from the decoder
     alignments: sequence of attention weights from the decoder
     """
-
-    decoder_input = self.get_go_frame(memory).unsqueeze(0)
+    # get_go_frame -> parse_decoder_inputs -> prenet -> initialize_decoder_states -> decode -> parse_decoder_outputs
+    decoder_input = self.get_go_frame(memory)
+    # [20, 80] -> [1, 20, 80]
+    decoder_input = decoder_input.unsqueeze(0)
     decoder_inputs = self.parse_decoder_inputs(decoder_inputs)
     decoder_inputs = torch.cat((decoder_input, decoder_inputs), dim=0)
     decoder_inputs = self.prenet(decoder_inputs)
@@ -438,9 +449,7 @@ class Decoder(nn.Module):
       gate_outputs += [gate_output.squeeze(1)]
       alignments += [attention_weights]
 
-    mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(mel_outputs, gate_outputs, alignments)
-
-    return mel_outputs, gate_outputs, alignments
+    return self.parse_decoder_outputs(mel_outputs, gate_outputs, alignments)
 
   def inference(self, memory):
     """ Decoder inference
@@ -483,6 +492,7 @@ class Tacotron2(nn.Module):
     super(Tacotron2, self).__init__()
     self.mask_padding = hparams.mask_padding
     self.n_mel_channels = hparams.n_mel_channels
+    # TODO rename to symbol_embeddings but it will destroy all previous trained models
     self.embedding = nn.Embedding(hparams.n_symbols, hparams.symbols_embedding_dim)
     std = sqrt(2.0 / (hparams.n_symbols + hparams.symbols_embedding_dim))
     val = sqrt(3.0) * std  # uniform bounds for std
@@ -523,22 +533,37 @@ class Tacotron2(nn.Module):
     text_inputs, text_lengths, mels, max_len, output_lengths, speaker_ids = inputs
     text_lengths, output_lengths = text_lengths.data, output_lengths.data
 
-    embedded_inputs = self.embedding(text_inputs).transpose(1, 2)
+    embedded_inputs = self.embedding(input=text_inputs)
+    # from [20, 133, 512]) to [20, 512, 133]
+    embedded_inputs = embedded_inputs.transpose(1, 2)
 
-    encoder_outputs = self.encoder(embedded_inputs, text_lengths)
+    encoder_outputs = self.encoder(
+      x=embedded_inputs,
+      input_lengths=text_lengths
+    )
 
     # Extract speaker embeddings
+    # From [20] to [20, 1]
     speaker_ids = speaker_ids.unsqueeze(1)
-    embedded_speakers = self.speakers_embedding(speaker_ids)
+    embedded_speakers = self.speakers_embedding(input=speaker_ids)
+    # From [20, 1, 16] to [20, 133, 16]
+    # copies the values from one speaker to all max_len dimension arrays
     embedded_speakers = embedded_speakers.expand(-1, max_len, -1)
     
     outputs = []
+    # [20, 133, 512]
     outputs.append(encoder_outputs)
+    # [20, 133, 16]
     outputs.append(embedded_speakers)
+    # [20, 133, 528]
+    # concatenate symbol and speaker embeddings (-1 means last dimension)
     merged_outputs = torch.cat(outputs, -1)
 
     mel_outputs, gate_outputs, alignments = self.decoder(
-      merged_outputs, mels, memory_lengths=text_lengths)
+      memory=merged_outputs,
+      decoder_inputs=mels,
+      memory_lengths=text_lengths
+    )
 
     mel_outputs_postnet = self.postnet(mel_outputs)
     mel_outputs_postnet = mel_outputs + mel_outputs_postnet
@@ -551,7 +576,7 @@ class Tacotron2(nn.Module):
 
     # Extract speaker embeddings
     speaker_id = speaker_id.unsqueeze(1)
-    embedded_speaker = self.speakers_embedding(speaker_id)
+    embedded_speaker = self.speakers_embedding(input=speaker_id)
     embedded_speaker = embedded_speaker.expand(-1, encoder_outputs.shape[1], -1)
     
     outputs = []
