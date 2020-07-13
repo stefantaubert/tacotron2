@@ -8,10 +8,16 @@ from collections import OrderedDict
 
 csv_separator = '\t'
 
+utt_name_col = 0
 wavpath_col = 1
 symbols_str_col = 2
 duration_col = 3
 speaker_id_col = 4
+
+def get_speaker_count_csv(csv) -> int:
+  all_speakers = np.unique(csv.iloc[:, [speaker_id_col]].values)
+  speaker_count = len(all_speakers)
+  return speaker_count
 
 def get_total_duration_min_df(csv_file) -> float:
   data = pd.read_csv(csv_file, header=None, sep=csv_separator)
@@ -69,3 +75,8 @@ def to_gpu(x):
   if torch.cuda.is_available():
     x = x.cuda(non_blocking=True)
   return torch.autograd.Variable(x)
+
+if __name__ == "__main__":
+  x = "/datasets/models/taco2pt_v2/debug/filelist/filelist.csv"
+  data = pd.read_csv(x, header=None, sep=csv_separator)
+  get_speaker_count_csv(data)

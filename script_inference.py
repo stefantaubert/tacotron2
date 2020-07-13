@@ -79,4 +79,4 @@ if __name__ == "__main__":
     print("Using no mapping.")
 
   process_input_text(training_dir_path, infer_dir_path, ipa=args.ipa, ignore_tones=args.ignore_tones, ignore_arcs=args.ignore_arcs, subset_id=args.subset_id, lang=args.lang, use_map=bool(args.map))
-  infer(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, custom_checkpoint=args.custom_checkpoint, speakers=args.speakers, speaker=args.speaker)
+  infer(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, checkpoint=checkpoint, speakers=args.speakers, speaker=args.speaker)
