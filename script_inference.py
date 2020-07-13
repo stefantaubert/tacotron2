@@ -40,19 +40,22 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.training_dir = 'debug_ljs_ms'
+    args.training_dir = 'debug'
     args.ipa = True
     # args.text = "examples/chn/thchs.txt"
     # args.lang = "chn"
     # args.text = "examples/ger/nord.txt"
     # args.lang = "ger"
-    args.text = "examples/en/north.txt"
+    args.text = "examples/en/ljs_0001.txt"
     args.lang = "en"
-    args.map = "maps/inference/chn_v1.json"
+    #args.map = "maps/inference/chn_v1.json"
+    args.map = "maps/inference/en_v1.json"
     args.ignore_tones = True
     args.ignore_arcs = True
-    args.speakers = 'thchs_v5,B2;thchs_v5,A2'
-    args.speaker = 'thchs_v5,B2'
+    #args.speakers = 'thchs_v5,B2;thchs_v5,A2'
+    args.speakers = 'ljs_ipa_v2,1'
+    args.speaker = 'ljs_ipa_v2,1'
+    #args.speaker = 'thchs_v5,B2'
     args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
@@ -79,4 +82,4 @@ if __name__ == "__main__":
     print("Using no mapping.")
 
   process_input_text(training_dir_path, infer_dir_path, ipa=args.ipa, ignore_tones=args.ignore_tones, ignore_arcs=args.ignore_arcs, subset_id=args.subset_id, lang=args.lang, use_map=bool(args.map))
-  infer(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, custom_checkpoint=args.custom_checkpoint, speakers=args.speakers, speaker=args.speaker)
+  infer(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, checkpoint=checkpoint, speakers=args.speakers, speaker=args.speaker)

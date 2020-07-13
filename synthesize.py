@@ -7,6 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.pylab as plt
 import numpy as np
 from scipy.io import wavfile
+from shutil import copyfile
 import time
 
 import os
@@ -14,9 +15,10 @@ import torch
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from text.symbol_converter import load_from_file, deserialize_symbol_ids
-from paths import get_symbols_path, inference_input_symbols_file_name, get_checkpoint_dir
+from paths import get_symbols_path, inference_input_symbols_file_name, get_checkpoint_dir, inference_input_file_name
 from train import get_last_checkpoint
 from utils import parse_ds_speakers
+from plot_mel import Mel2Samp, plot_melspecs, get_segment, get_audio
 
 # to load denoiser, glow etc.
 sys.path.append('waveglow/')
@@ -27,13 +29,6 @@ from hparams import create_hparams
 from model import Tacotron2
 from train import load_model
 from scipy.io.wavfile import write
-
-def plot_data(data, figsize=(16, 4)):
-  fig, axes = plt.subplots(1, len(data), figsize=figsize)
-  for i in range(len(data)):
-    axes[i].imshow(data[i], aspect='auto', origin='bottom', interpolation='none')
-  ### todo path
-  plt.savefig("out/plot.png", bbox_inches='tight')
 
 def to_wav(path, data, sr):
   wav = data
@@ -65,7 +60,7 @@ class Synthesizer():
       k.float()
     self.denoiser = Denoiser(self.waveglow)
 
-  def infer(self, symbols, dest_name, speaker_id: int):
+  def infer(self, symbols, speaker_id: int):
     sequence = np.array([symbols])
     sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
     speaker_id = torch.IntTensor([speaker_id]).cuda().long()
@@ -86,7 +81,63 @@ class Synthesizer():
     #to_wav("/tmp/{}_denoised.wav".format(dest_name), res, self.hparams.sampling_rate)
     return res
 
-def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, custom_checkpoint: str, speakers: str, speaker: str):
+def validate(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, checkpoint: str, infer_data: tuple, speaker_count: int) -> None:
+  hparams = create_hparams(hparams)
+
+  conv = load_from_file(get_symbols_path(training_dir_path))
+  n_symbols = conv.get_symbol_ids_count()
+  print('Loaded {} symbols'.format(n_symbols))
+  print('Loaded {} speaker(s)'.format(speaker_count))
+
+  hparams.n_symbols = n_symbols
+  hparams.n_speakers = speaker_count
+
+  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
+  print("Using model:", checkpoint_path)
+  synt = Synthesizer(hparams, checkpoint_path, waveglow)
+  plotter = Mel2Samp(hparams)
+
+  utt_name, serialized_symbol_ids, wav_orig_path, final_speaker_id = infer_data
+  print("Inferring {}...".format(utt_name))
+  symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
+  orig_text = conv.ids_to_text(symbol_ids)
+  print("{} ({})".format(orig_text, len(symbol_ids)))
+
+  with open(os.path.join(infer_dir_path, inference_input_file_name), 'w') as f:
+    f.writelines([orig_text])
+
+  synthesized_sentence = synt.infer(symbol_ids, final_speaker_id)
+
+  print("Saving...")
+  last_dir_name = Path(infer_dir_path).parts[-1]
+  output_name = "{}".format(last_dir_name)
+  out_path_template = os.path.join(infer_dir_path, output_name)
+  path_original_wav = "{}_orig.wav".format(out_path_template)
+  path_original_plot = "{}_orig.png".format(out_path_template)
+  path_inferred_wav = "{}_inferred.wav".format(out_path_template)
+  path_inferred_plot = "{}_inferred.png".format(out_path_template)
+  path_compared_plot = "{}_comparison.png".format(out_path_template)
+
+  to_wav(path_inferred_wav, synthesized_sentence, hparams.sampling_rate)
+  print("Finished. Saved to:", path_inferred_wav)
+  print("Plotting...")
+  wav_inferred = get_audio(path_inferred_wav)
+  wav_orig = get_audio(wav_orig_path)
+  #wav = get_segment(wav)
+  #wav = get_segment(wav)
+  mel_inferred = plotter.get_mel(wav_inferred)
+  mel_orig = plotter.get_mel(wav_orig)
+
+  plot_melspecs([mel_inferred])
+  plt.savefig(path_inferred_plot, bbox_inches='tight')
+  plot_melspecs([mel_orig])
+  plt.savefig(path_original_plot, bbox_inches='tight')
+  plot_melspecs([mel_orig, mel_inferred], titles=["Original", "Inferred"])
+  plt.savefig(path_compared_plot, bbox_inches='tight')
+  copyfile(wav_orig_path, path_original_wav)
+  print("Finished.")
+
+def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, checkpoint: str, speakers: str, speaker: str):
   hparams = create_hparams(hparams)
 
   conv = load_from_file(get_symbols_path(training_dir_path))
@@ -102,14 +153,10 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   hparams.n_symbols = n_symbols
   hparams.n_speakers = n_speakers
 
-  if custom_checkpoint:
-    checkpoint = custom_checkpoint
-  else:
-    checkpoint = get_last_checkpoint(training_dir_path)
-
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   print("Using model:", checkpoint_path)
   synt = Synthesizer(hparams, checkpoint_path, waveglow)
+  plotter = Mel2Samp(hparams)
 
   #complete_text = [item for sublist in sentences_symbols for item in sublist]
   #print(complete_text)
@@ -140,7 +187,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
     #print(sentence_symbols)
     symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
     print("{} ({})".format(conv.ids_to_text(symbol_ids), len(symbol_ids)))
-    synthesized_sentence = synt.infer(symbol_ids, str(i), final_speaker_id)
+    synthesized_sentence = synt.infer(symbol_ids, final_speaker_id)
     output = np.concatenate((output, synthesized_sentence, sentence_pause_samples), axis=0)
     #print(output)
 
@@ -150,6 +197,15 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   out_path = os.path.join(infer_dir_path, output_name)
   to_wav(out_path, output, hparams.sampling_rate)
   print("Finished. Saved to:", out_path)
+  print("Plotting...")
+  wav = get_audio(out_path)
+  #wav = get_segment(wav)
+  mel = plotter.get_mel(wav)
+  plot_melspecs([mel])
+  output_name = "{}.png".format(last_dir_name)
+  out_path = os.path.join(infer_dir_path, output_name)
+  plt.savefig(out_path, bbox_inches='tight')
+  plt.show()
 
 
 # if __name__ == "__main__":

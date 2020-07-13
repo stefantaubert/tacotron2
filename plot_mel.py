@@ -60,10 +60,15 @@ class Mel2Samp():
     melspec = torch.squeeze(melspec, 0)
     return melspec
 
-def plot_melspecs(melspecs: list, mel_dim_x = 16, mel_dim_y = 5, factor=1) -> None:
+def plot_melspecs(melspecs: list, mel_dim_x=16, mel_dim_y=5, factor=1, titles=None) -> None:
   fig, axes = plt.subplots(len(melspecs), 1, figsize=(mel_dim_x*factor, len(melspecs)*mel_dim_y*factor))
   for i, mel in enumerate(melspecs):
-    axes[i].imshow(mel, aspect='auto', origin='bottom', interpolation='none')
+    dest = axes
+    if len(melspecs) > 1:
+      dest = dest[i]
+    if titles:
+      dest.set_title(titles[i])
+    dest.imshow(mel, aspect='auto', origin='bottom', interpolation='none')
 
 
 if __name__ == "__main__":
@@ -73,8 +78,8 @@ if __name__ == "__main__":
   
   wav_paths = [
     "/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_742.wav",
-    "/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_743.wav",
-    "/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_744.wav"
+    #"/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_743.wav",
+    #"/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_744.wav"
   ]
 
   melspectrograms = []
@@ -86,6 +91,6 @@ if __name__ == "__main__":
     #torch.save(melspectrogram, new_filepath)
     melspectrograms.append(melspectrogram)
 
-  plot_melspecs(melspectrograms, mel_dim_x = 4, factor=1)
+  plot_melspecs(melspectrograms, mel_dim_x = 4, factor=1, titles=["a"])
   plt.savefig("/tmp/plot.png", bbox_inches='tight')
   plt.show()
