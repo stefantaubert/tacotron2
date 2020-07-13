@@ -149,7 +149,8 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, traini
     }, filepath)
 
 def save_checkpoint_score(checkpoint_path, gradloss, trainloss, valloss):
-  name = "{}_{:.6f}_{:.6f}_{:.6f}.log".format(checkpoint_path, gradloss, trainloss, valloss)
+  loss_avg = (trainloss + valloss) / 2
+  name = "{}_grad-{:.6f}_train-{:.6f}_val-{:.6f}_avg-{:.6f}.log".format(checkpoint_path, gradloss, trainloss, valloss, loss_avg)
   with open(name, mode='w') as f:
     f.write("Training Grad Norm: {:.6f}\nTraining Loss: {:.6f}\nValidation Loss: {:.6f}".format(gradloss, trainloss, valloss))
 

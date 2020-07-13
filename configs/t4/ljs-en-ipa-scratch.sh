@@ -95,3 +95,20 @@ python script_create_map_template.py \
   --ignore_tones
   --ignore_arcs
   --no_debugging
+
+
+# Validate
+export base_dir="/home/stefan_taubert/taco2pt_v2"
+export custom_training_name="ljs_ipa_ms_from_scratch"
+export pretrained="/home/stefan_taubert/taco2pt_v2/pretrained"
+python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained --no_debugging
+export waveglow="/home/stefan_taubert/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt"
+
+export utterance="random-val"
+python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=113204
+export utterance="LJ002-0205"
+python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=113204
+export utterance="LJ006-0229"
+python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=113204
+export utterance="LJ027-0076"
+python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=113204
