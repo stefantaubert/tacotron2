@@ -14,6 +14,10 @@ symbols_str_col = 2
 duration_col = 3
 speaker_id_col = 4
 
+def get_utterance_names_csv(csv) -> list:
+  all_names = set(np.unique(csv.iloc[:, [utt_name_col]].values))
+  return all_names
+
 def get_speaker_count_csv(csv) -> int:
   all_speakers = np.unique(csv.iloc[:, [speaker_id_col]].values)
   speaker_count = len(all_speakers)
@@ -79,4 +83,5 @@ def to_gpu(x):
 if __name__ == "__main__":
   x = "/datasets/models/taco2pt_v2/debug/filelist/filelist.csv"
   data = pd.read_csv(x, header=None, sep=csv_separator)
-  get_speaker_count_csv(data)
+  #get_speaker_count_csv(data)
+  get_utterance_names_csv(data)

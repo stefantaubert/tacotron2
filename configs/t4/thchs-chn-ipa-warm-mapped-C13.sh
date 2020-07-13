@@ -64,3 +64,19 @@ python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_
 export model_symbols="/home/stefan_taubert/taco2pt_v2/ds/thchs/all_symbols.json"
 export model_with_weights_symbols="/home/stefan_taubert/taco2pt_v2/ds/ljs_ipa/all_symbols.json"
 python script_create_map_template.py --mode=weights --a=$model_with_weights_symbols --b=$model_symbols --no_debugging
+
+# Validate
+export base_dir="/home/stefan_taubert/taco2pt_v2"
+export custom_training_name="thchs_ipa_warm_mapped_C13"
+export pretrained="/home/stefan_taubert/taco2pt_v2/pretrained"
+python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained --no_debugging
+export waveglow="/home/stefan_taubert/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt"
+
+export utterance="random-val"
+python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=8000
+export utterance="C13_615"
+python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=8000
+export utterance="C13_724"
+python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=8000
+export utterance="C13_508"
+python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=8000
