@@ -46,14 +46,14 @@ if __name__ == "__main__":
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.speakers = 'thchs_v5,B2;thchs_v5,A2;thchs_v5,A4;thchs_v5,A11;thchs_v5,B8;thchs_v5,B4;thchs_v5,A34;thchs_v5,A36;thchs_v5,C20;thchs_v5,C19'
     args.hparams = 'batch_size=20,iters_per_checkpoint=500'
-    args.training_dir = 'debug_ljs_ms'
-    args.pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
+    args.training_dir = 'debug_thchs_ms_v2'
+    #args.pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
     args.warm_start = False
     #args.weight_map_mode = 'same_symbols_only'
     #args.weight_map_mode = ''
-    args.map = "maps/weights/chn_en_v1.json"
-    args.pretrained_model = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
-    args.pretrained_model_symbols = "/datasets/models/pretrained/ljs_ipa_scratch.json"
+    #args.map = "maps/weights/chn_en_v1.json"
+    #args.pretrained_model = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
+    #args.pretrained_model_symbols = "/datasets/models/pretrained/ljs_ipa_scratch.json"
     args.continue_training = False
 
   if not args.base_dir:

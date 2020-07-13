@@ -5,7 +5,7 @@
 # you have to first train ljs-en-ipa
 
 # Init
-screen -r
+screen
 cd tacotron2
 source activate taco2pytorch
 
@@ -22,9 +22,7 @@ export base_dir="/home/stefan_taubert/taco2pt_v2"
 export custom_training_name="thchs_ipa_warm_mapped_C13"
 export speakers="thchs_v5,C13"
 export hparams="batch_size=45,iters_per_checkpoint=500,epochs=2000,ignore_layers=[embedding.weight,speakers_embedding.weight]"
-# export speakers="thchs_v5,C13;thchs_v5,B2;thchs_v5,A2"
-# export hparams="batch_size=35,iters_per_checkpoint=500,epochs=2000,ignore_layers=[embedding.weight,speakers_embedding.weight]"
-export model_with_weights="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/checkpoints/79000"
+export model_with_weights="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/checkpoints/113204"
 export model_with_weights_symbols="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
 export map="maps/weights/chn_en_v1.json"
 python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
@@ -48,19 +46,19 @@ export speakers="thchs_v5,C13"
 export speaker="thchs_v5,C13"
 
 export text="examples/ipa/thchs.txt"
-python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --map=$text_map --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --custom_checkpoint=500 --no_debugging
+python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --map=$text_map --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --no_debugging --custom_checkpoint=1500 
 
 export text="examples/ipa/north_sven_v2.txt"
-python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --waveglow=$waveglow --map=$text_map --speakers=$speakers --speaker=$speaker --custom_checkpoint=500 --no_debugging
+python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --waveglow=$waveglow --map=$text_map --speakers=$speakers --speaker=$speaker --no_debugging --custom_checkpoint=8000 
 
 export text="examples/en/north.txt"
-python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=en --ignore_tones --ignore_arcs --waveglow=$waveglow --map=$text_map --speakers=$speakers --speaker=$speaker --custom_checkpoint=500 --no_debugging
+python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=en --ignore_tones --ignore_arcs --waveglow=$waveglow --map=$text_map --speakers=$speakers --speaker=$speaker --no_debugging --custom_checkpoint=1000
 
 export text="examples/en/democritus_v2.txt"
-python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=en --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging
+python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=en --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=8000 
 
 export text="examples/ipa/north_ger.txt"
-python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --map=$text_map --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --custom_checkpoint=500 --no_debugging
+python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --map=$text_map --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --no_debugging --custom_checkpoint=1500
 
 # Create Weight Map Template
 export model_symbols="/home/stefan_taubert/taco2pt_v2/ds/thchs/all_symbols.json"

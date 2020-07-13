@@ -40,18 +40,18 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.training_dir = 'debug_ljs_ms'
+    args.training_dir = 'debug_thchs_ms_v2'
+    args.speakers = 'thchs_v5,B2;thchs_v5,A2;thchs_v5,A4;thchs_v5,A11;thchs_v5,B8;thchs_v5,B4;thchs_v5,A34;thchs_v5,A36;thchs_v5,C20;thchs_v5,C19'
     args.ipa = True
     # args.text = "examples/chn/thchs.txt"
     # args.lang = "chn"
     # args.text = "examples/ger/nord.txt"
     # args.lang = "ger"
-    args.text = "examples/en/north.txt"
-    args.lang = "en"
+    args.text = "examples/ipa/thchs.txt"
+    args.lang = "ipa"
     args.map = "maps/inference/chn_v1.json"
     args.ignore_tones = True
     args.ignore_arcs = True
-    args.speakers = 'thchs_v5,B2;thchs_v5,A2'
     args.speaker = 'thchs_v5,B2'
     args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
 
