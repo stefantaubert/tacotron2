@@ -32,7 +32,7 @@ if __name__ == "__main__":
   parser.add_argument('--warm_start', action='store_true')
   parser.add_argument('--pretrained_path', type=str)
   parser.add_argument('--speakers', type=str, choices=["ds_name,speaker_id;...","ds_name,all;..."])
-  parser.add_argument('--train_size', type=str, default=0.9)
+  parser.add_argument('--train_size', type=str, default=0.90)
   parser.add_argument('--validation_size', type=str, default=1.0)
   parser.add_argument('--hparams', type=str)
   parser.add_argument('--pretrained_model', type=str)
@@ -45,10 +45,11 @@ if __name__ == "__main__":
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.speakers = 'thchs_v5,all'
-    args.hparams = 'batch_size=8,iters_per_checkpoint=500'
+    args.hparams = 'batch_size=17,iters_per_checkpoint=500'
     args.training_dir = 'debug_thchs_ms_v2'
     #args.pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
     args.warm_start = False
+    args.train_size = 0.93
     #args.weight_map_mode = 'same_symbols_only'
     #args.weight_map_mode = ''
     #args.map = "maps/weights/chn_en_v1.json"
