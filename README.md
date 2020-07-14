@@ -55,7 +55,12 @@ gcloud compute instances create $INSTANCE_NAME \
 ## Checkout repo
 
 ```bash
-git clone git@github.com:stefantaubert/tacotron2.git
+# get link from https://www.anaconda.com/products/individual and then 'Linux Python 3.7 64-Bit (x86) Installer' copy link
+wget https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
+bash Anaconda3-2020.02-Linux-x86_64.sh
+# reopen shell
+
+git clone https://github.com/stefantaubert/tacotron2
 cd tacotron2
 git submodule init
 git submodule update
@@ -65,6 +70,21 @@ pip install -r reqmin.txt
 # TODO: reqmin is not enough
 pip install -r reqmax.txt
 ```
+to be able to run training without being connected with ssh:
+```
+sudo apt install screen
+```
+
+check cuda is installed:
+```
+nvcc --version
+```
+
+error is normal:
+```
+ERROR: tensorflow 1.13.2 has requirement tensorboard<1.14.0,>=1.13.0, but you'll have tensorboard 2.2.2 which is incompatible.
+Installing collected packages: numpy, pytz, six,
+```
 
 ## IPA synthesis using LJSpeech-1.1 dataset
 
@@ -73,6 +93,7 @@ pip install -r reqmax.txt
 If you want to train on IPA-Symbols you need to install [flite](https://github.com/festvox/flite) for G2P conversion of English text:
 
 ```bash
+cd
 git clone https://github.com/festvox/flite.git
 cd flite
 ./configure && make
