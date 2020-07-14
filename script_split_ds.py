@@ -14,7 +14,7 @@ def __save(train, training_dir_path, fn):
   #df = train.iloc[:, __wav_symids_cols]
   total_dur_min = get_total_duration_min(train)
   train.to_csv(os.path.join(get_filelist_dir(training_dir_path), fn), header=None, index=None, sep=csv_separator)
-  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min".format(fn, len(train), total_dur_min))
+  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(fn, len(train), total_dur_min, total_dur_min / 60))
   return total_dur_min
 
 def split_ds(base_dir, training_dir_path: str, train_size: float, validation_size: float, seed: int):
@@ -50,7 +50,7 @@ def split_ds(base_dir, training_dir_path: str, train_size: float, validation_siz
   d = __save(val, training_dir_path, filelist_validation_file_name)
   total_duration = total_duration + d
 
-  log(training_dir_path, "Total => Size: {}, Duration: {:.2f}min".format(len(data), total_duration))
+  log(training_dir_path, "Total => Size: {}, Duration: {:.2f}min / {:.2f}h".format(len(data), total_duration, total_duration / 60))
   log(training_dir_path, "Dataset is splitted now.")
 
 if __name__ == "__main__":

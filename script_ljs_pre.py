@@ -11,7 +11,7 @@ from tqdm import tqdm
 import librosa
 
 from ipa2symb import extract_from_sentence
-from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path
+from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path, get_all_speakers_path
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
@@ -55,9 +55,12 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arc
   speaker = "1"
 
   ds_dir = get_ds_dir(base_dir, ds_name, speaker, create=True)
-  
-  data = []
 
+  all_speakers = OrderedDict([("1", len(p.data))])
+  all_speakers_path = get_all_speakers_path(base_dir, ds_name)
+  save_json(all_speakers_path, all_speakers)
+
+  data = []
   symbol_counter = Counter()
   ### normalize input
   for basename, text, wav_path in tqdm(p.data):
@@ -126,10 +129,10 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.data_dir = '/datasets/LJSpeech-1.1-tmp'
+    args.data_dir = '/datasets/LJSpeech-1.1'
     args.ipa = True
     args.ignore_arcs = True
-    args.ds_name = 'ljs_en_test'
+    args.ds_name = 'ljs_ipa_v2'
   
   ensure_downloaded(args.data_dir)
 

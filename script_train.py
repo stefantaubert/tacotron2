@@ -31,7 +31,7 @@ if __name__ == "__main__":
   parser.add_argument('--seed', type=str, default=1234)
   parser.add_argument('--warm_start', action='store_true')
   parser.add_argument('--pretrained_path', type=str)
-  parser.add_argument('--speakers', type=str)
+  parser.add_argument('--speakers', type=str, choices=["ds_name,speaker_id;...","ds_name,all;..."])
   parser.add_argument('--train_size', type=str, default=0.9)
   parser.add_argument('--validation_size', type=str, default=1.0)
   parser.add_argument('--hparams', type=str)
@@ -45,7 +45,7 @@ if __name__ == "__main__":
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.training_dir = 'debug'
-    args.speakers = 'ljs_ipa_v2,1'
+    args.speakers = 'thchs_v5,all;thchs_v5,A11'
     args.hparams = 'batch_size=20,iters_per_checkpoint=3,ignore_layers=[embedding.weight, speakers_embedding.weight]'
     args.pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
     args.warm_start = True
