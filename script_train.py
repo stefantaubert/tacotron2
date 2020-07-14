@@ -54,7 +54,7 @@ if __name__ == "__main__":
     #args.map = "maps/weights/chn_en_v1.json"
     #args.pretrained_model = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
     #args.pretrained_model_symbols = "/datasets/models/pretrained/ljs_ipa_scratch.json"
-    args.continue_training = False
+    args.continue_training = True
 
   if not args.base_dir:
     raise Exception("Argument 'base_dir' is required.")

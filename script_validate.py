@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.training_dir = 'debug'
+    args.training_dir = 'debug_thchs_ms_v2'
     #args.utterance = "LJ001-0001"
     args.utterance = "random-val"
     args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
