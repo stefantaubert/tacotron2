@@ -158,14 +158,13 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   hparams.n_symbols = n_symbols
   hparams.n_speakers = n_speakers
 
-
   with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'r') as f:
     serialized_symbol_ids_sentences = f.readlines()
 
   hparams.n_symbols = n_symbols
   hparams.n_speakers = n_speakers
 
-  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
+  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), str(checkpoint))
   print("Using model:", checkpoint_path)
   synt = Synthesizer(hparams, checkpoint_path, waveglow)
   plotter = Mel2Samp(hparams)
