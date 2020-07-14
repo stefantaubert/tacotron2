@@ -13,14 +13,18 @@ wavpath_col = 1
 symbols_str_col = 2
 duration_col = 3
 speaker_id_col = 4
+speaker_name_col = 5
 
 def get_utterance_names_csv(csv) -> list:
   all_names = set(np.unique(csv.iloc[:, [utt_name_col]].values))
   return all_names
 
+def get_speakers_csv(csv) -> set:
+  all_speakers = set(np.unique(csv.iloc[:, [speaker_id_col]].values))
+  return all_speakers
+
 def get_speaker_count_csv(csv) -> int:
-  all_speakers = np.unique(csv.iloc[:, [speaker_id_col]].values)
-  speaker_count = len(all_speakers)
+  speaker_count = len(get_speakers_csv(csv))
   return speaker_count
 
 def get_total_duration_min_df(csv_file) -> float:
@@ -31,10 +35,21 @@ def get_total_duration_min(dataset_csv) -> float:
   total_dur_min = float(dataset_csv.iloc[:, [duration_col]].sum(axis=0)) / 60
   return total_dur_min
 
+def serialize_ds_speaker(ds: str, speaker: str):
+  return "{},{}".format(ds, speaker)
+
 def parse_ds_speaker(ds_speaker: str):
   return ds_speaker.split(',')
 
-def parse_ds_speakers(ds_speakers: str):
+def serialize_ds_speakers(ds_speakers: tuple):
+  ds_speakers = [serialize_ds_speaker(ds, speaker) for ds, speaker in ds_speakers]
+  res = ";".join(ds_speakers)
+  return res
+
+def parse_ds_speakers(ds_speakers: str) -> list:
+  '''
+  Example: [ ['thchs', 'C11', 0], ... ]
+  '''
   speakers = ds_speakers.split(';')
   ds_speakers = [parse_ds_speaker(x) + [i] for i, x in enumerate(speakers)]
   return ds_speakers

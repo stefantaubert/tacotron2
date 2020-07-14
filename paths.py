@@ -19,12 +19,14 @@ filelist_validation_file_name = 'audio_text_val_filelist.csv'
 filelist_symbols_file_name = 'symbols.json'
 filelist_file_name = 'filelist.csv'
 filelist_file_log_name = 'filelist_log.csv'
+filelist_speakers_name = 'speakers.json'
 filelist_weights_file_name = 'weights.npy'
 
 ds_dir = 'ds'
 ds_preprocessed_file_name = 'filelist.csv'
 ds_preprocessed_symbols_name = 'symbols.json'
 ds_preprocessed_all_symbols_name = 'all_symbols.json'
+ds_preprocessed_all_speakers_name = 'all_speakers.json'
 
 inference_dir = 'inference'
 inference_input_file_name = 'input.txt'
@@ -60,6 +62,10 @@ def get_symbols_path(training_dir_path: str) -> str:
 
 def get_all_symbols_path(base_dir: str, name: str, create: bool = True) -> str:
   path = os.path.join(__get_subdir(base_dir, os.path.join(ds_dir, name), create), ds_preprocessed_all_symbols_name)
+  return path
+
+def get_all_speakers_path(base_dir: str, name: str, create: bool = True) -> str:
+  path = os.path.join(__get_subdir(base_dir, os.path.join(ds_dir, name), create), ds_preprocessed_all_speakers_name)
   return path
 
 def get_ds_dir(base_dir: str, name: str, speaker: str, create: bool = True) -> str:

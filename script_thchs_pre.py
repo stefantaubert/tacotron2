@@ -10,7 +10,7 @@ import tarfile
 import shutil
 
 from ipa2symb import extract_from_sentence
-from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path
+from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path, get_all_speakers_path
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from utils import csv_separator
@@ -72,6 +72,12 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
   all_symbols = OrderedDict(symbol_counter.most_common())
   all_symbols_path = get_all_symbols_path(base_dir, ds_name)
   save_json(all_symbols_path, all_symbols)
+
+  all_speakers = [(k, len(v)) for k, v in data.items()]
+  all_speakers.sort(key=lambda tup: tup[1], reverse=True)
+  all_speakers = OrderedDict(all_speakers)
+  all_speakers_path = get_all_speakers_path(base_dir, ds_name)
+  save_json(all_speakers_path, all_speakers)
 
   for speaker, recordings in tqdm(data.items()):
     print("Processing speaker:", speaker)
