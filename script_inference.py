@@ -29,7 +29,6 @@ if __name__ == "__main__":
   parser.add_argument('--ignore_tones', action='store_true')
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--map', type=str)
-  parser.add_argument('--speakers', type=str)
   parser.add_argument('--speaker', type=str)
   parser.add_argument('--subset_id', type=str)
   parser.add_argument('--hparams', type=str)
@@ -41,7 +40,6 @@ if __name__ == "__main__":
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.training_dir = 'debug_thchs_ms_v2'
-    args.speakers = 'thchs_v5,B2;thchs_v5,A2;thchs_v5,A4;thchs_v5,A11;thchs_v5,B8;thchs_v5,B4;thchs_v5,A34;thchs_v5,A36;thchs_v5,C20;thchs_v5,C19'
     args.ipa = True
     # args.text = "examples/chn/thchs.txt"
     # args.lang = "chn"
@@ -80,4 +78,4 @@ if __name__ == "__main__":
     print("Using no mapping.")
 
   process_input_text(training_dir_path, infer_dir_path, ipa=args.ipa, ignore_tones=args.ignore_tones, ignore_arcs=args.ignore_arcs, subset_id=args.subset_id, lang=args.lang, use_map=bool(args.map))
-  infer(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, checkpoint=str(checkpoint), speakers=args.speakers, speaker=args.speaker)
+  infer(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, checkpoint=str(checkpoint), speaker=args.speaker)

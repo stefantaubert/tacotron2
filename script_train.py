@@ -60,8 +60,6 @@ if __name__ == "__main__":
     raise Exception("Argument 'base_dir' is required.")
   elif not args.training_dir:
     raise Exception("Argument 'training_dir' is required.")
-  elif not args.speakers:
-    raise Exception("Argument 'speakers' is required.")
 
   hparams = create_hparams(args.hparams)
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
@@ -80,6 +78,6 @@ if __name__ == "__main__":
     
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
   use_weights_map = os.path.exists(weights_path)
-  start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training, speakers=args.speakers)
+  start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training)
 
   analyse(training_dir_path)
