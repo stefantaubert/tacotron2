@@ -4,7 +4,7 @@ import os
 import random
 from shutil import copyfile
 import pandas as pd
-from utils import csv_separator, utt_name_col, symbols_str_col, wavpath_col, speaker_id_col, get_speaker_count_csv, get_utterance_names_csv
+from utils import csv_separator, utt_name_col, symbols_str_col, wavpath_col, speaker_id_col, speaker_name_col, get_speaker_count_csv, get_utterance_names_csv
 from paths import (ds_preprocessed_file_name, filelist_validation_file_name,
                    ds_preprocessed_symbols_name, filelist_file_name,
                    filelist_symbols_file_name,
@@ -60,20 +60,21 @@ if __name__ == "__main__":
     print("Selected random validationset utterance: {}".format(infer_utterance_name))
 
   data = pd.read_csv(preprocessed_path, header=None, sep=csv_separator)
-  speaker_count = get_speaker_count_csv(data)
   infer_data = None
   for i, row in data.iterrows():
     utt_name = row[utt_name_col]
     if utt_name == infer_utterance_name:
       symbs = row[symbols_str_col]
       wav_path = row[wavpath_col]
-      speaker = row[speaker_id_col]
-      infer_data = (utt_name, symbs, wav_path, speaker)
+      speaker_id = row[speaker_id_col]
+      speaker_name = row[speaker_name_col]
+      infer_data = (utt_name, symbs, wav_path, speaker_id)
       break
 
   if not infer_data:
     raise Exception("Utterance {} was not found".format(infer_utterance_name))
+  
+  print("Speaker is: {} ({})".format(speaker_name, str(speaker_id)))
+  infer_dir_path = get_validation_dir(training_dir_path, infer_utterance_name, checkpoint, speaker_name)
 
-  infer_dir_path = get_validation_dir(training_dir_path, infer_utterance_name, checkpoint, speaker)
-
-  validate(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, checkpoint=checkpoint, infer_data=infer_data, speaker_count=speaker_count)
+  validate(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, checkpoint=checkpoint, infer_data=infer_data)

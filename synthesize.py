@@ -15,9 +15,9 @@ import torch
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from text.symbol_converter import load_from_file, deserialize_symbol_ids
-from paths import get_symbols_path, inference_input_symbols_file_name, get_checkpoint_dir, inference_input_file_name
+from paths import get_symbols_path, inference_input_symbols_file_name, get_checkpoint_dir, inference_input_file_name, get_filelist_dir, filelist_speakers_name
 from train import get_last_checkpoint
-from utils import parse_ds_speakers
+from utils import parse_ds_speakers, parse_json
 from plot_mel import Mel2Samp, plot_melspecs, get_segment, get_audio
 
 # to load denoiser, glow etc.
@@ -81,16 +81,21 @@ class Synthesizer():
     #to_wav("/tmp/{}_denoised.wav".format(dest_name), res, self.hparams.sampling_rate)
     return res
 
-def validate(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, checkpoint: str, infer_data: tuple, speaker_count: int) -> None:
+def validate(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, checkpoint: str, infer_data: tuple) -> None:
   hparams = create_hparams(hparams)
 
   conv = load_from_file(get_symbols_path(training_dir_path))
   n_symbols = conv.get_symbol_ids_count()
+
+  speakers_file = os.path.join(get_filelist_dir(training_dir_path), filelist_speakers_name)
+  all_speakers = parse_json(speakers_file)
+  n_speakers = len(all_speakers)
+
   print('Loaded {} symbols'.format(n_symbols))
-  print('Loaded {} speaker(s)'.format(speaker_count))
+  print('Loaded {} speaker(s)'.format(n_speakers))
 
   hparams.n_symbols = n_symbols
-  hparams.n_speakers = speaker_count
+  hparams.n_speakers = n_speakers
 
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   print("Using model:", checkpoint_path)
@@ -137,15 +142,22 @@ def validate(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str
   copyfile(wav_orig_path, path_original_wav)
   print("Finished.")
 
-def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, checkpoint: str, speakers: str, speaker: str):
+def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, checkpoint: str, speaker: str):
   hparams = create_hparams(hparams)
 
   conv = load_from_file(get_symbols_path(training_dir_path))
   n_symbols = conv.get_symbol_ids_count()
+
+  speakers_file = os.path.join(get_filelist_dir(training_dir_path), filelist_speakers_name)
+  all_speakers = parse_json(speakers_file)
+  n_speakers = len(all_speakers)
+
   print('Loaded {} symbols'.format(n_symbols))
-  ds_speakers = parse_ds_speakers(speakers)
-  n_speakers = len(ds_speakers)
   print('Loaded {} speaker(s)'.format(n_speakers))
+
+  hparams.n_symbols = n_symbols
+  hparams.n_speakers = n_speakers
+
 
   with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'r') as f:
     serialized_symbol_ids_sentences = f.readlines()
@@ -175,11 +187,11 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   output = np.array([])
 
   final_speaker_id = -1
-  dest_ds, dest_speaker = speaker.split(',')
-  for ds, speaker, speaker_id in ds_speakers:
-    if speaker == dest_speaker and ds == dest_ds:
+  for ds_speaker, speaker_id in all_speakers.items():
+    if ds_speaker == speaker:
       final_speaker_id = speaker_id
       break
+    
   if final_speaker_id == -1:
     raise Exception("Speaker {} not available!".format(speaker))
 

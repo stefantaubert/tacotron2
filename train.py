@@ -16,10 +16,10 @@ from data_utils import SymbolsMelLoader, SymbolsMelCollate
 from loss_function import Tacotron2Loss
 from logger import Tacotron2Logger
 from hparams import create_hparams
-from utils import parse_ds_speakers, get_total_duration_min_df
+from utils import parse_ds_speakers, get_total_duration_min_df, parse_json
 
 from text.symbol_converter import load_from_file
-from paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
+from paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name, filelist_speakers_name
 from train_log import log
 
 def reduce_tensor(tensor, n_gpus):
@@ -329,13 +329,15 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
   save_checkpoint_score(checkpoint_path, grad_norm, reduced_loss, valloss)
 
-def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool, speakers: str):
+def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool):
   start = time.time()
   conv = load_from_file(get_symbols_path(training_dir_path))
-  
   hparams.n_symbols = conv.get_symbol_ids_count()
-  n_speakers = len(parse_ds_speakers(speakers))
-  hparams.n_speakers = n_speakers
+
+  speakers_file = os.path.join(get_filelist_dir(training_dir_path), filelist_speakers_name)
+  all_speakers = parse_json(speakers_file)
+  hparams.n_speakers = len(all_speakers)
+  
   log(training_dir_path, 'Final parsed hparams:')
   x = '\n'.join(str(hparams.values()).split(','))
   log(training_dir_path, x)
