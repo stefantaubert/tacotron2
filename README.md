@@ -66,9 +66,7 @@ git submodule init
 git submodule update
 conda create -n taco2pytorch python=3.6 -y
 conda activate taco2pytorch
-pip install -r reqmin.txt
-# TODO: reqmin is not enough
-pip install -r reqmax.txt
+pip install -r requirements.txt
 ```
 to be able to run training without being connected with ssh:
 ```
@@ -231,3 +229,7 @@ These maps are used to translate unknown symbols in the text which should be inf
 I also successfylly tryed this configurations:
 - Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
 
+to save requirements:
+```bash
+pipreqs .
+```

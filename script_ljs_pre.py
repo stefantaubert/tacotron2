@@ -128,8 +128,8 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   if not args.no_debugging:
-    args.base_dir = '/datasets/models/taco2pt_v2'
-    args.data_dir = '/datasets/LJSpeech-1.1'
+    args.base_dir = '/datasets/models/taco2pt_v2-tmp'
+    args.data_dir = '/datasets/LJSpeech-1.1-tmp'
     args.ipa = True
     args.ignore_arcs = True
     args.ds_name = 'ljs_ipa_v2'
