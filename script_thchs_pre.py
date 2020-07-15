@@ -8,6 +8,8 @@ from tqdm import tqdm
 import librosa
 import tarfile
 import shutil
+import tempfile
+from pathlib import Path
 
 from ipa2symb import extract_from_sentence
 from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path, get_all_speakers_path
@@ -37,7 +39,7 @@ def __download_tar(download_url, dir_path, tarmode: str = "r:gz"):
   downloaded_file = os.path.join(dir_path, dest)
   print("\nFinished download to {}".format(downloaded_file))
   print("Unpacking...")
-  tar = tarfile.open(downloaded_file, tarmode)  
+  tar = tarfile.open(downloaded_file, tarmode)
   tar.extractall(dir_path)
   tar.close()
   os.remove(downloaded_file)
@@ -49,7 +51,15 @@ def __download_dataset(dir_path: str):
   # - http://data.cslt.org/thchs30/zip/wav.tgz
   # - http://data.cslt.org/thchs30/zip/doc.tgz
   download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
-  __download_tar(download_url_kaldi, dir_path)
+  tmp_dir = tempfile.mkdtemp()
+  __download_tar(download_url_kaldi, tmp_dir)
+  subfolder_name = "data_thchs30"
+  content_dir = os.path.join(tmp_dir, subfolder_name)
+  parent = Path(dir_path).parent
+  os.makedirs(parent, exist_ok=True)
+  dest = os.path.join(parent, subfolder_name)
+  shutil.move(content_dir, dest)
+  os.rename(dest, dir_path)
 
 def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool):
   parsed_data = parse_thchs(data_dir)
