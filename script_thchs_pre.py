@@ -45,9 +45,11 @@ def __download_tar(download_url, dir_path, tarmode: str = "r:gz"):
 
 def __download_dataset(dir_path: str):
   print("THCHS-30 is not downloaded yet.")
-  #download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
-  __download_tar("http://data.cslt.org/thchs30/zip/wav.tgz", dir_path)
-  __download_tar("http://data.cslt.org/thchs30/zip/doc.tgz", dir_path)
+  # old ones:
+  # - http://data.cslt.org/thchs30/zip/wav.tgz
+  # - http://data.cslt.org/thchs30/zip/doc.tgz
+  download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
+  __download_tar(download_url_kaldi, dir_path)
 
 def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool):
   parsed_data = parse_thchs(data_dir)
