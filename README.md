@@ -22,15 +22,43 @@ I have modified the original tacotron 2 code:
 
 ## Locally with remote Server
 
-Serveraddress for example `user@example.com`.
+Serveraddress for example `joedoe@example.com`.
+
+### SSH login
+
 Execute locally:
 ```bash
 # generate ssh key
 ssh-keygen -f ~/.ssh/abc-key-ecdsa -t ecdsa -b 521
 # copy the public key to the server
-ssh-copy-id -i ~/.ssh/abc-key-ecdsa user@example.com
+ssh-copy-id -i ~/.ssh/abc-key-ecdsa joedoe@example.com
 # connect
-ssh -i ~/.ssh/abc-key-ecdsa user@example.com
+ssh -i ~/.ssh/abc-key-ecdsa joedoe@example.com
+```
+
+### samba access to get synthesized files
+
+```bash
+sudo apt-get update
+sudo apt-get install samba
+sudo smbpasswd -a user # example set pwd to 123456
+sudo nano /etc/samba/smb.conf
+```
+now add on end:
+```txt
+[joedoe]
+path = /home/joedoe
+valid users = joedoe
+read only = no
+```
+and then:
+```bash
+sudo service smbd restart
+```
+and then you can mount that drive with:
+```bash
+mkdir -p joedoe_home
+sudo mount -t cifs -o user=joedoe,password=123456,uid=$(id -u),gid=$(id -g) //example.com/joedoe joedoe_home
 ```
 
 ## Create Google Cloud Platform VM (optional)
@@ -64,6 +92,16 @@ gcloud compute instances create $INSTANCE_NAME \
 
 - [More information on templates](https://cloud.google.com/ai-platform/deep-learning-vm/docs/quickstart-cli)
 - [More information on the parameters](https://cloud.google.com/sdk/gcloud/reference/compute/instances/create)
+
+Install filezilla on your machine to access files:
+```bash
+sudo apt-get install filezilla -y
+# i don't know if the '-C joedoe' is necessary and if i also can use ecdsa
+ssh-keygen -f ~/.ssh/gloud-rsa -t rsa -b 4096 -C joedoe
+```
+and then copy the content of the file `~/.ssh/gloud-rsa.pub` to properties -> SSH of your VM
+
+
 
 ## Checkout repo
 
@@ -197,10 +235,19 @@ $base_dir
 │  │  │  ├── config.log
 │  │  │  ├── input.txt
 │  │  │  ├── input_sentences.txt
-│  │  │  ├── input_sentences_mapped.t
+│  │  │  ├── input_sentences_mapped.txt
 │  │  │  ├── input_symbols.txt
 │  │  │  ├── input_map.json
+│  │  │  ├── 2020-06-17_18-11-03_democritus_A11_500.png
 │  │  │  └── 2020-06-17_18-11-03_democritus_A11_500.wav
+│  │  ├── ...
+│  │  ├── validation_2020-07-14_11-43-47_D11_906_50_9
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_orig.wav
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_orig.png
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_inferred.wav
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_inferred.png
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_comparison.png
+│  │  │  └── input.txt
 │  │  ├── ...
 │  ├── analysis
 │  │  ├── 500_sims.log
@@ -250,6 +297,7 @@ These maps are used to translate unknown symbols in the text which should be inf
 
 I also successfylly tryed this configurations:
 - Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
+- Cuda 10.2, Nvidia driver 440.64.00, cuDNN 7.6.5 with RTX 2070 8GB
 
 to save requirements:
 ```bash
