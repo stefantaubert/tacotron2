@@ -47,10 +47,12 @@ def init_distributed(hparams, n_gpus, rank, group_name, training_dir_path):
 def prepare_dataloaders(hparams, filelist_dir_path):
   # Get data, data loaders and collate function ready
   trainset_path = os.path.join(filelist_dir_path, filelist_training_file_name)
-  print("Duration trainset {:.2f}min".format(get_total_duration_min_df(trainset_path)))
+  train_dur = get_total_duration_min_df(trainset_path)
+  print("Duration trainset {:.2f}min / {:.2f}h".format(train_dur, train_dur / 60))
   trainset = SymbolsMelLoader(trainset_path, hparams)
   valset_path = os.path.join(filelist_dir_path, filelist_validation_file_name)
-  print("Duration valset {:.2f}min".format(get_total_duration_min_df(valset_path)))
+  val_dur = get_total_duration_min_df(valset_path)
+  print("Duration valset {:.2f}min / {:.2f}h".format(val_dur, val_dur / 60))
   valset = SymbolsMelLoader(valset_path, hparams)
   collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
 

@@ -18,3 +18,4 @@ gdown==3.11.1
 scikit_learn==0.23.1
 tensorboardX==2.1
 numba==0.48
+Pillow==7.1.2
