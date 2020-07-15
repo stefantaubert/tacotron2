@@ -68,7 +68,7 @@ python -m script_train --base_dir=$base_dir --training_dir=$custom_training_name
 # Inference
 python -m script_dl_waveglow_pretrained --pretrained_dir=$pretrained_dir --no_debugging
 export text_map="maps/inference/en_v1.json"
-export speaker="ljs_ipa,1"
+export speaker="$ds_name,1"
 
 export text="examples/ipa/north_sven_orig.txt"
 python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --custom_checkpoint=81500 --map=$text_map --no_debugging

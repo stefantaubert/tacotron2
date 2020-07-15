@@ -61,7 +61,7 @@ python -m script_thchs_pre \
 # Training from scratch
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=500"
 python -m paths --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
-python -m script_train --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --train_size=0.9 --validation_size=1.0 --no_debugging
+python -m script_train --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --train_size=0.93 --validation_size=1.0 --no_debugging
 
 
 ## Continue training
@@ -71,8 +71,8 @@ python -m script_train --base_dir=$base_dir --training_dir=$custom_training_name
 
 # Inference
 python -m script_dl_waveglow_pretrained --pretrained_dir=$pretrained_dir --no_debugging
-export text_map="maps/inference/en_v1.json"
-export speaker="ljs_ipa,1"
+export text_map="maps/inference/chn_v1.json"
+export speaker="$ds_name,1"
 
 export text="examples/ipa/north_sven_orig.txt"
 python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --custom_checkpoint=81500 --map=$text_map --no_debugging
