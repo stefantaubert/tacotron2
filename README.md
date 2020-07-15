@@ -226,6 +226,14 @@ These maps are used to translate unknown symbols in the text which should be inf
 
 # Notes
 
+## Requirements
+
+- `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)
+- `gdown` only required for downloading pretrained waveglow-model
+- `wget` only required for automatically downloading datasets
+
+## Configs
+
 I also successfylly tryed this configurations:
 - Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
 
