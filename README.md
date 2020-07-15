@@ -20,6 +20,47 @@ I have modified the original tacotron 2 code:
 
 # Setup
 
+## Locally with remote Server
+
+Serveraddress for example `joedoe@example.com`.
+
+### SSH login
+
+Execute locally:
+```bash
+# generate ssh key
+ssh-keygen -f ~/.ssh/abc-key-ecdsa -t ecdsa -b 521
+# copy the public key to the server
+ssh-copy-id -i ~/.ssh/abc-key-ecdsa joedoe@example.com
+# connect
+ssh -i ~/.ssh/abc-key-ecdsa joedoe@example.com
+```
+
+### samba access to get synthesized files
+
+```bash
+sudo apt-get update
+sudo apt-get install samba
+sudo smbpasswd -a user # example set pwd to 123456
+sudo nano /etc/samba/smb.conf
+```
+now add on end:
+```txt
+[joedoe]
+path = /home/joedoe
+valid users = joedoe
+read only = no
+```
+and then:
+```bash
+sudo service smbd restart
+```
+and then you can mount that drive with:
+```bash
+mkdir -p joedoe_home
+sudo mount -t cifs -o user=joedoe,password=123456,uid=$(id -u),gid=$(id -g) //example.com/joedoe joedoe_home
+```
+
 ## Create Google Cloud Platform VM (optional)
 
 ### Prerequisites
@@ -52,18 +93,47 @@ gcloud compute instances create $INSTANCE_NAME \
 - [More information on templates](https://cloud.google.com/ai-platform/deep-learning-vm/docs/quickstart-cli)
 - [More information on the parameters](https://cloud.google.com/sdk/gcloud/reference/compute/instances/create)
 
+Install filezilla on your machine to access files:
+```bash
+sudo apt-get install filezilla -y
+# i don't know if the '-C joedoe' is necessary and if i also can use ecdsa
+ssh-keygen -f ~/.ssh/gloud-rsa -t rsa -b 4096 -C joedoe
+```
+and then copy the content of the file `~/.ssh/gloud-rsa.pub` to properties -> SSH of your VM
+
+
+
 ## Checkout repo
 
 ```bash
-git clone git@github.com:stefantaubert/tacotron2.git
+# get link from https://www.anaconda.com/products/individual and then 'Linux Python 3.7 64-Bit (x86) Installer' copy link
+wget https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
+bash Anaconda3-2020.02-Linux-x86_64.sh
+# reopen shell
+rm Anaconda3-2020.02-Linux-x86_64.sh
+
+git clone https://github.com/stefantaubert/tacotron2
 cd tacotron2
 git submodule init
 git submodule update
 conda create -n taco2pytorch python=3.6 -y
 conda activate taco2pytorch
-pip install -r reqmin.txt
-# TODO: reqmin is not enough
-pip install -r reqmax.txt
+pip install -r requirements.txt
+```
+to be able to run training without being connected with ssh:
+```
+sudo apt install screen
+```
+
+check cuda is installed:
+```
+nvcc --version
+```
+
+error is normal:
+```
+ERROR: tensorflow 1.13.2 has requirement tensorboard<1.14.0,>=1.13.0, but you'll have tensorboard 2.2.2 which is incompatible.
+Installing collected packages: numpy, pytz, six,
 ```
 
 ## IPA synthesis using LJSpeech-1.1 dataset
@@ -73,6 +143,7 @@ pip install -r reqmax.txt
 If you want to train on IPA-Symbols you need to install [flite](https://github.com/festvox/flite) for G2P conversion of English text:
 
 ```bash
+cd
 git clone https://github.com/festvox/flite.git
 cd flite
 ./configure && make
@@ -164,10 +235,19 @@ $base_dir
 │  │  │  ├── config.log
 │  │  │  ├── input.txt
 │  │  │  ├── input_sentences.txt
-│  │  │  ├── input_sentences_mapped.t
+│  │  │  ├── input_sentences_mapped.txt
 │  │  │  ├── input_symbols.txt
 │  │  │  ├── input_map.json
+│  │  │  ├── 2020-06-17_18-11-03_democritus_A11_500.png
 │  │  │  └── 2020-06-17_18-11-03_democritus_A11_500.wav
+│  │  ├── ...
+│  │  ├── validation_2020-07-14_11-43-47_D11_906_50_9
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_orig.wav
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_orig.png
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_inferred.wav
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_inferred.png
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_comparison.png
+│  │  │  └── input.txt
 │  │  ├── ...
 │  ├── analysis
 │  │  ├── 500_sims.log
@@ -207,6 +287,19 @@ These maps are used to translate unknown symbols in the text which should be inf
 
 # Notes
 
+## Requirements
+
+- `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)
+- `gdown` only required for downloading pretrained waveglow-model
+- `wget` only required for automatically downloading datasets
+
+## Configs
+
 I also successfylly tryed this configurations:
 - Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
+- Cuda 10.2, Nvidia driver 440.64.00, cuDNN 7.6.5 with RTX 2070 8GB
 
+to save requirements:
+```bash
+pipreqs .
+```

@@ -138,7 +138,7 @@ if __name__ == "__main__":
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.data_dir = '/datasets/thchs_wav'
     args.data_conversion_dir = '/datasets/thchs_16bit_22050kHz'
-    args.ds_name = 'thchs_v5'
+    args.ds_name = 'thchs_v5-test'
     args.ignore_tones = True
     args.ignore_arcs = True
     args.auto_dl = False
