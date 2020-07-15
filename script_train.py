@@ -31,7 +31,7 @@ if __name__ == "__main__":
   parser.add_argument('--seed', type=str, default=1234)
   parser.add_argument('--warm_start', action='store_true')
   parser.add_argument('--pretrained_path', type=str)
-  parser.add_argument('--speakers', type=str, choices=["ds_name,speaker_id;...","ds_name,all;..."])
+  parser.add_argument('--speakers', type=str, help="ds_name,speaker_id;... or ds_name,all;...")
   parser.add_argument('--train_size', type=str, default=0.9)
   parser.add_argument('--validation_size', type=str, default=1.0)
   parser.add_argument('--hparams', type=str)

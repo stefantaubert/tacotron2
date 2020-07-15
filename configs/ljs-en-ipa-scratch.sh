@@ -1,10 +1,21 @@
 ########################################################################################
 # LJSpeech based IPA Synthesis
 ########################################################################################
-# For usage with a t4 on Google Cloud Plattform
 
 # Init
-screen -r
+## Capslock
+conda activate test1
+export base_dir="/datasets/models/taco2pt_v2"
+export datasets_dir="/datasets"
+export pretrained_dir="/datasets/models/pretrained"
+export custom_training_name="ljs_ipa_ms_from_scratch"
+export waveglow="$pretrained_dir/waveglow_256channels_universal_v5.pt"
+export ds_name="ljs_ipa_v2"
+export speakers="$ds_name,all"
+export batch_size=26
+
+## GCP
+# For usage with a t4 on Google Cloud Plattform
 cd tacotron2
 source activate taco2pytorch
 export base_dir="/home/stefan_taubert/taco2pt_v2"
@@ -14,11 +25,11 @@ export custom_training_name="ljs_ipa_ms_from_scratch"
 export waveglow="$pretrained_dir/waveglow_256channels_universal_v5.pt"
 export ds_name="ljs_ipa"
 export speakers="$ds_name,all"
+export batch_size=52
 
-# Phil
-screen
+## Phil
 cd tacotron2
-conda activate tacotron
+conda activate test2
 export base_dir="/home/stefan/taco2pt_v2"
 export datasets_dir="/home/stefan/datasets"
 export pretrained_dir="$base_dir/pretrained"
@@ -26,6 +37,7 @@ export custom_training_name="ljs_ipa_ms_from_scratch"
 export waveglow="$pretrained_dir/waveglow_256channels_universal_v5.pt"
 export ds_name="ljs_ipa"
 export speakers="$ds_name,all"
+export batch_size=26
 
 
 # Preprocessing
@@ -35,17 +47,18 @@ python script_ljs_pre.py \
   --ipa \
   --ignore_arcs \
   --ds_name=$ds_name \
+  --auto_dl \
   --no_debugging
 
 # Training from scratch
-export hparams="batch_size=52,iters_per_checkpoint=500,epochs=500"
+export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=500"
 python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
 python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --no_debugging
 #python -m script_train --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --no_debugging
 
 ## Continue training
-export hparams="batch_size=52,iters_per_checkpoint=500,epochs=500"
-python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --speakers=$speakers --continue_training --no_debugging
+export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=500"
+python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --continue_training --no_debugging
 
 # Inference
 python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained_dir --no_debugging
@@ -86,7 +99,7 @@ python plot_embeddings.py --base_dir=$base_dir --training_dir=$custom_training_n
 
 # Create Inference Map
 python script_create_map_template.py \
-  --a="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json" \
+  --a="$base_dir/ljs_ipa_ms_from_scratch/filelist/symbols.json" \
   --b="examples/ipa/corpora.txt" \
   --mode="infer"
   --ignore_tones
@@ -95,7 +108,7 @@ python script_create_map_template.py \
 
 # Update Inference Map
 python script_create_map_template.py \
-  --a="/home/stefan_taubert/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json" \
+  --a="$base_dir/ljs_ipa_ms_from_scratch/filelist/symbols.json" \
   --b="examples/ipa/corpora.txt" \
   --existing_map="maps/inference/en_v1.json"
   --mode="infer"

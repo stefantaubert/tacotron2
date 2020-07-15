@@ -20,6 +20,19 @@ I have modified the original tacotron 2 code:
 
 # Setup
 
+## Locally with remote Server
+
+Serveraddress for example `user@example.com`.
+Execute locally:
+```bash
+# generate ssh key
+ssh-keygen -f ~/.ssh/abc-key-ecdsa -t ecdsa -b 521
+# copy the public key to the server
+ssh-copy-id -i ~/.ssh/abc-key-ecdsa user@example.com
+# connect
+ssh -i ~/.ssh/abc-key-ecdsa user@example.com
+```
+
 ## Create Google Cloud Platform VM (optional)
 
 ### Prerequisites
@@ -59,6 +72,7 @@ gcloud compute instances create $INSTANCE_NAME \
 wget https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
 bash Anaconda3-2020.02-Linux-x86_64.sh
 # reopen shell
+rm Anaconda3-2020.02-Linux-x86_64.sh
 
 git clone https://github.com/stefantaubert/tacotron2
 cd tacotron2

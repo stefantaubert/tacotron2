@@ -62,6 +62,8 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arc
 
   data = []
   symbol_counter = Counter()
+  print("Reading symbols...")
+  # Duration: ~20min
   ### normalize input
   for basename, text, wav_path in tqdm(p.data):
     normalized_text = normalize_text(text)
@@ -91,6 +93,8 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arc
   conv.print_symbols()
 
   ### convert text to symbols
+  # Duration: ~15min
+  print("Reading durations of audio files...")
   result = []
   for bn, norm_eng, eng_ipa, syms, wav in tqdm(data):
     symbol_ids = conv.symbols_to_ids(syms, add_eos=True, replace_unknown_with_pad=True)
@@ -123,6 +127,7 @@ if __name__ == "__main__":
   parser.add_argument('--ipa', action='store_true', help='transcribe to IPA')
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
+  parser.add_argument('--auto_dl', action='store_true')
   parser.add_argument('--no_debugging', action='store_true')
 
   args = parser.parse_args()
@@ -134,6 +139,7 @@ if __name__ == "__main__":
     args.ignore_arcs = True
     args.ds_name = 'ljs_ipa_v2'
   
-  ensure_downloaded(args.data_dir)
+  if args.auto_dl:
+    ensure_downloaded(args.data_dir)
 
   preprocess(args.base_dir, args.data_dir, args.ds_name, args.ipa, args.ignore_arcs)
