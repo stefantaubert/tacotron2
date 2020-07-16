@@ -1,5 +1,5 @@
 import os
-#from utils import download_tar
+from utils import download_tar
 import tempfile
 import shutil
 import glob

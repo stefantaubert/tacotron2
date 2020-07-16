@@ -1,7 +1,7 @@
 import argparse
 import os
 from parser.thchs_parser import parse, exists, ensure_downloaded
-from parser.thchs_kaldi_parser import parse as kaldi_parse, kaldi_exists, kaldi_ensure_downloaded
+from parser.thchs_kaldi_parser import parse as kaldi_parse, exists as kaldi_exists, ensure_downloaded as kaldi_ensure_downloaded
 
 import epitran
 import pandas as pd
