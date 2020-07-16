@@ -5,9 +5,12 @@ from shutil import copyfile
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from paths import ds_preprocessed_symbols_name, ds_preprocessed_file_name, filelist_symbols_file_name, filelist_test_file_name, filelist_training_file_name, filelist_validation_file_name, get_filelist_dir, get_ds_dir
-from utils import csv_separator, get_total_duration_min
+from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
+                   filelist_symbols_file_name, filelist_test_file_name,
+                   filelist_training_file_name, filelist_validation_file_name,
+                   get_ds_dir, get_filelist_dir)
 from train_log import log
+from utils import csv_separator, get_total_duration_min
 
 
 def __save(train, training_dir_path, fn):
@@ -28,17 +31,6 @@ def split_ds(base_dir, training_dir_path: str, train_size: float, validation_siz
   
   d = __save(train, training_dir_path, filelist_training_file_name)
   total_duration = total_duration + d
-
-  # all_cols = list(range(len(train.columns)))
-  # for i in wav_symids_cols:
-  #   all_cols.remove(i)
-  #df2 = train.iloc[:, all_cols]
-
-  #df = train.iloc[:, __wav_symids_cols]
-  #df2 = train.iloc[:, all_cols]
-  #total_dur_min = train.iloc[:, __duration_col].sum() / 60
-  #df.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_training_file_name), header=None, index=None, sep=csv_separator)
-  #log(training_dir_path, "Trainsize: {}, Duration: {:.2f}".format(len(train), total_dur_min))
 
   if validation_size < 1.0:
     test, val = train_test_split(val, test_size=validation_size, random_state=seed)

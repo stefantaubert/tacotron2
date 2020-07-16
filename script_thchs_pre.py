@@ -75,7 +75,7 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
 
   print("Reading wav durations and processing symbols.")
   for speaker, recordings in tqdm(data.items()):
-    print("Processing speaker:", speaker)
+    #print("Processing speaker:", speaker)
     ### get all symbols
     symbols = set()
     for _, _, _, symbs, _ in recordings:
