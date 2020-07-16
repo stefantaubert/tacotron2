@@ -11,19 +11,8 @@ def ensure_downloaded(dir_path: str):
 
 def __download_dataset(dir_path: str):
   print("THCHS-30 is not downloaded yet.")
-  # old ones:
-  # - http://data.cslt.org/thchs30/zip/wav.tgz
-  # - http://data.cslt.org/thchs30/zip/doc.tgz
-  download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
-  tmp_dir = tempfile.mkdtemp()
-  download_tar(download_url_kaldi, tmp_dir)
-  subfolder_name = "data_thchs30"
-  content_dir = os.path.join(tmp_dir, subfolder_name)
-  parent = Path(dir_path).parent
-  os.makedirs(parent, exist_ok=True)
-  dest = os.path.join(parent, subfolder_name)
-  shutil.move(content_dir, dest)
-  os.rename(dest, dir_path)
+  download_tar("http://data.cslt.org/thchs30/zip/wav.tgz", dir_path)
+  download_tar("http://data.cslt.org/thchs30/zip/doc.tgz", dir_path)
 
 def exists(dir_path: str):
   path_to_check = os.path.join(dir_path, 'doc/trans/train.word.txt')
@@ -67,8 +56,10 @@ def parse(dir_path: str):
   train_wavs = os.path.join(dir_path, 'wav/train/')
   test_wavs = os.path.join(dir_path, 'wav/test/')
 
+  print("Parsing files...")
   train_set = __parse_dataset__(os.path.join(dir_path, train_words), train_wavs)
   test_set = __parse_dataset__(os.path.join(dir_path, test_words), test_wavs)
+  print("Done.")
   #print(train_set[0:10])
   #print(test_set[0:10])
 
@@ -76,7 +67,6 @@ def parse(dir_path: str):
   res.extend(train_set)
   res.extend(test_set)
   res.sort()
-
 
   return res
 
