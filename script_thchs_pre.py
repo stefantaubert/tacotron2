@@ -30,7 +30,7 @@ def ensure_is_22050kHz(dir_path: str, data_conversion_dir: str, kaldi_version: b
     is_converted = exists(data_conversion_dir)
 
   if not is_converted:
-    convert(dir_path, data_conversion_dir)
+    convert(dir_path, data_conversion_dir, kaldi_version)
 
 def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool, kaldi_version: bool):
   if kaldi_version:
