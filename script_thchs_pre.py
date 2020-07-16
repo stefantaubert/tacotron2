@@ -1,6 +1,7 @@
 import argparse
 import os
-from parser.thchs_parser import parse as parse_thchs, exists
+from parser.thchs_parser import parse, exists, ensure_downloaded
+from parser.thchs_kaldi_parser import parse as kaldi_parse, kaldi_exists, kaldi_ensure_downloaded
 
 import epitran
 import pandas as pd
@@ -20,59 +21,38 @@ import wget
 from text.chn_tools import chn_to_ipa
 from script_upsample_thchs import convert
 from collections import Counter, OrderedDict
-from utils import save_json
+from utils import save_json, download_tar
 
-def ensure_downloaded(dir_path: str):
-  is_downloaded = exists(dir_path)
-  if not is_downloaded:
-    __download_dataset(dir_path)
+def ensure_is_22050kHz(dir_path: str, data_conversion_dir: str, kaldi_version: bool):
+  if kaldi_version:
+    is_converted = kaldi_exists(data_conversion_dir)
+  else:
+    is_converted = exists(data_conversion_dir)
 
-def ensure_is_22050kHz(dir_path: str, data_conversion_dir: str):
-  is_converted = exists(data_conversion_dir)
   if not is_converted:
     convert(dir_path, data_conversion_dir)
 
-def __download_tar(download_url, dir_path, tarmode: str = "r:gz"):
-  print("Starting download of {}...".format(download_url))
-  os.makedirs(dir_path, exist_ok=True)
-  dest = wget.download(download_url, dir_path)
-  downloaded_file = os.path.join(dir_path, dest)
-  print("\nFinished download to {}".format(downloaded_file))
-  print("Unpacking...")
-  tar = tarfile.open(downloaded_file, tarmode)
-  tar.extractall(dir_path)
-  tar.close()
-  os.remove(downloaded_file)
-  print("Done.")
+def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool, kaldi_version: bool):
+  if kaldi_version:
+    parsed_data = kaldi_parse(data_dir)
+  else:
+    parsed_data = parse(data_dir)
 
-def __download_dataset(dir_path: str):
-  print("THCHS-30 is not downloaded yet.")
-  # old ones:
-  # - http://data.cslt.org/thchs30/zip/wav.tgz
-  # - http://data.cslt.org/thchs30/zip/doc.tgz
-  download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
-  tmp_dir = tempfile.mkdtemp()
-  __download_tar(download_url_kaldi, tmp_dir)
-  subfolder_name = "data_thchs30"
-  content_dir = os.path.join(tmp_dir, subfolder_name)
-  parent = Path(dir_path).parent
-  os.makedirs(parent, exist_ok=True)
-  dest = os.path.join(parent, subfolder_name)
-  shutil.move(content_dir, dest)
-  os.rename(dest, dir_path)
-
-def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool):
-  parsed_data = parse_thchs(data_dir)
   data = {}
 
   ### normalize input
   symbol_counter = Counter()
-  for _, speaker_name, basename, wav_path, chn in tqdm(parsed_data):
+  for utterance in tqdm(parsed_data):
+    chn = utterance[4]
     try:
       chn_ipa = chn_to_ipa(chn, add_period=True)
     except Exception as e:
       print("Error on:", chn, e)
       continue
+
+    speaker_name = [1]
+    basename = [2]
+    wav_path = [3]
 
     text_symbols = extract_from_sentence(chn_ipa, ignore_tones, ignore_arcs)
     if speaker_name not in data:
@@ -143,6 +123,7 @@ if __name__ == "__main__":
   parser.add_argument('--auto_dl', action='store_true')
   parser.add_argument('--auto_convert', action='store_true')
   parser.add_argument('--no_debugging', action='store_true')
+  parser.add_argument('--kaldi_version', action='store_true')
 
   args = parser.parse_args()
 
@@ -155,11 +136,15 @@ if __name__ == "__main__":
     args.ignore_arcs = True
     args.auto_dl = False
     args.auto_convert = False
+    args.kaldi_version = False
   
   if args.auto_dl:
-    ensure_downloaded(args.data_dir)
+    if args.kaldi_version:
+      kaldi_ensure_downloaded(args.data_dir)
+    else:
+      ensure_downloaded(args.data_dir)
 
   if args.auto_convert:
-    ensure_is_22050kHz(args.data_dir, args.data_conversion_dir)
+    ensure_is_22050kHz(args.data_dir, args.data_conversion_dir, args.kaldi_version)
 
-  preprocess(args.base_dir, args.data_conversion_dir, args.ds_name, args.ignore_tones, args.ignore_arcs)
+  preprocess(args.base_dir, args.data_conversion_dir, args.ds_name, args.ignore_tones, args.ignore_arcs, args.kaldi_version)

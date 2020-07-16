@@ -5,6 +5,9 @@ import torch
 import json
 from ipa2symb import extract_from_sentence
 from collections import OrderedDict
+import wget
+import os
+import tarfile
 
 csv_separator = '\t'
 
@@ -14,6 +17,20 @@ symbols_str_col = 2
 duration_col = 3
 speaker_id_col = 4
 speaker_name_col = 5
+
+
+def download_tar(download_url, dir_path, tarmode: str = "r:gz"):
+  print("Starting download of {}...".format(download_url))
+  os.makedirs(dir_path, exist_ok=True)
+  dest = wget.download(download_url, dir_path)
+  downloaded_file = os.path.join(dir_path, dest)
+  print("\nFinished download to {}".format(downloaded_file))
+  print("Unpacking...")
+  tar = tarfile.open(downloaded_file, tarmode)
+  tar.extractall(dir_path)
+  tar.close()
+  os.remove(downloaded_file)
+  print("Done.")
 
 def get_utterance_names_csv(csv) -> list:
   all_names = set(np.unique(csv.iloc[:, [utt_name_col]].values))
