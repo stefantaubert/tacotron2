@@ -1,5 +1,4 @@
 import os
-from utils import download_tar
 import tempfile
 import shutil
 import glob
@@ -12,6 +11,7 @@ def ensure_downloaded(dir_path: str):
     __download_dataset(dir_path)
 
 def __download_dataset(dir_path: str):
+  from utils import download_tar
   print("THCHS-30 is not downloaded yet.")
   download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
   tmp_dir = tempfile.mkdtemp()
@@ -41,14 +41,14 @@ def parse(dir_path: str):
   wav_files = glob.glob(wav_paths)
   sent_files_gen = ["{}.trn".format(x) for x in wav_files]
 
-  for gen_sent_file in sent_files_gen:
-    if gen_sent_file not in sent_files:
-      raise Exception
-
-  wavs_sents = tuple(zip(wav_files, sent_files_gen))
+  wavs_sents = sorted(tuple(zip(wav_files, sent_files_gen)))
+  skipped = [x for x in wavs_sents if x[1] not in sent_files]
+  wavs_sents = [x for x in wavs_sents if x[1] in sent_files]
+  
+  print("Skipped:", len(skipped), "of", len(wavs_sents))
+  #print(skipped)
 
   res = []
-  wavs_sents = sorted(wavs_sents)
   print("Parsing files...")
   for wav, sent_file in tqdm(wavs_sents):
     with open(sent_file, 'r', encoding='utf-8') as f:
@@ -66,5 +66,6 @@ def parse(dir_path: str):
 
 if __name__ == "__main__":
   dir_path = '/datasets/phil_home/datasets/THCHS-30'
+  dir_path = '/datasets/THCHS-30'
   res = parse(dir_path)
   print(res[:10])

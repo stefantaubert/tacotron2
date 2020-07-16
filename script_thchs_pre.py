@@ -50,9 +50,9 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
       print("Error on:", chn, e)
       continue
 
-    speaker_name = [1]
-    basename = [2]
-    wav_path = [3]
+    speaker_name = utterance[1]
+    basename = utterance[2]
+    wav_path = utterance[3]
 
     text_symbols = extract_from_sentence(chn_ipa, ignore_tones, ignore_arcs)
     if speaker_name not in data:
@@ -127,16 +127,27 @@ if __name__ == "__main__":
 
   args = parser.parse_args()
 
+  # if not args.no_debugging:
+  #   args.base_dir = '/datasets/models/taco2pt_v2'
+  #   args.data_dir = '/datasets/thchs_wav'
+  #   args.data_conversion_dir = '/datasets/thchs_16bit_22050kHz'
+  #   args.ds_name = 'thchs_v5-test'
+  #   args.ignore_tones = True
+  #   args.ignore_arcs = True
+  #   args.auto_dl = False
+  #   args.auto_convert = False
+  #   args.kaldi_version = False
+  
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.data_dir = '/datasets/thchs_wav'
-    args.data_conversion_dir = '/datasets/thchs_16bit_22050kHz'
-    args.ds_name = 'thchs_v5-test'
+    args.data_dir = '/datasets/THCHS-30'
+    args.data_conversion_dir = '/datasets/THCHS-30_16bit-22050kHz'
+    args.ds_name = 'thchs_kaldi_v5-test'
     args.ignore_tones = True
     args.ignore_arcs = True
     args.auto_dl = False
     args.auto_convert = False
-    args.kaldi_version = False
+    args.kaldi_version = True
   
   if args.auto_dl:
     if args.kaldi_version:
