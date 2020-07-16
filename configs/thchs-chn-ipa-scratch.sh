@@ -1,52 +1,55 @@
 ########################################################################################
-# LJSpeech based IPA Synthesis
+# THCHS-30 based IPA Synthesis
 ########################################################################################
+# old and not tested
+# Config: toneless, without arcs, no mapping
 
 # Init
 
 ## Capslock Dev
 source /datasets/code/tacotron2-dev/configs/envs/dev-caps.sh
-export custom_training_name="ljs_ipa_ms_from_scratch"
-export ds_name="ljs_ipa_v2"
-export speakers="$ds_name,all"
-export batch_size=26
+export custom_training_name="thchs_ipa_scratch"
+export ds_name="thchs_v5"
+export speakers="$ds_name,B8;$ds_name,B2;$ds_name,A2"
+export batch_size=?
 
 ## Capslock GCP
 source /datasets/code/tacotron2-dev/configs/envs/prod-caps.sh
-export custom_training_name="ljs_ipa_ms_from_scratch"
-export ds_name="ljs_ipa_v2"
-export speakers="$ds_name,all"
-export batch_size=26
+export custom_training_name="thchs_ipa_scratch"
+export ds_name="thchs_v5"
+export speakers="$ds_name,B8;$ds_name,B2;$ds_name,A2"
+export batch_size=10
 
 ## GCP
 # For usage with a t4 on Google Cloud Plattform
 source /home/stefan_taubert/tacotron2/configs/envs/prod-gcp.sh
-export custom_training_name="ljs_ipa_ms_from_scratch"
-export ds_name="ljs_ipa"
-export speakers="$ds_name,all"
-export batch_size=52
+export custom_training_name="thchs_ipa_scratch"
+export ds_name="thchs_v5"
+export speakers="$ds_name,B8;$ds_name,B2;$ds_name,A2"
+export batch_size=35
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/prod-phil.sh
-export custom_training_name="ljs_ipa_ms_from_scratch"
-export ds_name="ljs_ipa"
-export speakers="$ds_name,all"
-export batch_size=26
+export custom_training_name="thchs_ipa_scratch"
+export ds_name="thchs_v5"
+export speakers="$ds_name,B8;$ds_name,B2;$ds_name,A2"
+export batch_size=?
 
 
 # Preprocessing
-python -m script_ljs_pre \
+python script_thchs_pre.py \
   --base_dir=$base_dir \
-  --data_dir="$datasets_dir/LJSpeech-1.1" \
-  --ipa \
+  --data_dir="$datasets_dir/thchs" \
+  --data_conversion_dir="$datasets_dir/thchs_16bit_22050kHz" \
   --ignore_arcs \
-  --ds_name=$ds_name \
+  --ignore_tones \
   --auto_dl \
+  --auto_convert \
+  --ds_name=$ds_name \
   --no_debugging
 
-
 # Training from scratch
-export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=1000"
+export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000"
 python -m paths \
   --base_dir=$base_dir \
   --custom_training_name=$custom_training_name \
@@ -60,9 +63,8 @@ python -m script_train \
   --validation_size=1.0 \
   --no_debugging
 
-
 ## Continue training
-export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=1000"
+export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000"
 python -m script_train \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
@@ -70,13 +72,12 @@ python -m script_train \
   --continue_training \
   --no_debugging
 
-
 # Inference
 python -m script_dl_waveglow_pretrained \
   --pretrained_dir=$pretrained_dir \
   --no_debugging
-export text_map="maps/inference/en_v1.json"
-export speaker="$ds_name,1"
+export text_map="maps/inference/chn_v1.json"
+export speaker="$ds_name,A2"
 
 export text="examples/ipa/north_sven_orig.txt"
 python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
@@ -101,47 +102,3 @@ python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_
 
 export text="examples/ipa/north_ger.txt"
 python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
-
-# Validate checkpoints
-export hparams="batch_size=$batch_size"
-export select_pattern=10000
-python -m script_eval_checkpoints --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --select=2000 --min=70000 --no_debugging
-
-# Plot Embeddings
-python -m plot_embeddings \
-  --base_dir=$base_dir \
-  --training_dir=$custom_training_name \
-  --no_debugging \
-  --custom_checkpoint=''
-
-# Create Inference Map
-python script_create_map_template.py \
-  --a="$base_dir/$custom_training_name/filelist/symbols.json" \
-  --b="examples/ipa/corpora.txt" \
-  --mode="infer"
-  --ignore_tones
-  --ignore_arcs
-  --no_debugging
-
-# Update Inference Map
-python -m script_create_map_template \
-  --a="$base_dir/$custom_training_name/filelist/symbols.json" \
-  --b="examples/ipa/corpora.txt" \
-  --existing_map="maps/inference/en_v1.json"
-  --mode="infer"
-  --ignore_tones
-  --ignore_arcs
-  --no_debugging
-
-
-# Validate
-python script_dl_waveglow_pretrained.py \
-  --pretrained_dir=$pretrained \
-  --no_debugging
-
-# export utterance="LJ002-0205"
-# export utterance="LJ006-0229"
-# export utterance="LJ027-0076"
-export utterance="random-val"
-python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=''
-# last valid checkpoint: 113204
