@@ -38,22 +38,22 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   if not args.no_debugging:
-    args.base_dir = '/datasets/models/taco2pt_v2'
-    args.training_dir = 'debug'
+    args.base_dir = '/datasets/gcp_home'
+    args.training_dir = 'ljs_ipa_ms_from_scratch'
     args.ipa = True
     # args.text = "examples/chn/thchs.txt"
     # args.lang = "chn"
     # args.text = "examples/ger/nord.txt"
     # args.lang = "ger"
-    args.text = "examples/en/ljs_0001.txt"
-    args.lang = "en"
+    args.text = "examples/ipa/north_sven_orig.txt"
+    args.lang = "ipa"
     #args.map = "maps/inference/chn_v1.json"
     args.map = "maps/inference/en_v1.json"
     args.ignore_tones = True
     args.ignore_arcs = True
     #args.speakers = 'thchs_v5,B2;thchs_v5,A2'
     #args.speaker = 'ljs_ipa_v2,1'
-    args.speaker = 'thchs_v5,B2'
+    args.speaker = 'ljs_ipa_v2,1'
     args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)

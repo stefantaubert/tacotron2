@@ -3,13 +3,16 @@
 ########################################################################################
 
 # Init
-## Capslock
-conda activate test1
-export base_dir="/datasets/models/taco2pt_v2"
-export datasets_dir="/datasets"
-export pretrained_dir="/datasets/models/pretrained"
-export waveglow="$pretrained_dir/waveglow_256channels_universal_v5.pt"
-# Custom for this model
+
+## Capslock Dev
+source /datasets/code/tacotron2-dev/configs/envs/dev-caps.sh
+export custom_training_name="ljs_ipa_ms_from_scratch"
+export ds_name="ljs_ipa_v2"
+export speakers="$ds_name,all"
+export batch_size=26
+
+## Capslock GCP
+source /datasets/code/tacotron2-dev/configs/envs/prod-caps.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa_v2"
 export speakers="$ds_name,all"
@@ -17,26 +20,14 @@ export batch_size=26
 
 ## GCP
 # For usage with a t4 on Google Cloud Plattform
-cd tacotron2
-source activate taco2pytorch
-export base_dir="/home/stefan_taubert/taco2pt_v2"
-export datasets_dir="/home/stefan_taubert/datasets"
-export pretrained_dir="$base_dir/pretrained"
-export waveglow="$pretrained_dir/waveglow_256channels_universal_v5.pt"
-# Custom for this model
+source /home/stefan_taubert/tacotron2/configs/envs/prod-gcp.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa"
 export speakers="$ds_name,all"
 export batch_size=52
 
 ## Phil
-cd tacotron2
-conda activate test2
-export base_dir="/home/stefan/taco2pt_v2"
-export datasets_dir="/home/stefan/datasets"
-export pretrained_dir="$base_dir/pretrained"
-export waveglow="$pretrained_dir/waveglow_256channels_universal_v5.pt"
-# Custom for this model
+source /home/stefan/tacotron2/configs/envs/prod-phil.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa"
 export speakers="$ds_name,all"
@@ -55,23 +46,23 @@ python -m script_ljs_pre \
 
 
 # Training from scratch
-export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=500"
+export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=1000"
 python -m paths --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
 python -m script_train --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --train_size=0.9 --validation_size=1.0 --no_debugging
 
 
 ## Continue training
-export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=500"
+export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=1000"
 python -m script_train --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --continue_training --no_debugging
 
 
 # Inference
 python -m script_dl_waveglow_pretrained --pretrained_dir=$pretrained_dir --no_debugging
 export text_map="maps/inference/en_v1.json"
-export speaker="ljs_ipa,1"
+export speaker="$ds_name,1"
 
 export text="examples/ipa/north_sven_orig.txt"
-python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --custom_checkpoint=81500 --map=$text_map --no_debugging
+python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
 
 export text="examples/chn/thchs.txt"
 python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=chn --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging
@@ -95,7 +86,7 @@ export text="examples/ipa/north_ger.txt"
 python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --custom_checkpoint=79000 --map=$text_map --no_debugging
 
 # Validate checkpoints
-export hparams="batch_size=52"
+export hparams="batch_size=$batch_size"
 export select_pattern=10000
 python -m script_eval_checkpoints --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --select=2000 --min=70000 --no_debugging
 
