@@ -61,6 +61,7 @@ def parse(dir_path: str):
     speaker, nr = basename.split('_')
     nr = int(nr)
     res.append((nr, speaker, basename, wav, chn, sent_file))
+  print("Done.")
 
   return res
 

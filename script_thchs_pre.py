@@ -42,6 +42,7 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
 
   ### normalize input
   symbol_counter = Counter()
+  print("Converting Chinese to IPA.")
   for utterance in tqdm(parsed_data):
     chn = utterance[4]
     try:
@@ -70,9 +71,11 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
   all_speakers = OrderedDict(all_speakers)
   all_speakers_path = get_all_speakers_path(base_dir, ds_name)
   save_json(all_speakers_path, all_speakers)
+  print("Done.")
 
+  print("Reading wav durations and processing symbols.")
   for speaker, recordings in tqdm(data.items()):
-    print("Processing speaker:", speaker)
+    #print("Processing speaker:", speaker)
     ### get all symbols
     symbols = set()
     for _, _, _, symbs, _ in recordings:
@@ -85,8 +88,8 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
     ds_dir = get_ds_dir(base_dir, ds_name, speaker, create=True)
 
     conv.dump(os.path.join(ds_dir, ds_preprocessed_symbols_name))
-    print("Resulting symbolset:")
-    conv.print_symbols()
+    #print("Resulting symbolset:")
+    #conv.print_symbols()
 
     ### convert text to symbols
     result = []
@@ -103,12 +106,11 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
 
     df = pd.DataFrame(result)
     df.to_csv(os.path.join(ds_dir, ds_preprocessed_file_name), header=None, index=None, sep=csv_separator)
-    print("Dataset saved.")
+    #print("Dataset saved.")
     #df1 = df.iloc[:, [1, 4, 0, 2, 3, 5, 6]]
     #df2 = df.iloc[:, []]
     #df2.to_csv(os.path.join(ds_dir, ds_preprocessed_file_log_name), header=None, index=None, sep=csv_separator)
-
-  
+  print("Done.")
   print("Dataset preprocessing finished.")
 
 
