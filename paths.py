@@ -93,7 +93,7 @@ def get_validation_dir(training_dir_path: str, input_name: str, checkpoint: str,
 
 def log_train_config(training_dir_path: str, args):
   t = args_to_str(args)
-  with open(os.path.join(training_dir_path, train_config_file), 'w') as f:
+  with open(os.path.join(training_dir_path, train_config_file), 'w', encoding='utf-8') as f:
     f.write(t)
   print("Passed training arguments:")
   print(t)
@@ -104,7 +104,7 @@ def log_train_map(training_dir_path: str, map_path: str):
 
 def log_inference_config(infer_dir_path: str, args):
   t = args_to_str(args)
-  with open(os.path.join(infer_dir_path, inference_config_file), 'w') as f:
+  with open(os.path.join(infer_dir_path, inference_config_file), 'w', encoding='utf-8') as f:
     f.write(t)
   print("Passed inference arguments:")
   print(t)
@@ -118,7 +118,7 @@ def log_map_file(infer_dir_path: str, map_file: str):
 def create_description_file(training_dir_path: str):
   desc_file = os.path.join(training_dir_path, description_txt_file)
   if not os.path.exists(desc_file):
-    with open(desc_file, 'w') as f:
+    with open(desc_file, 'w', encoding='utf-8') as f:
       f.write('Description\n')
       f.write('-----------\n')
 

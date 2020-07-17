@@ -78,7 +78,7 @@ def args_to_str(args):
   return res
 
 def parse_json(path: str) -> dict:
-  with open(path, 'r') as f:
+  with open(path, 'r', encoding='utf-8') as f:
     tmp = json.load(f)
   return tmp
 

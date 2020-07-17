@@ -24,7 +24,7 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
   lines = []
 
   input_file = os.path.join(infer_dir_path, inference_input_file_name)
-  with open(input_file, 'r') as f:
+  with open(input_file, 'r', encoding='utf-8') as f:
     lines = f.readlines()
   
   is_ipa = lang == "ipa"
@@ -69,7 +69,7 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
       cleaned_sent = normalize_text(s)
       cleaned_sents.append(cleaned_sent)
 
-    with open(os.path.join(infer_dir_path, inference_input_normalized_sentences_file_name), 'w') as f:
+    with open(os.path.join(infer_dir_path, inference_input_normalized_sentences_file_name), 'w', encoding='utf-8') as f:
       f.writelines(['{}\n'.format(s) for s in cleaned_sents])
    
     accented_sents = []
@@ -81,7 +81,7 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
         accented_sentence = s
       accented_sents.append(accented_sentence)
 
-  with open(os.path.join(infer_dir_path, inference_input_sentences_file_name), 'w') as f:
+  with open(os.path.join(infer_dir_path, inference_input_sentences_file_name), 'w', encoding='utf-8') as f:
     f.writelines(['{}\n'.format(s) for s in accented_sents])
 
   if use_map:
@@ -122,11 +122,11 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
     serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
     seq_sents.append('{}\n'.format(serialized_symbol_ids))
 
-  with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'w') as f:
+  with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'w', encoding='utf-8') as f:
     f.writelines(seq_sents)
   
   if use_map:
-    with open(os.path.join(infer_dir_path, inference_input_sentences_mapped_file_name), 'w') as f:
+    with open(os.path.join(infer_dir_path, inference_input_sentences_mapped_file_name), 'w', encoding='utf-8') as f:
       f.writelines(['{}\n'.format(s) for s in seq_sents_text])
 
   if len(unknown_symbols) > 0:

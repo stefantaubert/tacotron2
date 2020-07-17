@@ -108,7 +108,7 @@ def validate(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str
   orig_text = conv.ids_to_text(symbol_ids)
   print("{} ({})".format(orig_text, len(symbol_ids)))
 
-  with open(os.path.join(infer_dir_path, inference_input_file_name), 'w') as f:
+  with open(os.path.join(infer_dir_path, inference_input_file_name), 'w', encoding='utf-8') as f:
     f.writelines([orig_text])
 
   synthesized_sentence = synt.infer(symbol_ids, final_speaker_id)
@@ -158,7 +158,8 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   hparams.n_symbols = n_symbols
   hparams.n_speakers = n_speakers
 
-  with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'r') as f:
+
+  with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'r', encoding='utf-8') as f:
     serialized_symbol_ids_sentences = f.readlines()
 
   hparams.n_symbols = n_symbols
