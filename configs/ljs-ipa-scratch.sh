@@ -37,7 +37,7 @@ export batch_size=26
 # Preprocessing
 python -m script_ljs_pre \
   --base_dir=$base_dir \
-  --data_dir="$datasets_dir/LJSpeech-1.1" \
+  --data_dir="$ljs_data" \
   --ipa \
   --ignore_arcs \
   --ds_name=$ds_name \

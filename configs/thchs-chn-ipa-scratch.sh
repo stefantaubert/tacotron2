@@ -11,14 +11,14 @@ source /datasets/code/tacotron2-dev/configs/envs/dev-caps.sh
 export custom_training_name="thchs_ipa_scratch"
 export ds_name="thchs_v5"
 export speakers="$ds_name,B8;$ds_name,B2;$ds_name,A2"
-export batch_size=?
+export batch_size=0
 
 ## Capslock GCP
 source /datasets/code/tacotron2-dev/configs/envs/prod-caps.sh
 export custom_training_name="thchs_ipa_scratch"
 export ds_name="thchs_v5"
 export speakers="$ds_name,B8;$ds_name,B2;$ds_name,A2"
-export batch_size=10
+export batch_size=0
 
 ## GCP
 # For usage with a t4 on Google Cloud Plattform
@@ -33,14 +33,14 @@ source /home/stefan/tacotron2/configs/envs/prod-phil.sh
 export custom_training_name="thchs_ipa_scratch"
 export ds_name="thchs_v5"
 export speakers="$ds_name,B8;$ds_name,B2;$ds_name,A2"
-export batch_size=?
+export batch_size=0
 
 
 # Preprocessing
 python script_thchs_pre.py \
   --base_dir=$base_dir \
-  --data_dir="$datasets_dir/thchs" \
-  --data_conversion_dir="$datasets_dir/thchs_16bit_22050kHz" \
+  --data_dir="$thchs_original_data" \
+  --data_conversion_dir="$thchs_data" \
   --ignore_arcs \
   --ignore_tones \
   --auto_dl \
