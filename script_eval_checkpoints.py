@@ -7,7 +7,7 @@ from tqdm import tqdm
 import numpy as np
 
 import torch
-from distributed import apply_gradient_allreduce
+from distributed_tacotron import apply_gradient_allreduce
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 import argparse

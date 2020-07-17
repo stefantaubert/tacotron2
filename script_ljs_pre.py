@@ -137,7 +137,7 @@ if __name__ == "__main__":
     args.data_dir = '/datasets/LJSpeech-1.1-tmp'
     args.ipa = True
     args.ignore_arcs = True
-    args.ds_name = 'ljs_ipa_v2'
+    args.ds_name = 'ljs_ipa_v2-tmp'
   
   if args.auto_dl:
     ensure_downloaded(args.data_dir)

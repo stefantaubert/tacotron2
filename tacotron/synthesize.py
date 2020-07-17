@@ -20,8 +20,8 @@ from tacotron.train import get_last_checkpoint
 from common.utils import parse_ds_speakers, parse_json
 from script_plot_mel import Mel2Samp, plot_melspecs, get_segment, get_audio
 
-# to load denoiser, glow etc.
-#sys.path.append('waveglow/')
+# needed becaus otherwise the pretrained model could not be loaded
+sys.path.append('waveglow/')
 from waveglow.denoiser import Denoiser
 from pathlib import Path
 
