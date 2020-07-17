@@ -102,3 +102,11 @@ python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_
 
 export text="examples/ipa/north_ger.txt"
 python -m script_inference --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
+
+# Validate
+python script_dl_waveglow_pretrained.py \
+  --pretrained_dir=$pretrained_dir \
+  --no_debugging
+
+export utterance="random-val"
+python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=''
