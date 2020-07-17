@@ -48,6 +48,7 @@ export batch_size=17
 # Preprocessing
 python -m script_thchs_pre \
   --base_dir=$base_dir \
+  --kaldi_version \
   --auto_dl \
   --data_dir="$datasets_dir/THCHS-30" \
   --auto_convert \
@@ -61,7 +62,7 @@ python -m script_thchs_pre \
 # Training from scratch
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=500"
 python -m paths --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
-python -m script_train --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --train_size=0.93 --validation_size=1.0 --no_debugging
+python -m script_train --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --train_size=0.94 --validation_size=1.0 --no_debugging
 
 
 ## Continue training
