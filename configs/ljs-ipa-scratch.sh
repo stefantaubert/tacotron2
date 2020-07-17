@@ -136,7 +136,7 @@ python -m script_create_map_template \
 
 # Validate
 python script_dl_waveglow_pretrained.py \
-  --pretrained_dir=$pretrained \
+  --pretrained_dir=$pretrained_dir \
   --no_debugging
 
 # export utterance="LJ002-0205"
