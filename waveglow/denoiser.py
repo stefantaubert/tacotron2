@@ -1,6 +1,6 @@
 import sys
-sys.path.append('tacotron2')
-from layers import STFT
+#sys.path.append('tacotron2')
+from common.stft import STFT
 import torch
 
 

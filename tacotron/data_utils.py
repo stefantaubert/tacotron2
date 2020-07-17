@@ -4,7 +4,7 @@ import torch
 import torch.utils.data
 
 import layers
-from utils import load_wav_to_torch, load_filepaths_and_symbols
+from common.utils import load_wav_to_torch, load_filepaths_and_symbols
 from text.symbol_converter import deserialize_symbol_ids
 
 class SymbolsMelLoader(torch.utils.data.Dataset):

@@ -10,8 +10,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 import torch
-from hparams import create_hparams
-from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
+from tacotron.hparams import create_hparams
+from script_paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
                    filelist_file_log_name, filelist_file_name,
                    filelist_symbols_file_name, filelist_weights_file_name,
                    get_all_speakers_path, get_ds_dir, get_filelist_dir,
@@ -19,8 +19,8 @@ from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
 from text.symbol_converter import (deserialize_symbol_ids, init_from_symbols,
                                    load_from_file, serialize_symbol_ids)
 from torch import nn
-from train_log import log
-from utils import (csv_separator, duration_col, parse_ds_speakers, parse_json,
+from common.train_log import log
+from common.utils import (csv_separator, duration_col, parse_ds_speakers, parse_json,
                    serialize_ds_speaker, serialize_ds_speakers, speaker_id_col,
                    speaker_name_col, symbols_str_col, utt_name_col,
                    wavpath_col, save_json)

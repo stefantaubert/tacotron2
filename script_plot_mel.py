@@ -5,10 +5,10 @@ import sys
 import random
 import os
 
-from layers import TacotronSTFT
-from utils import load_filepaths_and_symbols
+from tacotron.layers import TacotronSTFT
+from common.utils import load_filepaths_and_symbols
 from scipy.io.wavfile import read
-from hparams import create_hparams
+from tacotron.hparams import create_hparams
 from tqdm import tqdm
 
 def load_wav_to_torch(full_path):

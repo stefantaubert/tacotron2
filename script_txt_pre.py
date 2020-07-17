@@ -5,11 +5,11 @@ import epitran
 from nltk.tokenize import sent_tokenize
 from nltk import download
 
-from ipa2symb import extract_from_sentence
-from utils import parse_json
+from text.ipa2symb import extract_from_sentence
+from common.utils import parse_json
 from text.adjustments import normalize_text
 from text.symbol_converter import load_from_file, serialize_symbol_ids
-from paths import get_symbols_path, inference_input_normalized_sentences_file_name, inference_input_sentences_file_name, inference_input_sentences_mapped_file_name, inference_input_symbols_file_name, inference_input_file_name, inference_input_map_file_name
+from script_paths import get_symbols_path, inference_input_normalized_sentences_file_name, inference_input_sentences_file_name, inference_input_sentences_mapped_file_name, inference_input_symbols_file_name, inference_input_file_name, inference_input_map_file_name
 from text.chn_tools import chn_to_ipa
 
 def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, ignore_tones: bool, ignore_arcs: bool, subset_id: int, lang: str, use_map: bool):

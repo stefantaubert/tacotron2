@@ -37,7 +37,7 @@ export select_pattern=10000
 python -m script_eval_checkpoints --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --select=2000 --min=70000 --no_debugging
 
 # Plot Embeddings
-python -m plot_embeddings \
+python -m script_plot_embeddings \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --no_debugging \

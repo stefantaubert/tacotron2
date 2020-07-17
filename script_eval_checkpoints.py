@@ -13,18 +13,18 @@ from torch.utils.data.distributed import DistributedSampler
 import argparse
 from torch.utils.data import DataLoader
 
-from model import Tacotron2
-from data_utils import SymbolsMelLoader, SymbolsMelCollate
-from loss_function import Tacotron2Loss
-from logger import Tacotron2Logger
-from hparams import create_hparams
-from utils import parse_ds_speakers, get_total_duration_min_df
+from tacotron.model import Tacotron2
+from tacotron.data_utils import SymbolsMelLoader, SymbolsMelCollate
+from tacotron.loss_function import Tacotron2Loss
+from tacotron.logger import Tacotron2Logger
+from tacotron.hparams import create_hparams
+from common.utils import parse_ds_speakers, get_total_duration_min_df
 
 from text.symbol_converter import load_from_file
-from paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
-from train_log import log
+from script_paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
+from common.train_log import log
 
-from train import load_model, prepare_directories_and_logger, get_last_checkpoint, validate_core, prepare_dataloaders, load_checkpoint
+from tacotron.train import load_model, prepare_directories_and_logger, get_last_checkpoint, validate_core, prepare_dataloaders, load_checkpoint
 
 def eval_chkpoints(hparams, training_dir_path, select: int, min_it: int, max_it: int):
   n_gpus = 1

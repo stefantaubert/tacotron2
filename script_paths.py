@@ -2,7 +2,7 @@ import os
 import datetime
 from shutil import copyfile
 import argparse
-from utils import args_to_str
+from common.utils import args_to_str
 
 log_dir = 'logs'
 log_train_file_name = 'log.txt'

@@ -10,13 +10,13 @@ import pandas as pd
 from tqdm import tqdm
 import librosa
 
-from ipa2symb import extract_from_sentence
-from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path, get_all_speakers_path
+from text.ipa2symb import extract_from_sentence
+from script_paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path, get_all_speakers_path
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
-from utils import csv_separator
+from common.utils import csv_separator
 from collections import Counter, OrderedDict
-from utils import save_json
+from common.utils import save_json
 
 def __download_ljs(dir_path: str):
   print("LJSpeech is not downloaded yet.")

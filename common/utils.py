@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.io.wavfile import read
 import torch
 import json
-from ipa2symb import extract_from_sentence
+from text.ipa2symb import extract_from_sentence
 from collections import OrderedDict
 import wget
 import os

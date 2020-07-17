@@ -1,8 +1,8 @@
 import argparse
-from utils import save_json, parse_json
+from common.utils import save_json, parse_json
 from text.symbol_converter import load_from_file
 from collections import OrderedDict
-from ipa2symb import extract_from_sentence
+from text.ipa2symb import extract_from_sentence
 
 def save(path: str, symbols: set) -> set:
   with open(path, 'w', encoding='utf-8') as f:

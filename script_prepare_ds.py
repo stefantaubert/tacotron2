@@ -7,15 +7,15 @@ from torch import nn
 import torch
 from math import sqrt
 import numpy as np
-from utils import parse_json
+from common.utils import parse_json
 
-from paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_file_name, filelist_weights_file_name, train_map_file, filelist_file_log_name
+from script_paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_file_name, filelist_weights_file_name, train_map_file, filelist_file_log_name
 from text.symbol_converter import load_from_file, serialize_symbol_ids, deserialize_symbol_ids
-from utils import csv_separator
-from hparams import create_hparams
-from train_log import log
+from common.utils import csv_separator
+from tacotron.hparams import create_hparams
+from common.train_log import log
 from shutil import copyfile
-from utils import symbols_str_col
+from common.utils import symbols_str_col
 
 def prepare(base_dir: str, training_dir_path: str, merge_mode: str, pretrained_model_symbols: str, ds_name: str, speaker: str, pretrained_model: str, weight_map_mode: str, hparams):
   log(training_dir_path, "Merging symbols...")

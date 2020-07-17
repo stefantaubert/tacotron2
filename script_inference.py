@@ -3,7 +3,7 @@ import json
 import os
 from shutil import copyfile
 
-from paths import (ds_preprocessed_file_name,
+from script_paths import (ds_preprocessed_file_name,
                    ds_preprocessed_symbols_name, filelist_file_name,
                    filelist_symbols_file_name,
                    get_ds_dir, get_filelist_dir, get_inference_dir,
@@ -12,11 +12,11 @@ from paths import (ds_preprocessed_file_name,
 from script_prepare_ds import prepare
 from script_split_ds import split_ds
 from script_txt_pre import process_input_text
-from synthesize import infer
-from train import start_train, get_last_checkpoint
-from train_log import reset_log
-from plot_embeddings import analyse
-from utils import parse_ds_speaker
+from tacotron.synthesize import infer
+from tacotron.train import start_train, get_last_checkpoint
+from common.train_log import reset_log
+from script_plot_embeddings import analyse
+from common.utils import parse_ds_speaker
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()

@@ -15,19 +15,19 @@ import torch
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from text.symbol_converter import load_from_file, deserialize_symbol_ids
-from paths import get_symbols_path, inference_input_symbols_file_name, get_checkpoint_dir, inference_input_file_name, get_filelist_dir, filelist_speakers_name
-from train import get_last_checkpoint
-from utils import parse_ds_speakers, parse_json
-from plot_mel import Mel2Samp, plot_melspecs, get_segment, get_audio
+from script_paths import get_symbols_path, inference_input_symbols_file_name, get_checkpoint_dir, inference_input_file_name, get_filelist_dir, filelist_speakers_name
+from tacotron.train import get_last_checkpoint
+from common.utils import parse_ds_speakers, parse_json
+from script_plot_mel import Mel2Samp, plot_melspecs, get_segment, get_audio
 
 # to load denoiser, glow etc.
-sys.path.append('waveglow/')
-from denoiser import Denoiser
+#sys.path.append('waveglow/')
+from waveglow.denoiser import Denoiser
 from pathlib import Path
 
-from hparams import create_hparams
-from model import Tacotron2
-from train import load_model
+from tacotron.hparams import create_hparams
+from tacotron.model import Tacotron2
+from tacotron.train import load_model
 from scipy.io.wavfile import write
 
 def to_wav(path, data, sr):

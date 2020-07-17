@@ -5,13 +5,12 @@ from shutil import copyfile
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
+from script_paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
                    filelist_symbols_file_name, filelist_test_file_name,
                    filelist_training_file_name, filelist_validation_file_name,
                    get_ds_dir, get_filelist_dir)
-from train_log import log
-from utils import csv_separator, get_total_duration_min
-
+from common.train_log import log
+from common.utils import csv_separator, get_total_duration_min
 
 def __save(train, training_dir_path, fn):
   #df = train.iloc[:, __wav_symids_cols]

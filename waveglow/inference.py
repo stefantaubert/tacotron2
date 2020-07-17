@@ -27,8 +27,8 @@
 import os
 from scipy.io.wavfile import write
 import torch
-from mel2samp import files_to_list, MAX_WAV_VALUE
-from denoiser import Denoiser
+from waveglow.mel2samp import files_to_list, MAX_WAV_VALUE
+from waveglow.denoiser import Denoiser
 
 
 def main(mel_files, waveglow_path, sigma, output_dir, sampling_rate, is_fp16,

@@ -9,7 +9,7 @@ import scipy.signal as sps
 import os
 from pathlib import Path
 import numpy as np
-from synthesize import to_wav
+from tacotron.synthesize import to_wav
 
 
 def create_parent_folder(file: str):

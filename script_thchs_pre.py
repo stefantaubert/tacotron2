@@ -12,16 +12,16 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from ipa2symb import extract_from_sentence
-from paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path, get_all_speakers_path
+from text.ipa2symb import extract_from_sentence
+from script_paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path, get_all_speakers_path
 from text.adjustments import normalize_text
 from text.symbol_converter import init_from_symbols, serialize_symbol_ids
-from utils import csv_separator
+from common.utils import csv_separator
 import wget
 from text.chn_tools import chn_to_ipa
 from script_upsample_thchs import convert
 from collections import Counter, OrderedDict
-from utils import save_json, download_tar
+from common.utils import save_json, download_tar
 
 def ensure_is_22050kHz(dir_path: str, data_conversion_dir: str, kaldi_version: bool):
   if kaldi_version:

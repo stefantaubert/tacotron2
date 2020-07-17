@@ -1,5 +1,5 @@
 import os
-from paths import get_log_dir, log_train_file_name
+from script_paths import get_log_dir, log_train_file_name
 import datetime
 
 def log(training_dir_path: str, msg: str):

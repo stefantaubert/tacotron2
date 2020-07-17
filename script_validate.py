@@ -4,8 +4,8 @@ import os
 import random
 from shutil import copyfile
 import pandas as pd
-from utils import csv_separator, utt_name_col, symbols_str_col, wavpath_col, speaker_id_col, speaker_name_col, get_speaker_count_csv, get_utterance_names_csv
-from paths import (ds_preprocessed_file_name, filelist_validation_file_name,
+from common.utils import csv_separator, utt_name_col, symbols_str_col, wavpath_col, speaker_id_col, speaker_name_col, get_speaker_count_csv, get_utterance_names_csv
+from script_paths import (ds_preprocessed_file_name, filelist_validation_file_name,
                    ds_preprocessed_symbols_name, filelist_file_name,
                    filelist_symbols_file_name,
                    get_ds_dir, get_filelist_dir, get_inference_dir, get_validation_dir,
@@ -14,11 +14,11 @@ from paths import (ds_preprocessed_file_name, filelist_validation_file_name,
 from script_prepare_ds import prepare
 from script_split_ds import split_ds
 from script_txt_pre import process_input_text
-from synthesize import validate
-from train import start_train, get_last_checkpoint
-from train_log import reset_log
-from plot_embeddings import analyse
-from utils import parse_ds_speaker
+from tacotron.synthesize import validate
+from tacotron.train import start_train, get_last_checkpoint
+from common.train_log import reset_log
+from script_plot_embeddings import analyse
+from common.utils import parse_ds_speaker
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()

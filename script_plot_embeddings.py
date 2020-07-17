@@ -8,10 +8,10 @@ from scipy.spatial import distance
 import torch
 from sklearn.preprocessing import normalize
 from text.symbol_converter import load_from_file
-from paths import get_symbols_path, get_analysis_dir, analysis_2d_file_name, analysis_3d_file_name, analysis_sims_file_name, get_checkpoint_dir
+from script_paths import get_symbols_path, get_analysis_dir, analysis_2d_file_name, analysis_3d_file_name, analysis_sims_file_name, get_checkpoint_dir
 import os
 import argparse
-from train import get_last_checkpoint
+from tacotron.train import get_last_checkpoint
 
 def analyse(training_dir_path: str, custom_checkpoint: int = None):
   conv = load_from_file(get_symbols_path(training_dir_path))

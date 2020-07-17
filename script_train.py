@@ -3,8 +3,8 @@ import json
 import os
 from shutil import copyfile
 
-from hparams import create_hparams
-from paths import (ds_preprocessed_file_name,
+from tacotron.hparams import create_hparams
+from script_paths import (ds_preprocessed_file_name,
                    ds_preprocessed_symbols_name, filelist_file_name,
                    filelist_symbols_file_name,
                    filelist_weights_file_name, get_ds_dir, get_filelist_dir,
@@ -12,15 +12,15 @@ from paths import (ds_preprocessed_file_name,
                    log_inference_config, log_input_file, log_map_file,
                    log_train_config, log_train_map, train_config_file,
                    train_map_file)
-from plot_embeddings import analyse
+from script_plot_embeddings import analyse
 from script_prepare_ds import prepare
 from script_prepare_ds_ms import prepare as prepare_ms
 from script_split_ds import split_ds
 from script_txt_pre import process_input_text
-from synthesize import infer
-from train import get_last_checkpoint, start_train
-from train_log import reset_log
-from utils import args_to_str
+from tacotron.synthesize import infer
+from tacotron.train import get_last_checkpoint, start_train
+from common.train_log import reset_log
+from common.utils import args_to_str
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
