@@ -43,6 +43,3 @@ def split_ds(base_dir, training_dir_path: str, train_size: float, validation_siz
 
   log(training_dir_path, "Total => Size: {}, Duration: {:.2f}min / {:.2f}h".format(len(data), total_duration, total_duration / 60))
   log(training_dir_path, "Dataset is splitted now.")
-
-if __name__ == "__main__":
-  split_ds

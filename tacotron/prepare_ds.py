@@ -130,26 +130,3 @@ def prepare(base_dir: str, training_dir_path: str, merge_mode: str, pretrained_m
     np.save(weights_path, embedding.weight.data.numpy())
 
   log(training_dir_path, "Done.")
-
-# if __name__ == "__main__":
-
-#   parser = argparse.ArgumentParser()
-#   parser.add_argument('--base_dir', type=str, help='base directory')
-#   parser.add_argument('--pretrained_model', type=str)
-#   parser.add_argument('--pretrained_model_symbols', type=str)
-#   parser.add_argument('--ds_name', type=str)
-#   parser.add_argument('--speaker', type=str)
-#   parser.add_argument('--mode', type=str, help='separate,unify,map')
-#   parser.add_argument('--map', type=str)
-
-#   = parser.parse_)
-#   debug = True
-#   if debug:
-#     base_dir = '/datasets/models/taco2pt_ms'
-#     pretrained_model = os.path.join(base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000')
-#     pretrained_model_symbols = os.path.join(base_dir, filelist_dir, 'ljs_ipa/1/symbols.json')
-#     ds_name = 'thchs_no_tone'
-#     speaker = 'A11'
-#     mode = 'map'
-#     map = 'maps/en_chn.txt'
-

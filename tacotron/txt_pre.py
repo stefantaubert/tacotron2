@@ -135,35 +135,3 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
     print('There were no unknown symbols.')
 
   print("Text to synthesize processed.")
-
-
-# if __name__ == "__main__":
-#   parser = argparse.ArgumentParser()
-#   parser.add_argument('--base_dir', type=str, help='base directory')
-#   parser.add_argument('--ipa', type=str, help='IPA-based')
-#   parser.add_argument('--text', type=str, help='path to text which should be synthesized')
-#   parser.add_argument('--lang=ipa', type=str, help='text is ipa')
-#   parser.add_argument('--ds_name', type=str)
-#   parser.add_argument('--speaker', type=str)
-#   parser.add_argument('--map', default='')
-#   parser.add_argument('--subset_id', type=int)
-#   parser.add_argument('--debug', type=str, default='true')
-
-#   = parser.parse_)
-
-#   debug = str.lower(debug) == 'true'
-#   if debug:
-#     base_dir = '/datasets/models/taco2pt_ms'
-#     ipa = 'true'
-#     text = 'examples/grandfather.txt'
-#     is_ipa = 'false'
-#     if True:
-#       map = 'maps/en_chn.txt'
-#       subset_id = 1
-#     else:
-#       map = ''
-#       subset_id = 1
-#     speaker_dir = os.path.join(base_dir, filelist_dir)
-#   else:
-#     speaker_dir = os.path.join(base_dir, filelist_dir, ds_name, speaker)
- 
