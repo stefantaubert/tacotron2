@@ -1,9 +1,7 @@
 .vscode
 .ipynb_checkpoints
-out
-pretrained
-filelist
-./playground.py
+playground.py
+playground.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
