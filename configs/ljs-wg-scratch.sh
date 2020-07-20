@@ -35,7 +35,7 @@ export batch_size=4
 
 
 # Preprocessing
-python ./script_ljs_pre.py \
+python ./src/script_ljs_pre.py \
   --base_dir=$base_dir \
   --data_dir="$ljs_data" \
   --ds_name=$ds_name \
@@ -45,11 +45,11 @@ python ./script_ljs_pre.py \
 
 # Training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=50"
-python ./script_paths.py \
+python ./src/script_paths.py \
   --base_dir=$base_dir \
   --custom_training_name=$custom_training_name \
   --no_debugging
-python -m script_train_waveglow \
+python ./src/waveglow/script_train.py \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
@@ -61,7 +61,7 @@ python -m script_train_waveglow \
 
 ## Continue training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=50"
-python -m script_train_waveglow \
+python ./src/waveglow/script_train.py \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --hparams=$hparams \
@@ -70,7 +70,7 @@ python -m script_train_waveglow \
 
 
 # Inference
-# python ./tacotron/script_dl_waveglow_pretrained.py \
+# python ./src/tacotron/script_dl_waveglow_pretrained.py \
 #   --pretrained_dir=$pretrained_dir \
 #   --no_debugging
 # export text_map="maps/inference/en_v1.json"

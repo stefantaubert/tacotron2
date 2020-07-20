@@ -8,43 +8,43 @@ python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$cu
 
 # Inference IPA
 export text="examples/ipa/north_sven_orig.txt"
-python ./tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
 
 export text="examples/chn/thchs.txt"
-python ./tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=chn --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=chn --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
 
 export text="examples/ger/example.txt"
-python ./tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ger --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ger --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
 
 export text="examples/ger/nord.txt"
-python ./tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ger --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ger --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
 
 export text="examples/ipa/north_sven_v2.txt"
-python ./tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
 
 export text="examples/en/north.txt"
-python ./tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=en --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=en --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
 
 export text="examples/en/democritus_v2.txt"
-python ./tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=en --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=en --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
 
 export text="examples/ipa/north_ger.txt"
-python ./tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --custom_checkpoint=''
 
 # Validate checkpoints
 export hparams="batch_size=$batch_size"
 export select_pattern=10000
-python ./tacotron/script_eval_checkpoints.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --no_debugging --select=2000 --min=70000
+python ./src/tacotron/script_eval_checkpoints.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --no_debugging --select=2000 --min=70000
 
 # Plot Embeddings
-python ./tacotron/script_plot_embeddings.py \
+python ./src/tacotron/script_plot_embeddings.py \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --no_debugging \
   --custom_checkpoint=''
 
 # Create Inference Map
-python ./tacotron/script_create_map_template.py \
+python ./src/tacotron/script_create_map_template.py \
   --a="$base_dir/$custom_training_name/filelist/symbols.json" \
   --b="examples/ipa/corpora.txt" \
   --mode="infer"
@@ -53,7 +53,7 @@ python ./tacotron/script_create_map_template.py \
   --no_debugging
 
 # Update Inference Map
-python ./tacotron/script_create_map_template.py \
+python ./src/tacotron/script_create_map_template.py \
   --a="$base_dir/$custom_training_name/filelist/symbols.json" \
   --b="examples/ipa/corpora.txt" \
   --existing_map="maps/inference/en_v1.json"
