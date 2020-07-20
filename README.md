@@ -96,12 +96,10 @@ gcloud compute instances create $INSTANCE_NAME \
 Install filezilla on your machine to access files:
 ```bash
 sudo apt-get install filezilla -y
-# i don't know if the '-C joedoe' is necessary and if i also can use ecdsa
+# i don't tested if the '-C joedoe' is necessary and if i can use ecdsa
 ssh-keygen -f ~/.ssh/gloud-rsa -t rsa -b 4096 -C joedoe
 ```
 and then copy the content of the file `~/.ssh/gloud-rsa.pub` to properties -> SSH of your VM
-
-
 
 ## Checkout repo
 
@@ -114,26 +112,20 @@ rm Anaconda3-2020.02-Linux-x86_64.sh
 
 git clone https://github.com/stefantaubert/tacotron2
 cd tacotron2
-git submodule init
-git submodule update
 conda create -n taco2pytorch python=3.6 -y
 conda activate taco2pytorch
 pip install -r requirements.txt
 ```
+
 to be able to run training without being connected with ssh:
-```
+```bash
 sudo apt install screen
+# usage: screen
 ```
 
 check cuda is installed:
-```
+```bash
 nvcc --version
-```
-
-error is normal:
-```
-ERROR: tensorflow 1.13.2 has requirement tensorboard<1.14.0,>=1.13.0, but you'll have tensorboard 2.2.2 which is incompatible.
-Installing collected packages: numpy, pytz, six,
 ```
 
 ## IPA synthesis using LJSpeech-1.1 dataset
@@ -158,10 +150,6 @@ sudo cp lex_lookup /usr/local/bin
 duration: about 1.5h
 
 ```bash
-export base_dir="/home/stefan_taubert/taco2pt_v2"
-export ljs_dir="/home/stefan_taubert/datasets/LJSpeech-1.1"
-export ds_name="ljs_ipa"
-python script_ljs_pre.py --base_dir=$base_dir --data_dir=$ljs_dir --ipa --ignore_arcs --ds_name=$ds_name --no_debugging
 ```
 
 ### Start training
@@ -169,42 +157,16 @@ python script_ljs_pre.py --base_dir=$base_dir --data_dir=$ljs_dir --ipa --ignore
 duration: about 5 days on t4
 
 ```bash
-export base_dir="/home/stefan_taubert/taco2pt_v2"
-export hparams="batch_size=52,iters_per_checkpoint=500,epochs=300"
-export speakers="ljs_ipa,1"
-export custom_training_name="ljs_ipa_ms_from_scratch"
-python paths.py --base_dir=$base_dir --custom_training_name=$custom_training_name --no_debugging
-python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --speakers=$speakers --hparams=$hparams --no_debugging
 ```
 
 ### Continue training
 
 ```bash
-export base_dir="/home/stefan_taubert/taco2pt_v2"
-export hparams="batch_size=52,iters_per_checkpoint=500,epochs=500"
-export speakers="ljs_ipa,1"
-export custom_training_name="ljs_ipa_ms_from_scratch"
-python script_train.py --base_dir=$base_dir --training_dir=$custom_training_name --hparams=$hparams --speakers=$speakers --continue_training --no_debugging
 ```
 
 ### Synthesize example
 
 ```bash
-export base_dir="/home/stefan_taubert/taco2pt_v2"
-export pretrained="/home/stefan_taubert/taco2pt_v2/pretrained"
-python script_dl_waveglow_pretrained.py --pretrained_dir=$pretrained --no_debugging
-export waveglow="/home/stefan_taubert/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt"
-export speakers="ljs_ipa,1"
-export speaker="ljs_ipa,1"
-
-export text="examples/ipa/north_sven_v2.txt"
-python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --no_debugging
-
-export text="examples/en/north.txt"
-python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --no_debugging
-
-export text="examples/en/democritus_v2.txt"
-python script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --ignore_tones --ignore_arcs --speakers=$speakers --speaker=$speaker --waveglow=$waveglow --no_debugging
 ```
 
 ## Filestructure
@@ -272,7 +234,6 @@ $base_dir
 │  ├── weights_map.json
 │  └── description.txt
 │── training_...
-│── training_...
 ```
 
 # Maps
@@ -289,7 +250,7 @@ These maps are used to translate unknown symbols in the text which should be inf
 
 # Notes
 
-## Requirementsü
+## Requirements
 
 - `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)
 - `gdown` only required for downloading pretrained waveglow-model
@@ -297,9 +258,9 @@ These maps are used to translate unknown symbols in the text which should be inf
 
 ## Configs
 
-I also successfylly tryed this configurations:
+I also successfully tryed this configurations:
 - Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
-- Cuda 10.2, Nvidia driver 440.64.00, cuDNN 7.6.5 with RTX 2070 8GB
+- Cuda 10.2.89, Nvidia driver 440.100, cuDNN not installed with RTX 2070 8GB
 
 to save requirements:
 ```bash
