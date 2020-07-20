@@ -1,5 +1,7 @@
 # usage: source path/to/this/file
-cd /home/stefan_taubert/tacotron2
+code_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"/../..
+cd $code_dir
+export PYTHONPATH=$code_dir
 #source activate taco2pytorch
 conda activate taco2pytorch
 

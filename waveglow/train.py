@@ -58,16 +58,15 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, hparam
   print("Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
   model_for_saving = WaveGlow(hparams).cuda()
   model_for_saving.load_state_dict(model.state_dict())
-  torch.save(
-    {
-      'model': model_for_saving,
-      'iteration': iteration,
-      'optimizer': optimizer.state_dict(),
-      'learning_rate': learning_rate
-    },
-    filepath
-  )
 
+  data = {
+    'model': model_for_saving,
+    'iteration': iteration,
+    'optimizer': optimizer.state_dict(),
+    'learning_rate': learning_rate
+  }
+
+  torch.save(data, filepath)
 
 def get_last_checkpoint(training_dir_path: str):
   checkpoint_dir = get_checkpoint_dir(training_dir_path)
@@ -88,7 +87,9 @@ def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
   #   init_distributed(rank, n_gpus, group_name, **dist_config)
   # #=====END:   ADDED FOR DISTRIBUTED======
 
-  criterion = WaveGlowLoss(hparams.sigma)
+  criterion = WaveGlowLoss(
+    sigma=hparams.sigma
+  )
   model = WaveGlow(hparams).cuda()
 
   # #=====START: ADDED FOR DISTRIBUTED======
@@ -111,13 +112,9 @@ def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
       raise Exception("No checkpoint was found to continue training!")
 
     full_checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), last_checkpoint)
-
     log(training_dir_path, "Loading checkpoint '{}'".format(full_checkpoint_path))
-    
     model, optimizer, iteration = load_checkpoint(full_checkpoint_path, model, optimizer)
-
     log(training_dir_path, "Loaded checkpoint '{}' from iteration {}" .format(full_checkpoint_path, iteration))
-
     iteration += 1  # next iteration is iteration + 1
   
   filelist_dir_path = get_filelist_dir(training_dir_path)
@@ -195,8 +192,7 @@ def start_train(training_dir_path: str, hparams, continue_training: bool):
   start = time.time()
 
   log(training_dir_path, 'Final parsed hparams:')
-  x = '\n'.join(str(hparams.values()).split(','))
-  log(training_dir_path, x)
+  log(training_dir_path, '\n'.join(str(hparams.values()).split(',')))
 
   torch.backends.cudnn.enabled = True
   torch.backends.cudnn.benchmark = False
@@ -216,6 +212,13 @@ def start_train(training_dir_path: str, hparams, continue_training: bool):
   if n_gpus > 1:
     raise Exception("More than one GPU is currently not supported.")
   #group_name = "group_name" # 'Distributed group name'
+  # if n_gpus > 1:
+  #   if args.group_name == '':
+  #     print("WARNING: Multiple GPUs detected but no distributed group set")
+  #     print("Only running 1 GPU.  Use distributed.py for multiple GPUs")
+  #     n_gpus = 1
+  # if n_gpus == 1 and args.rank != 0:
+  #   raise Exception("Doing single GPU training on rank > 0")
 
   train(training_dir_path=training_dir_path, n_gpus=n_gpus, rank=rank, hparams=hparams, continue_training=continue_training)
 
@@ -223,40 +226,3 @@ def start_train(training_dir_path: str, hparams, continue_training: bool):
   duration_s = time.time() - start
   duration_m = duration_s / 60
   log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
-# #   #hparams.batch_size=22 only when on all speakers simultanously thchs
-
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('-c', '--config', type=str, help='JSON file for configuration', default='config.json')
-  parser.add_argument('-r', '--rank', type=int, default=0, help='rank of process for distributed')
-  parser.add_argument('-g', '--group_name', type=str, default='', help='name of group for distributed')
-  args = parser.parse_args()
-
-  # Parse configs.  Globals nicer in this case
-  with open(args.config) as f:
-    data = f.read()
-  config = json.loads(data)
-  train_config = config["train_config"]
-  global data_config
-  data_config = config["data_config"]
-  global dist_config
-  dist_config = config["dist_config"]
-  global waveglow_config
-  waveglow_config = config["waveglow_config"]
-  train_config['fp16_run'] = False
-  train_config['batch_size'] = 4
-  train_config['iters_per_checkpoint'] = 50
-  data_config['training_files'] = "/datasets/models/taco2pt_ms/filelist/ljs_ipa/1/audio_text_train_filelist.csv"
-  n_gpus = torch.cuda.device_count()
-  if n_gpus > 1:
-    if args.group_name == '':
-      print("WARNING: Multiple GPUs detected but no distributed group set")
-      print("Only running 1 GPU.  Use distributed.py for multiple GPUs")
-      n_gpus = 1
-
-  if n_gpus == 1 and args.rank != 0:
-    raise Exception("Doing single GPU training on rank > 0")
-
-  torch.backends.cudnn.enabled = True
-  torch.backends.cudnn.benchmark = False
-  train(n_gpus, args.rank, args.group_name, **train_config)

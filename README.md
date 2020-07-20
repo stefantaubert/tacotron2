@@ -287,7 +287,7 @@ These maps are used to translate unknown symbols in the text which should be inf
 
 # Notes
 
-## Requirements
+## Requirementsü
 
 - `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)
 - `gdown` only required for downloading pretrained waveglow-model

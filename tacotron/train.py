@@ -6,7 +6,7 @@ from numpy import finfo
 import numpy as np
 
 import torch
-from distributed_tacotron import apply_gradient_allreduce
+#from distributed_tacotron import apply_gradient_allreduce
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader

@@ -1,5 +1,7 @@
 # usage: source path/to/this/file
-cd /datasets/code/tacotron2-dev
+code_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"/../..
+cd $code_dir
+export PYTHONPATH=$code_dir
 conda activate test1
 
 datasets_dir="/datasets"

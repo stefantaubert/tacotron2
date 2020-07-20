@@ -37,7 +37,7 @@ if __name__ == "__main__":
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.training_dir = 'wg_debug'
     args.speakers = 'ljs_en_v2,all'
-    args.hparams = 'batch_size=4,iters_per_checkpoint=5,fp16_run=False'
+    args.hparams = 'batch_size=4,iters_per_checkpoint=5,fp16_run=False,with_tensorboard=True'
     args.continue_training = True
 
   if not args.base_dir:

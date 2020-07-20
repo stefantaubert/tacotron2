@@ -37,7 +37,7 @@ export batch_size=0
 
 
 # Preprocessing
-python script_thchs_pre.py \
+python ./script_thchs_pre.py \
   --base_dir=$base_dir \
   --data_dir="$thchs_original_data" \
   --data_conversion_dir="$thchs_data" \
@@ -50,11 +50,11 @@ python script_thchs_pre.py \
 
 # Training from scratch
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000"
-python -m paths \
+python ./script_paths.py \
   --base_dir=$base_dir \
   --custom_training_name=$custom_training_name \
   --no_debugging
-python -m script_train \
+python ./tacotron/script_train.py \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
@@ -65,7 +65,7 @@ python -m script_train \
 
 ## Continue training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000"
-python -m script_train \
+python ./tacotron/script_train.py \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --hparams=$hparams \
@@ -73,7 +73,7 @@ python -m script_train \
   --no_debugging
 
 # Inference
-python -m script_dl_waveglow_pretrained \
+python ./tacotron/script_dl_waveglow_pretrained.py \
   --pretrained_dir=$pretrained_dir \
   --no_debugging
 export text_map="maps/inference/chn_v1.json"
