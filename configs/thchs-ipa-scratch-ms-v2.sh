@@ -29,7 +29,7 @@ export batch_size=0
 ## Phil
 source /home/stefan/tacotron2/configs/envs/prod-phil.sh
 export custom_training_name="thchs_chn_ipa_scratch_ms_v2"
-export ds_name="thchs_v5"
+export ds_name="thchs_ipa"
 export speakers="$ds_name,all"
 export batch_size=17
 
@@ -76,4 +76,13 @@ python -m script_dl_waveglow_pretrained \
   --pretrained_dir=$pretrained_dir \
   --no_debugging
 export text_map="maps/inference/chn_v1.json"
-export speaker="$ds_name,A2"
+export speaker="$ds_name,B8"
+
+# Validate
+python script_dl_waveglow_pretrained.py \
+  --pretrained_dir=$pretrained_dir \
+  --no_debugging
+
+export utterance="A23_75"
+python script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint='80000'
+
