@@ -217,6 +217,7 @@ $base_dir
 │  ├── LJSpeech-1.1
 │  ├── THCHS-30
 │  ├── THCHS-30-22050kHz
+│  ├── ...
 ├── ds
 │  ├── ljs_ipa
 │  │  ├── 1
@@ -227,6 +228,7 @@ $base_dir
 │  │  │  ├── symbols.json
 │  │  │  └── filelist.csv
 │  │  ├── ...
+│  ├── ...
 ├── training_2020-06-17_11-11-03
 │  ├── logs
 │  │  └── log.txt
