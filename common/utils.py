@@ -44,12 +44,12 @@ def get_speaker_count_csv(csv) -> int:
   speaker_count = len(get_speakers_csv(csv))
   return speaker_count
 
-def get_total_duration_min_df(csv_file) -> float:
+def get_total_duration_min_df(csv_file, duration_column=duration_col) -> float:
   data = pd.read_csv(csv_file, header=None, sep=csv_separator)
-  return get_total_duration_min(data)
+  return get_total_duration_min(data, duration_column)
 
-def get_total_duration_min(dataset_csv) -> float:
-  total_dur_min = float(dataset_csv.iloc[:, [duration_col]].sum(axis=0)) / 60
+def get_total_duration_min(dataset_csv, duration_column=duration_col) -> float:
+  total_dur_min = float(dataset_csv.iloc[:, [duration_column]].sum(axis=0)) / 60
   return total_dur_min
 
 def serialize_ds_speaker(ds: str, speaker: str):

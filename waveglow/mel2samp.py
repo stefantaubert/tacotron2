@@ -34,24 +34,12 @@ import sys
 from scipy.io.wavfile import read
 
 # We're using the audio processing from TacoTron2 to make sure it matches
-sys.path.insert(0, 'tacotron2')
-from tacotron2.layers import TacotronSTFT
-from tacotron2.utils import load_filepaths_and_symbols
+#sys.path.insert(0, 'tacotron2')
+from tacotron.layers import TacotronSTFT
+from waveglow.prepare_ds import load_filepaths
 
+# todo to hparams
 MAX_WAV_VALUE = 32768.0
-
-def files_to_list(filename):
-  arr = load_filepaths_and_symbols(filename)
-  wavs = [x[0] for x in arr]
-  return wavs
-  # """
-  # Takes a text file of filenames and makes a list of filenames
-  # """
-  # with open(filename, encoding='utf-8') as f:
-  #   files = f.readlines()
-
-  # files = [f.rstrip() for f in files]
-  # return files
 
 def load_wav_to_torch(full_path):
   """
@@ -66,18 +54,21 @@ class Mel2Samp(torch.utils.data.Dataset):
   This is the main class that calculates the spectrogram and returns the
   spectrogram, audio pair.
   """
-  def __init__(self, training_files, segment_length, filter_length,
-         hop_length, win_length, sampling_rate, mel_fmin, mel_fmax):
-    self.audio_files = files_to_list(training_files)
-    random.seed(1234)
+  def __init__(self, training_files, hparams):
+    self.audio_files = load_filepaths(training_files)
+    random.seed(hparams.seed)
     random.shuffle(self.audio_files)
-    self.stft = TacotronSTFT(filter_length=filter_length,
-                 hop_length=hop_length,
-                 win_length=win_length,
-                 sampling_rate=sampling_rate,
-                 mel_fmin=mel_fmin, mel_fmax=mel_fmax)
-    self.segment_length = segment_length
-    self.sampling_rate = sampling_rate
+    self.stft = TacotronSTFT(
+      filter_length=hparams.filter_length,
+      hop_length=hparams.hop_length,
+      win_length=hparams.win_length,
+      n_mel_channels=hparams.n_mel_channels,
+      sampling_rate=hparams.sampling_rate,
+      mel_fmin=hparams.mel_fmin,
+      mel_fmax=hparams.mel_fmax
+    )
+    self.segment_length = hparams.segment_length
+    self.sampling_rate = hparams.sampling_rate
 
   def get_mel(self, audio):
     audio_norm = audio / MAX_WAV_VALUE
@@ -89,7 +80,7 @@ class Mel2Samp(torch.utils.data.Dataset):
 
   def __getitem__(self, index):
     # Read audio
-    filename = self.audio_files[index]
+    filename = self.audio_files[index][0]
     audio, sampling_rate = load_wav_to_torch(filename)
     if sampling_rate != self.sampling_rate:
       raise ValueError("{} SR doesn't match target {} SR".format(

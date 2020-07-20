@@ -108,45 +108,44 @@ class WN(torch.nn.Module):
   from WaveNet is the convolutions need not be causal.  There is also no dilation
   size reset.  The dilation only doubles on each layer
   """
-  def __init__(self, n_in_channels, n_mel_channels, n_layers, n_channels,
-         kernel_size):
+  def __init__(self, n_in_channels, n_mel_channels, hparams):
     super(WN, self).__init__()
-    assert(kernel_size % 2 == 1)
-    assert(n_channels % 2 == 0)
-    self.n_layers = n_layers
-    self.n_channels = n_channels
+    assert(hparams.kernel_size % 2 == 1)
+    assert(hparams.n_channels % 2 == 0)
+    self.n_layers = hparams.n_layers
+    self.n_channels = hparams.n_channels
     self.in_layers = torch.nn.ModuleList()
     self.res_skip_layers = torch.nn.ModuleList()
 
-    start = torch.nn.Conv1d(n_in_channels, n_channels, 1)
+    start = torch.nn.Conv1d(n_in_channels, self.n_channels, 1)
     start = torch.nn.utils.weight_norm(start, name='weight')
     self.start = start
 
     # Initializing last layer to 0 makes the affine coupling layers
     # do nothing at first.  This helps with training stability
-    end = torch.nn.Conv1d(n_channels, 2*n_in_channels, 1)
+    end = torch.nn.Conv1d(self.n_channels, 2*n_in_channels, 1)
     end.weight.data.zero_()
     end.bias.data.zero_()
     self.end = end
 
-    cond_layer = torch.nn.Conv1d(n_mel_channels, 2*n_channels*n_layers, 1)
+    cond_layer = torch.nn.Conv1d(n_mel_channels, 2*self.n_channels*self.n_layers, 1)
     self.cond_layer = torch.nn.utils.weight_norm(cond_layer, name='weight')
 
-    for i in range(n_layers):
+    for i in range(self.n_layers):
       dilation = 2 ** i
-      padding = int((kernel_size*dilation - dilation)/2)
-      in_layer = torch.nn.Conv1d(n_channels, 2*n_channels, kernel_size,
+      padding = int((hparams.kernel_size*dilation - dilation)/2)
+      in_layer = torch.nn.Conv1d(self.n_channels, 2*self.n_channels, hparams.kernel_size,
                      dilation=dilation, padding=padding)
       in_layer = torch.nn.utils.weight_norm(in_layer, name='weight')
       self.in_layers.append(in_layer)
 
 
       # last one is not necessary
-      if i < n_layers - 1:
-        res_skip_channels = 2*n_channels
+      if i < self.n_layers - 1:
+        res_skip_channels = 2*self.n_channels
       else:
-        res_skip_channels = n_channels
-      res_skip_layer = torch.nn.Conv1d(n_channels, res_skip_channels, 1)
+        res_skip_channels = self.n_channels
+      res_skip_layer = torch.nn.Conv1d(self.n_channels, res_skip_channels, 1)
       res_skip_layer = torch.nn.utils.weight_norm(res_skip_layer, name='weight')
       self.res_skip_layers.append(res_skip_layer)
 
@@ -176,32 +175,39 @@ class WN(torch.nn.Module):
 
 
 class WaveGlow(torch.nn.Module):
-  def __init__(self, n_mel_channels, n_flows, n_group, n_early_every,
-         n_early_size, WN_config):
+  def __init__(self, hparams):
     super(WaveGlow, self).__init__()
 
-    self.upsample = torch.nn.ConvTranspose1d(n_mel_channels,
-                         n_mel_channels,
-                         1024, stride=256)
-    assert(n_group % 2 == 0)
-    self.n_flows = n_flows
-    self.n_group = n_group
-    self.n_early_every = n_early_every
-    self.n_early_size = n_early_size
+    self.upsample = torch.nn.ConvTranspose1d(
+      hparams.n_mel_channels,
+      hparams.n_mel_channels,
+      1024,
+      stride=256
+    )
+    assert(hparams.n_group % 2 == 0)
+    self.n_flows = hparams.n_flows
+    self.n_group = hparams.n_group
+    self.n_early_every = hparams.n_early_every
+    self.n_early_size = hparams.n_early_size
     self.WN = torch.nn.ModuleList()
     self.convinv = torch.nn.ModuleList()
 
-    n_half = int(n_group/2)
+    n_half = int(self.n_group / 2)
 
     # Set up layers with the right sizes based on how many dimensions
     # have been output already
-    n_remaining_channels = n_group
-    for k in range(n_flows):
+    n_remaining_channels = self.n_group
+    for k in range(self.n_flows):
       if k % self.n_early_every == 0 and k > 0:
         n_half = n_half - int(self.n_early_size/2)
         n_remaining_channels = n_remaining_channels - self.n_early_size
       self.convinv.append(Invertible1x1Conv(n_remaining_channels))
-      self.WN.append(WN(n_half, n_mel_channels*n_group, **WN_config))
+      WN_res = WN(
+        n_in_channels=n_half,
+        n_mel_channels=hparams.n_mel_channels * self.n_group,
+        hparams=hparams
+      )
+      self.WN.append(WN_res)
     self.n_remaining_channels = n_remaining_channels  # Useful during inference
 
   def forward(self, forward_input):

@@ -148,7 +148,9 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, traini
       'state_dict': model.state_dict(),
       'optimizer': optimizer.state_dict(),
       'learning_rate': learning_rate
-    }, filepath)
+    },
+    filepath
+  )
 
 def save_checkpoint_score(checkpoint_path, gradloss, trainloss, valloss):
   loss_avg = (trainloss + valloss) / 2

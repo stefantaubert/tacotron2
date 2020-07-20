@@ -19,9 +19,14 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
     self.sampling_rate = hparams.sampling_rate
     self.load_mel_from_disk = hparams.load_mel_from_disk
     self.stft = TacotronSTFT(
-      hparams.filter_length, hparams.hop_length, hparams.win_length,
-      hparams.n_mel_channels, hparams.sampling_rate, hparams.mel_fmin,
-      hparams.mel_fmax)
+      filter_length=hparams.filter_length,
+      hop_length=hparams.hop_length,
+      win_length=hparams.win_length,
+      n_mel_channels=hparams.n_mel_channels,
+      sampling_rate=hparams.sampling_rate,
+      mel_fmin=hparams.mel_fmin,
+      mel_fmax=hparams.mel_fmax
+    )
     random.seed(hparams.seed)
     random.shuffle(self.audiopaths_and_symbols)
 

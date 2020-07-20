@@ -12,7 +12,6 @@ from script_paths import (ds_preprocessed_file_name, filelist_validation_file_na
                    inference_config_file, log_inference_config, log_input_file,
                    log_map_file, log_train_config, train_config_file, log_train_map)
 from tacotron.prepare_ds import prepare
-from common.split_ds import split_ds
 from tacotron.txt_pre import process_input_text
 from tacotron.synthesize import validate
 from tacotron.train import start_train, get_last_checkpoint

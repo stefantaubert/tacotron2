@@ -9,21 +9,18 @@ def create_hparams(hparams_string=None, verbose=False):
     # Experiment Parameters    #
     ################################
     fp16_run=False,
-    output_directory='checkpoints',
     epochs=100000,
     iters_per_checkpoint=2000,
     seed=1234,
-    checkpoint_path='',
     with_tensorboard=False,
     
-    # dist_config
-    dist_backend="nccl",
-    dist_url="tcp://localhost:54321",
+    # # dist_config
+    # dist_backend="nccl",
+    # dist_url="tcp://localhost:54321",
     
     ################################
     # Audio Parameters       #
     ################################
-    training_files="train_files.txt",
     segment_length=16000,
     sampling_rate=22050,
     filter_length=1024,

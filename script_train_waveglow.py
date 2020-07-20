@@ -12,12 +12,8 @@ from script_paths import (ds_preprocessed_file_name,
                    log_inference_config, log_input_file, log_map_file,
                    log_train_config, log_train_map, train_config_file,
                    train_map_file)
-from script_plot_embeddings import analyse
-from tacotron.prepare_ds import prepare
-from tacotron.prepare_ds_ms import prepare as prepare_ms
+from waveglow.prepare_ds import prepare, duration_col
 from common.split_ds import split_ds
-from tacotron.txt_pre import process_input_text
-from tacotron.synthesize import infer
 from waveglow.train import get_last_checkpoint, start_train
 from common.train_log import reset_log
 from common.utils import args_to_str
@@ -41,8 +37,8 @@ if __name__ == "__main__":
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.training_dir = 'wg_debug'
     args.speakers = 'ljs_en_v2,all'
-    args.hparams = 'batch_size=4,iters_per_checkpoint=3'
-    #args.continue_training = True
+    args.hparams = 'batch_size=4,iters_per_checkpoint=5,fp16_run=False'
+    args.continue_training = True
 
   if not args.base_dir:
     raise Exception("Argument 'base_dir' is required.")
@@ -54,11 +50,24 @@ if __name__ == "__main__":
 
   if not args.continue_training:
     reset_log(training_dir_path)
-    prepare_ms(args.base_dir, training_dir_path, speakers=args.speakers, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=hparams, pretrained_model_symbols=args.pretrained_model_symbols)
-    split_ds(args.base_dir, training_dir_path, train_size=args.train_size, validation_size=args.validation_size, seed=args.seed)
-    
-  weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
-  use_weights_map = os.path.exists(weights_path)
-  start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=args.pretrained_path, warm_start=args.warm_start, continue_training=args.continue_training)
 
-  analyse(training_dir_path)
+    prepare(
+      base_dir=args.base_dir,
+      training_dir_path=training_dir_path,
+      speakers=args.speakers
+    )
+
+    split_ds(
+      base_dir=args.base_dir,
+      training_dir_path=training_dir_path,
+      train_size=args.train_size,
+      validation_size=args.validation_size,
+      seed=args.seed,
+      duration_col=duration_col
+    )
+    
+  start_train(
+    training_dir_path=training_dir_path,
+    hparams=hparams,
+    continue_training=args.continue_training
+  )

@@ -20,7 +20,7 @@ from tacotron.txt_pre import process_input_text
 from tacotron.synthesize import infer
 from tacotron.train import get_last_checkpoint, start_train
 from common.train_log import reset_log
-from common.utils import args_to_str
+from common.utils import args_to_str, duration_col
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     reset_log(training_dir_path)
     prepare_ms(args.base_dir, training_dir_path, speakers=args.speakers, pretrained_model=args.pretrained_model, weight_map_mode=args.weight_map_mode, hparams=hparams, pretrained_model_symbols=args.pretrained_model_symbols)
-    split_ds(args.base_dir, training_dir_path, train_size=args.train_size, validation_size=args.validation_size, seed=args.seed)
+    split_ds(args.base_dir, training_dir_path, train_size=args.train_size, validation_size=args.validation_size, seed=args.seed, duration_col=duration_col)
     
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
   use_weights_map = os.path.exists(weights_path)
