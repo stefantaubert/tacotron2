@@ -25,7 +25,7 @@ if __name__ == "__main__":
   parser.add_argument('--no_debugging', action='store_true')
   parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--utterance', type=str, help="Utterance name or random-val"])
+  parser.add_argument('--utterance', type=str, help="Utterance name or random-val")
   parser.add_argument('--hparams', type=str)
   parser.add_argument('--waveglow', type=str)
   parser.add_argument('--custom_checkpoint', type=str)
