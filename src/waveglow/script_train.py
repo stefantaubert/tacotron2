@@ -27,7 +27,7 @@ if __name__ == "__main__":
   parser.add_argument('--seed', type=str, default=1234)
   #parser.add_argument('--pretrained_path', type=str)
   parser.add_argument('--speakers', type=str, help="ds_name,speaker_id;... or ds_name,all;...")
-  parser.add_argument('--train_size', type=float, default=0.97)
+  parser.add_argument('--train_size', type=float, default=0.9)
   parser.add_argument('--validation_size', type=float, default=1.0)
   parser.add_argument('--hparams', type=str)
 

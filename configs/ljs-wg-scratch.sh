@@ -20,7 +20,7 @@ export custom_training_name="ljs_waveglow"
 export ds_name="ljs_en_v2"
 export speakers="$ds_name,all"
 export batch_size=4
-export iters_per_checkpoint=1000
+export iters_per_checkpoint=5000
 export epochs=100000
 export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs=$epochs"
 
@@ -31,7 +31,7 @@ export custom_training_name="ljs_waveglow"
 export ds_name="ljs_en_v2"
 export speakers="$ds_name,all"
 export batch_size=0
-export iters_per_checkpoint=1000
+export iters_per_checkpoint=5000
 export epochs=100000
 export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs=$epochs"
 
@@ -41,7 +41,7 @@ export custom_training_name="ljs_waveglow"
 export ds_name="ljs_en_v2"
 export speakers="$ds_name,all"
 export batch_size=3
-export iters_per_checkpoint=1000
+export iters_per_checkpoint=5000 # 17min per 1000
 export epochs=100000
 export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs=$epochs"
 
@@ -65,7 +65,7 @@ python ./src/waveglow/script_train.py \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
   --hparams=$hparams \
-  --train_size=0.9 \
+  --train_size=0.99 \
   --validation_size=1.0 \
   --no_debugging
 
