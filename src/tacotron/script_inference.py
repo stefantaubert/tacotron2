@@ -54,7 +54,8 @@ if __name__ == "__main__":
     #args.speakers = 'thchs_v5,B2;thchs_v5,A2'
     #args.speaker = 'ljs_ipa_v2,1'
     args.speaker = 'ljs_ipa_v2,1'
-    args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
+    #args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
+    args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5_out.pt"
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 

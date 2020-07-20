@@ -1,6 +1,8 @@
+
 # Validate
-python script_dl_waveglow_pretrained.py \
-  --pretrained_dir=$pretrained_dir \
+python ./src/tacotron/script_dl_waveglow_pretrained.py \
+  --destination=$waveglow \
+  --auto_convert \
   --no_debugging
 
 export utterance="random-val"

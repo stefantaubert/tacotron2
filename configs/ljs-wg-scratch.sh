@@ -10,6 +10,9 @@ export custom_training_name="ljs_waveglow"
 export ds_name="ljs_en_v2"
 export speakers="$ds_name,all"
 export batch_size=4
+export iters_per_checkpoint=3
+export epochs=1
+export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs=$epochs"
 
 ## Capslock GCP
 source /datasets/code/tacotron2-dev/configs/envs/prod-caps.sh
@@ -17,6 +20,9 @@ export custom_training_name="ljs_waveglow"
 export ds_name="ljs_en_v2"
 export speakers="$ds_name,all"
 export batch_size=4
+export iters_per_checkpoint=1000
+export epochs=100000
+export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs=$epochs"
 
 ## GCP
 # For usage with a t4 on Google Cloud Plattform
@@ -25,13 +31,19 @@ export custom_training_name="ljs_waveglow"
 export ds_name="ljs_en_v2"
 export speakers="$ds_name,all"
 export batch_size=0
+export iters_per_checkpoint=1000
+export epochs=100000
+export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs=$epochs"
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/prod-phil.sh
 export custom_training_name="ljs_waveglow"
 export ds_name="ljs_en_v2"
 export speakers="$ds_name,all"
-export batch_size=4
+export batch_size=3
+export iters_per_checkpoint=1000
+export epochs=100000
+export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs=$epochs"
 
 
 # Preprocessing
@@ -44,7 +56,6 @@ python ./src/script_ljs_pre.py \
 
 
 # Training
-export hparams="batch_size=$batch_size,iters_per_checkpoint=50"
 python ./src/script_paths.py \
   --base_dir=$base_dir \
   --custom_training_name=$custom_training_name \
@@ -60,7 +71,6 @@ python ./src/waveglow/script_train.py \
 
 
 ## Continue training
-export hparams="batch_size=$batch_size,iters_per_checkpoint=50"
 python ./src/waveglow/script_train.py \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
@@ -68,10 +78,3 @@ python ./src/waveglow/script_train.py \
   --continue_training \
   --no_debugging
 
-
-# Inference
-# python ./src/tacotron/script_dl_waveglow_pretrained.py \
-#   --pretrained_dir=$pretrained_dir \
-#   --no_debugging
-# export text_map="maps/inference/en_v1.json"
-# export speaker="$ds_name,1"

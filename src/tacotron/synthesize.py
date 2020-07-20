@@ -29,6 +29,7 @@ from src.tacotron.hparams import create_hparams
 from src.tacotron.model import Tacotron2
 from src.tacotron.train import load_model
 from scipy.io.wavfile import write
+from src.waveglow.train import load_model_for_inference
 
 def to_wav(path, data, sr):
   wav = data
@@ -54,10 +55,7 @@ class Synthesizer():
     self.model.cuda().eval().half()
 
     # Load WaveGlow for mel2audio synthesis and denoiser
-    self.waveglow = torch.load(waveglow_path)['model']
-    self.waveglow.cuda().eval().half()
-    for k in self.waveglow.convinv:
-      k.float()
+    self.waveglow = load_model_for_inference(waveglow_path)
     self.denoiser = Denoiser(self.waveglow)
 
   def infer(self, symbols, speaker_id: int):

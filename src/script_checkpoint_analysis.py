@@ -1,8 +1,11 @@
 import torch 
 import os
+import pickle
 
 def load_checkpoint(checkpoint_path):
   assert os.path.isfile(checkpoint_path)
+  with open(checkpoint_path, "r", encoding="unicode") as f:
+    x = pickle.load(f)
   print("Loading checkpoint '{}'".format(checkpoint_path))
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
   for k, v in checkpoint_dict.items():
@@ -39,4 +42,5 @@ def load_checkpoint(checkpoint_path):
 
 if __name__ == "__main__":
   #load_checkpoint('/datasets/models/pretrained/tacotron2_statedict.pt')
-  load_checkpoint('/datasets/models/pretrained/ljs_ipa_scratch_80000')
+  #load_checkpoint('/datasets/models/pretrained/ljs_ipa_scratch_80000')
+  load_checkpoint('/datasets/phil_home/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt')

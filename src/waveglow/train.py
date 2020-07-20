@@ -34,33 +34,56 @@ from src.common.train_log import log
 from src.script_paths import filelist_training_file_name, filelist_validation_file_name, get_filelist_dir, get_checkpoint_dir, get_log_dir
 from src.common.utils import get_total_duration_min_df
 from src.waveglow.prepare_ds import duration_col
+from src.waveglow.hparams import create_hparams
+
+from torch.utils.data import DataLoader
+from src.waveglow.glow import WaveGlow, WaveGlowLoss
+from src.waveglow.mel2samp import Mel2Samp
 
 # #=====START: ADDED FOR DISTRIBUTED======
 # from distributed_waveglow import init_distributed, apply_gradient_allreduce, reduce_tensor
 # from torch.utils.data.distributed import DistributedSampler
 # #=====END:   ADDED FOR DISTRIBUTED======
 
-from torch.utils.data import DataLoader
-from src.waveglow.glow import WaveGlow, WaveGlowLoss
-from src.waveglow.mel2samp import Mel2Samp
+def load_model(hparams):
+  model = WaveGlow(hparams).cuda()
 
+  return model
+
+def load_model_for_inference(path):
+  assert os.path.isfile(path)
+  checkpoint_dict = torch.load(path, map_location='cpu')
+  model_state_dict = checkpoint_dict['state_dict']
+  hparams = create_hparams()
+  model = load_model(hparams)
+  model.load_state_dict(model_state_dict)
+  model.eval().half()
+  for k in model.convinv:
+    k.float()
+  return model
+  
 def load_checkpoint(checkpoint_path, model, optimizer):
   assert os.path.isfile(checkpoint_path)
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
   iteration = checkpoint_dict['iteration']
-  optimizer.load_state_dict(checkpoint_dict['optimizer'])
-  model_for_loading = checkpoint_dict['model']
-  model.load_state_dict(model_for_loading.state_dict())
+  learning_rate = checkpoint_dict['learning_rate']
+  optimizer_state_dict = checkpoint_dict['optimizer']
+  optimizer.load_state_dict(optimizer_state_dict)
+  # model_for_loading = checkpoint_dict['model']
+  # model.load_state_dict(model_for_loading.state_dict())
+  model_state_dict = checkpoint_dict['state_dict']
+  model.load_state_dict(model_state_dict)
   print("Loaded checkpoint '{}' (iteration {})" .format(checkpoint_path, iteration))
-  return model, optimizer, iteration
+  return model, optimizer, learning_rate, iteration
 
 def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, hparams):
   print("Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
-  model_for_saving = WaveGlow(hparams).cuda()
-  model_for_saving.load_state_dict(model.state_dict())
+  #model_for_saving = WaveGlow(hparams).cuda()
+  #model_for_saving.load_state_dict(model.state_dict())
 
   data = {
-    'model': model_for_saving,
+    #'model': model_for_saving,
+    'state_dict': model.state_dict(),
     'iteration': iteration,
     'optimizer': optimizer.state_dict(),
     'learning_rate': learning_rate
@@ -90,7 +113,8 @@ def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
   criterion = WaveGlowLoss(
     sigma=hparams.sigma
   )
-  model = WaveGlow(hparams).cuda()
+
+  model = load_model(hparams)
 
   # #=====START: ADDED FOR DISTRIBUTED======
   # if n_gpus > 1:
@@ -113,7 +137,7 @@ def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
 
     full_checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), last_checkpoint)
     log(training_dir_path, "Loading checkpoint '{}'".format(full_checkpoint_path))
-    model, optimizer, iteration = load_checkpoint(full_checkpoint_path, model, optimizer)
+    model, optimizer, learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer)
     log(training_dir_path, "Loaded checkpoint '{}' from iteration {}" .format(full_checkpoint_path, iteration))
     iteration += 1  # next iteration is iteration + 1
   

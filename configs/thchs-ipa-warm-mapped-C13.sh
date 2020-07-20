@@ -80,7 +80,9 @@ python ./src/tacotron/script_train.py \
 
 # Inference
 python ./src/tacotron/script_dl_waveglow_pretrained.py \
-  --pretrained_dir=$pretrained_dir \
+  --destination=$waveglow \
+  --auto_convert \
   --no_debugging
+
 export text_map="maps/inference/chn_v1.json"
 export speaker="$ds_name,C13"
