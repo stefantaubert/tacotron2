@@ -31,7 +31,7 @@ source /home/stefan/tacotron2/configs/envs/prod-phil.sh
 export custom_training_name="ljs_waveglow"
 export ds_name="ljs_en_v2"
 export speakers="$ds_name,all"
-export batch_size=0
+export batch_size=4
 
 
 # Preprocessing

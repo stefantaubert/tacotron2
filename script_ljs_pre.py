@@ -73,7 +73,7 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arc
       data.append((basename, normalized_text, ipa_text, text_symbols, wav_path))
     else:
       text_symbols = list(normalized_text)
-      data.append((basename, normalized_text, text_symbols, wav_path))
+      data.append((basename, normalized_text, normalized_text, text_symbols, wav_path))
     symbol_counter.update(text_symbols)
 
   all_symbols = OrderedDict(symbol_counter.most_common())
