@@ -18,7 +18,7 @@ from src.text.symbol_converter import load_from_file, deserialize_symbol_ids
 from src.script_paths import get_symbols_path, inference_input_symbols_file_name, get_checkpoint_dir, inference_input_file_name, get_filelist_dir, filelist_speakers_name
 from src.tacotron.train import get_last_checkpoint
 from src.common.utils import parse_ds_speakers, parse_json
-from src.tacotron.script_plot_mel import Mel2Samp, plot_melspecs, get_segment, get_audio
+from src.tacotron.script_plot_mel import Mel2Samp, plot_melspec, get_segment, get_audio, stack_images_vertically
 
 # needed becaus otherwise the pretrained model could not be loaded
 #sys.path.append('waveglow/')
@@ -131,12 +131,15 @@ def validate(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str
   mel_inferred = plotter.get_mel(wav_inferred)
   mel_orig = plotter.get_mel(wav_orig)
 
-  plot_melspecs([mel_inferred])
+  plot_melspec(mel_inferred, title="Inferred")
   plt.savefig(path_inferred_plot, bbox_inches='tight')
-  plot_melspecs([mel_orig])
+  plot_melspec(mel_orig, title="Original")
   plt.savefig(path_original_plot, bbox_inches='tight')
-  plot_melspecs([mel_orig, mel_inferred], titles=["Original", "Inferred"])
-  plt.savefig(path_compared_plot, bbox_inches='tight')
+
+  stack_images_vertically([path_original_plot, path_inferred_plot], path_compared_plot)
+
+  # plot_melspec([mel_orig, mel_inferred], titles=["Original", "Inferred"])
+  # plt.savefig(path_compared_plot, bbox_inches='tight')
   copyfile(wav_orig_path, path_original_wav)
   print("Finished.")
 
@@ -211,7 +214,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   wav = get_audio(out_path)
   #wav = get_segment(wav)
   mel = plotter.get_mel(wav)
-  plot_melspecs([mel])
+  plot_melspec(mel, title=last_dir_name)
   output_name = "{}.png".format(last_dir_name)
   out_path = os.path.join(infer_dir_path, output_name)
   plt.savefig(out_path, bbox_inches='tight')
