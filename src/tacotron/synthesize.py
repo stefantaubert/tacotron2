@@ -143,7 +143,7 @@ def validate(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str
   copyfile(wav_orig_path, path_original_wav)
   print("Finished.")
 
-def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, checkpoint: str, speaker: str):
+def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, checkpoint: str, speaker: str, analysis: bool):
   hparams = create_hparams(hparams)
 
   conv = load_from_file(get_symbols_path(training_dir_path))
@@ -196,16 +196,32 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   if final_speaker_id == -1:
     raise Exception("Speaker {} not available!".format(speaker))
 
+  last_dir_name = Path(infer_dir_path).parts[-1]
+
+  mel_plot_files = []
+
   for i, serialized_symbol_ids in tqdm(enumerate(serialized_symbol_ids_sentences), total=len(serialized_symbol_ids_sentences)):
     #print(sentence_symbols)
     symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
     print("{} ({})".format(conv.ids_to_text(symbol_ids), len(symbol_ids)))
     synthesized_sentence = synt.infer(symbol_ids, final_speaker_id)
+    if analysis:
+      out_path = os.path.join(infer_dir_path, "{}.wav".format(i))
+      to_wav(out_path, synthesized_sentence, hparams.sampling_rate)
+      wav = get_audio(out_path)
+      mel = plotter.get_mel(wav)
+      plot_melspec(mel, title="{}: {}".format(last_dir_name, i))
+      out_path = os.path.join(infer_dir_path, "{}.png".format(i))
+      plt.savefig(out_path, bbox_inches='tight')
+      mel_plot_files.append(out_path)
     output = np.concatenate((output, synthesized_sentence, sentence_pause_samples), axis=0)
     #print(output)
 
+  if analysis:
+    out_path = os.path.join(infer_dir_path, "{}_v.png".format(last_dir_name))
+    stack_images_vertically(mel_plot_files, out_path)
+
   print("Saving...")
-  last_dir_name = Path(infer_dir_path).parts[-1]
   output_name = "{}.wav".format(last_dir_name)
   out_path = os.path.join(infer_dir_path, output_name)
   to_wav(out_path, output, hparams.sampling_rate)
@@ -215,7 +231,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   #wav = get_segment(wav)
   mel = plotter.get_mel(wav)
   plot_melspec(mel, title=last_dir_name)
-  output_name = "{}.png".format(last_dir_name)
+  output_name = "{}_h.png".format(last_dir_name)
   out_path = os.path.join(infer_dir_path, output_name)
   plt.savefig(out_path, bbox_inches='tight')
   plt.show()

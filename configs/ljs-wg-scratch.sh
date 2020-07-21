@@ -5,7 +5,7 @@
 # Init
 
 ## Capslock Dev
-source /datasets/code/tacotron2-dev/configs/envs/dev-caps.sh
+source /datasets/code/tacotron2/configs/envs/dev-caps.sh
 export custom_training_name="ljs_waveglow"
 export ds_name="ljs_en_v2"
 export speakers="$ds_name,all"
@@ -15,7 +15,7 @@ export epochs=1
 export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs=$epochs"
 
 ## Capslock GCP
-source /datasets/code/tacotron2-dev/configs/envs/prod-caps.sh
+source /datasets/code/tacotron2/configs/envs/prod-caps.sh
 export custom_training_name="ljs_waveglow"
 export ds_name="ljs_en_v2"
 export speakers="$ds_name,all"

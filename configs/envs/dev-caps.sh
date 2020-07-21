@@ -1,4 +1,4 @@
-# usage: source /datasets/code/tacotron2-dev/dev-caps.sh
+# usage: source /datasets/code/tacotron2/dev-caps.sh
 code_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"/../..
 cd $code_dir
 export PYTHONPATH=$code_dir

@@ -7,14 +7,14 @@
 # Init
 
 ## Capslock Dev
-source /datasets/code/tacotron2-dev/configs/envs/dev-caps.sh
+source /datasets/code/tacotron2/configs/envs/dev-caps.sh
 export custom_training_name="thchs_ipa_warm_mapped"
 export ds_name="thchs_v5"
 export speakers="$ds_name,B8"
 export batch_size=0
 
 ## Capslock GCP
-source /datasets/code/tacotron2-dev/configs/envs/prod-caps.sh
+source /datasets/code/tacotron2/configs/envs/prod-caps.sh
 export custom_training_name="thchs_ipa_warm_mapped"
 export ds_name="thchs_v5"
 export speakers="$ds_name,B8"

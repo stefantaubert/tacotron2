@@ -6,14 +6,14 @@
 # Init
 
 ## Capslock Dev
-source /datasets/code/tacotron2-dev/configs/envs/dev-caps.sh
+source /datasets/code/tacotron2/configs/envs/dev-caps.sh
 export custom_training_name="ljs_ipa_warm_mapped"
 export ds_name="ljs_ipa_v2"
 export speakers="$ds_name,all"
 export batch_size=26
 
 ## Capslock GCP
-source /datasets/code/tacotron2-dev/configs/envs/prod-caps.sh
+source /datasets/code/tacotron2/configs/envs/prod-caps.sh
 export custom_training_name="ljs_ipa_warm_mapped"
 export ds_name="ljs_ipa_v2"
 export speakers="$ds_name,all"
