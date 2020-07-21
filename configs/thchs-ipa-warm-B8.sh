@@ -75,7 +75,7 @@ python ./src/tacotron/script_train.py \
   --no_debugging
 
 # Inference
-python ./src/tacotron/script_dl_waveglow_pretrained.py \
+python ./src/waveglow/script_dl_pretrained.py \
   --pretrained_dir=$pretrained_dir \
   --no_debugging
 export text_map="maps/inference/chn_v1.json"

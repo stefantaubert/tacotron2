@@ -72,7 +72,7 @@ python ./src/tacotron/script_train.py \
 
 
 # Inference
-python ./src/tacotron/script_dl_waveglow_pretrained.py \
+python ./src/waveglow/script_dl_pretrained.py \
   --destination=$waveglow \
   --auto_convert \
   --no_debugging

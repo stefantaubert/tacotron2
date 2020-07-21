@@ -31,7 +31,7 @@ if __name__ == "__main__":
   parser.add_argument('--no_debugging', action='store_true')
   parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--utterance', type=str, choices=["Utterance name", "random-val"])
+  parser.add_argument('--utterance', type=str, help="Utterance name or random-val or random-val-B12")
   parser.add_argument('--hparams', type=str)
   parser.add_argument('--waveglow', type=str)
   parser.add_argument('--custom_checkpoint', type=str)
@@ -58,11 +58,20 @@ if __name__ == "__main__":
 
   infer_utterance_name = args.utterance
 
-  if infer_utterance_name == "random-val":
+  if "random-val" in infer_utterance_name:
+    tmp = infer_utterance_name.split('-')
+    speaker_is_given = len(tmp) == 3
+    if speaker_is_given:
+      speaker = tmp[2]
+
     valset_path = os.path.join(get_filelist_dir(training_dir_path), filelist_validation_file_name)
     valset = pd.read_csv(valset_path, header=None, sep=csv_separator)
-    all_names = get_utterance_names_csv(valset)
-    infer_utterance_name = random.choice(list(all_names))
+    all_names = list(get_utterance_names_csv(valset))
+    infer_utterance_name = random.choice(all_names)
+    while speaker_is_given:
+      if speaker in infer_utterance_name:
+        break
+      infer_utterance_name = random.choice(all_names)
     print("Selected random validationset utterance: {}".format(infer_utterance_name))
 
   data = pd.read_csv(preprocessed_path, header=None, sep=csv_separator)
