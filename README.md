@@ -256,6 +256,7 @@ These maps are used to translate unknown symbols in the text which should be inf
 - `gdown` only required for downloading pretrained waveglow-model
 - `wget` only required for automatically downloading datasets
 - `scikit-image` only for comparing mels for waveglow evaluation
+- `pydub` only for removing silence in thchs audio files
 
 ## Configs
 
