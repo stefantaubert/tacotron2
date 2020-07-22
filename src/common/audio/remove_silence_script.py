@@ -6,12 +6,13 @@ import matplotlib.pylab as plt
 from shutil import copyfile
 import os
 
+
 def remove_silence_plot(
     in_path: str,
     base_dir: str,
+    chunk_size: int,
     threshold_start: float,
     threshold_end: float,
-    chunk_size: int,
     buffer_start_ms: float,
     buffer_end_ms: float
   ):
@@ -60,9 +61,9 @@ if __name__ == "__main__":
   parser.add_argument('--no_debugging', action='store_true')
   parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--wav', type=str)
+  parser.add_argument('--chunk_size', type=int)
   parser.add_argument('--threshold_start', type=float)
   parser.add_argument('--threshold_end', type=float)
-  parser.add_argument('--chunk_size', type=int)
   parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
   parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
 
@@ -84,5 +85,5 @@ if __name__ == "__main__":
     threshold_start = args.threshold_start,
     threshold_end = args.threshold_end,
     buffer_start_ms = args.buffer_start_ms,
-    buffer_end_ms = args.buffer_end_ms,
+    buffer_end_ms = args.buffer_end_ms
   )

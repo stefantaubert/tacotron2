@@ -35,7 +35,7 @@ export batch_size=26
 
 
 # Preprocessing
-python ./src/script_ljs_pre.py \
+python ./src/pre/ljs/script_pre.py \
   --base_dir=$base_dir \
   --data_dir="$ljs_data" \
   --ipa \

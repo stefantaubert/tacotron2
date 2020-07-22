@@ -47,7 +47,7 @@ export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoin
 
 
 # Preprocessing
-python ./src/script_ljs_pre.py \
+python ./src/pre/ljs/script_pre.py \
   --base_dir=$base_dir \
   --data_dir="$ljs_data" \
   --ds_name=$ds_name \

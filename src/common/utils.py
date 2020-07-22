@@ -9,6 +9,7 @@ import pandas as pd
 import wget
 from scipy.io.wavfile import read
 from skimage.metrics import structural_similarity
+from pathlib import Path
 
 import torch
 from src.text.ipa2symb import extract_from_sentence
@@ -21,6 +22,10 @@ symbols_str_col = 2
 duration_col = 3
 speaker_id_col = 4
 speaker_name_col = 5
+
+def create_parent_folder(file: str):
+  path = Path(file)
+  os.makedirs(path.parent, exist_ok=True)
 
 def compare_mels(path_a, path_b):
   img_a = imageio.imread(path_a)

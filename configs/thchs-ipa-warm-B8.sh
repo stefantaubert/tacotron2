@@ -37,16 +37,34 @@ export batch_size=0
 
 
 # Preprocessing
-python ./src/script_thchs_pre.py \
+
+python ./src/pre/thchs/script_dl.py \
+  --no_debugging \
+  --data_dir=$thchs_original_data \
+  --ds_name=$ds_name
+
+python ./src/pre/thchs/script_upsample.py \
+  --no_debugging \
+  --data_src_dir=$thchs_original_data \
+  --data_dest_dir=$thchs_upsampled_data
+
+python ./src/pre/thchs/script_remove_silence.py \
+  --no_debugging \
+  --data_src_dir=$thchs_upsampled_data \
+  --data_dest_dir=$thchs_nosil_data \
+  --chunk_size=5 \
+  --threshold_start=-25 \
+  --threshold_end=-35 \
+  --buffer_start_ms=100 \
+  --buffer_end_ms=150
+
+python ./src/pre/thchs/script_pre.py \
+  --no_debugging \
   --base_dir=$base_dir \
-  --data_dir="$thchs_original_data" \
-  --data_conversion_dir="$thchs_data" \
+  --data_dir="$thchs_nosil_data" \
   --ignore_arcs \
   --ignore_tones \
-  --auto_dl \
-  --auto_convert \
-  --ds_name=$ds_name \
-  --no_debugging
+  --ds_name=$ds_name
 
 # Training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000,ignore_layers=[embedding.weight,speakers_embedding.weight]"

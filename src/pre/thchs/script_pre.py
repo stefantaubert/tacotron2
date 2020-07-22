@@ -22,21 +22,11 @@ from src.script_paths import (ds_preprocessed_file_name,
                               ds_preprocessed_symbols_name,
                               get_all_speakers_path, get_all_symbols_path,
                               get_ds_dir)
-from src.script_upsample_thchs import convert
 from src.text.adjustments import normalize_text
 from src.text.chn_tools import chn_to_ipa
 from src.text.ipa2symb import extract_from_sentence
 from src.text.symbol_converter import init_from_symbols, serialize_symbol_ids
 
-
-def ensure_is_22050kHz(dir_path: str, data_conversion_dir: str, kaldi_version: bool):
-  if kaldi_version:
-    is_converted = kaldi_exists(data_conversion_dir)
-  else:
-    is_converted = exists(data_conversion_dir)
-
-  if not is_converted:
-    convert(dir_path, data_conversion_dir, kaldi_version)
 
 def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool, kaldi_version: bool):
   if kaldi_version:
@@ -123,47 +113,31 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--base_dir', type=str, help='base directory')
+  parser.add_argument('--no_debugging', action='store_true')
+  parser.add_argument('--kaldi_version', action='store_true')
   parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
-  parser.add_argument('--data_conversion_dir', type=str, help='THCHS dataset directory')
+
   parser.add_argument('--ignore_tones', action='store_true')
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
-  parser.add_argument('--auto_dl', action='store_true')
-  parser.add_argument('--auto_convert', action='store_true')
-  parser.add_argument('--no_debugging', action='store_true')
-  parser.add_argument('--kaldi_version', action='store_true')
 
   args = parser.parse_args()
-
-  # if not args.no_debugging:
-  #   args.base_dir = '/datasets/models/taco2pt_v2'
-  #   args.data_dir = '/datasets/thchs_wav'
-  #   args.data_conversion_dir = '/datasets/thchs_16bit_22050kHz'
-  #   args.ds_name = 'thchs_v5-test'
-  #   args.ignore_tones = True
-  #   args.ignore_arcs = True
-  #   args.auto_dl = False
-  #   args.auto_convert = False
-  #   args.kaldi_version = False
   
   if not args.no_debugging:
-    args.base_dir = '/datasets/models/taco2pt_v2'
-    args.data_dir = '/datasets/THCHS-30'
-    args.data_conversion_dir = '/datasets/THCHS-30_16bit-22050kHz'
-    args.ds_name = 'thchs_kaldi_v5-test'
-    args.ignore_tones = True
-    args.ignore_arcs = True
-    args.auto_dl = False
-    args.auto_convert = False
     args.kaldi_version = True
-  
-  if args.auto_dl:
+    args.kaldi_version = False
+    args.base_dir = '/datasets/models/taco2pt_v2'
     if args.kaldi_version:
-      kaldi_ensure_downloaded(args.data_dir)
+      args.data_dir = '/datasets/THCHS-30'
+      args.ds_name = 'thchs_kaldi_v5-test'
+      args.ignore_tones = True
+      args.ignore_arcs = True
     else:
-      ensure_downloaded(args.data_dir)
-
-  if args.auto_convert:
-    ensure_is_22050kHz(args.data_dir, args.data_conversion_dir, args.kaldi_version)
-
-  preprocess(args.base_dir, args.data_conversion_dir, args.ds_name, args.ignore_tones, args.ignore_arcs, args.kaldi_version)
+      args.data_dir = '/datasets/thchs_wav'
+      args.ds_name = 'thchs_v5-test'
+      args.ignore_tones = True
+      args.ignore_arcs = True
+  
+  # TODO: check already exists
+  
+  preprocess(args.base_dir, args.auto_convert_out, args.ds_name, args.ignore_tones, args.ignore_arcs, args.kaldi_version)

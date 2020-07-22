@@ -1,6 +1,5 @@
-import argparse
-from src.parser.thchs_parser import parse as parse
-from src.parser.thchs_kaldi_parser import parse as kaldi_parse
+from src.parser.thchs_parser import parse, exists
+from src.parser.thchs_kaldi_parser import parse as kaldi_parse, exists as kaldi_exists
 from shutil import copyfile
 from tqdm import tqdm
 import librosa    
@@ -10,13 +9,22 @@ import os
 from pathlib import Path
 import numpy as np
 from src.tacotron.synthesize import to_wav
+from src.common.utils import create_parent_folder
 
+def upsample(origin, dest, new_rate):
+  new_data, _ = librosa.load(origin, sr=new_rate, mono=True, dtype=np.float32)
+  to_wav(dest, new_data, new_rate)
 
-def create_parent_folder(file: str):
-  path = Path(file)
-  os.makedirs(path.parent, exist_ok=True)
+def ensure_upsampled(origin, dest, kaldi_version: bool, new_rate=22050):
+  if kaldi_version:
+    already_converted = kaldi_exists(dest)
+  else:
+    already_converted = exists(dest)
 
-def convert(origin, dest, kaldi_version: bool, new_rate=22050):
+  if already_converted:
+    print("Dataset is already upsampled.")
+    return
+  
   if kaldi_version:
     parsed_data = kaldi_parse(origin)
   else:
@@ -30,8 +38,7 @@ def convert(origin, dest, kaldi_version: bool, new_rate=22050):
     dest_wav_path = wav_path.replace(origin, dest)
     create_parent_folder(dest_wav_path)
 
-    new_data, _ = librosa.load(wav_path, sr=new_rate, mono=True, dtype=np.float32)
-    to_wav(dest_wav_path, new_data, new_rate)
+    upsample(wav_path, dest_wav_path, new_rate)
 
     #new_data = new_data.astype(np.uint16)
     #new_data = (new_data * 32767).astype(np.int16)
@@ -57,19 +64,3 @@ def convert(origin, dest, kaldi_version: bool, new_rate=22050):
     a = os.path.join(origin, 'doc/trans/train.word.txt')
     b = os.path.join(dest, 'doc/trans/train.word.txt')
     copyfile(a, b)
-
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
-  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
-  parser.add_argument('--kaldi_version', action='store_true')
-  parser.add_argument('--no_debugging', action='store_true')
-
-  args = parser.parse_args()
-
-  if not args.no_debugging:
-    args.data_src_dir = '/datasets/thchs_wav'
-    args.data_dest_dir = '/datasets/thchs_16bit_22050kHz'
-    args.kaldi_version = False
-
-  convert(args.data_src_dir, args.data_dest_dir, args.kaldi_version)
