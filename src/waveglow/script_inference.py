@@ -1,10 +1,7 @@
 import argparse
 import os
-from shutil import copyfile
 
-from src.common.train_log import reset_log
 from src.script_paths import get_inference_dir
-from src.waveglow.prepare_ds import load_filepaths
 from src.waveglow.train import get_last_checkpoint
 from src.waveglow.inference import infer
 
@@ -15,7 +12,7 @@ if __name__ == "__main__":
   parser.add_argument('--training_dir', type=str)
   parser.add_argument('--wav', type=str)
   parser.add_argument('--hparams', type=str)
-  parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias. Start with 0.1 and adjust')
+  parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias.')
   parser.add_argument("--sigma", default=1.0, type=float)
   parser.add_argument('--custom_checkpoint', type=str)
 
@@ -25,6 +22,8 @@ if __name__ == "__main__":
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.training_dir = 'wg_debug'
     args.wav = "/datasets/LJSpeech-1.1-test/wavs/LJ001-0100.wav"
+    args.denoiser_strength = 0.5
+    args.sigma = 0.666
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 
@@ -34,7 +33,7 @@ if __name__ == "__main__":
 
   infer(
     training_dir_path=training_dir_path,
-    infer_dir_path=get_inference_dir(training_dir_path, wav_name, checkpoint, ''),
+    infer_dir_path=get_inference_dir(training_dir_path, wav_name, checkpoint, "{}_{}".format(args.sigma, args.denoiser_strength)),
     hparams=args.hparams,
     checkpoint=checkpoint,
     infer_wav_path=args.wav,

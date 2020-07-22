@@ -54,6 +54,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   print("Using model:", checkpoint_path)
   assert os.path.isfile(checkpoint_path)
+  
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
   model_state_dict = checkpoint_dict['state_dict']
   model = load_model(hparams)
@@ -86,7 +87,6 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   audio = audio.squeeze()
   audio = audio.cpu().numpy()
   audio = audio.astype('int16')
-  #audio_path = os.path.join(output_dir, "{}_synthesis.wav".format(file_name))
 
   last_dir_name = Path(infer_dir_path).parts[-1]
   output_name = "{}".format(last_dir_name)
@@ -134,30 +134,5 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
 
   stack_images_vertically([path_original_plot, path_inferred_plot, path_diff_plot], path_compared_plot)
 
-  # plot_melspec([mel_orig, mel_inferred], titles=["Original", "Inferred"])
-  # plt.savefig(path_compared_plot, bbox_inches='tight')
   copyfile(infer_wav_path, path_original_wav)
   print("Finished.")
-
-
-if __name__ == "__main__":
-  import argparse
-
-  parser = argparse.ArgumentParser()
-  # parser.add_argument('-f', "--filelist_path", required=True)
-  # parser.add_argument('-f', "--filelist_path", required=True)
-  # parser.add_argument('-w', '--waveglow_path',
-  #           help='Path to waveglow decoder checkpoint with model')
-  # parser.add_argument('-o', "--output_dir", required=True)
-  # parser.add_argument("-s", "--sigma", default=1.0, type=float)
-  # parser.add_argument("--sampling_rate", default=22050, type=int)
-  # parser.add_argument("--is_fp16", action="store_true")
-  # parser.add_argument("-d", "--denoiser_strength", default=0.0, type=float,
-  #           help='Removes model bias. Start with 0.1 and adjust')
-
-  args = parser.parse_args()
-
-
-
-  # main(args.filelist_path, args.waveglow_path, args.sigma, args.output_dir,
-  #    args.sampling_rate, args.is_fp16, args.denoiser_strength)
