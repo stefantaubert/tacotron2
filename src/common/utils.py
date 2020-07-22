@@ -3,10 +3,12 @@ import os
 import tarfile
 from collections import OrderedDict
 
+import imageio
 import numpy as np
 import pandas as pd
 import wget
 from scipy.io.wavfile import read
+from skimage.metrics import structural_similarity
 
 import torch
 from src.text.ipa2symb import extract_from_sentence
@@ -20,6 +22,21 @@ duration_col = 3
 speaker_id_col = 4
 speaker_name_col = 5
 
+def compare_mels(path_a, path_b):
+  img_a = imageio.imread(path_a)
+  img_b = imageio.imread(path_b)
+  #img_b = imageio.imread(path_original_plot)
+  assert img_a.shape[0] == img_b.shape[0]
+  img_a_width = img_a.shape[1]
+  img_b_width = img_b.shape[1]
+  resize_width = img_a_width if img_a_width < img_b_width else img_b_width
+  img_a = img_a[:,:resize_width]
+  img_b = img_b[:,:resize_width]
+  #imageio.imsave("/tmp/a.png", img_a)
+  #imageio.imsave("/tmp/b.png", img_b)
+  score, diff_img = structural_similarity(img_a, img_b, full=True, multichannel=True)
+  #imageio.imsave(path_out, diff)
+  return score, diff_img
 
 def download_tar(download_url, dir_path, tarmode: str = "r:gz"):
   print("Starting download of {}...".format(download_url))

@@ -1,75 +1,43 @@
 import argparse
-import json
 import os
 from shutil import copyfile
 
 from src.common.train_log import reset_log
-from src.common.utils import parse_ds_speaker
-from src.script_paths import (ds_preprocessed_file_name,
-                              ds_preprocessed_symbols_name, filelist_file_name,
-                              filelist_symbols_file_name, get_ds_dir,
-                              get_filelist_dir, get_inference_dir,
-                              inference_config_file, log_inference_config,
-                              log_input_file, log_map_file, log_train_config,
-                              log_train_map, train_config_file)
-from src.tacotron.prepare_ds import prepare
-from src.tacotron.script_plot_embeddings import analyse
-from src.tacotron.synthesize import infer
-from src.tacotron.train import get_last_checkpoint, start_train
-from src.tacotron.txt_pre import process_input_text
+from src.script_paths import get_inference_dir
+from src.waveglow.prepare_ds import load_filepaths
+from src.waveglow.train import get_last_checkpoint
+from src.waveglow.inference import infer
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--no_debugging', action='store_true')
   parser.add_argument('--base_dir', type=str, help='base directory')
   parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--speaker', type=str)
+  parser.add_argument('--wav', type=str)
   parser.add_argument('--hparams', type=str)
+  parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias. Start with 0.1 and adjust')
+  parser.add_argument("--sigma", default=1.0, type=float)
   parser.add_argument('--custom_checkpoint', type=str)
 
   args = parser.parse_args()
 
   if not args.no_debugging:
-    args.base_dir = '/datasets/gcp_home'
-    args.training_dir = 'ljs_ipa_ms_from_scratch'
-    args.ipa = True
-    # args.text = "examples/chn/thchs.txt"
-    # args.lang = "chn"
-    # args.text = "examples/ger/nord.txt"
-    # args.lang = "ger"
-    args.text = "examples/ipa/north_sven_orig.txt"
-    args.lang = "ipa"
-    #args.map = "maps/inference/chn_v1.json"
-    args.map = "maps/inference/en_v1.json"
-    args.ignore_tones = True
-    args.ignore_arcs = True
-    #args.speakers = 'thchs_v5,B2;thchs_v5,A2'
-    #args.speaker = 'ljs_ipa_v2,1'
-    args.speaker = 'ljs_ipa_v2,1'
-    args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
+    args.base_dir = '/datasets/models/taco2pt_v2'
+    args.training_dir = 'wg_debug'
+    args.wav = "/datasets/LJSpeech-1.1-test/wavs/LJ001-0100.wav"
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 
-  assert os.path.isfile(args.text)
-  assert os.path.isfile(args.waveglow)
+  checkpoint = args.custom_checkpoint if args.custom_checkpoint else get_last_checkpoint(training_dir_path)
 
-  print("Infering text from:", args.text)
-  input_name = os.path.splitext(os.path.basename(args.text))[0]
-  if args.custom_checkpoint:
-    checkpoint = args.custom_checkpoint
-  else:
-    checkpoint = get_last_checkpoint(training_dir_path)
-  speaker = parse_ds_speaker(args.speaker)[1]
-  infer_dir_path = get_inference_dir(training_dir_path, input_name, checkpoint, speaker)
-  log_inference_config(infer_dir_path, args)
-  log_input_file(infer_dir_path, args.text)
+  wav_name = os.path.basename(args.wav)[:-4]
 
-  if args.map:
-    assert os.path.isfile(args.map)
-    print("Using mapping from:", args.map)
-    log_map_file(infer_dir_path, args.map)
-  else:
-    print("Using no mapping.")
-
-  process_input_text(training_dir_path, infer_dir_path, ipa=args.ipa, ignore_tones=args.ignore_tones, ignore_arcs=args.ignore_arcs, subset_id=args.subset_id, lang=args.lang, use_map=bool(args.map))
-  infer(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, checkpoint=checkpoint, speaker=args.speaker)
+  infer(
+    training_dir_path=training_dir_path,
+    infer_dir_path=get_inference_dir(training_dir_path, wav_name, checkpoint, ''),
+    hparams=args.hparams,
+    checkpoint=checkpoint,
+    infer_wav_path=args.wav,
+    denoiser_strength=args.denoiser_strength,
+    sigma=args.sigma
+  )

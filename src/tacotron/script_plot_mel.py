@@ -63,7 +63,7 @@ class Mel2Samp():
     melspec = torch.squeeze(melspec, 0)
     return melspec
 
-def plot_melspec(mel, mel_dim_x=16, mel_dim_y=5, factor=1, title=None) -> None:
+def plot_melspec(mel, mel_dim_x=16, mel_dim_y=5, factor=1, title=None):
   height, width = mel.shape
   width_factor = width / 1000
   fig, axes = plt.subplots(
@@ -78,6 +78,7 @@ def plot_melspec(mel, mel_dim_x=16, mel_dim_y=5, factor=1, title=None) -> None:
   axes.set_xlabel("Time (ms)")
   axes.set_ylabel("Freq. channel")
   axes.imshow(mel, aspect='auto', origin='bottom', interpolation='none')
+  return axes
   
 # def plot_melspecs(melspecs: list, mel_dim_x=16, mel_dim_y=5, factor=1, titles=None) -> None:
 #   witdh = melspecs[0].shape[1]

@@ -255,6 +255,7 @@ These maps are used to translate unknown symbols in the text which should be inf
 - `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)
 - `gdown` only required for downloading pretrained waveglow-model
 - `wget` only required for automatically downloading datasets
+- `scikit-image` only for comparing mels for waveglow evaluation
 
 ## Configs
 

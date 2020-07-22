@@ -4,6 +4,7 @@ import shutil
 import glob
 from pathlib import Path
 from tqdm import tqdm
+from src.common.utils import download_tar
 
 def ensure_downloaded(dir_path: str):
   is_downloaded = exists(dir_path)
@@ -11,7 +12,6 @@ def ensure_downloaded(dir_path: str):
     __download_dataset(dir_path)
 
 def __download_dataset(dir_path: str):
-  from common.utils import download_tar
   print("THCHS-30 is not downloaded yet.")
   download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
   tmp_dir = tempfile.mkdtemp()

@@ -4,7 +4,8 @@ librosa==0.6.0
 plotly==4.8.1
 tensorflow==1.14
 torch==1.4.0
-scipy==1.0.0
+scipy==1.0.1
+scikit-image==0.17.2
 nltk==3.5
 matplotlib==2.1.0
 tqdm==4.46.0

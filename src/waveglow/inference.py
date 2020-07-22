@@ -27,6 +27,9 @@
 import os
 from pathlib import Path
 from shutil import copyfile
+import tempfile
+
+import imageio
 import matplotlib
 matplotlib.use("Agg")
 
@@ -34,6 +37,7 @@ import matplotlib.pylab as plt
 from scipy.io.wavfile import write
 
 import torch
+from src.common.utils import compare_mels
 from src.tacotron.script_plot_mel import (Mel2Samp, get_audio, get_segment,
                                           plot_melspec,
                                           stack_images_vertically)
@@ -102,12 +106,33 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   mel_inferred = plotter.get_mel(wav_inferred)
   mel_orig = plotter.get_mel(wav_orig)
 
-  plot_melspec(mel_inferred, title="Inferred")
+  ax = plot_melspec(mel_inferred, title="Inferred")
   plt.savefig(path_inferred_plot, bbox_inches='tight')
-  plot_melspec(mel_orig, title="Original")
+
+  ax.set_title('')
+  #ax.get_xaxis().set_visible(False)
+  #ax.get_yaxis().set_visible(False)
+  a = tempfile.mktemp(suffix='.png')
+  plt.savefig(a, bbox_inches='tight')
+
+  ax = plot_melspec(mel_orig, title="Original")
   plt.savefig(path_original_plot, bbox_inches='tight')
 
-  stack_images_vertically([path_original_plot, path_inferred_plot], path_compared_plot)
+  ax.set_title('')
+  #ax.get_xaxis().set_visible(False)
+  #ax.get_yaxis().set_visible(False)
+  b = tempfile.mktemp(suffix='.png')
+  plt.savefig(b, bbox_inches='tight')
+
+  score, diff_img = compare_mels(a, b)
+  os.remove(a)
+  os.remove(b)
+  path_diff_plot = "{}_diff_{:.6}.png".format(out_path_template, score)
+  imageio.imsave(path_diff_plot, diff_img)
+
+  print("Similarity of original and inferred mel: {}".format(score))
+
+  stack_images_vertically([path_original_plot, path_inferred_plot, path_diff_plot], path_compared_plot)
 
   # plot_melspec([mel_orig, mel_inferred], titles=["Original", "Inferred"])
   # plt.savefig(path_compared_plot, bbox_inches='tight')
