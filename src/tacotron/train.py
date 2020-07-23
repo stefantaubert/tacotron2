@@ -351,11 +351,13 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
       save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
       save_checkpoint_score(checkpoint_path, grad_norm, reduced_loss, valloss, epoch, i)
 
-  valloss = validate(model, criterion, valset, iteration - 1, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank, training_dir_path)
-  #if rank == 0:
-  checkpoint_path = os.path.join(output_directory,  str(iteration - 1))
-  save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
-  save_checkpoint_score(checkpoint_path, grad_norm, reduced_loss, valloss, epoch, i)
+  checkpoint_was_already_created = save_iteration or save_epoch
+  if not checkpoint_was_already_created:
+    valloss = validate(model, criterion, valset, iteration - 1, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank, training_dir_path)
+    #if rank == 0:
+    checkpoint_path = os.path.join(output_directory,  str(iteration - 1))
+    save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
+    save_checkpoint_score(checkpoint_path, grad_norm, reduced_loss, valloss, epoch, i)
 
 def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool):
   start = time.time()

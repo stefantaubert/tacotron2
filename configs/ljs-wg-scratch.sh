@@ -65,8 +65,8 @@ python ./src/waveglow/script_train.py \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
   --hparams=$hparams \
-  --train_size=0.99 \
-  --validation_size=1.0 \
+  --validation_size=0.01 \
+  --test_size=0 \
   --no_debugging
 
 

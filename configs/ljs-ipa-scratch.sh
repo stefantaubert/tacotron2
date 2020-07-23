@@ -56,8 +56,8 @@ python ./src/tacotron/script_train.py \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
   --hparams=$hparams \
-  --train_size=0.9 \
-  --validation_size=1.0 \
+  --validation_size=0.1 \
+  --test_size=0 \
   --no_debugging
 
 

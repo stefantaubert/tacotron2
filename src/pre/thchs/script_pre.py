@@ -27,8 +27,15 @@ from src.text.chn_tools import chn_to_ipa
 from src.text.ipa2symb import extract_from_sentence
 from src.text.symbol_converter import init_from_symbols, serialize_symbol_ids
 
-
 def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool, kaldi_version: bool):
+  all_symbols_path = get_all_symbols_path(base_dir, ds_name)
+  all_speakers_path = get_all_speakers_path(base_dir, ds_name)
+  
+  already_preprocessed = os.path.exists(all_speakers_path) and os.path.exists(all_symbols_path)
+  if already_preprocessed:
+    print("Data is already preprocessed for dataset: {}".format(ds_name))
+    return
+
   if kaldi_version:
     parsed_data = kaldi_parse(data_dir)
   else:
@@ -59,13 +66,11 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
     data[speaker_name].append((basename, chn, chn_ipa, text_symbols, wav_path))
 
   all_symbols = OrderedDict(symbol_counter.most_common())
-  all_symbols_path = get_all_symbols_path(base_dir, ds_name)
   save_json(all_symbols_path, all_symbols)
 
   all_speakers = [(k, len(v)) for k, v in data.items()]
   all_speakers.sort(key=lambda tup: tup[1], reverse=True)
   all_speakers = OrderedDict(all_speakers)
-  all_speakers_path = get_all_speakers_path(base_dir, ds_name)
   save_json(all_speakers_path, all_speakers)
   print("Done.")
 
@@ -140,4 +145,4 @@ if __name__ == "__main__":
   
   # TODO: check already exists
   
-  preprocess(args.base_dir, args.auto_convert_out, args.ds_name, args.ignore_tones, args.ignore_arcs, args.kaldi_version)
+  preprocess(args.base_dir, args.data_dir, args.ds_name, args.ignore_tones, args.ignore_arcs, args.kaldi_version)

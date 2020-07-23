@@ -43,6 +43,12 @@ def compare_mels(path_a, path_b):
   #imageio.imsave(path_out, diff)
   return score, diff_img
 
+def str_to_int(val: str) -> int:
+  '''maps a string to int'''
+  mapped = [(i + 1) * ord(x) for i, x in enumerate(val)]
+  res = sum(mapped)
+  return res
+
 def download_tar(download_url, dir_path, tarmode: str = "r:gz"):
   print("Starting download of {}...".format(download_url))
   os.makedirs(dir_path, exist_ok=True)

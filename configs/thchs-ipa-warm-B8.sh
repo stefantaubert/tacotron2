@@ -77,8 +77,8 @@ python ./src/tacotron/script_train.py \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
   --hparams=$hparams \
-  --train_size=0.9 \
-  --validation_size=1.0 \
+  --validation_size=0.1 \
+  --test_size=0 \
   --warm_start \
   --pretrained_path="$base_dir/ljs_ipa_ms_from_scratch/checkpoints/79000" \
   --no_debugging

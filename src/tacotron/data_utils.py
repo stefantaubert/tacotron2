@@ -29,6 +29,7 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
       mel_fmin=hparams.mel_fmin,
       mel_fmax=hparams.mel_fmax
     )
+    
     random.seed(hparams.seed)
     random.shuffle(self.audiopaths_and_symbols)
 

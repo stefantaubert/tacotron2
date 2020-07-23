@@ -3,30 +3,39 @@ import os
 from collections import OrderedDict
 from math import sqrt
 from shutil import copyfile
-from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from tqdm import tqdm
 
 import torch
-from src.tacotron.hparams import create_hparams
-from src.script_paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
-                   filelist_file_log_name, filelist_file_name,
-                   filelist_symbols_file_name, filelist_weights_file_name,
-                   get_all_speakers_path, get_ds_dir, get_filelist_dir,
-                   train_map_file, filelist_speakers_name)
-from src.text.symbol_converter import (deserialize_symbol_ids, init_from_symbols,
-                                   load_from_file, serialize_symbol_ids)
-from torch import nn
 from src.common.train_log import log
-from src.common.utils import (csv_separator, duration_col, parse_ds_speakers, parse_json,
-                   serialize_ds_speaker, serialize_ds_speakers, speaker_id_col,
-                   speaker_name_col, symbols_str_col, utt_name_col,
-                   wavpath_col, save_json)
+from src.common.utils import (csv_separator, duration_col, parse_ds_speakers,
+                              parse_json, save_json, serialize_ds_speaker,
+                              serialize_ds_speakers, speaker_id_col,
+                              speaker_name_col, symbols_str_col, utt_name_col,
+                              wavpath_col, str_to_int)
+from src.script_paths import (ds_preprocessed_file_name,
+                              ds_preprocessed_symbols_name,
+                              filelist_file_log_name, filelist_file_name,
+                              filelist_speakers_name,
+                              filelist_symbols_file_name,
+                              filelist_test_file_name,
+                              filelist_training_file_name,
+                              filelist_validation_file_name,
+                              filelist_weights_file_name,
+                              get_all_speakers_path, get_ds_dir,
+                              get_filelist_dir, train_map_file)
+from src.tacotron.hparams import create_hparams
+from src.text.symbol_converter import (deserialize_symbol_ids,
+                                       init_from_symbols, load_from_file,
+                                       serialize_symbol_ids)
+from torch import nn
+from src.common.utils import csv_separator, get_total_duration_min
 
 
-def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_model_symbols: str, pretrained_model: str, weight_map_mode: str, hparams):
+def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_model_symbols: str, pretrained_model: str, weight_map_mode: str, hparams, test_size: float, val_size: float, seed: int):
   ds_speakers = parse_ds_speakers(speakers)
   final_conv = init_from_symbols(set())
   
@@ -60,7 +69,13 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
   # symbols.json
   final_conv.dump(os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name))
 
-  result = []
+  wholeset = []
+  testset = []
+  trainset = []
+  valset = []
+
+  create_testset = test_size > 0
+  create_valset = val_size > 0
 
   for ds, speaker, speaker_id in tqdm(ds_speakers):
     speaker_dir_path = get_ds_dir(base_dir, ds, speaker)
@@ -68,6 +83,8 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
     symbols_path = os.path.join(speaker_dir_path, ds_preprocessed_symbols_name)
     speaker_conv = load_from_file(symbols_path)
     speaker_data = pd.read_csv(prepr_path, header=None, sep=csv_separator)
+
+    speaker_new_rows = []
 
     for _, row in speaker_data.iterrows():
       serialized_ids = row[symbols_str_col]
@@ -86,12 +103,56 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
       new_row[speaker_id_col] = speaker_id
       new_row[speaker_name_col] = speaker
       #new_row = [basename, wav_path, serialized_updated_ids, duration, speaker_id, speaker]
-      result.append(new_row)
+      speaker_new_rows.append(new_row)
+    
+    # reason: speakers with same utterance counts should not have the same validation sets
+    speaker_seed = seed + str_to_int(speaker)
+
+    if create_testset:
+      train, test = train_test_split(speaker_new_rows, test_size=test_size, random_state=speaker_seed)
+      testset.extend(test)
+
+    if create_valset:
+      train, val = train_test_split(train, test_size=val_size, random_state=speaker_seed)
+      valset.extend(val)
+
+    trainset.extend(train)
+    wholeset.extend(speaker_new_rows)
+
 
   # filelist.csv
-  df = pd.DataFrame(result)
+  trainset_path = os.path.join(get_filelist_dir(training_dir_path), filelist_training_file_name)
+  df = pd.DataFrame(trainset)
+  df.to_csv(trainset_path, header=None, index=None, sep=csv_separator)
+  total_dur_min = get_total_duration_min(df, duration_col)
+  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_training_file_name, len(df), total_dur_min, total_dur_min / 60))
+
+  if create_testset:
+    testset_path = os.path.join(get_filelist_dir(training_dir_path), filelist_test_file_name)
+    df = pd.DataFrame(testset)
+    df.to_csv(testset_path, header=None, index=None, sep=csv_separator)
+    total_dur_min = get_total_duration_min(df, duration_col)
+    log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_test_file_name, len(df), total_dur_min, total_dur_min / 60))
+  else:
+    log(training_dir_path, "Create no testset.")
+
+  if create_valset:
+    valset_path = os.path.join(get_filelist_dir(training_dir_path), filelist_validation_file_name)
+    df = pd.DataFrame(valset)
+    df.to_csv(valset_path, header=None, index=None, sep=csv_separator)
+    total_dur_min = get_total_duration_min(df, duration_col)
+    log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_validation_file_name, len(df), total_dur_min, total_dur_min / 60))
+  else:
+    log(training_dir_path, "Create no valset.")
+  
+  # filelist.csv
+  wholeset_path = os.path.join(get_filelist_dir(training_dir_path), filelist_file_name)
+  df = pd.DataFrame(wholeset)
+  df.to_csv(wholeset_path, header=None, index=None, sep=csv_separator)
+  total_dur_min = get_total_duration_min(df, duration_col)
+  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_file_name, len(df), total_dur_min, total_dur_min / 60))
   print(df.head())
-  df.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_file_name), header=None, index=None, sep=csv_separator)
+
 
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
 

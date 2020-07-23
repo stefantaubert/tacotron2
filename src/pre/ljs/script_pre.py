@@ -48,6 +48,14 @@ def ensure_downloaded(dir_path: str):
     __download_ljs(dir_path)
 
 def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arcs: bool):
+  all_symbols_path = get_all_symbols_path(base_dir, ds_name)
+  all_speakers_path = get_all_speakers_path(base_dir, ds_name)
+  
+  already_preprocessed = os.path.exists(all_speakers_path) and os.path.exists(all_symbols_path)
+  if already_preprocessed:
+    print("Data is already preprocessed for dataset: {}".format(ds_name))
+    return
+
   epi = epitran.Epitran('eng-Latn')
   p = LJSpeechDatasetParser(data_dir)
   p.parse()

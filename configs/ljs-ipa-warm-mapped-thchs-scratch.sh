@@ -56,8 +56,8 @@ python ./src/tacotron/script_train.py \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
   --hparams=$hparams \
-  --train_size=0.9 \
-  --validation_size=1.0 \
+  --validation_size=0.1 \
+  --test_size=0 \
   --warm_start \
   --pretrained_path="$base_dir/thchs_ipa_scratch/checkpoints/29000" \
   --pretrained_model="$base_dir/thchs_ipa_scratch/checkpoints/29000" \

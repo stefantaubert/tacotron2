@@ -67,7 +67,7 @@ python ./src/pre/thchs/script_pre.py \
   --ds_name=$ds_name
 
 # Training
-export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000,ignore_layers=[embedding.weight,speakers_embedding.weight]"
+export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs_per_checkpoint=1,epochs=2000,ignore_layers=[embedding.weight,speakers_embedding.weight]"
 python ./src/script_paths.py \
   --base_dir=$base_dir \
   --custom_training_name=$custom_training_name \
@@ -77,8 +77,9 @@ python ./src/tacotron/script_train.py \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
   --hparams=$hparams \
-  --train_size=0.9 \
-  --validation_size=1.0 \
+  --validation_size=0.1 \
+  --test_size=0.01 \
+  --seed=1234 \
   --warm_start \
   --pretrained_path="/datasets/gcp_home/ljs_ipa_ms_from_scratch/checkpoints/113500" \
   --pretrained_model="/datasets/gcp_home/ljs_ipa_ms_from_scratch/checkpoints/113500" \
@@ -88,7 +89,7 @@ python ./src/tacotron/script_train.py \
   --no_debugging
 
 ## Continue training
-export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000"
+export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs_per_checkpoint=1,epochs=2000"
 python ./src/tacotron/script_train.py \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
