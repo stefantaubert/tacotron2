@@ -74,6 +74,6 @@ if __name__ == "__main__":
         infer_utterance_name = x[0]
   basename = os.path.basename(infer_utterance_name)[:-4]
 
-  infer_dir_path = get_validation_dir(training_dir_path, basename, checkpoint, "{}_{}".format(args.sigma, args.denoiser_strength)),
+  infer_dir_path = get_validation_dir(training_dir_path, basename, checkpoint, "{}_{}".format(args.sigma, args.denoiser_strength))
 
   infer(training_dir_path, infer_dir_path, hparams=args.hparams, checkpoint=checkpoint, infer_wav_path=infer_utterance_name, denoiser_strength=args.denoiser_strength, sigma=args.sigma)

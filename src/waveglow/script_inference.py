@@ -30,10 +30,11 @@ if __name__ == "__main__":
   checkpoint = args.custom_checkpoint if args.custom_checkpoint else get_last_checkpoint(training_dir_path)
 
   wav_name = os.path.basename(args.wav)[:-4]
+  infer_dir = get_inference_dir(training_dir_path, wav_name, checkpoint, "{}_{}".format(args.sigma, args.denoiser_strength))
 
   infer(
     training_dir_path=training_dir_path,
-    infer_dir_path=get_inference_dir(training_dir_path, wav_name, checkpoint, "{}_{}".format(args.sigma, args.denoiser_strength)),
+    infer_dir_path=infer_dir,
     hparams=args.hparams,
     checkpoint=checkpoint,
     infer_wav_path=args.wav,

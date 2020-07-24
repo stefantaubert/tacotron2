@@ -1,5 +1,4 @@
 ########################################################################################
-# LJSpeech based IPA Synthesis
 ########################################################################################
 
 # Init
@@ -65,8 +64,8 @@ python ./src/waveglow/script_train.py \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
   --hparams=$hparams \
-  --validation_size=0.01 \
-  --test_size=0 \
+  --train_size=0.99 \
+  --validation_size=1 \
   --no_debugging
 
 
