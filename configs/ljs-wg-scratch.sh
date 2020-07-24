@@ -78,3 +78,15 @@ python ./src/waveglow/script_train.py \
   --continue_training \
   --no_debugging
 
+
+## Inference
+python ./src/waveglow/script_validate.py \
+  --base_dir=$base_dir \
+  --training_dir=$custom_training_name \
+  --utterance=random-val \
+  --hparams=$hparams \
+  --denoiser_strength=0 \
+  --sigma=1 \
+  --custom_checkpoint='' \
+  --no_debugging
+

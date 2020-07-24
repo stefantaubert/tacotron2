@@ -65,7 +65,6 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arc
   ds_dir = get_ds_dir(base_dir, ds_name, speaker, create=True)
 
   all_speakers = OrderedDict([("1", len(p.data))])
-  all_speakers_path = get_all_speakers_path(base_dir, ds_name)
   save_json(all_speakers_path, all_speakers)
 
   data = []
@@ -85,7 +84,6 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arc
     symbol_counter.update(text_symbols)
 
   all_symbols = OrderedDict(symbol_counter.most_common())
-  all_symbols_path = get_all_symbols_path(base_dir, ds_name)
   save_json(all_symbols_path, all_symbols)
 
   ### get all symbols

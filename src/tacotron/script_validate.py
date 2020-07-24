@@ -14,7 +14,7 @@ from src.common.utils import (csv_separator, get_speaker_count_csv,
 from src.script_paths import (ds_preprocessed_file_name,
                               ds_preprocessed_symbols_name, filelist_file_name,
                               filelist_symbols_file_name,
-                              filelist_validation_file_name, get_ds_dir,
+                              filelist_validation_file_name, filelist_test_file_name, get_ds_dir,
                               get_filelist_dir, get_inference_dir,
                               get_validation_dir, inference_config_file,
                               log_inference_config, log_input_file,
@@ -56,10 +56,9 @@ if __name__ == "__main__":
 
   preprocessed_path = os.path.join(get_filelist_dir(training_dir_path), ds_preprocessed_file_name)
 
-  infer_utterance_name = args.utterance
 
-  if "random-val" in infer_utterance_name:
-    tmp = infer_utterance_name.split('-')
+  if "random-val" in args.utterance:
+    tmp = args.utterance.split('-')
     speaker_is_given = len(tmp) == 3
     if speaker_is_given:
       speaker = tmp[2]
@@ -73,6 +72,24 @@ if __name__ == "__main__":
         break
       infer_utterance_name = random.choice(all_names)
     print("Selected random validationset utterance: {}".format(infer_utterance_name))
+  elif "random-test" in args.utterance:
+    tmp = args.utterance.split('-')
+    speaker_is_given = len(tmp) == 3
+    if speaker_is_given:
+      speaker = tmp[2]
+
+    testset_path = os.path.join(get_filelist_dir(training_dir_path), filelist_test_file_name)
+    testset = pd.read_csv(testset_path, header=None, sep=csv_separator)
+    all_names = list(get_utterance_names_csv(testset))
+    infer_utterance_name = random.choice(all_names)
+    while speaker_is_given:
+      if speaker in infer_utterance_name:
+        break
+      infer_utterance_name = random.choice(all_names)
+    print("Selected random testset utterance: {}".format(infer_utterance_name))
+  else:
+    infer_utterance_name = args.utterance
+
 
   data = pd.read_csv(preprocessed_path, header=None, sep=csv_separator)
   infer_data = None
