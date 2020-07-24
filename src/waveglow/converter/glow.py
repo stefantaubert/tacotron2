@@ -1,7 +1,7 @@
 # Dummy necessary for conversion
 
 import torch
-from src.waveglow.glow import WaveGlow
+from src.waveglow.model import WaveGlow
 
 
 class Invertible1x1Conv(torch.nn.Module):

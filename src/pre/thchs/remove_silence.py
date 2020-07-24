@@ -33,8 +33,6 @@ def remove_silence_thchs(
   print("Removing silence at start and end of wav files...")
   for data in tqdm(parsed_data):
     wav_path = data[3]
-    #if speaker_name != 'A11':
-    #  continue
 
     dest_wav_path = wav_path.replace(origin, dest)
     create_parent_folder(dest_wav_path)
@@ -48,15 +46,6 @@ def remove_silence_thchs(
       buffer_start_ms = buffer_start_ms,
       buffer_end_ms = buffer_end_ms
     )
-
-    #new_data = new_data.astype(np.uint16)
-    #new_data = (new_data * 32767).astype(np.int16)
-    #wavfile.write(dest_wav_path, new_rate, new_data)
-
-    #new_data = ints.astype('<u2')
-    #new_data = little_endian.tostring()
-    #sf.write(tmp_file, audio, rate, subtype='PCM_16')
-    #librosa.output.write_wav(dest_wav_path, new_data, new_rate)
 
   if kaldi_version:
     for data in tqdm(parsed_data):

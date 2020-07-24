@@ -37,7 +37,7 @@ from src.waveglow.prepare_ds import duration_col
 from src.waveglow.hparams import create_hparams
 
 from torch.utils.data import DataLoader
-from src.waveglow.glow import WaveGlow, WaveGlowLoss
+from src.waveglow.model import WaveGlow, WaveGlowLoss
 from src.waveglow.mel2samp import Mel2Samp
 
 # #=====START: ADDED FOR DISTRIBUTED======

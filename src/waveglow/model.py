@@ -184,6 +184,7 @@ class WaveGlow(torch.nn.Module):
       1024,
       stride=256
     )
+    
     assert(hparams.n_group % 2 == 0)
     self.n_flows = hparams.n_flows
     self.n_group = hparams.n_group

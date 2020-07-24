@@ -62,7 +62,7 @@ if __name__ == "__main__":
     args.speaker = 'ljs_ipa_v2,1'
     #args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
     args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5_out.pt"
-    args.analysis = False
+    args.analysis = True
     #args.denoiser_strength = 0.5
     args.sigma = 0.666
 

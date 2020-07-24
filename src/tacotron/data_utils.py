@@ -10,30 +10,6 @@ from src.text.symbol_converter import deserialize_symbol_ids
 from src.common.audio.utils import wav_to_float32
 from src.waveglow.mel2samp import MelParser
 
-# def get_mel_(audio_path, stft):
-#   from scipy.io.wavfile import read
-#   sampling_rate, data = read(audio_path)
-#   data = data.astype(np.float32)
-#   audio = torch.FloatTensor(data)
-
-#   #audio, sampling_rate = load_wav_to_torch(audio_path)
-#   # if sampling_rate != self.stft.sampling_rate:
-#   #   raise ValueError("{} {} SR doesn't match target {} SR".format(
-#   #     sampling_rate, self.stft.sampling_rate))
-#   audio_norm = audio / 32768.0
-#   audio_norm = audio_norm.unsqueeze(0)
-#   audio_norm = torch.autograd.Variable(audio_norm, requires_grad=False)
-#   melspec = stft.mel_spectrogram(audio_norm)
-#   melspec = torch.squeeze(melspec, 0)
-#   return melspec
-
-# def get_mel(wav_tensor, stft):
-#   wav_tensor = wav_tensor.unsqueeze(0)
-#   wav_tensor = torch.autograd.Variable(wav_tensor, requires_grad=False)
-#   melspec = stft.mel_spectrogram(wav_tensor)
-#   melspec = torch.squeeze(melspec, 0)
-#   return melspec
-
 class SymbolsMelLoader(torch.utils.data.Dataset):
   """
     1) loads audio,text pairs
@@ -42,57 +18,17 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
   """
   def __init__(self, audiopaths_and_text, hparams):
     self.audiopaths_and_symbols = load_filepaths_and_symbols(audiopaths_and_text)
-    self.max_wav_value = hparams.max_wav_value
-    self.sampling_rate = hparams.sampling_rate
     self.mel_parser = MelParser(hparams)
-    #self.load_mel_from_disk = hparams.load_mel_from_disk
-    # self.stft = TacotronSTFT(
-    #   filter_length=hparams.filter_length,
-    #   hop_length=hparams.hop_length,
-    #   win_length=hparams.win_length,
-    #   n_mel_channels=hparams.n_mel_channels,
-    #   sampling_rate=hparams.sampling_rate,
-    #   mel_fmin=hparams.mel_fmin,
-    #   mel_fmax=hparams.mel_fmax
-    # )
-
+    
     random.seed(hparams.seed)
     random.shuffle(self.audiopaths_and_symbols)
 
   def get_mel_symbols_pair(self, audiopath_and_text):
-    # separate filename and text
     audiopath, serialized_symbol_ids, speaker_id = audiopath_and_text[0], audiopath_and_text[1], audiopath_and_text[2]
     symbols_tensor = self.get_symbols(serialized_symbol_ids)
     mel_tensor, _ = self.mel_parser.get_mel(audiopath, segment_length=None)
-    #mel_tensor = self.get_mel(audiopath)
-
-    # wav, sampling_rate = wav_to_float32(audiopath)
-
-    # if sampling_rate != self.sampling_rate:
-    #   raise ValueError("{} {} SR doesn't match target {} SR".format(audiopath, sampling_rate, self.sampling_rate))
-
-    # wav_tensor = torch.FloatTensor(wav)
-    # mel_tensor = get_mel(wav_tensor, self.stft)
+   
     return (symbols_tensor, mel_tensor, speaker_id)
-
-  # def get_mel(self, filename):
-  #   if not self.load_mel_from_disk:
-  #     audio, sampling_rate = load_wav_to_torch(filename)
-  #     if sampling_rate != self.stft.sampling_rate:
-  #       raise ValueError("{} {} SR doesn't match target {} SR".format(
-  #         sampling_rate, self.stft.sampling_rate))
-  #     audio_norm = audio / self.max_wav_value
-  #     audio_norm = audio_norm.unsqueeze(0)
-  #     audio_norm = torch.autograd.Variable(audio_norm, requires_grad=False)
-  #     melspec = self.stft.mel_spectrogram(audio_norm)
-  #     melspec = torch.squeeze(melspec, 0)
-  #   else:
-  #     melspec = torch.from_numpy(np.load(filename))
-  #     assert melspec.size(0) == self.stft.n_mel_channels, (
-  #       'Mel dimension mismatch: given {}, expected {}'.format(
-  #         melspec.size(0), self.stft.n_mel_channels))
-
-  #   return melspec
 
   def get_symbols(self, serialized_symbol_ids):
     symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)

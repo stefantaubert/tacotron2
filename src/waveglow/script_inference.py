@@ -24,7 +24,7 @@ if __name__ == "__main__":
     args.wav = "/datasets/LJSpeech-1.1-test/wavs/LJ001-0100.wav"
     args.denoiser_strength = 0
     args.sigma = 0.666
-    args.custom_checkpoint = 15
+    args.custom_checkpoint = ''
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 

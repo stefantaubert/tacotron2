@@ -143,6 +143,4 @@ if __name__ == "__main__":
       args.ignore_tones = True
       args.ignore_arcs = True
   
-  # TODO: check already exists
-  
   preprocess(args.base_dir, args.data_dir, args.ds_name, args.ignore_tones, args.ignore_arcs, args.kaldi_version)

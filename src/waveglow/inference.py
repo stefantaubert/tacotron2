@@ -39,9 +39,7 @@ from scipy.io.wavfile import write
 
 import torch
 from src.common.utils import compare_mels
-from src.tacotron.script_plot_mel import (Mel2Samp, get_audio, get_segment,
-                                          plot_melspec,
-                                          stack_images_vertically)
+from src.tacotron.script_plot_mel import (plot_melspec, stack_images_vertically)
 from src.waveglow.denoiser import Denoiser
 from src.waveglow.hparams import create_hparams
 from src.waveglow.train import get_checkpoint_dir, load_model
@@ -88,59 +86,25 @@ class Synthesizer():
 def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str, infer_wav_path: str, denoiser_strength: float, sigma: float):
   hparams = create_hparams(hparams)
   synth = Synthesizer()
-  #plotter = Mel2Samp(hparams)
 
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), str(checkpoint))
   print("Using model:", checkpoint_path)
   synth.load_model(checkpoint_path, hparams)
   
-  # checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-  # model_state_dict = checkpoint_dict['state_dict']
-  # model = load_model(hparams)
-  # model.load_state_dict(model_state_dict)
-  # model = model.remove_weightnorm(model)
-  # model.cuda().eval()
-
   # if is_fp16:
   #   from apex import amp
   #   waveglow, _ = amp.initialize(waveglow, [], opt_level="O3")
 
-  # if denoiser_strength > 0:
-  #   denoiser = Denoiser(model).cuda()
-
   print("Inferring {}...".format(infer_wav_path))
 
-  # TODO other method
-
-  # wav, sampling_rate = wav_to_float32(infer_wav_path)
-  # if sampling_rate != hparams.sampling_rate:
-  #     raise ValueError("{} {} SR doesn't match target {} SR".format(infer_wav_path, sampling_rate, hparams.sampling_rate))
-  
-  # wav_tensor = torch.FloatTensor(wav)
-
   mel_parser = MelParser(hparams)
-
   mel, _ = mel_parser.get_mel(infer_wav_path, segment_length=None)
-
-  # a = get_audio(infer_wav_path)
-  # mel = plotter.get_mel(a)
-  
-  #mel = torch.load(file_path)
   mel = torch.autograd.Variable(mel.cuda())
   mel = torch.unsqueeze(mel, 0)
+
   #mel = mel.half() if is_fp16 else mel
 
   audio = synth.infer_mel(mel, sigma, denoiser_strength)
-
-  # with torch.no_grad():
-  #   audio = model.infer(mel, sigma=sigma)
-  #   if denoiser_strength > 0:
-  #     audio = denoiser(audio, denoiser_strength)
-  #   #audio = audio * MAX_WAV_VALUE
-  # audio = audio.squeeze()
-  # audio = audio.cpu().numpy()
-  
-  #audio = audio.astype('int16')
 
   last_dir_name = Path(infer_dir_path).parts[-1]
   output_name = "{}".format(last_dir_name)
@@ -160,9 +124,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   )
 
   print("Plotting...")
-  #wav_inferred = get_audio(path_inferred_wav)
-  #wav_orig = get_audio(infer_wav_path)
-  #wav = get_segment(wav)
+
   mel_inferred, _ = mel_parser.get_mel(path_inferred_wav)
   mel_orig, _ = mel_parser.get_mel(infer_wav_path)
 

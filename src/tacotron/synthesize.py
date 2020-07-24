@@ -22,17 +22,15 @@ from src.script_paths import (filelist_speakers_name, get_checkpoint_dir,
                               inference_input_symbols_file_name)
 from src.tacotron.hparams import create_hparams
 from src.tacotron.model import Tacotron2
-from src.tacotron.script_plot_mel import (Mel2Samp, get_audio, get_segment,
-                                          plot_melspec,
-                                          stack_images_vertically)
+from src.tacotron.script_plot_mel import (plot_melspec, stack_images_vertically)
 from src.tacotron.train import get_last_checkpoint, load_model
 from src.text.symbol_converter import deserialize_symbol_ids, load_from_file
-from src.waveglow.denoiser import Denoiser
-#from src.waveglow.train import load_model_for_inference
 from src.waveglow.inference import Synthesizer as WGSynthesizer
+from src.waveglow.mel2samp import MelParser
 
 matplotlib.use("Agg")
 
+# TODO refactor in own tacotron synthesizer class
 class Synthesizer():
   def __init__(self, hparams, checkpoint_path, waveglow_path):
     super().__init__()
@@ -45,42 +43,19 @@ class Synthesizer():
     self.model.load_state_dict(state_dict)
     self.model.cuda().eval().half()
 
-    # Load WaveGlow for mel2audio synthesis and denoiser
     self.synthesizer = WGSynthesizer()
     self.synthesizer.load_model(waveglow_path, for_taco_infer=True)
-    #self.waveglow = load_model_for_inference(waveglow_path)
-    #self.denoiser = Denoiser(self.waveglow)
 
   def infer(self, symbols, speaker_id: int, sigma, denoiser_strength):
     sequence = np.array([symbols])
     sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
     speaker_id = torch.IntTensor([speaker_id]).cuda().long()
 
-    # Decode text input and plot results
     mel_outputs, mel_outputs_postnet, _, alignments = self.model.inference(sequence, speaker_id)
     # plot_data((mel_outputs.float().data.cpu().numpy()[0], mel_outputs_postnet.float().data.cpu().numpy()[0], alignments.float().data.cpu().numpy()[0].T))
     audio = self.synthesizer.infer_mel(mel_outputs_postnet, sigma, denoiser_strength)
-    # with torch.no_grad():
-    #   audio = self.waveglow.infer(mel_outputs_postnet, sigma=sigma)
-    #   if denoiser_strength > 0:
-    #     audio = self.denoiser(audio, denoiser_strength)
-    #   #audio = audio * 2**15 # 32768
-    # audio = audio.squeeze()
-    # audio = audio.cpu().numpy()
-    #audio = audio.astype('int16')
+   
     return audio
-
-    # with torch.no_grad():
-    #   audio = self.waveglow.infer(mel_outputs_postnet, sigma=0.666)
-    # #res = audio[0].data.cpu().numpy()
-    # #print("Saving {}...".format(dest_name))
-    # #to_wav("/tmp/{}.wav".format(dest_name), res, self.hparams.sampling_rate)
-
-    # # (Optional) Remove WaveGlow bias
-    # audio_denoised = self.denoiser(audio, strength=10**-2)[:, 0]
-    # res = audio_denoised.cpu().numpy()[0]
-    # #to_wav("/tmp/{}_denoised.wav".format(dest_name), res, self.hparams.sampling_rate)
-    # return res
 
 def validate(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, checkpoint: str, infer_data: tuple) -> None:
   hparams = create_hparams(hparams)
@@ -101,7 +76,7 @@ def validate(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   print("Using model:", checkpoint_path)
   synt = Synthesizer(hparams, checkpoint_path, waveglow)
-  plotter = Mel2Samp(hparams)
+  mel_parser = MelParser(hparams)
 
   utt_name, serialized_symbol_ids, wav_orig_path, final_speaker_id = infer_data
   print("Inferring {}...".format(utt_name))
@@ -134,12 +109,8 @@ def validate(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str
 
   print("Finished. Saved to:", path_inferred_wav)
   print("Plotting...")
-  wav_inferred = get_audio(path_inferred_wav)
-  wav_orig = get_audio(wav_orig_path)
-  #wav = get_segment(wav)
-  #wav = get_segment(wav)
-  mel_inferred = plotter.get_mel(wav_inferred)
-  mel_orig = plotter.get_mel(wav_orig)
+  mel_inferred, _ = mel_parser.get_mel(path_inferred_wav)
+  mel_orig, _ = mel_parser.get_mel(wav_orig_path)
 
   plot_melspec(mel_inferred, title="Inferred")
   plt.savefig(path_inferred_plot, bbox_inches='tight')
@@ -178,7 +149,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   print("Using model:", checkpoint_path)
   synt = Synthesizer(hparams, checkpoint_path, waveglow)
-  plotter = Mel2Samp(hparams)
+  mel_parser = MelParser(hparams)
 
   #complete_text = [item for sublist in sentences_symbols for item in sublist]
   #print(complete_text)
@@ -227,8 +198,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
         normalize=True,
         sample_rate=hparams.sampling_rate
       )
-      wav = get_audio(out_path)
-      mel = plotter.get_mel(wav)
+      mel, _ = mel_parser.get_mel(out_path)
       plot_melspec(mel, title="{}: {}".format(last_dir_name, i))
       out_path = os.path.join(infer_dir_path, "{}.png".format(i))
       plt.savefig(out_path, bbox_inches='tight')
@@ -252,38 +222,9 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   )
   print("Finished. Saved to:", out_path)
   print("Plotting...")
-  wav = get_audio(out_path)
-  #wav = get_segment(wav)
-  mel = plotter.get_mel(wav)
+  mel, _ = mel_parser.get_mel(out_path)
   plot_melspec(mel, title=last_dir_name)
   output_name = "{}_h.png".format(last_dir_name)
   out_path = os.path.join(infer_dir_path, output_name)
   plt.savefig(out_path, bbox_inches='tight')
   plt.show()
-
-
-# if __name__ == "__main__":
-#   parser = argparse.ArgumentParser()
-#   parser.add_argument('--base_dir', type=str, help='base directory')
-#   parser.add_argument('--checkpoint', type=str, help='checkpoint name')
-#   parser.add_argument('--output_name', type=str, help='name of the wav file', default='complete')
-#   parser.add_argument('--waveglow', type=str, help='Path to pretrained waveglow file')
-#   parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
-#   parser.add_argument('--ds_name', type=str, required=False)
-#   parser.add_argument('--speaker', type=str, required=False)
-#   parser.add_argument('--debug', type=str, default='true')
-
-#   = parser.parse_)
-#   hparams = create_hparams(hparams)
-#   debug = str.lower(debug) == 'true'
-#   if debug:
-#     base_dir = '/datasets/models/taco2pt_ms'
-#     speaker_dir = os.path.join(base_dir, filelist_dir)
-#     checkpoint_path = os.path.join(base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499')
-#     #checkpoint_path = os.path.join(base_dir, checkpoint_output_dir, 'checkpoint_1499')
-#     waveglow = '/datasets/models/pretrained/waveglow_256channels_universal_v5.pt'
-#     output_name = 'test'
-#     hparams.sampling_rate = 19000
-#   else:
-#     speaker_dir = os.path.join(base_dir, filelist_dir, ds_name, speaker)
-#     checkpoint_path = os.path.join(base_dir, savecheckpoints_dir, checkpoint)
