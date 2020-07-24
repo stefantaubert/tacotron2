@@ -66,7 +66,7 @@ if __name__ == "__main__":
     args.mode = "infer"
     if args.mode == "weights":
       args.a = "/datasets/models/taco2pt_v2/ds/ljs_ipa_v2/all_symbols.json"
-      args.b = "/datasets/models/taco2pt_v2/ds/thchs_v5/all_symbols.json"
+      args.b = "/datasets/models/taco2pt_v2/ds/thchs_nosil_tones/all_symbols.json"
       #args.out = "/datasets/models/symbols/map.json"
       #args.reverse = True
     else:
