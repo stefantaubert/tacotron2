@@ -48,7 +48,7 @@ if __name__ == "__main__":
     args.speakers = 'thchs_v5,D31;thchs_v5,A5'
     args.hparams = 'batch_size=20,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight, speakers_embedding.weight]'
     args.pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000"
-    args.warm_start = True
+    args.warm_start = False
     args.test_size = 0.1
     args.validation_size = 0.2
     #args.weight_map_mode = 'same_symbols_only'

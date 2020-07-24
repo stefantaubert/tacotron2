@@ -34,12 +34,15 @@ if __name__ == "__main__":
   parser.add_argument('--hparams', type=str)
   parser.add_argument('--waveglow', type=str)
   parser.add_argument('--custom_checkpoint', type=str)
+  parser.add_argument('--sentence_pause_s', type=float, default=0.5)
+  parser.add_argument('--sigma', type=float, default=0.666)
+  parser.add_argument('--denoiser_strength', type=float, default=0.01)
   parser.add_argument('--analysis', action='store_true')
 
   args = parser.parse_args()
 
   if not args.no_debugging:
-    args.base_dir = '/datasets/gcp_home'
+    args.base_dir = '/datasets/models/taco2pt_v2'
     args.training_dir = 'ljs_ipa_ms_from_scratch'
     args.ipa = True
     # args.text = "examples/chn/thchs.txt"
@@ -48,6 +51,8 @@ if __name__ == "__main__":
     # args.lang = "ger"
     args.text = "examples/ipa/north_sven_orig.txt"
     args.lang = "ipa"
+    #args.text = "examples/en/ljs_0001.txt"
+    #args.lang = "en"
     #args.map = "maps/inference/chn_v1.json"
     args.map = "maps/inference/en_v1.json"
     args.ignore_tones = True
@@ -57,6 +62,9 @@ if __name__ == "__main__":
     args.speaker = 'ljs_ipa_v2,1'
     #args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
     args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5_out.pt"
+    args.analysis = False
+    #args.denoiser_strength = 0.5
+    args.sigma = 0.666
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 
@@ -81,5 +89,18 @@ if __name__ == "__main__":
   else:
     print("Using no mapping.")
 
-  process_input_text(training_dir_path, infer_dir_path, ipa=args.ipa, ignore_tones=args.ignore_tones, ignore_arcs=args.ignore_arcs, subset_id=args.subset_id, lang=args.lang, use_map=bool(args.map))
-  infer(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, checkpoint=checkpoint, speaker=args.speaker, analysis=args.analysis)
+  process_input_text(
+    training_dir_path,
+    infer_dir_path, ipa=args.ipa, ignore_tones=args.ignore_tones, ignore_arcs=args.ignore_arcs, subset_id=args.subset_id, lang=args.lang, use_map=bool(args.map))
+  infer(
+    training_dir_path=training_dir_path,
+    infer_dir_path=infer_dir_path,
+    hparams=args.hparams,
+    waveglow=args.waveglow,
+    checkpoint=checkpoint,
+    speaker=args.speaker,
+    analysis=args.analysis,
+    sentence_pause_s=args.sentence_pause_s,
+    sigma=args.sigma,
+    denoiser_strength=args.denoiser_strength
+  )

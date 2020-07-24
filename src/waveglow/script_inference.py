@@ -14,7 +14,7 @@ if __name__ == "__main__":
   parser.add_argument('--hparams', type=str)
   parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias.')
   parser.add_argument("--sigma", default=1.0, type=float)
-  parser.add_argument('--custom_checkpoint', type=str)
+  parser.add_argument('--custom_checkpoint', type=int)
 
   args = parser.parse_args()
 
@@ -22,12 +22,13 @@ if __name__ == "__main__":
     args.base_dir = '/datasets/models/taco2pt_v2'
     args.training_dir = 'wg_debug'
     args.wav = "/datasets/LJSpeech-1.1-test/wavs/LJ001-0100.wav"
-    args.denoiser_strength = 0.5
+    args.denoiser_strength = 0
     args.sigma = 0.666
+    args.custom_checkpoint = 15
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)
 
-  checkpoint = args.custom_checkpoint if args.custom_checkpoint else get_last_checkpoint(training_dir_path)
+  checkpoint = args.custom_checkpoint if str(args.custom_checkpoint) else get_last_checkpoint(training_dir_path)
 
   wav_name = os.path.basename(args.wav)[:-4]
   infer_dir = get_inference_dir(training_dir_path, wav_name, checkpoint, "{}_{}".format(args.sigma, args.denoiser_strength))

@@ -38,7 +38,7 @@ if __name__ == "__main__":
     args.training_dir = 'wg_debug'
     args.speakers = 'ljs_en_v2,all'
     args.hparams = 'batch_size=4,iters_per_checkpoint=5,fp16_run=False,with_tensorboard=True'
-    args.continue_training = True
+    args.continue_training = False
 
   if not args.base_dir:
     raise Exception("Argument 'base_dir' is required.")

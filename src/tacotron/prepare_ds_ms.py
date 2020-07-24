@@ -108,8 +108,9 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
     # reason: speakers with same utterance counts should not have the same validation sets
     speaker_seed = seed + str_to_int(speaker)
 
+    train = speaker_new_rows
     if create_testset:
-      train, test = train_test_split(speaker_new_rows, test_size=test_size, random_state=speaker_seed)
+      train, test = train_test_split(train, test_size=test_size, random_state=speaker_seed)
       testset.extend(test)
 
     if create_valset:

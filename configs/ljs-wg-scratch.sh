@@ -59,6 +59,7 @@ python ./src/script_paths.py \
   --base_dir=$base_dir \
   --custom_training_name=$custom_training_name \
   --no_debugging
+  
 python ./src/waveglow/script_train.py \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \

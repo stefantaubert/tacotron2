@@ -50,17 +50,17 @@ def load_model(hparams):
 
   return model
 
-def load_model_for_inference(path):
-  assert os.path.isfile(path)
-  checkpoint_dict = torch.load(path, map_location='cpu')
-  model_state_dict = checkpoint_dict['state_dict']
-  hparams = create_hparams()
-  model = load_model(hparams)
-  model.load_state_dict(model_state_dict)
-  model.eval().half()
-  for k in model.convinv:
-    k.float()
-  return model
+# def load_model_for_inference(path):
+#   assert os.path.isfile(path)
+#   checkpoint_dict = torch.load(path, map_location='cpu')
+#   model_state_dict = checkpoint_dict['state_dict']
+#   hparams = create_hparams()
+#   model = load_model(hparams)
+#   model.load_state_dict(model_state_dict)
+#   model.eval().half()
+#   for k in model.convinv:
+#     k.float()
+#   return model
   
 def load_checkpoint(checkpoint_path, model, optimizer):
   assert os.path.isfile(checkpoint_path)
