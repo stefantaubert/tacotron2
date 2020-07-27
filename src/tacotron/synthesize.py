@@ -41,10 +41,10 @@ class Synthesizer():
     torch_model = torch.load(checkpoint_path)
     state_dict = torch_model['state_dict']
     self.model.load_state_dict(state_dict)
-    self.model.cuda().eval().half()
+    self.model.cuda()
+    self.model.eval()
 
-    self.synthesizer = WGSynthesizer()
-    self.synthesizer.load_model(waveglow_path, for_taco_infer=True)
+    self.synthesizer = WGSynthesizer(waveglow_path)
 
   def infer(self, symbols, speaker_id: int, sigma, denoiser_strength):
     sequence = np.array([symbols])

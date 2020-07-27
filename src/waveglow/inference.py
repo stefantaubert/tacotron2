@@ -49,10 +49,8 @@ from src.tacotron.layers import TacotronSTFT
 from src.waveglow.mel2samp import MelParser
 
 class Synthesizer():
-  def __init__(self):
+  def __init__(self, checkpoint_path, hparams=None):
     super().__init__()
-
-  def load_model(self, checkpoint_path, hparams=None, for_taco_infer=False):
     assert os.path.isfile(checkpoint_path)
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
     model_state_dict = checkpoint_dict['state_dict']
@@ -61,35 +59,33 @@ class Synthesizer():
     model = load_model(hparams)
     model.load_state_dict(model_state_dict)
 
-    if for_taco_infer:
-      model.eval().half()
-      for k in model.convinv:
-        k.float()
-    else:
-      model = model.remove_weightnorm(model)
-      model.cuda().eval()
+    model = model.remove_weightnorm(model)
+    model.cuda()
+    model.eval()
+    
+    denoiser = Denoiser(model)
+    denoiser.cuda()
     
     self.model = model
-    self.denoiser = Denoiser(self.model).cuda()
+    self.denoiser = denoiser
 
   def infer_mel(self, mel, sigma, denoiser_strength):
-    assert self.model
     with torch.no_grad():
       audio = self.model.infer(mel, sigma=sigma)
       if denoiser_strength > 0:
         assert self.denoiser
         audio = self.denoiser(audio, denoiser_strength)
     audio = audio.squeeze()
-    audio = audio.cpu().numpy()
+    audio = audio.cpu()
+    audio = audio.numpy()
     return audio
 
 def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str, infer_wav_path: str, denoiser_strength: float, sigma: float):
   hparams = create_hparams(hparams)
-  synth = Synthesizer()
 
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), str(checkpoint))
   print("Using model:", checkpoint_path)
-  synth.load_model(checkpoint_path, hparams)
+  synth = Synthesizer(checkpoint_path, hparams)
   
   # if is_fp16:
   #   from apex import amp

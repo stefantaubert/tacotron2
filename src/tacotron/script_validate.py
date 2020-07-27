@@ -40,9 +40,9 @@ if __name__ == "__main__":
 
   if not args.no_debugging:
     args.base_dir = '/datasets/models/taco2pt_v2'
-    args.training_dir = 'debug'
-    #args.utterance = "LJ001-0001"
-    args.utterance = "random-val"
+    args.training_dir = 'ljs_ipa_ms_from_scratch'
+    args.utterance = "LJ002-0205"
+    #args.utterance = "random-val"
     args.waveglow = "/datasets/models/pretrained/waveglow_256channels_universal_v5.pt"
 
   training_dir_path = os.path.join(args.base_dir, args.training_dir)

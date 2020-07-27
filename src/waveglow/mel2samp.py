@@ -50,11 +50,15 @@ class MelParser():
       mel_fmax=hparams.mel_fmax
     )
 
-  def get_mel(self, path, segment_length=None):
+  def get_mel(self, path, segment_length=None) -> tuple:
+    '''
+    returns mel and wav_tensor
+    - mel is float32 = FloatTensor
+    '''
     wav, sampling_rate = wav_to_float32(path)
 
     if sampling_rate != self.stft.sampling_rate:
-      raise ValueError("{} {} SR doesn't match target {} SR".format(filename, sampling_rate, self.stft.sampling_rate))
+      raise ValueError("{} {} SR doesn't match target {} SR".format(path, sampling_rate, self.stft.sampling_rate))
     
     wav_tensor = torch.FloatTensor(wav)
 
