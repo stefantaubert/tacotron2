@@ -104,9 +104,9 @@ class Invertible1x1Conv(torch.nn.Module):
 
 class WN(torch.nn.Module):
   """
-  This is the WaveNet like layer for the affine coupling.  The primary difference
-  from WaveNet is the convolutions need not be causal.  There is also no dilation
-  size reset.  The dilation only doubles on each layer
+  This is the WaveNet like layer for the affine coupling. The primary difference
+  from WaveNet is the convolutions need not be causal. There is also no dilation
+  size reset. The dilation only doubles on each layer
   """
   def __init__(self, n_in_channels, n_mel_channels, hparams):
     super(WN, self).__init__()

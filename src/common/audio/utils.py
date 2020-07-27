@@ -43,6 +43,11 @@ def wav_to_float32(path) -> (np.float32, int):
   wav = wav.astype(np.float32)
   return wav, sampling_rate
 
+def mel_to_numpy(mel):
+    mel = mel.squeeze(0)
+    mel = mel.cpu()
+    mel = mel.numpy()
+    return mel
 
 if __name__ == "__main__":
   wav, _ = wav_to_float32("/datasets/models/taco2pt_v2/thchs_ipa_warm_mapped_all_tones/inference/validation_2020-07-27_08-54-17_D31_769_D31_50777/validation_2020-07-27_08-54-17_D31_769_D31_50777_inferred.wav")

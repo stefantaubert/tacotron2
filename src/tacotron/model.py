@@ -584,8 +584,7 @@ class Tacotron2(nn.Module):
     outputs.append(embedded_speaker)
     merged_outputs = torch.cat(outputs, -1)
 
-    mel_outputs, gate_outputs, alignments = self.decoder.inference(
-      merged_outputs)
+    mel_outputs, gate_outputs, alignments = self.decoder.inference(merged_outputs)
 
     mel_outputs_postnet = self.postnet(mel_outputs)
     mel_outputs_postnet = mel_outputs + mel_outputs_postnet

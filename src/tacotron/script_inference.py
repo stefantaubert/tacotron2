@@ -8,13 +8,13 @@ from src.common.utils import parse_ds_speaker
 from src.script_paths import (ds_preprocessed_file_name,
                               ds_preprocessed_symbols_name, filelist_file_name,
                               filelist_symbols_file_name, get_ds_dir,
-                              get_filelist_dir, get_inference_dir,
+                              get_filelist_dir, get_inference_dir, get_checkpoint_dir,
                               inference_config_file, log_inference_config,
                               log_input_file, log_map_file, log_train_config,
                               log_train_map, train_config_file)
 from src.tacotron.prepare_ds import prepare
 from src.tacotron.script_plot_embeddings import analyse
-from src.tacotron.synthesize import infer
+from src.synthesize import infer
 from src.tacotron.train import get_last_checkpoint, start_train
 from src.tacotron.txt_pre import process_input_text
 
@@ -37,6 +37,7 @@ if __name__ == "__main__":
   parser.add_argument('--sentence_pause_s', type=float, default=0.5)
   parser.add_argument('--sigma', type=float, default=0.666)
   parser.add_argument('--denoiser_strength', type=float, default=0.01)
+  parser.add_argument('--sampling_rate', type=float, default=22050)
   parser.add_argument('--analysis', action='store_true')
 
   args = parser.parse_args()
@@ -91,16 +92,26 @@ if __name__ == "__main__":
 
   process_input_text(
     training_dir_path,
-    infer_dir_path, ipa=args.ipa, ignore_tones=args.ignore_tones, ignore_arcs=args.ignore_arcs, subset_id=args.subset_id, lang=args.lang, use_map=bool(args.map))
+    infer_dir_path,
+    ipa=args.ipa,
+    ignore_tones=args.ignore_tones,
+    ignore_arcs=args.ignore_arcs,
+    subset_id=args.subset_id,
+    lang=args.lang,
+    use_map=bool(args.map)
+  )
+
+  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   infer(
     training_dir_path=training_dir_path,
     infer_dir_path=infer_dir_path,
     hparams=args.hparams,
     waveglow=args.waveglow,
-    checkpoint=checkpoint,
+    checkpoint_path=checkpoint_path,
     speaker=args.speaker,
     analysis=args.analysis,
     sentence_pause_s=args.sentence_pause_s,
     sigma=args.sigma,
-    denoiser_strength=args.denoiser_strength
+    denoiser_strength=args.denoiser_strength,
+    sampling_rate=args.sampling_rate
   )

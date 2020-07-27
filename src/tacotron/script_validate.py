@@ -13,7 +13,7 @@ from src.common.utils import (csv_separator, get_speaker_count_csv,
                               symbols_str_col, utt_name_col, wavpath_col)
 from src.script_paths import (ds_preprocessed_file_name,
                               ds_preprocessed_symbols_name, filelist_file_name,
-                              filelist_symbols_file_name,
+                              filelist_symbols_file_name, get_checkpoint_dir,
                               filelist_validation_file_name, filelist_test_file_name, get_ds_dir,
                               get_filelist_dir, get_inference_dir,
                               get_validation_dir, inference_config_file,
@@ -22,7 +22,7 @@ from src.script_paths import (ds_preprocessed_file_name,
                               train_config_file)
 from src.tacotron.prepare_ds import prepare
 from src.tacotron.script_plot_embeddings import analyse
-from src.tacotron.synthesize import validate
+from src.synthesize import validate
 from src.tacotron.train import get_last_checkpoint, start_train
 from src.tacotron.txt_pre import process_input_text
 
@@ -108,5 +108,6 @@ if __name__ == "__main__":
   
   print("Speaker is: {} ({})".format(speaker_name, str(speaker_id)))
   infer_dir_path = get_validation_dir(training_dir_path, infer_utterance_name, checkpoint, speaker_name)
+  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
 
-  validate(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, checkpoint=checkpoint, infer_data=infer_data)
+  validate(training_dir_path, infer_dir_path, hparams=args.hparams, waveglow=args.waveglow, checkpoint_path=checkpoint_path, infer_data=infer_data)

@@ -7,7 +7,6 @@ import torch.utils.data
 from src.common.utils import load_filepaths_and_symbols, load_wav_to_torch
 from src.tacotron.layers import TacotronSTFT
 from src.text.symbol_converter import deserialize_symbol_ids
-from src.common.audio.utils import wav_to_float32
 from src.waveglow.mel2samp import MelParser
 
 class SymbolsMelLoader(torch.utils.data.Dataset):

@@ -79,7 +79,7 @@ class MelParser():
     wav_tensor = wav_tensor.unsqueeze(0)
     wav_tensor = torch.autograd.Variable(wav_tensor, requires_grad=False)
     melspec = self.stft.mel_spectrogram(wav_tensor)
-    melspec = torch.squeeze(melspec, 0)
+    melspec = melspec.squeeze(0)
     return melspec
 
 class Mel2Samp(torch.utils.data.Dataset):

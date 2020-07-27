@@ -44,7 +44,6 @@ from src.waveglow.denoiser import Denoiser
 from src.waveglow.hparams import create_hparams
 from src.waveglow.train import get_checkpoint_dir, load_model
 from src.common.audio.utils import float_to_wav
-from src.common.audio.utils import wav_to_float32
 from src.tacotron.layers import TacotronSTFT
 from src.waveglow.mel2samp import MelParser
 
@@ -60,11 +59,11 @@ class Synthesizer():
     model.load_state_dict(model_state_dict)
 
     model = model.remove_weightnorm(model)
-    model.cuda()
-    model.eval()
+    model = model.cuda()
+    model = model.eval()
     
     denoiser = Denoiser(model)
-    denoiser.cuda()
+    denoiser = denoiser.cuda()
     
     self.model = model
     self.denoiser = denoiser
@@ -95,8 +94,9 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
 
   mel_parser = MelParser(hparams)
   mel, _ = mel_parser.get_mel(infer_wav_path, segment_length=None)
-  mel = torch.autograd.Variable(mel.cuda())
-  mel = torch.unsqueeze(mel, 0)
+  mel = mel.cuda()
+  mel = torch.autograd.Variable(mel)
+  mel = mel.unsqueeze(0)
 
   #mel = mel.half() if is_fp16 else mel
 
