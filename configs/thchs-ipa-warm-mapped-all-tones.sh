@@ -115,20 +115,22 @@ python ./src/waveglow/script_dl_pretrained.py \
 
 export text_map="maps/inference/chn_v1.json"
 export speaker="$ds_name,D31"
+export custom_checkpoint='13019'
+#export custom_checkpoint='50777'
 
 # epoch 19 - 13019
 
 export text="examples/ipa/north_sven_orig.txt"
-python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint='13019'
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint=$custom_checkpoint
 
 export text="examples/ger/nord.txt"
-python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ger --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint='13019'
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ger --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint=$custom_checkpoint
 
 export text="examples/en/north.txt"
-python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=en --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint='13019'
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=en --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint=$custom_checkpoint
 
 export text="examples/ipa/north_ger.txt"
-python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint='13019'
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint=$custom_checkpoint
 
 # Validate
 python ./src/waveglow/script_dl_pretrained.py \
@@ -137,22 +139,22 @@ python ./src/waveglow/script_dl_pretrained.py \
   --no_debugging
   
 export utterance="random-val"
-python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint='13019'
+python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=$custom_checkpoint
 
 export utterance="D31_832"
-python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint='13019'
+python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=$custom_checkpoint
 
 export utterance="D31_764"
-python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint='13019'
+python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=$custom_checkpoint
 
 export utterance="D31_917"
-python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint='13019'
+python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=$custom_checkpoint
 
 export utterance="D31_769"
-python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint='13019'
+python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=$custom_checkpoint
 
 export utterance="D31_953"
-python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint='13019'
+python ./src/tacotron/script_validate.py --no_debugging --base_dir=$base_dir --training_dir=$custom_training_name --waveglow=$waveglow --utterance=$utterance --custom_checkpoint=$custom_checkpoint
 
 # D31_832
 # D31_764
