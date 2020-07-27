@@ -17,7 +17,6 @@ from src.tacotron.prepare_ds import prepare
 from src.tacotron.prepare_ds_ms import prepare as prepare_ms
 from src.common.split_ds import split_ds
 from src.tacotron.txt_pre import process_input_text
-from src.tacotron.synthesize import infer
 from src.tacotron.train import get_last_checkpoint, start_train
 from src.common.train_log import reset_log
 from src.common.utils import args_to_str, duration_col

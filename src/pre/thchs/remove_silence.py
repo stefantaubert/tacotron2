@@ -10,7 +10,6 @@ from tqdm import tqdm
 
 from src.parser.thchs_kaldi_parser import parse as kaldi_parse
 from src.parser.thchs_parser import parse as parse
-from src.tacotron.synthesize import to_wav
 from src.common.utils import create_parent_folder
 from src.common.audio.remove_silence import remove_silence
 

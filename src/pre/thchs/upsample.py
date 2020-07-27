@@ -8,12 +8,12 @@ import scipy.signal as sps
 import os
 from pathlib import Path
 import numpy as np
-from src.tacotron.synthesize import to_wav
+from src.common.audio.utils import float_to_wav
 from src.common.utils import create_parent_folder
 
 def upsample(origin, dest, new_rate):
   new_data, _ = librosa.load(origin, sr=new_rate, mono=True, dtype=np.float32)
-  to_wav(dest, new_data, new_rate)
+  float_to_wav(wav=new_data, path=dest, sample_rate=new_rate, normalize=False)
 
 def ensure_upsampled(origin, dest, kaldi_version: bool, new_rate=22050):
   if kaldi_version:
