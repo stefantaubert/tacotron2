@@ -116,10 +116,17 @@ python ./src/waveglow/script_dl_pretrained.py \
 export text_map="maps/inference/chn_v1.json"
 export speaker="$ds_name,D31"
 #export custom_checkpoint='13019'
-export custom_checkpoint='50777'
+#export custom_checkpoint='50777'
+export custom_checkpoint='64020' # ep 97
 
 # epoch 19 - 13019
 # epoch 77 - 50777
+
+export text="examples/chn/north_wiki.txt"
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=chn --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint=$custom_checkpoint
+
+export text="examples/chn/north.txt"
+python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=chn --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint=$custom_checkpoint
 
 export text="examples/ipa/north_sven_orig.txt"
 python ./src/tacotron/script_inference.py --base_dir=$base_dir --training_dir=$custom_training_name --ipa --text=$text --lang=ipa --ignore_tones --ignore_arcs --speaker=$speaker --waveglow=$waveglow --map=$text_map --no_debugging --analysis --custom_checkpoint=$custom_checkpoint
