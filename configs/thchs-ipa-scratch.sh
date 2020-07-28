@@ -38,18 +38,15 @@ export batch_size=0
 
 # Preprocessing
 
-python ./src/pre/thchs/script_dl.py \
-  --no_debugging \
+python -m src.runner thchs-dl \
   --data_dir=$thchs_original_data \
   --ds_name=$ds_name
 
-python ./src/pre/thchs/script_upsample.py \
-  --no_debugging \
+python -m src.runner thchs-upsample \
   --data_src_dir=$thchs_original_data \
   --data_dest_dir=$thchs_upsampled_data
 
-python ./src/pre/thchs/script_remove_silence.py \
-  --no_debugging \
+python -m src.runner thchs-remove-silence \
   --data_src_dir=$thchs_upsampled_data \
   --data_dest_dir=$thchs_nosil_data \
   --chunk_size=5 \
@@ -58,8 +55,7 @@ python ./src/pre/thchs/script_remove_silence.py \
   --buffer_start_ms=100 \
   --buffer_end_ms=150
 
-python ./src/pre/thchs/script_pre.py \
-  --no_debugging \
+python -m src.runner thchs-pre \
   --base_dir=$base_dir \
   --data_dir="$thchs_nosil_data" \
   --ignore_arcs \
@@ -68,33 +64,29 @@ python ./src/pre/thchs/script_pre.py \
 
 # Training from scratch
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000"
-python ./src/script_paths.py \
+python -m src.runner paths \
   --base_dir=$base_dir \
-  --custom_training_name=$custom_training_name \
-  --no_debugging
-python ./src/tacotron/script_train.py \
+  --custom_training_name=$custom_training_name
+python -m src.runner tacotron-train
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
   --hparams=$hparams \
   --validation_size=0.1 \
-  --test_size=0 \
-  --no_debugging
+  --test_size=0
 
 ## Continue training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000"
-python ./src/tacotron/script_train.py \
+python -m src.runner tacotron-train
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --hparams=$hparams \
-  --continue_training \
-  --no_debugging
+  --continue_training
 
 # Inference
-python ./src/waveglow/script_dl_pretrained.py \
+python -m src.runner waveglow-dl \
   --destination=$waveglow \
-  --auto_convert \
-  --no_debugging
+  --auto_convert
 
 export text_map="maps/inference/chn_v1.json"
 export speaker="$ds_name,A2"

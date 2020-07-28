@@ -11,7 +11,7 @@ from src.common.utils import (csv_separator, get_speaker_count_csv,
                               get_utterance_names_csv, parse_ds_speaker,
                               speaker_id_col, speaker_name_col,
                               symbols_str_col, utt_name_col, wavpath_col)
-from src.script_paths import (ds_preprocessed_file_name,
+from src.paths import (ds_preprocessed_file_name,
                               ds_preprocessed_symbols_name, filelist_file_name,
                               filelist_symbols_file_name,
                               filelist_validation_file_name, get_ds_dir,
@@ -24,33 +24,15 @@ from src.waveglow.prepare_ds import load_filepaths
 from src.waveglow.train import get_last_checkpoint
 from src.waveglow.inference import infer
 
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--no_debugging', action='store_true')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--utterance', type=str, help="Utterance name or random-val or random-val-B12")
-  parser.add_argument('--hparams', type=str)
-  parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias. Start with 0.1 and adjust')
-  parser.add_argument("--sigma", default=1.0, type=float)
-  parser.add_argument('--custom_checkpoint', type=str)
+def main(base_dir, training_dir, utterance, hparams, denoiser_strength, sigma, custom_checkpoint):
+  training_dir_path = os.path.join(base_dir, training_dir)
 
-  args = parser.parse_args()
-
-  if not args.no_debugging:
-    args.base_dir = '/datasets/models/taco2pt_v2'
-    args.training_dir = 'wg_debug'
-    args.utterance = "LJ001-0001"
-    #args.utterance = "random-val"
-
-  training_dir_path = os.path.join(args.base_dir, args.training_dir)
-
-  if args.custom_checkpoint:
-    checkpoint = args.custom_checkpoint
+  if custom_checkpoint:
+    checkpoint = custom_checkpoint
   else:
     checkpoint = get_last_checkpoint(training_dir_path)
 
-  infer_utterance_name = args.utterance
+  infer_utterance_name = utterance
 
   if "random-val" in infer_utterance_name:
     tmp = infer_utterance_name.split('-')
@@ -74,6 +56,18 @@ if __name__ == "__main__":
         infer_utterance_name = x[0]
   basename = os.path.basename(infer_utterance_name)[:-4]
 
-  infer_dir_path = get_validation_dir(training_dir_path, basename, checkpoint, "{}_{}".format(args.sigma, args.denoiser_strength))
+  infer_dir_path = get_validation_dir(training_dir_path, basename, checkpoint, "{}_{}".format(sigma, denoiser_strength))
 
-  infer(training_dir_path, infer_dir_path, hparams=args.hparams, checkpoint=checkpoint, infer_wav_path=infer_utterance_name, denoiser_strength=args.denoiser_strength, sigma=args.sigma)
+  infer(training_dir_path, infer_dir_path, hparams=hparams, checkpoint=checkpoint, infer_wav_path=infer_utterance_name, denoiser_strength=denoiser_strength, sigma=sigma)
+
+if __name__ == "__main__":
+  main(
+    base_dir = '/datasets/models/taco2pt_v2',
+    training_dir = 'wg_debug',
+    utterance = "LJ001-0001",
+    hparams = None,
+    denoiser_strength = 0,
+    sigma = 1,
+    custom_checkpoint = None
+    #utterance = "random-val",
+  )

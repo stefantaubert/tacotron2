@@ -238,7 +238,7 @@ $base_dir
 
 # Maps
 
-Maps can be created with `script_create_map_template.py`.
+Maps can be created with `create_map_template.py`.
 
 ## Weight maps
 

@@ -39,7 +39,7 @@ from scipy.io.wavfile import write
 
 import torch
 from src.common.utils import compare_mels
-from src.tacotron.script_plot_mel import (plot_melspec, stack_images_vertically)
+from src.tacotron.plot_mel import (plot_melspec, stack_images_vertically)
 from src.waveglow.denoiser import Denoiser
 from src.waveglow.hparams import create_hparams
 from src.waveglow.train import get_checkpoint_dir, load_model
@@ -154,3 +154,38 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
 
   copyfile(infer_wav_path, path_original_wav)
   print("Finished.")
+
+import argparse
+import os
+
+from src.paths import get_inference_dir
+from src.waveglow.train import get_last_checkpoint
+
+def main(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom_checkpoint):
+  training_dir_path = os.path.join(base_dir, training_dir)
+
+  checkpoint = custom_checkpoint if str(custom_checkpoint) else get_last_checkpoint(training_dir_path)
+
+  wav_name = os.path.basename(wav)[:-4]
+  infer_dir = get_inference_dir(training_dir_path, wav_name, checkpoint, "{}_{}".format(sigma, denoiser_strength))
+
+  infer(
+    training_dir_path=training_dir_path,
+    infer_dir_path=infer_dir,
+    hparams=hparams,
+    checkpoint=checkpoint,
+    infer_wav_path=wav,
+    denoiser_strength=denoiser_strength,
+    sigma=sigma
+  )
+
+
+if __name__ == "__main__":
+  main(
+    base_dir = '/datasets/models/taco2pt_v2',
+    training_dir = 'wg_debug',
+    wav = "/datasets/LJSpeech-1.1-test/wavs/LJ001-0100.wav",
+    denoiser_strength = 0,
+    sigma = 0.666,
+    custom_checkpoint = ''
+  )

@@ -9,7 +9,7 @@ from math import sqrt
 import numpy as np
 from src.common.utils import parse_json
 
-from src.script_paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_file_name, filelist_weights_file_name, train_map_file, filelist_file_log_name
+from src.paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_file_name, filelist_weights_file_name, train_map_file, filelist_file_log_name
 from src.text.symbol_converter import load_from_file, serialize_symbol_ids, deserialize_symbol_ids
 from src.common.utils import csv_separator
 from src.tacotron.hparams import create_hparams

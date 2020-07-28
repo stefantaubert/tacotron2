@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from src.script_paths import get_log_dir, log_train_file_name
+from src.paths import get_log_dir, log_train_file_name
 
 
 def log(training_dir_path: str, msg: str):

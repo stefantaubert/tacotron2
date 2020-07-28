@@ -122,27 +122,24 @@ def create_description_file(training_dir_path: str):
       f.write('Description\n')
       f.write('-----------\n')
 
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--no_debugging', action='store_true')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--custom_training_name', type=str)
-
-  args = parser.parse_args()
-
-  if not args.no_debugging:
-    args.base_dir = '/datasets/models/taco2pt_v2'
-    args.custom_training_name = 'debug_ljs_ms'
-  
-  if args.custom_training_name != None and args.custom_training_name != "":
-    train_dir_path = os.path.join(args.base_dir, args.custom_training_name)
+def main(base_dir: str, custom_training_name: str):
+  print(base_dir)
+  print(custom_training_name)
+  if custom_training_name != None and custom_training_name != "":
+    train_dir_path = os.path.join(base_dir, custom_training_name)
     os.makedirs(train_dir_path, exist_ok=True)
     print("Ensured folder {} exists.".format(train_dir_path))
-    train_dir_name = args.custom_training_name
+    train_dir_name = custom_training_name
   else:
-    train_dir_name = get_training_dir(args.base_dir, create=True)
-    train_dir_path = os.path.join(args.base_dir, train_dir_name)
+    train_dir_name = get_training_dir(base_dir, create=True)
+    train_dir_path = os.path.join(base_dir, train_dir_name)
 
   create_description_file(train_dir_path)
 
   print(train_dir_name)
+
+if __name__ == "__main__":
+  main(
+    base_dir='/datasets/models/taco2pt_v2',
+    custom_training_name='debug_ljs_ms_test'
+  )

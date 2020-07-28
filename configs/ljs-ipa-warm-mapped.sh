@@ -36,22 +36,20 @@ export batch_size=26
 
 
 # Preprocessing
-python ./src/pre/ljs/script_pre.py \
+python -m src.runner ljs-pre \
   --base_dir=$base_dir \
   --data_dir="$ljs_data" \
   --ipa \
   --ignore_arcs \
   --ds_name=$ds_name \
-  --auto_dl \
-  --no_debugging
+  --auto_dl
 
 # Training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=500,ignore_layers=[embedding.weight,speakers_embedding.weight]"
-python ./src/script_paths.py \
+python -m src.runner paths \
   --base_dir=$base_dir \
-  --custom_training_name=$custom_training_name \
-  --no_debugging
-python ./src/tacotron/script_train.py \
+  --custom_training_name=$custom_training_name
+python -m src.runner tacotron-train
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
@@ -63,23 +61,20 @@ python ./src/tacotron/script_train.py \
   --pretrained_model="$base_dir/thchs_ipa_warm_mapped/checkpoints/6000" \
   --pretrained_model_symbols="$base_dir/thchs_ipa_warm_mapped/filelist/symbols.json" \
   --weight_map_mode='use_map' \
-  --map="maps/weights/en_chn_v1.json" \
-  --no_debugging
+  --map="maps/weights/en_chn_v1.json"
 
 ## Continue training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=500"
-python ./src/tacotron/script_train.py \
+python -m src.runner tacotron-train
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --hparams=$hparams \
-  --continue_training \
-  --no_debugging
+  --continue_training
 
 # Inference
-python ./src/waveglow/script_dl_pretrained.py \
+python -m src.runner waveglow-dl \
   --destination=$waveglow \
-  --auto_convert \
-  --no_debugging
+  --auto_convert
 
 export text_map="maps/inference/en_v1.json"
 export speaker="$ds_name,1"

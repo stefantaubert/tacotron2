@@ -1,7 +1,7 @@
 import argparse
 from src.pre.audio.remove_silence import remove_silence
 from src.waveglow.hparams import create_hparams
-from src.tacotron.script_plot_mel import (Mel2Samp, get_audio, get_segment, plot_melspec, stack_images_vertically)
+from src.tacotron.plot_mel import (Mel2Samp, get_audio, get_segment, plot_melspec, stack_images_vertically)
 import matplotlib.pylab as plt
 from shutil import copyfile
 import os

@@ -61,3 +61,42 @@ def remove_silence_thchs(
     a = os.path.join(origin, 'doc/trans/train.word.txt')
     b = os.path.join(dest, 'doc/trans/train.word.txt')
     copyfile(a, b)
+
+from src.parser.thchs_parser import parse, exists
+from src.parser.thchs_kaldi_parser import parse as kaldi_parse, exists as kaldi_exists
+
+def main(data_src_dir, data_dest_dir, kaldi_version, chunk_size, threshold_start, threshold_end, buffer_start_ms, buffer_end_ms):
+  if kaldi_version:
+    already_removed = kaldi_exists(data_dest_dir)
+  else:
+    already_removed = exists(data_dest_dir)
+  
+  if already_removed:
+    print("Dataset is already without silence.")
+  else:
+    print("Saving to {}".format(data_dest_dir))
+    
+    remove_silence_thchs(
+      origin=data_src_dir,
+      dest=data_dest_dir,
+      kaldi_version=kaldi_version,
+      chunk_size = chunk_size,
+      threshold_start = threshold_start,
+      threshold_end = threshold_end,
+      buffer_start_ms = buffer_start_ms,
+      buffer_end_ms = buffer_end_ms
+    )
+
+    print("Finished.")
+
+if __name__ == "__main__":
+  main(
+    data_src_dir='/datasets/thchs_16bit_22050kHz',
+    data_dest_dir='/datasets/thchs_16bit_22050kHz_nosil',
+    kaldi_version=False,
+    chunk_size=5,
+    threshold_start=-25,
+    threshold_end=-35,
+    buffer_start_ms=100,
+    buffer_end_ms=150
+  )

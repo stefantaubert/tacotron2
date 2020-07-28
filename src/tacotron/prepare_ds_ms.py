@@ -16,7 +16,7 @@ from src.common.utils import (csv_separator, duration_col, parse_ds_speakers,
                               serialize_ds_speakers, speaker_id_col,
                               speaker_name_col, symbols_str_col, utt_name_col,
                               wavpath_col, str_to_int)
-from src.script_paths import (ds_preprocessed_file_name,
+from src.paths import (ds_preprocessed_file_name,
                               ds_preprocessed_symbols_name,
                               filelist_file_log_name, filelist_file_name,
                               filelist_speakers_name,

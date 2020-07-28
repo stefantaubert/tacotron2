@@ -16,13 +16,13 @@ from src.common.audio.utils import float_to_wav
 
 import torch
 from src.common.utils import parse_ds_speakers, parse_json
-from src.script_paths import (filelist_speakers_name, get_checkpoint_dir,
+from src.paths import (filelist_speakers_name, get_checkpoint_dir,
                               get_filelist_dir, get_symbols_path,
                               inference_input_file_name,
                               inference_input_symbols_file_name)
 from src.tacotron.hparams import create_hparams
 from src.tacotron.model import Tacotron2
-from src.tacotron.script_plot_mel import (plot_melspec, stack_images_vertically)
+from src.tacotron.plot_mel import (plot_melspec, stack_images_vertically)
 from src.tacotron.train import get_last_checkpoint, load_model
 from src.text.symbol_converter import deserialize_symbol_ids, load_from_file
 from src.waveglow.inference import Synthesizer as WGSynthesizer

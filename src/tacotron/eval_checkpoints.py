@@ -21,7 +21,7 @@ from src.tacotron.hparams import create_hparams
 from src.common.utils import parse_ds_speakers, get_total_duration_min_df
 
 from src.text.symbol_converter import load_from_file
-from src.script_paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
+from src.paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
 from src.common.train_log import log
 
 from src.tacotron.train import load_model, prepare_directories_and_logger, get_last_checkpoint, validate_core, prepare_dataloaders, load_checkpoint
@@ -79,37 +79,24 @@ def eval_chkpoints(hparams, training_dir_path, select: int, min_it: int, max_it:
   for loss, cp in result:
     print("Validation loss {}: {:9f}".format(cp, loss))
 
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--no_debugging', action='store_true')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--speakers', type=str)
-  parser.add_argument('--hparams', type=str)
-  parser.add_argument('--select', type=int)
-  parser.add_argument('--min', type=int)
-  parser.add_argument('--max', type=int)
-
-  args = parser.parse_args()
-
-  if not args.no_debugging:
-    args.base_dir = '/datasets/models/taco2pt_v2'
-    args.speakers = 'thchs_v5,B2;thchs_v5,A2'
-    args.training_dir = 'debug_ljs_ms'
-    args.hparams = 'batch_size=20'
-    args.select = 500
-    args.min = 0
-
-
-  hparams = create_hparams(args.hparams)
-  training_dir_path = os.path.join(args.base_dir, args.training_dir)
-
+def main(base_dir: str, training_dir: str, speakers: str, hparams: str, select: int, min_it: int, max_it: int):
+  hparams = create_hparams(hparams)
+  training_dir_path = os.path.join(base_dir, training_dir)
 
   conv = load_from_file(get_symbols_path(training_dir_path))
   
   hparams.n_symbols = conv.get_symbol_ids_count()
-  n_speakers = len(parse_ds_speakers(args.speakers))
+  n_speakers = len(parse_ds_speakers(speakers))
   hparams.n_speakers = n_speakers
 
+  eval_chkpoints(hparams, training_dir_path, select=select, min_it=min_it, max_it=max_it)
 
-  eval_chkpoints(hparams, training_dir_path, select=args.select, min_it=args.min, max_it=args.max)
+if __name__ == "__main__":
+  main(
+    base_dir = '/datasets/models/taco2pt_v2',
+    speakers = 'thchs_v5,B2;thchs_v5,A2',
+    training_dir = 'debug_ljs_ms',
+    hparams = 'batch_size=20',
+    select = 500,
+    min_it = 0,
+  )

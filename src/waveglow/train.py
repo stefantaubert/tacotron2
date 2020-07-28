@@ -31,7 +31,7 @@ import os
 import torch
 from src.common.train_log import log
 
-from src.script_paths import filelist_training_file_name, filelist_validation_file_name, get_filelist_dir, get_checkpoint_dir, get_log_dir
+from src.paths import filelist_training_file_name, filelist_validation_file_name, get_filelist_dir, get_checkpoint_dir, get_log_dir
 from src.common.utils import get_total_duration_min_df
 from src.waveglow.prepare_ds import duration_col
 from src.waveglow.hparams import create_hparams
@@ -250,3 +250,64 @@ def start_train(training_dir_path: str, hparams, continue_training: bool):
   duration_s = time.time() - start
   duration_m = duration_s / 60
   log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
+
+import argparse
+import json
+import os
+from shutil import copyfile
+
+from src.waveglow.hparams import create_hparams
+from src.paths import (ds_preprocessed_file_name,
+                   ds_preprocessed_symbols_name, filelist_file_name,
+                   filelist_symbols_file_name,
+                   filelist_weights_file_name, get_ds_dir, get_filelist_dir,
+                   inference_config_file,
+                   log_inference_config, log_input_file, log_map_file,
+                   log_train_config, log_train_map, train_config_file,
+                   train_map_file)
+from src.waveglow.prepare_ds import prepare, duration_col
+from src.common.split_ds import split_ds
+from src.common.train_log import reset_log
+from src.common.utils import args_to_str
+
+def main(base_dir, training_dir, continue_training, seed, speakers, train_size, validation_size, hparams):
+  if not base_dir:
+    raise Exception("Argument 'base_dir' is required.")
+  elif not training_dir:
+    raise Exception("Argument 'training_dir' is required.")
+
+  hparams = create_hparams(hparams)
+  training_dir_path = os.path.join(base_dir, training_dir)
+
+  if not continue_training:
+    reset_log(training_dir_path)
+
+    prepare(
+      base_dir=base_dir,
+      training_dir_path=training_dir_path,
+      speakers=speakers
+    )
+
+    split_ds(
+      base_dir=base_dir,
+      training_dir_path=training_dir_path,
+      train_size=train_size,
+      validation_size=validation_size,
+      seed=seed,
+      duration_col=duration_col
+    )
+    
+  start_train(
+    training_dir_path=training_dir_path,
+    hparams=hparams,
+    continue_training=continue_training
+  )
+
+if __name__ == "__main__":
+  main(
+    base_dir = '/datasets/models/taco2pt_v2',
+    training_dir = 'wg_debug',
+    speakers = 'ljs_en_v2,all',
+    hparams = 'batch_size=4,iters_per_checkpoint=5,fp16_run=False,with_tensorboard=True',
+    continue_training = False,
+  )

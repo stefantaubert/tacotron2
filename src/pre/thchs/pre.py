@@ -18,7 +18,7 @@ from src.parser.thchs_kaldi_parser import \
 from src.parser.thchs_kaldi_parser import exists as kaldi_exists
 from src.parser.thchs_kaldi_parser import parse as kaldi_parse
 from src.parser.thchs_parser import ensure_downloaded, exists, parse
-from src.script_paths import (ds_preprocessed_file_name,
+from src.paths import (ds_preprocessed_file_name,
                               ds_preprocessed_symbols_name,
                               get_all_speakers_path, get_all_symbols_path,
                               get_ds_dir)
@@ -113,34 +113,21 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ignore_tones: bool, i
     #df2.to_csv(os.path.join(ds_dir, ds_preprocessed_file_log_name), header=None, index=None, sep=csv_separator)
   print("Done.")
   print("Dataset preprocessing finished.")
-
+  
 
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--no_debugging', action='store_true')
-  parser.add_argument('--kaldi_version', action='store_true')
-  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
+  kaldi_version = True
+  kaldi_version = False
+  base_dir = '/datasets/models/taco2pt_v2'
+  if kaldi_version:
+    data_dir = '/datasets/THCHS-30'
+    ds_name = 'thchs_kaldi_v5-test'
+    ignore_tones = True
+    ignore_arcs = True
+  else:
+    data_dir = '/datasets/thchs_wav'
+    ds_name = 'thchs_v5-test'
+    ignore_tones = True
+    ignore_arcs = True
 
-  parser.add_argument('--ignore_tones', action='store_true')
-  parser.add_argument('--ignore_arcs', action='store_true')
-  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
-
-  args = parser.parse_args()
-  
-  if not args.no_debugging:
-    args.kaldi_version = True
-    args.kaldi_version = False
-    args.base_dir = '/datasets/models/taco2pt_v2'
-    if args.kaldi_version:
-      args.data_dir = '/datasets/THCHS-30'
-      args.ds_name = 'thchs_kaldi_v5-test'
-      args.ignore_tones = True
-      args.ignore_arcs = True
-    else:
-      args.data_dir = '/datasets/thchs_wav'
-      args.ds_name = 'thchs_v5-test'
-      args.ignore_tones = True
-      args.ignore_arcs = True
-  
-  preprocess(args.base_dir, args.data_dir, args.ds_name, args.ignore_tones, args.ignore_arcs, args.kaldi_version)
+  preprocess(base_dir, data_dir, ds_name, ignore_tones, ignore_arcs, kaldi_version)

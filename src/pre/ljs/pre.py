@@ -1,4 +1,3 @@
-import argparse
 import os
 from src.parser.LJSpeechDatasetParser import LJSpeechDatasetParser, get_metadata_filepath
 import wget
@@ -11,7 +10,7 @@ from tqdm import tqdm
 import librosa
 
 from src.text.ipa2symb import extract_from_sentence
-from src.script_paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path, get_all_speakers_path
+from src.paths import get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, get_all_symbols_path, get_all_speakers_path
 from src.text.adjustments import normalize_text
 from src.text.symbol_converter import init_from_symbols, serialize_symbol_ids
 from src.common.utils import csv_separator
@@ -125,27 +124,17 @@ def preprocess(base_dir: str, data_dir: str, ds_name: str, ipa: bool, ignore_arc
   # df2.to_csv(os.path.join(ds_dir, ds_preprocessed_file_log_name), header=None, index=None, sep=csv_separator)
   print("Dataset preprocessing finished.")
 
+def main(base_dir: str, data_dir: str, ipa: bool, ignore_arcs: bool, ds_name: str, auto_dl: bool):
+  if auto_dl:
+    ensure_downloaded(data_dir)
+
+  preprocess(base_dir, data_dir, ds_name, ipa, ignore_arcs)
 
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--data_dir', type=str, help='LJSpeech dataset directory')
-  parser.add_argument('--ipa', action='store_true', help='transcribe to IPA')
-  parser.add_argument('--ignore_arcs', action='store_true')
-  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
-  parser.add_argument('--auto_dl', action='store_true')
-  parser.add_argument('--no_debugging', action='store_true')
-
-  args = parser.parse_args()
-
-  if not args.no_debugging:
-    args.base_dir = '/datasets/models/taco2pt_v2-tmp'
-    args.data_dir = '/datasets/LJSpeech-1.1-tmp'
-    args.ipa = True
-    args.ignore_arcs = True
-    args.ds_name = 'ljs_ipa_v2-tmp'
-  
-  if args.auto_dl:
-    ensure_downloaded(args.data_dir)
-
-  preprocess(args.base_dir, args.data_dir, args.ds_name, args.ipa, args.ignore_arcs)
+  main(
+    base_dir = '/datasets/models/taco2pt_v2-tmp',
+    data_dir = '/datasets/LJSpeech-1.1-tmp',
+    ipa = True,
+    ignore_arcs = True,
+    ds_name = 'ljs_ipa_v2-tmp'
+  )

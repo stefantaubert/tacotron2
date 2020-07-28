@@ -5,7 +5,7 @@ from shutil import copyfile
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from src.script_paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
+from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
                    filelist_symbols_file_name, filelist_test_file_name,
                    filelist_training_file_name, filelist_validation_file_name,
                    get_ds_dir, get_filelist_dir)

@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 
 import torch
 from src.tacotron.hparams import create_hparams
-from src.script_paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
+from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
                    filelist_file_log_name, filelist_file_name,
                    filelist_symbols_file_name, filelist_weights_file_name,
                    get_all_speakers_path, get_ds_dir, get_filelist_dir,

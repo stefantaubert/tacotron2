@@ -8,7 +8,7 @@ from scipy.spatial import distance
 import torch
 from sklearn.preprocessing import normalize
 from src.text.symbol_converter import load_from_file
-from src.script_paths import get_symbols_path, get_analysis_dir, analysis_2d_file_name, analysis_3d_file_name, analysis_sims_file_name, get_checkpoint_dir
+from src.paths import get_symbols_path, get_analysis_dir, analysis_2d_file_name, analysis_3d_file_name, analysis_sims_file_name, get_checkpoint_dir
 import os
 import argparse
 from src.tacotron.train import get_last_checkpoint
@@ -87,29 +87,23 @@ def analyse(training_dir_path: str, custom_checkpoint: int = None):
   fig = go.Figure(data=plot, layout=layout)
   plt.plot(fig, filename=os.path.join(get_analysis_dir(training_dir_path), "{}_{}".format(str(checkpoint), analysis_2d_file_name)))
 
+def main(base_dir, training_dir, custom_checkpoint):
+  training_dir_path = os.path.join(base_dir, training_dir)
+  analyse(training_dir_path, custom_checkpoint)
+
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--no_debugging', action='store_true')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--custom_checkpoint', type=str)
 
-  args = parser.parse_args()
-  
-  if not args.no_debugging:
-    args.base_dir = '/datasets/models/taco2pt_v2'
-    args.training_dir = 'debug_ljs_ms'
-    #args.custom_checkpoint = 0
-
-  training_dir_path = os.path.join(args.base_dir, args.training_dir)
-  analyse(training_dir_path, args.custom_checkpoint)
-
+  main(
+    base_dir='/datasets/models/taco2pt_v2',
+    training_dir = 'debug_ljs_ms',
+    custom_checkpoint = None,
+  )
 #   models = [
-#     ('ljs_ipa_thchs_no_tone_A11', os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499'), os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499.json')),
-#     ('ljs_en', os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_en_1_ipa_51500'), os.path.join(args.base_dir, filelist_dir, 'ljs_en/1/symbols.json')),
-#     ('thchs_no_tone', os.path.join(args.base_dir, savecheckpoints_dir, 'thchs_no_tone_C17_ipa_2999'), os.path.join(args.base_dir, filelist_dir, 'thchs_no_tone/C17/symbols.json')),
-#     ('ljs_ipa', os.path.join(args.base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000'), os.path.join(args.base_dir, filelist_dir, 'ljs_ipa/1/symbols.json')),
-#     ('thchs', os.path.join(args.base_dir, savecheckpoints_dir, 'thchs_C17_ipa_2999'), os.path.join(args.base_dir, filelist_dir, 'thchs/C17/symbols.json')),
+#     ('ljs_ipa_thchs_no_tone_A11', os.path.join(base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499'), os.path.join(base_dir, savecheckpoints_dir, 'ljs_ipa_thchs_no_tone_A11_1499.json')),
+#     ('ljs_en', os.path.join(base_dir, savecheckpoints_dir, 'ljs_en_1_ipa_51500'), os.path.join(base_dir, filelist_dir, 'ljs_en/1/symbols.json')),
+#     ('thchs_no_tone', os.path.join(base_dir, savecheckpoints_dir, 'thchs_no_tone_C17_ipa_2999'), os.path.join(base_dir, filelist_dir, 'thchs_no_tone/C17/symbols.json')),
+#     ('ljs_ipa', os.path.join(base_dir, savecheckpoints_dir, 'ljs_1_ipa_49000'), os.path.join(base_dir, filelist_dir, 'ljs_ipa/1/symbols.json')),
+#     ('thchs', os.path.join(base_dir, savecheckpoints_dir, 'thchs_C17_ipa_2999'), os.path.join(base_dir, filelist_dir, 'thchs/C17/symbols.json')),
 #   ]
 
-#   analyse(models, args.base_dir, include_plotting=False)
+#   analyse(models, base_dir, include_plotting=False)

@@ -1,4 +1,3 @@
-import argparse
 from src.common.utils import save_json, parse_json
 from src.text.symbol_converter import load_from_file
 from collections import OrderedDict
@@ -47,52 +46,20 @@ def comp(symbolsA: set, symbolsB: set, out: str):
   print("In A & B:\n", set_to_str(symbolsA.intersection(symbolsB)))
   print("A + B:\n", set_to_str(symbolsA.union(symbolsB)))
 
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--no_debugging', action='store_true')
-  parser.add_argument('--a', type=str)
-  parser.add_argument('--b', type=str)
-  parser.add_argument('--existing_map', type=str, help="if your corpora extended and you want to extend an existing symbolsmap.")
-  parser.add_argument('--mode', type=str, choices=["weights", "infer"])
-  parser.add_argument('--out', type=str, default='/tmp/map.json')
-  parser.add_argument('--reverse', action='store_true')
-  parser.add_argument('--ignore_tones', action='store_true')
-  parser.add_argument('--ignore_arcs', action='store_true')
+def main(a, b, existing_map, mode, out, reverse, ignore_tones, ignore_arcs):
 
-  args = parser.parse_args()
-
-  if not args.no_debugging:
-    args.mode = "weights"
-    args.mode = "infer"
-    if args.mode == "weights":
-      args.a = "/datasets/models/taco2pt_v2/ds/ljs_ipa_v2/all_symbols.json"
-      args.b = "/datasets/models/taco2pt_v2/ds/thchs_nosil_tones/all_symbols.json"
-      #args.out = "/datasets/models/symbols/map.json"
-      #args.reverse = True
-    else:
-      args.a = "/datasets/models/taco2pt_v2/ds/ljs_ipa_v2/all_symbols.json"
-      #args.a = "/datasets/models/taco2pt_v2/ds/thchs_v5/all_symbols.json"
-      args.b = "examples/ipa/corpora.txt"
-      #args.out = "/datasets/models/symbols/en_v1.json"
-      args.existing_map = "maps/inference/en_v1.json"
-      args.ignore_tones = True
-      args.ignore_arcs = True
-  
-  a = args.a
-  b = args.b
-  
   skip = False
-  if args.mode == "weights":
-    if args.reverse:
-      a = args.b
-      b = args.a
+  if mode == "weights":
+    if reverse:
+      a = b
+      b = a
     syms_a = read_symbols_from_file(a)
     syms_b = read_symbols_from_file(b)
-  elif args.mode == "infer":
+  elif mode == "infer":
     syms_a = read_symbols_from_file(a)
-    syms_b = read_symbols_from_text(b, args.ignore_tones, args.ignore_arcs)
-    if args.existing_map:
-      existing_map = parse_json(args.existing_map)
+    syms_b = read_symbols_from_text(b, ignore_tones, ignore_arcs)
+    if existing_map:
+      existing_map = parse_json(existing_map)
       existing_syms = set(existing_map.keys())
       print("Ignoring existing symbols: {}".format(set_to_str(existing_syms)))
       syms_b = syms_b.difference(existing_syms)
@@ -101,5 +68,36 @@ if __name__ == "__main__":
         skip = True
     
   if not skip:
-    comp(syms_a, syms_b, args.out)
+    comp(syms_a, syms_b, out)
 
+
+if __name__ == "__main__":
+  mode = "weights"
+  mode = "infer"
+  if mode == "weights":
+    a = "/datasets/models/taco2pt_v2/ds/ljs_ipa_v2/all_symbols.json"
+    b = "/datasets/models/taco2pt_v2/ds/thchs_nosil_tones/all_symbols.json"
+    #out = "/datasets/models/symbols/map.json"
+    #reverse = True
+    ignore_tones = False
+    ignore_arcs = False
+  else:
+    a = "/datasets/models/taco2pt_v2/ds/ljs_ipa_v2/all_symbols.json"
+    #a = "/datasets/models/taco2pt_v2/ds/thchs_v5/all_symbols.json"
+    b = "examples/ipa/corpora.txt"
+    #out = "/datasets/models/symbols/en_v1.json"
+    existing_map = "maps/inference/en_v1.json"
+    ignore_tones = True
+    ignore_arcs = True
+    
+  main(
+    a=a,
+    b=b,
+    existing_map=existing_map,
+    mode=mode,
+    out="/tmp/out.json",
+    reverse=False,
+    ignore_tones=ignore_tones,
+    ignore_arcs=ignore_arcs
+  )
+  

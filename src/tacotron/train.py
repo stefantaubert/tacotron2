@@ -19,7 +19,7 @@ from src.tacotron.hparams import create_hparams
 from src.common.utils import parse_ds_speakers, get_total_duration_min_df, parse_json
 
 from src.text.symbol_converter import load_from_file
-from src.script_paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name, filelist_speakers_name
+from src.paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name, filelist_speakers_name
 from src.common.train_log import log
 
 def reduce_tensor(tensor, n_gpus):
@@ -394,3 +394,77 @@ def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_pa
   duration_m = duration_s / 60
   log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
 # #   #hparams.batch_size=22 only when on all speakers simultanously thchs
+
+import argparse
+import json
+import os
+from shutil import copyfile
+
+from src.tacotron.hparams import create_hparams
+from src.paths import (ds_preprocessed_file_name,
+                   ds_preprocessed_symbols_name, filelist_file_name,
+                   filelist_symbols_file_name,
+                   filelist_weights_file_name, get_ds_dir, get_filelist_dir,
+                   inference_config_file,
+                   log_inference_config, log_input_file, log_map_file,
+                   log_train_config, log_train_map, train_config_file,
+                   train_map_file)
+from src.tacotron.plot_embeddings import analyse
+from src.tacotron.prepare_ds import prepare
+from src.tacotron.prepare_ds_ms import prepare as prepare_ms
+from src.common.split_ds import split_ds
+from src.tacotron.txt_pre import process_input_text
+from src.common.train_log import reset_log
+from src.common.utils import args_to_str, duration_col
+
+def main(base_dir, training_dir, continue_training, seed, warm_start, pretrained_path, speakers, test_size, validation_size, hparams, pretrained_model, pretrained_model_symbols, weight_map_mode, inference_map):
+  if not base_dir:
+    raise Exception("Argument 'base_dir' is required.")
+  elif not training_dir:
+    raise Exception("Argument 'training_dir' is required.")
+
+  hparams = create_hparams(hparams)
+  training_dir_path = os.path.join(base_dir, training_dir)
+
+  if not continue_training:
+    use_map = weight_map_mode == 'use_map'
+    map_path = os.path.join(training_dir_path, train_map_file)
+    if use_map:
+      log_train_map(training_dir_path, inference_map)
+    elif os.path.exists(map_path):
+      os.remove(map_path)
+
+    reset_log(training_dir_path)
+    prepare_ms(base_dir, training_dir_path, speakers=speakers, pretrained_model=pretrained_model, weight_map_mode=weight_map_mode, hparams=hparams, pretrained_model_symbols=pretrained_model_symbols, test_size=test_size, val_size=validation_size, seed=seed)
+    #split_ds(base_dir, training_dir_path, train_size=train_size, validation_size=validation_size, seed=seed, duration_col=duration_col)
+    
+  weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
+  use_weights_map = os.path.exists(weights_path)
+  start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=pretrained_path, warm_start=warm_start, continue_training=continue_training)
+
+  analyse(training_dir_path)
+
+
+if __name__ == "__main__":
+  main(
+    base_dir = '/datasets/models/taco2pt_v2',
+    training_dir = 'debug',
+    speakers = 'thchs_v5,D31;thchs_v5,A5',
+    hparams = 'batch_size=20,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight, speakers_embedding.weight]',
+    pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000",
+    warm_start = False,
+    seed = 1234,
+    test_size = 0.1,
+    validation_size = 0.2,
+    weight_map_mode = None,
+    inference_map = None,
+    pretrained_model = None,
+    pretrained_model_symbols = None,
+    continue_training = False
+    #weight_map_mode = 'same_symbols_only',
+    #weight_map_mode = 'use_map',
+    #map = "maps/weights/chn_en_v1.json",
+    #pretrained_model = "/datasets/models/pretrained/ljs_ipa_scratch_80000",
+    #pretrained_model_symbols = "/datasets/models/pretrained/ljs_ipa_scratch.json",
+    #continue_training = True,
+  )
