@@ -19,10 +19,10 @@ from src.paths import (ds_preprocessed_file_name,
                               get_validation_dir, inference_config_file,
                               log_inference_config, log_input_file,
                               log_map_file, log_train_config, log_train_map,
-                              train_config_file)
+                              train_config_file, get_checkpoint_dir)
 from src.waveglow.prepare_ds import load_filepaths
-from src.waveglow.train import get_last_checkpoint
 from src.waveglow.inference import infer
+from src.common.utils import get_last_checkpoint
 
 def main(base_dir, training_dir, utterance, hparams, denoiser_strength, sigma, custom_checkpoint):
   training_dir_path = os.path.join(base_dir, training_dir)
@@ -30,7 +30,8 @@ def main(base_dir, training_dir, utterance, hparams, denoiser_strength, sigma, c
   if custom_checkpoint:
     checkpoint = custom_checkpoint
   else:
-    checkpoint = get_last_checkpoint(training_dir_path)
+    checkpoint_dir = get_checkpoint_dir(training_dir_path)
+    checkpoint = get_last_checkpoint(checkpoint_dir)
 
   infer_utterance_name = utterance
 

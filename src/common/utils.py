@@ -23,6 +23,17 @@ duration_col = 3
 speaker_id_col = 4
 speaker_name_col = 5
 
+def get_last_checkpoint(checkpoint_dir) -> str:
+  #checkpoint_dir = get_checkpoint_dir(training_dir_path)
+  _, _, filenames = next(os.walk(checkpoint_dir))
+  filenames = [x for x in filenames if ".log" not in x]
+  at_least_one_checkpoint_exists = len(filenames) > 0
+  if at_least_one_checkpoint_exists:
+    last_checkpoint = str(max(list(map(int, filenames))))
+    return last_checkpoint
+  else:
+    return None
+
 def create_parent_folder(file: str):
   path = Path(file)
   os.makedirs(path.parent, exist_ok=True)
@@ -121,12 +132,6 @@ def get_mask_from_lengths(lengths):
   ids = torch.arange(0, max_len, out=torch.cuda.LongTensor(max_len))
   mask = (ids < lengths.unsqueeze(1)).bool()
   return mask
-
-
-def load_wav_to_torch(full_path):
-  sampling_rate, data = read(full_path)
-  return torch.FloatTensor(data.astype(np.float32)), sampling_rate
-
 
 def load_filepaths_and_symbols(filename):
   data = pd.read_csv(filename, header=None, sep=csv_separator)

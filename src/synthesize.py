@@ -12,25 +12,24 @@ from nltk.tokenize import sent_tokenize
 from scipy.io import wavfile
 from scipy.io.wavfile import write
 from tqdm import tqdm
-from src.common.audio.utils import float_to_wav
 
 import torch
+from src.common.audio.utils import float_to_wav, mel_to_numpy
 from src.common.utils import parse_ds_speakers, parse_json
 from src.paths import (filelist_speakers_name, get_checkpoint_dir,
-                              get_filelist_dir, get_symbols_path,
-                              inference_input_file_name,
-                              inference_input_symbols_file_name)
+                       get_filelist_dir, get_symbols_path,
+                       inference_input_file_name,
+                       inference_input_symbols_file_name)
 from src.tacotron.hparams import create_hparams
 from src.tacotron.model import Tacotron2
-from src.tacotron.plot_mel import (plot_melspec, stack_images_vertically)
-from src.tacotron.train import get_last_checkpoint, load_model
+from src.tacotron.plot_mel import plot_melspec, stack_images_vertically
+from src.tacotron.synthesizer import Synthesizer as TacoSynthesizer
+from src.common.utils import get_last_checkpoint
+from src.tacotron.train import load_model
 from src.text.symbol_converter import deserialize_symbol_ids, load_from_file
 from src.waveglow.inference import Synthesizer as WGSynthesizer
 from src.waveglow.mel2samp import MelParser
-
 from src.waveglow.synthesizer import Synthesizer as WGSynthesizer
-from src.tacotron.synthesizer import Synthesizer as TacoSynthesizer
-from src.common.audio.utils import mel_to_numpy
 
 matplotlib.use("Agg")
 
@@ -94,7 +93,7 @@ def validate(training_dir_path: str, infer_dir_path: str, hparams: str, waveglow
   print("Plotting...")
 
   mel_parser = MelParser(taco_synt.hparams)
-  mel_orig, _ = mel_parser.get_mel(wav_orig_path)
+  mel_orig = mel_parser.get_mel(wav_orig_path)[0]
 
   plot_melspec(mel_to_numpy(mel_outputs_postnet), title="Inferred")
   plt.savefig(path_inferred_plot, bbox_inches='tight')
@@ -226,7 +225,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   print("Plotting...")
 
   mel_parser = MelParser(taco_synt.hparams)
-  mel, _ = mel_parser.get_mel(out_path)
+  mel = mel_parser.get_mel(out_path)[0]
   plot_melspec(mel, title=last_dir_name)
   output_name = "{}_h.png".format(last_dir_name)
   out_path = os.path.join(infer_dir_path, output_name)

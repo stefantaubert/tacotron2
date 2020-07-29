@@ -11,7 +11,7 @@ from src.text.symbol_converter import load_from_file
 from src.paths import get_symbols_path, get_analysis_dir, analysis_2d_file_name, analysis_3d_file_name, analysis_sims_file_name, get_checkpoint_dir
 import os
 import argparse
-from src.tacotron.train import get_last_checkpoint
+from src.common.utils import get_last_checkpoint
 
 def analyse(training_dir_path: str, custom_checkpoint: int = None):
   conv = load_from_file(get_symbols_path(training_dir_path))
@@ -20,7 +20,8 @@ def analyse(training_dir_path: str, custom_checkpoint: int = None):
   if custom_checkpoint:
     checkpoint = custom_checkpoint
   else:
-    checkpoint = get_last_checkpoint(training_dir_path)
+    checkpoint_dir = get_checkpoint_dir(training_dir_path)
+    checkpoint = get_last_checkpoint(checkpoint_dir)
   print("Analyzing checkpoint {}...".format(str(checkpoint)))
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')

@@ -23,7 +23,8 @@ from src.paths import (ds_preprocessed_file_name,
 from src.tacotron.prepare_ds import prepare
 from src.tacotron.plot_embeddings import analyse
 from src.synthesize import validate
-from src.tacotron.train import get_last_checkpoint, start_train
+from src.tacotron.train import start_train
+from src.common.utils import get_last_checkpoint
 from src.tacotron.txt_pre import process_input_text
 
 def main(base_dir, training_dir, utterance, hparams, waveglow, custom_checkpoint):
@@ -34,7 +35,8 @@ def main(base_dir, training_dir, utterance, hparams, waveglow, custom_checkpoint
   if custom_checkpoint:
     checkpoint = custom_checkpoint
   else:
-    checkpoint = get_last_checkpoint(training_dir_path)
+    checkpoint_dir = get_checkpoint_dir(training_dir_path)
+    checkpoint = get_last_checkpoint(checkpoint_dir)
 
   preprocessed_path = os.path.join(get_filelist_dir(training_dir_path), ds_preprocessed_file_name)
 

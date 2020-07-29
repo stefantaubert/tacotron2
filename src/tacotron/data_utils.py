@@ -1,13 +1,14 @@
 import random
 
 import numpy as np
+from tqdm import tqdm
 
 import torch
 import torch.utils.data
-from src.common.utils import load_filepaths_and_symbols, load_wav_to_torch
+from src.common.utils import load_filepaths_and_symbols
 from src.tacotron.layers import TacotronSTFT
 from src.text.symbol_converter import deserialize_symbol_ids
-from src.waveglow.mel2samp import MelParser
+
 
 class SymbolsMelLoader(torch.utils.data.Dataset):
   """
@@ -16,29 +17,27 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
     3) computes mel-spectrograms from audio files.
   """
   def __init__(self, audiopaths_and_text, hparams):
-    self.audiopaths_and_symbols = load_filepaths_and_symbols(audiopaths_and_text)
-    self.mel_parser = MelParser(hparams)
-    
+    audiopaths_and_symbols = load_filepaths_and_symbols(audiopaths_and_text)
+
     random.seed(hparams.seed)
-    random.shuffle(self.audiopaths_and_symbols)
+    random.shuffle(audiopaths_and_symbols)
 
-  def get_mel_symbols_pair(self, audiopath_and_text):
-    audiopath, serialized_symbol_ids, speaker_id = audiopath_and_text[0], audiopath_and_text[1], audiopath_and_text[2]
-    symbols_tensor = self.get_symbols(serialized_symbol_ids)
-    mel_tensor, _ = self.mel_parser.get_mel(audiopath, segment_length=None)
-   
-    return (symbols_tensor, mel_tensor, speaker_id)
-
-  def get_symbols(self, serialized_symbol_ids):
-    symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
-    symbols_tensor = torch.IntTensor(symbol_ids)
-    return symbols_tensor
+    print("Loading mels into memory...")
+    self.cache = {}
+    for i, data in tqdm(enumerate(audiopaths_and_symbols), total=len(audiopaths_and_symbols)):
+      audiopath, serialized_symbol_ids, speaker_id = data
+      symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
+      symbols_tensor = torch.IntTensor(symbol_ids)
+      mel_tensor = torch.load(audiopath, map_location='cpu')
+      self.cache[i] = (symbols_tensor, mel_tensor, speaker_id)
 
   def __getitem__(self, index):
-    return self.get_mel_symbols_pair(self.audiopaths_and_symbols[index])
+    #return self.cache[index]
+    symbols_tensor, mel_tensor, speaker_id = self.cache[index]
+    return symbols_tensor.clone().detach(), mel_tensor.clone().detach(), speaker_id
 
   def __len__(self):
-    return len(self.audiopaths_and_symbols)
+    return len(self.cache)
 
 
 class SymbolsMelCollate():

@@ -67,7 +67,7 @@ export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000"
 python -m src.runner paths \
   --base_dir=$base_dir \
   --custom_training_name=$custom_training_name
-python -m src.runner tacotron-train
+python -m src.runner tacotron-train \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
@@ -77,7 +77,7 @@ python -m src.runner tacotron-train
 
 ## Continue training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=2000"
-python -m src.runner tacotron-train
+python -m src.runner tacotron-train \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --hparams=$hparams \

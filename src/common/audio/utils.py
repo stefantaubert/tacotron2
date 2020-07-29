@@ -1,5 +1,6 @@
+import librosa
 import numpy as np
-from scipy.io.wavfile import write, read
+from scipy.io.wavfile import read, write
 
 float32_64_max_wav = 1.0
 int16_max_wav = np.iinfo(np.int16).max # 32767 = 2**15 - 1
@@ -43,6 +44,10 @@ def wav_to_float32(path) -> (np.float32, int):
   wav = wav.astype(np.float32)
   return wav, sampling_rate
 
+def upsample(origin, dest, new_rate):
+  new_data, _ = librosa.load(origin, sr=new_rate, mono=True, dtype=np.float32)
+  float_to_wav(wav=new_data, path=dest, sample_rate=new_rate, normalize=False)
+
 def mel_to_numpy(mel):
     mel = mel.squeeze(0)
     mel = mel.cpu()
@@ -52,4 +57,3 @@ def mel_to_numpy(mel):
 if __name__ == "__main__":
   wav, _ = wav_to_float32("/datasets/models/taco2pt_v2/thchs_ipa_warm_mapped_all_tones/inference/validation_2020-07-27_08-54-17_D31_769_D31_50777/validation_2020-07-27_08-54-17_D31_769_D31_50777_inferred.wav")
   float_to_wav(wav, "/tmp/out.wav", dtype=np.int16, normalize=True, sample_rate=22050)
-

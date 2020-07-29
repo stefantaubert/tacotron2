@@ -4,43 +4,10 @@ if __name__ == "__main__":
   main_parser = argparse.ArgumentParser()
   subparsers = main_parser.add_subparsers(help='sub-command help')
 
-  from src.paths import main as handler
-  parser = subparsers.add_parser('paths', help='preprocess help')
+  from src.common.audio.remove_silence import remove_silence_plot as handler
+  parser = subparsers.add_parser('remove-silence')
   parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--custom_training_name', type=str)
-  parser.set_defaults(invoke_handler=handler)
-
-  from src.pre.ljs.pre import main as handler
-  parser = subparsers.add_parser('ljs-pre')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--data_dir', type=str, help='LJSpeech dataset directory')
-  parser.add_argument('--ipa', action='store_true', help='transcribe to IPA')
-  parser.add_argument('--ignore_arcs', action='store_true')
-  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
-  parser.add_argument('--auto_dl', action='store_true')
-  parser.set_defaults(invoke_handler=handler)
-
-  from src.pre.thchs.dl import main as handler
-  parser = subparsers.add_parser('thchs-dl')
-  parser.add_argument('--kaldi_version', action='store_true')
-  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.thchs.pre import preprocess as handler
-  parser = subparsers.add_parser('thchs-pre')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--kaldi_version', action='store_true')
-  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
-  parser.add_argument('--ignore_tones', action='store_true')
-  parser.add_argument('--ignore_arcs', action='store_true')
-  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.thchs.remove_silence import main as handler
-  parser = subparsers.add_parser('thchs-remove-silence')
-  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
-  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
-  parser.add_argument('--kaldi_version', action='store_true')
+  parser.add_argument('--wav', type=str)
   parser.add_argument('--chunk_size', type=int)
   parser.add_argument('--threshold_start', type=float)
   parser.add_argument('--threshold_end', type=float)
@@ -48,14 +15,99 @@ if __name__ == "__main__":
   parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
   parser.set_defaults(invoke_handler=handler)
   
-  from src.pre.thchs.upsample import ensure_upsampled as handler
+  from src.paths import main as handler
+  parser = subparsers.add_parser('paths', help='preprocess help')
+  parser.add_argument('--base_dir', type=str, help='base directory')
+  parser.add_argument('--custom_training_name', type=str)
+  parser.set_defaults(invoke_handler=handler)
+
+  from src.pre.ljs import ensure_downloaded as handler
+  parser = subparsers.add_parser('ljs-dl')
+  parser.add_argument('--data_dir', type=str, help='LJS dataset directory')
+  parser.set_defaults(invoke_handler=handler)
+  
+  from src.pre.thchs import ensure_downloaded as handler
+  parser = subparsers.add_parser('thchs-dl')
+  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
+  parser.set_defaults(invoke_handler=handler)
+  
+  from src.pre.thchs_kaldi import ensure_downloaded as handler
+  parser = subparsers.add_parser('thchs-kaldi-dl')
+  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
+  parser.set_defaults(invoke_handler=handler)
+  
+  from src.pre.thchs import ensure_upsampled as handler
   parser = subparsers.add_parser('thchs-upsample')
   parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
   parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
-  parser.add_argument('--kaldi_version', action='store_true')
   parser.add_argument('--new_rate', type=int, default=22050)
   parser.set_defaults(invoke_handler=handler)
   
+  from src.pre.thchs_kaldi import ensure_upsampled as handler
+  parser = subparsers.add_parser('thchs-upsample')
+  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
+  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
+  parser.add_argument('--new_rate', type=int, default=22050)
+  parser.set_defaults(invoke_handler=handler)
+  
+  from src.pre.thchs import remove_silence_main as handler
+  parser = subparsers.add_parser('thchs-remove-silence')
+  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
+  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
+  parser.add_argument('--chunk_size', type=int)
+  parser.add_argument('--threshold_start', type=float)
+  parser.add_argument('--threshold_end', type=float)
+  parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
+  parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
+  parser.set_defaults(invoke_handler=handler)
+  
+  from src.pre.thchs_kaldi import remove_silence_main as handler
+  parser = subparsers.add_parser('thchs-kaldi-remove-silence')
+  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
+  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
+  parser.add_argument('--chunk_size', type=int)
+  parser.add_argument('--threshold_start', type=float)
+  parser.add_argument('--threshold_end', type=float)
+  parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
+  parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
+  parser.set_defaults(invoke_handler=handler)
+  
+  from src.pre.ljs import calc_mels as handler
+  parser = subparsers.add_parser('ljs-mels')
+  parser.add_argument('--base_dir', type=str, help='base directory')
+  parser.add_argument('--name', type=str)
+  parser.add_argument('--path', type=str)
+  parser.add_argument('--hparams', type=str)
+  parser.set_defaults(invoke_handler=handler)
+  
+  from src.pre.thchs import calc_mels as handler
+  parser = subparsers.add_parser('thchs-mels')
+  parser.add_argument('--base_dir', type=str, help='base directory')
+  parser.add_argument('--name', type=str)
+  parser.add_argument('--path', type=str)
+  parser.add_argument('--hparams', type=str)
+  parser.set_defaults(invoke_handler=handler)
+  
+  from src.pre.thchs_kaldi import calc_mels as handler
+  parser = subparsers.add_parser('thchs-kaldi-mels')
+  parser.add_argument('--base_dir', type=str, help='base directory')
+  parser.add_argument('--name', type=str)
+  parser.add_argument('--path', type=str)
+  parser.add_argument('--hparams', type=str)
+  parser.set_defaults(invoke_handler=handler)
+  
+  from src.pre.text_pre import main as handler
+  parser = subparsers.add_parser('txt-pre')
+  parser.add_argument('--base_dir', type=str, help='base directory')
+  parser.add_argument('--data_dir', type=str, help='LJSpeech dataset directory')
+  parser.add_argument('--ipa', action='store_true', help='transcribe to IPA')
+  parser.add_argument('--ignore_arcs', action='store_true')
+  parser.add_argument('--ignore_tones', action='store_true')
+  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
+  parser.add_argument('--mel_name', type=str)
+  parser.add_argument('--lang', type=str, choices=["eng", "chn"])
+  parser.set_defaults(invoke_handler=handler)
+
   from src.tacotron.create_map_template import main as handler
   parser = subparsers.add_parser('create-map')
   parser.add_argument('--a', type=str)
@@ -142,7 +194,7 @@ if __name__ == "__main__":
   parser.add_argument('--destination', type=str)
   parser.set_defaults(invoke_handler=handler)
 
-  from src.waveglow.dl_pretrained import convert as handler
+  from src.waveglow.dl_pretrained import main as handler
   parser = subparsers.add_parser('waveglow-dl')
   parser.add_argument('--destination', type=str)
   parser.add_argument('--auto_convert', action='store_true')

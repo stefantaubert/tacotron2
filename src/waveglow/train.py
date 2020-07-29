@@ -25,20 +25,29 @@
 #
 # *****************************************************************************
 import argparse
-import time
 import json
 import os
+import time
+from shutil import copyfile
+
 import torch
-from src.common.train_log import log
-
-from src.paths import filelist_training_file_name, filelist_validation_file_name, get_filelist_dir, get_checkpoint_dir, get_log_dir
-from src.common.utils import get_total_duration_min_df
-from src.waveglow.prepare_ds import duration_col
+from src.waveglow.split_ds import split_ds
+from src.common.train_log import log, reset_log
+from src.common.utils import args_to_str, get_total_duration_min_df, get_last_checkpoint
+from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
+                       filelist_file_name, filelist_symbols_file_name,
+                       filelist_training_file_name,
+                       filelist_validation_file_name,
+                       filelist_weights_file_name, get_checkpoint_dir,
+                       get_ds_dir, get_filelist_dir, get_log_dir,
+                       inference_config_file, log_inference_config,
+                       log_input_file, log_map_file, log_train_config,
+                       log_train_map, train_config_file, train_map_file)
 from src.waveglow.hparams import create_hparams
-
-from torch.utils.data import DataLoader
-from src.waveglow.model import WaveGlow, WaveGlowLoss
 from src.waveglow.mel2samp import Mel2Samp
+from src.waveglow.model import WaveGlow, WaveGlowLoss
+from src.waveglow.prepare_ds import duration_col, prepare
+from torch.utils.data import DataLoader
 
 # #=====START: ADDED FOR DISTRIBUTED======
 # from distributed_waveglow import init_distributed, apply_gradient_allreduce, reduce_tensor
@@ -46,22 +55,11 @@ from src.waveglow.mel2samp import Mel2Samp
 # #=====END:   ADDED FOR DISTRIBUTED======
 
 def load_model(hparams):
-  model = WaveGlow(hparams).cuda()
+  model = WaveGlow(hparams)
+  model = model.cuda()
 
   return model
 
-# def load_model_for_inference(path):
-#   assert os.path.isfile(path)
-#   checkpoint_dict = torch.load(path, map_location='cpu')
-#   model_state_dict = checkpoint_dict['state_dict']
-#   hparams = create_hparams()
-#   model = load_model(hparams)
-#   model.load_state_dict(model_state_dict)
-#   model.eval().half()
-#   for k in model.convinv:
-#     k.float()
-#   return model
-  
 def load_checkpoint(checkpoint_path, model, optimizer):
   assert os.path.isfile(checkpoint_path)
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
@@ -91,17 +89,6 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, hparam
 
   torch.save(data, filepath)
 
-def get_last_checkpoint(training_dir_path: str):
-  checkpoint_dir = get_checkpoint_dir(training_dir_path)
-  _, _, filenames = next(os.walk(checkpoint_dir))
-  filenames = [x for x in filenames if ".log" not in x]
-  at_least_one_checkpoint_exists = len(filenames) > 0
-  if at_least_one_checkpoint_exists:
-    last_checkpoint = str(max(list(map(int, filenames))))
-    return last_checkpoint
-  else:
-    return None
-
 def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
   torch.manual_seed(hparams.seed)
   torch.cuda.manual_seed(hparams.seed)
@@ -130,12 +117,13 @@ def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
   # Load checkpoint if one exists
   iteration = 0
   if continue_training:
-    last_checkpoint = get_last_checkpoint(training_dir_path)
+    checkpoint_dir = get_checkpoint_dir(training_dir_path)
+    last_checkpoint = get_last_checkpoint(checkpoint_dir)
 
     if not last_checkpoint:
       raise Exception("No checkpoint was found to continue training!")
 
-    full_checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), last_checkpoint)
+    full_checkpoint_path = os.path.join(checkpoint_dir, last_checkpoint)
     log(training_dir_path, "Loading checkpoint '{}'".format(full_checkpoint_path))
     model, optimizer, learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer)
     log(training_dir_path, "Loaded checkpoint '{}' from iteration {}" .format(full_checkpoint_path, iteration))
@@ -250,25 +238,6 @@ def start_train(training_dir_path: str, hparams, continue_training: bool):
   duration_s = time.time() - start
   duration_m = duration_s / 60
   log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
-
-import argparse
-import json
-import os
-from shutil import copyfile
-
-from src.waveglow.hparams import create_hparams
-from src.paths import (ds_preprocessed_file_name,
-                   ds_preprocessed_symbols_name, filelist_file_name,
-                   filelist_symbols_file_name,
-                   filelist_weights_file_name, get_ds_dir, get_filelist_dir,
-                   inference_config_file,
-                   log_inference_config, log_input_file, log_map_file,
-                   log_train_config, log_train_map, train_config_file,
-                   train_map_file)
-from src.waveglow.prepare_ds import prepare, duration_col
-from src.common.split_ds import split_ds
-from src.common.train_log import reset_log
-from src.common.utils import args_to_str
 
 def main(base_dir, training_dir, continue_training, seed, speakers, train_size, validation_size, hparams):
   if not base_dir:

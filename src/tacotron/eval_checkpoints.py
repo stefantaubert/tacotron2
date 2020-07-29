@@ -24,7 +24,8 @@ from src.text.symbol_converter import load_from_file
 from src.paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
 from src.common.train_log import log
 
-from src.tacotron.train import load_model, prepare_directories_and_logger, get_last_checkpoint, validate_core, prepare_dataloaders, load_checkpoint
+from src.tacotron.train import load_model, prepare_directories_and_logger, validate_core, prepare_dataloaders, load_checkpoint
+from src.common.utils import get_last_checkpoint
 
 def eval_chkpoints(hparams, training_dir_path, select: int, min_it: int, max_it: int):
   n_gpus = 1

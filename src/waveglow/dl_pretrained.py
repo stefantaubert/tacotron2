@@ -4,6 +4,7 @@ import gdown
 import shutil
 from pathlib import Path
 from src.waveglow.converter.convert import convert
+from src.common.utils import create_parent_folder
 
 def main(destination, auto_convert):
   if not os.path.exists(destination):
@@ -11,8 +12,7 @@ def main(destination, auto_convert):
     # Download waveglow_universal_256channels_v5.pt (644M)
     download_url = "https://drive.google.com/uc?id=1rpK8CzAAirq9sWZhe9nlfvxMF1dRgFbF"
     filename = gdown.download(download_url)
-    path = Path(destination)
-    os.makedirs(path.parent, exist_ok=True)
+    create_parent_folder(destination)
     shutil.move(filename, destination)
 
   if auto_convert:

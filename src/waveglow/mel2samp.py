@@ -56,6 +56,7 @@ class MelParser():
     - mel is float32 = FloatTensor
     '''
     wav, sampling_rate = wav_to_float32(path)
+    duration = len(wav) / sampling_rate
 
     if sampling_rate != self.stft.sampling_rate:
       raise ValueError("{} {} SR doesn't match target {} SR".format(path, sampling_rate, self.stft.sampling_rate))
@@ -73,7 +74,7 @@ class MelParser():
     
     mel = self.__get_mel_core(wav_tensor)
 
-    return (mel, wav_tensor)
+    return (mel, wav_tensor, duration)
       
   def __get_mel_core(self, wav_tensor):
     wav_tensor = wav_tensor.unsqueeze(0)

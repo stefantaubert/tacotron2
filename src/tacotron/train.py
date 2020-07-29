@@ -1,26 +1,43 @@
+import argparse
+import json
+import math
 import os
 import time
-import argparse
-import math
-from numpy import finfo
+from shutil import copyfile
+
 import numpy as np
+from numpy import finfo
 
 import torch
 #from distributed_tacotron import apply_gradient_allreduce
 import torch.distributed as dist
-from torch.utils.data.distributed import DistributedSampler
-from torch.utils.data import DataLoader
-
-from src.tacotron.model import Tacotron2
-from src.tacotron.data_utils import SymbolsMelLoader, SymbolsMelCollate
-from src.tacotron.loss_function import Tacotron2Loss
-from src.tacotron.logger import Tacotron2Logger
+from src.common.train_log import log, reset_log
+from src.common.utils import (args_to_str, duration_col, get_last_checkpoint,
+                              get_total_duration_min_df, parse_ds_speakers,
+                              parse_json)
+from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
+                       filelist_file_name, filelist_speakers_name,
+                       filelist_symbols_file_name, filelist_training_file_name,
+                       filelist_validation_file_name,
+                       filelist_weights_file_name, get_checkpoint_dir,
+                       get_ds_dir, get_filelist_dir, get_log_dir,
+                       get_symbols_path, inference_config_file,
+                       log_inference_config, log_input_file, log_map_file,
+                       log_train_config, log_train_map, train_config_file,
+                       train_map_file)
+from src.tacotron.data_utils import SymbolsMelCollate, SymbolsMelLoader
 from src.tacotron.hparams import create_hparams
-from src.common.utils import parse_ds_speakers, get_total_duration_min_df, parse_json
-
+from src.tacotron.logger import Tacotron2Logger
+from src.tacotron.loss_function import Tacotron2Loss
+from src.tacotron.model import Tacotron2
+from src.tacotron.plot_embeddings import analyse
+from src.tacotron.prepare_ds import prepare
+from src.tacotron.prepare_ds_ms import prepare as prepare_ms
+from src.tacotron.txt_pre import process_input_text
 from src.text.symbol_converter import load_from_file
-from src.paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name, filelist_speakers_name
-from src.common.train_log import log
+from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
+
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -193,17 +210,6 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
   
   return val_loss
 
-def get_last_checkpoint(training_dir_path: str):
-  checkpoint_dir = get_checkpoint_dir(training_dir_path)
-  _, _, filenames = next(os.walk(checkpoint_dir))
-  filenames = [x for x in filenames if ".log" not in x]
-  at_least_one_checkpoint_exists = len(filenames) > 0
-  if at_least_one_checkpoint_exists:
-    last_checkpoint = str(max(list(map(int, filenames))))
-    return last_checkpoint
-  else:
-    return None
-
 def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
       rank, group_name, hparams, continue_training, training_dir_path):
   """Training and validation logging results to tensorboard and stdout
@@ -243,12 +249,17 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   logger = prepare_directories_and_logger(output_directory, log_directory, rank)
   train_loader, valset, collate_fn = prepare_dataloaders(hparams, filelist_dir_path)
 
+  if not len(train_loader):
+    print("Not enough trainingdata.")
+    return False
+
   # Load checkpoint if one exists
   iteration = 0
   epoch_offset = 0
 
   if continue_training:
-    last_checkpoint = get_last_checkpoint(training_dir_path)
+    checkpoint_dir = get_checkpoint_dir(training_dir_path)
+    last_checkpoint = get_last_checkpoint(checkpoint_dir)
 
     if not last_checkpoint:
       raise Exception("No checkpoint was found to continue training!")
@@ -285,6 +296,7 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   # ================ MAIN TRAINING LOOP! ===================
   for epoch in range(epoch_offset, hparams.epochs):
     log(training_dir_path, "Epoch: {}".format(epoch))
+    
     for i, batch in enumerate(train_loader):
       start = time.perf_counter()
       for param_group in optimizer.param_groups:
@@ -358,6 +370,7 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
     checkpoint_path = os.path.join(output_directory,  str(iteration - 1))
     save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
     save_checkpoint_score(checkpoint_path, grad_norm, reduced_loss, valloss, epoch, i)
+  return True
 
 def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool):
   start = time.time()
@@ -387,35 +400,13 @@ def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_pa
   n_gpus = 1 # 'number of gpus'
   group_name = "group_name" # 'Distributed group name'
 
-  train(pretrained_path, use_weights, warm_start, n_gpus, rank, group_name, hparams, continue_training, training_dir_path)
-
-  log(training_dir_path, 'Finished training.')
-  duration_s = time.time() - start
-  duration_m = duration_s / 60
-  log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
+  successfull = train(pretrained_path, use_weights, warm_start, n_gpus, rank, group_name, hparams, continue_training, training_dir_path)
+  if successfull:
+    log(training_dir_path, 'Finished training.')
+    duration_s = time.time() - start
+    duration_m = duration_s / 60
+    log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
 # #   #hparams.batch_size=22 only when on all speakers simultanously thchs
-
-import argparse
-import json
-import os
-from shutil import copyfile
-
-from src.tacotron.hparams import create_hparams
-from src.paths import (ds_preprocessed_file_name,
-                   ds_preprocessed_symbols_name, filelist_file_name,
-                   filelist_symbols_file_name,
-                   filelist_weights_file_name, get_ds_dir, get_filelist_dir,
-                   inference_config_file,
-                   log_inference_config, log_input_file, log_map_file,
-                   log_train_config, log_train_map, train_config_file,
-                   train_map_file)
-from src.tacotron.plot_embeddings import analyse
-from src.tacotron.prepare_ds import prepare
-from src.tacotron.prepare_ds_ms import prepare as prepare_ms
-from src.common.split_ds import split_ds
-from src.tacotron.txt_pre import process_input_text
-from src.common.train_log import reset_log
-from src.common.utils import args_to_str, duration_col
 
 def main(base_dir, training_dir, continue_training, seed, warm_start, pretrained_path, speakers, test_size, validation_size, hparams, pretrained_model, pretrained_model_symbols, weight_map_mode, inference_map):
   if not base_dir:
@@ -440,27 +431,27 @@ def main(base_dir, training_dir, continue_training, seed, warm_start, pretrained
     
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
   use_weights_map = os.path.exists(weights_path)
-  start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=pretrained_path, warm_start=warm_start, continue_training=continue_training)
-
-  analyse(training_dir_path)
+  successfull_training = start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=pretrained_path, warm_start=warm_start, continue_training=continue_training)
+  if successfull_training:
+    analyse(training_dir_path)
 
 
 if __name__ == "__main__":
   main(
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'debug',
-    speakers = 'thchs_v5,D31;thchs_v5,A5',
-    hparams = 'batch_size=20,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight, speakers_embedding.weight]',
-    pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000",
-    warm_start = False,
+    continue_training = False,
     seed = 1234,
+    warm_start = False,
+    pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000",
+    speakers = 'thchs_v6,all',
     test_size = 0.1,
-    validation_size = 0.2,
-    weight_map_mode = None,
-    inference_map = None,
+    validation_size = 0.05,
+    hparams = 'batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight, speakers_embedding.weight]',
     pretrained_model = None,
     pretrained_model_symbols = None,
-    continue_training = False
+    weight_map_mode = None,
+    inference_map = None,
     #weight_map_mode = 'same_symbols_only',
     #weight_map_mode = 'use_map',
     #map = "maps/weights/chn_en_v1.json",

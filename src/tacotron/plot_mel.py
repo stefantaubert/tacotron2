@@ -69,39 +69,39 @@ def stack_images_vertically(list_im, out_path):
   new_im.save(out_path)
 
 if __name__ == "__main__":
-  hparams = create_hparams()
+  # hparams = create_hparams()
 
-  mel2samp = Mel2Samp(hparams)
+  # mel2samp = Mel2Samp(hparams)
   
-  wav_paths = [
-    "/datasets/Report/21.07.20/exp1/validation_2020-07-21_09-27-29_D31_888_D31_10500 (very good)/validation_2020-07-21_09-27-29_D31_888_D31_10500_orig.wav",
-    "/datasets/Report/21.07.20/exp1/validation_2020-07-21_09-27-29_D31_888_D31_10500 (very good)/validation_2020-07-21_09-27-29_D31_888_D31_10500_inferred.wav",
-    #"/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_742.wav",
-    #"/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_743.wav",
-    #"/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_744.wav"
-  ]
+  # wav_paths = [
+  #   "/datasets/Report/21.07.20/exp1/validation_2020-07-21_09-27-29_D31_888_D31_10500 (very good)/validation_2020-07-21_09-27-29_D31_888_D31_10500_orig.wav",
+  #   "/datasets/Report/21.07.20/exp1/validation_2020-07-21_09-27-29_D31_888_D31_10500 (very good)/validation_2020-07-21_09-27-29_D31_888_D31_10500_inferred.wav",
+  #   #"/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_742.wav",
+  #   #"/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_743.wav",
+  #   #"/datasets/thchs_16bit_22050kHz/wav/train/C18/C18_744.wav"
+  # ]
 
-  melspectrograms = []
-  for i, w in enumerate(wav_paths):
-    audio = get_audio(w, target_sr=hparams.sampling_rate)
-    #audio = get_segment(audio)
-    melspectrogram = mel2samp.get_mel(audio)
-    #new_filepath = "/tmp/out.pt"
-    #torch.save(melspectrogram, new_filepath)
-    melspectrograms.append(melspectrogram)
+  # melspectrograms = []
+  # for i, w in enumerate(wav_paths):
+  #   audio = get_audio(w, target_sr=hparams.sampling_rate)
+  #   #audio = get_segment(audio)
+  #   melspectrogram = mel2samp.get_mel(audio)
+  #   #new_filepath = "/tmp/out.pt"
+  #   #torch.save(melspectrogram, new_filepath)
+  #   melspectrograms.append(melspectrogram)
 
-    plot_melspec(melspectrogram, mel_dim_x = 16, factor=1, title=str(i))
-    plt.savefig("/tmp/plot{}.png".format(i), bbox_inches='tight')
-    plt.show()
+  #   plot_melspec(melspectrogram, mel_dim_x = 16, factor=1, title=str(i))
+  #   plt.savefig("/tmp/plot{}.png".format(i), bbox_inches='tight')
+  #   plt.show()
 
-  stack_images_vertically([
-    "/tmp/plot0.png",
-    "/tmp/plot1.png"
-  ],
-    "/tmp/plot.png"
-  )
-  #plot_melspecs(melspectrograms, mel_dim_x = 4, factor=1, titles=["a", "b"])
-  #plt.savefig("/tmp/plot.png", bbox_inches='tight')
+  # stack_images_vertically([
+  #   "/tmp/plot0.png",
+  #   "/tmp/plot1.png"
+  # ],
+  #   "/tmp/plot.png"
+  # )
+  # #plot_melspecs(melspectrograms, mel_dim_x = 4, factor=1, titles=["a", "b"])
+  # #plt.savefig("/tmp/plot.png", bbox_inches='tight')
   
 
-  plt.show()
+  # plt.show()

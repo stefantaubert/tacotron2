@@ -15,8 +15,9 @@ from src.paths import (ds_preprocessed_file_name,
 from src.tacotron.prepare_ds import prepare
 from src.tacotron.plot_embeddings import analyse
 from src.synthesize import infer
-from src.tacotron.train import get_last_checkpoint, start_train
+from src.tacotron.train import start_train
 from src.tacotron.txt_pre import process_input_text
+from src.common.utils import get_last_checkpoint
 
 def main(base_dir: str, training_dir: str, ipa: bool, text: str, lang: str, ignore_tones: bool, ignore_arcs:bool, weights_map: str, speaker: str, hparams: str, waveglow: str, custom_checkpoint: str, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: float, analysis: bool):
   training_dir_path = os.path.join(base_dir, training_dir)
@@ -26,10 +27,13 @@ def main(base_dir: str, training_dir: str, ipa: bool, text: str, lang: str, igno
 
   print("Infering text from:", text)
   input_name = os.path.splitext(os.path.basename(text))[0]
+  checkpoint_dir = get_checkpoint_dir(training_dir_path)
   if custom_checkpoint:
     checkpoint = custom_checkpoint
   else:
-    checkpoint = get_last_checkpoint(training_dir_path)
+    checkpoint = get_last_checkpoint(checkpoint_dir)
+  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
+  
   speaker = parse_ds_speaker(speaker)[1]
   infer_dir_path = get_inference_dir(training_dir_path, input_name, checkpoint, speaker)
   # TODO logging
@@ -54,7 +58,6 @@ def main(base_dir: str, training_dir: str, ipa: bool, text: str, lang: str, igno
     use_map=bool(weights_map)
   )
 
-  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   infer(
     training_dir_path=training_dir_path,
     infer_dir_path=infer_dir_path,

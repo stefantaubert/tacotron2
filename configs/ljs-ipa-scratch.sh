@@ -9,6 +9,7 @@ source /datasets/code/tacotron2/configs/envs/dev-caps.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa_v2"
 export speakers="$ds_name,all"
+export mel_name="taco_ljs"
 export batch_size=26
 
 ## Capslock GCP
@@ -16,6 +17,7 @@ source /datasets/code/tacotron2/configs/envs/prod-caps.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa_v2"
 export speakers="$ds_name,all"
+export mel_name="taco_ljs"
 export batch_size=26
 
 ## GCP
@@ -24,6 +26,7 @@ source /home/stefan_taubert/tacotron2/configs/envs/prod-gcp.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa"
 export speakers="$ds_name,all"
+export mel_name="taco_ljs"
 export batch_size=52
 
 ## Phil
@@ -31,25 +34,37 @@ source /home/stefan/tacotron2/configs/envs/prod-phil.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa"
 export speakers="$ds_name,all"
+export mel_name="taco_ljs"
 export batch_size=26
 
 
 # Preprocessing
-python -m src.runner ljs-pre \
+python -m src.runner ljs-dl \
+  --data_dir="$ljs_data" \
+  
+python -m src.runner ljs-mels \
+  --base_dir=$base_dir \
+  --name="$mel_name" \
+  --path="$ljs_data" \
+  --hparams=segment_length=0
+
+python -m src.runner text-pre \
   --base_dir=$base_dir \
   --data_dir="$ljs_data" \
   --ipa \
   --ignore_arcs \
-  --ds_name=$ds_name \
-  --auto_dl
-
+  --ignore_tones \
+  --mel_name="$mel_name" \
+  --lang="eng" \
+  --ds_name=$ds_name
 
 # Training from scratch
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=1000"
 python -m src.runner paths \
   --base_dir=$base_dir \
   --custom_training_name=$custom_training_name
-python -m src.runner tacotron-train
+
+python -m src.runner tacotron-train \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --speakers=$speakers \
@@ -60,7 +75,7 @@ python -m src.runner tacotron-train
 
 ## Continue training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=1000"
-python -m src.runner tacotron-train
+python -m src.runner tacotron-train \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
   --hparams=$hparams \

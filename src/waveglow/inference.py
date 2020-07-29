@@ -24,28 +24,33 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # *****************************************************************************
+import argparse
 import os
+import tempfile
 from pathlib import Path
 from shutil import copyfile
-import tempfile
-import numpy as np
 
 import imageio
 import matplotlib
-matplotlib.use("Agg")
-
 import matplotlib.pylab as plt
+import numpy as np
 from scipy.io.wavfile import write
 
 import torch
+from src.common.audio.utils import float_to_wav
 from src.common.utils import compare_mels
-from src.tacotron.plot_mel import (plot_melspec, stack_images_vertically)
+from src.paths import get_inference_dir
+from src.tacotron.layers import TacotronSTFT
+from src.tacotron.plot_mel import plot_melspec, stack_images_vertically
 from src.waveglow.denoiser import Denoiser
 from src.waveglow.hparams import create_hparams
-from src.waveglow.train import get_checkpoint_dir, load_model
-from src.common.audio.utils import float_to_wav
-from src.tacotron.layers import TacotronSTFT
 from src.waveglow.mel2samp import MelParser
+from src.waveglow.train import (get_checkpoint_dir,
+                                load_model)
+from src.common.utils import get_last_checkpoint
+
+matplotlib.use("Agg")
+
 
 class Synthesizer():
   def __init__(self, checkpoint_path, hparams=None):
@@ -93,7 +98,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   print("Inferring {}...".format(infer_wav_path))
 
   mel_parser = MelParser(hparams)
-  mel, _ = mel_parser.get_mel(infer_wav_path, segment_length=None)
+  mel = mel_parser.get_mel(infer_wav_path, segment_length=None)[0]
   mel = mel.cuda()
   mel = torch.autograd.Variable(mel)
   mel = mel.unsqueeze(0)
@@ -121,8 +126,8 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
 
   print("Plotting...")
 
-  mel_inferred, _ = mel_parser.get_mel(path_inferred_wav)
-  mel_orig, _ = mel_parser.get_mel(infer_wav_path)
+  mel_inferred = mel_parser.get_mel(path_inferred_wav)[0]
+  mel_orig = mel_parser.get_mel(infer_wav_path)[0]
 
   ax = plot_melspec(mel_inferred, title="Inferred")
   plt.savefig(path_inferred_plot, bbox_inches='tight')
@@ -155,16 +160,11 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   copyfile(infer_wav_path, path_original_wav)
   print("Finished.")
 
-import argparse
-import os
-
-from src.paths import get_inference_dir
-from src.waveglow.train import get_last_checkpoint
-
 def main(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom_checkpoint):
   training_dir_path = os.path.join(base_dir, training_dir)
 
-  checkpoint = custom_checkpoint if str(custom_checkpoint) else get_last_checkpoint(training_dir_path)
+  checkpoint_dir = get_checkpoint_dir(training_dir_path)
+  checkpoint = custom_checkpoint if str(custom_checkpoint) else get_last_checkpoint(checkpoint_dir)
 
   wav_name = os.path.basename(wav)[:-4]
   infer_dir = get_inference_dir(training_dir_path, wav_name, checkpoint, "{}_{}".format(sigma, denoiser_strength))
