@@ -11,9 +11,16 @@ from src.common.audio.remove_silence import remove_silence
 from src.common.audio.utils import float_to_wav, upsample
 from src.common.utils import create_parent_folder, download_tar
 from src.pre.calc_mels import calc_mels
+from src.pre.text_pre import preprocess
 
 
-def ensure_upsampled(data_src_dir, data_dest_dir, new_rate=22050):
+def init_upsample_parser(parser):
+  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory', required=True)
+  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory', required=True)
+  parser.add_argument('--new_rate', type=int, default=22050)
+  return __ensure_upsampled
+
+def __ensure_upsampled(data_src_dir, data_dest_dir, new_rate=22050):
   already_converted = exists(data_dest_dir)
 
   if already_converted:
@@ -30,23 +37,24 @@ def ensure_upsampled(data_src_dir, data_dest_dir, new_rate=22050):
 
     upsample(wav_path, dest_wav_path, new_rate)
 
-  if kaldi_version:
-    for data in tqdm(parsed_data):
-      sent_file = data[5]
-      a = sent_file
-      b = sent_file.replace(data_src_dir, data_dest_dir)
-      copyfile(a, b)
-  else:
-    a = os.path.join(data_src_dir, 'doc/trans/test.word.txt')
-    b = os.path.join(data_dest_dir, 'doc/trans/test.word.txt')
-    create_parent_folder(b)
+  for data in tqdm(parsed_data):
+    sent_file = data[5]
+    a = sent_file
+    b = sent_file.replace(data_src_dir, data_dest_dir)
     copyfile(a, b)
+  
 
-    a = os.path.join(data_src_dir, 'doc/trans/train.word.txt')
-    b = os.path.join(data_dest_dir, 'doc/trans/train.word.txt')
-    copyfile(a, b)
+def init_remove_silence_parser(parser):
+  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory', required=True)
+  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory', required=True)
+  parser.add_argument('--chunk_size', type=int, required=True)
+  parser.add_argument('--threshold_start', type=float, required=True)
+  parser.add_argument('--threshold_end', type=float, required=True)
+  parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
+  parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
+  return __remove_silence_main
 
-def remove_silence_main(
+def __remove_silence_main(
     data_src_dir: str,
     data_dest_dir: str,
     chunk_size: int,
@@ -91,7 +99,11 @@ def remove_silence_main(
 
   print("Finished.")
 
-def ensure_downloaded(dir_path: str):
+def init_download_parser(parser):
+  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory', required=True)
+  return __ensure_downloaded
+
+def __ensure_downloaded(dir_path: str):
   is_downloaded = exists(dir_path)
   if not is_downloaded:
     print("THCHS-30 is not downloaded yet.")
@@ -147,13 +159,28 @@ def parse(dir_path: str):
 
   return res
 
-def calc_mels(base_dir: str, name: str, path: str, hparams: str):
-  data = parse(path)
-  calc_mels(base_dir, name, data, custom_hparams=hparams)
+def init_calc_mels_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--name', type=str, required=True)
+  parser.add_argument('--path', type=str, required=True)
+  parser.add_argument('--hparams', type=str)
+  return __calc_mels
 
+def __calc_mels(base_dir: str, name: str, path: str, hparams: str):
+  data = parse(path)
+  __calc_mels(base_dir, name, data, custom_hparams=hparams)
+
+def init_text_pre_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--mel_name', type=str, required=True)
+  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', required=True)
+  parser.add_argument('--ignore_tones', action='store_true')
+  parser.add_argument('--convert_to_ipa', action='store_true', help='transcribe to IPA')
+  parser.set_defaults(ignore_arcs=True, lang="chn", convert_to_ipa=True)
+  return preprocess
 
 if __name__ == "__main__":
-  ensure_downloaded(
+  __ensure_downloaded(
     dir_path = '/datasets/THCHS-30-test'
   )
 
@@ -161,13 +188,13 @@ if __name__ == "__main__":
     dir_path = '/datasets/THCHS-30'
   )
 
-  ensure_upsampled(
+  __ensure_upsampled(
     data_src_dir='/datasets/THCHS-30-test',
     data_dest_dir='/datasets/THCHS-30-test-22050',
     new_rate=22050
   )
 
-  remove_silence_main(
+  __remove_silence_main(
     data_src_dir='/datasets/THCHS-30-test-22050',
     data_dest_dir='/datasets/THCHS-30-test_nosil',
     chunk_size=5,
@@ -177,7 +204,7 @@ if __name__ == "__main__":
     buffer_end_ms=150
   )
 
-  calc_mels(
+  __calc_mels(
     base_dir="/datasets/models/taco2pt_v2",
     name="thchs_kaldi",
     path="/datasets/THCHS-30",

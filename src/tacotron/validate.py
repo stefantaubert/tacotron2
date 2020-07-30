@@ -27,7 +27,18 @@ from src.tacotron.train import start_train
 from src.common.utils import get_last_checkpoint
 from src.tacotron.txt_pre import process_input_text
 
-def main(base_dir, training_dir, utterance, hparams, waveglow, custom_checkpoint):
+
+def init_validate_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--training_dir', type=str, required=True)
+  parser.add_argument('--utterance', type=str, help="Utterance name or random-val or random-val-B12", required=True)
+  parser.add_argument('--hparams', type=str)
+  parser.add_argument('--waveglow', type=str, required=True)
+  parser.add_argument('--custom_checkpoint', type=str)
+  return __main
+
+
+def __main(base_dir, training_dir, utterance, hparams, waveglow, custom_checkpoint):
   training_dir_path = os.path.join(base_dir, training_dir)
 
   assert os.path.isfile(waveglow)
@@ -96,7 +107,7 @@ def main(base_dir, training_dir, utterance, hparams, waveglow, custom_checkpoint
 
 
 if __name__ == "__main__":
-  main(
+  __main(
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'ljs_ipa_ms_from_scratch',
     utterance = "LJ002-0205",

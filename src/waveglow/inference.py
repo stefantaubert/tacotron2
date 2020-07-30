@@ -49,7 +49,6 @@ from src.waveglow.train import (get_checkpoint_dir,
                                 load_model)
 from src.common.utils import get_last_checkpoint
 
-matplotlib.use("Agg")
 
 
 class Synthesizer():
@@ -160,7 +159,17 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   copyfile(infer_wav_path, path_original_wav)
   print("Finished.")
 
-def main(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom_checkpoint):
+def init_inference_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--training_dir', type=str, required=True)
+  parser.add_argument('--wav', type=str, required=True)
+  parser.add_argument('--hparams', type=str)
+  parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias.')
+  parser.add_argument("--sigma", default=1.0, type=float)
+  parser.add_argument('--custom_checkpoint', type=int)
+  return __main
+
+def __main(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom_checkpoint):
   training_dir_path = os.path.join(base_dir, training_dir)
 
   checkpoint_dir = get_checkpoint_dir(training_dir_path)
@@ -181,7 +190,7 @@ def main(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom_
 
 
 if __name__ == "__main__":
-  main(
+  __main(
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'wg_debug',
     wav = "/datasets/LJSpeech-1.1-test/wavs/LJ001-0100.wav",

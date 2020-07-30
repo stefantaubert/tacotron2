@@ -24,7 +24,17 @@ from src.waveglow.prepare_ds import load_filepaths
 from src.waveglow.inference import infer
 from src.common.utils import get_last_checkpoint
 
-def main(base_dir, training_dir, utterance, hparams, denoiser_strength, sigma, custom_checkpoint):
+def init_validate_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--training_dir', type=str, required=True)
+  parser.add_argument('--utterance', type=str, help="Utterance name or random-val or random-val-B12", required=True)
+  parser.add_argument('--hparams', type=str)
+  parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias. Start with 0.1 and adjust')
+  parser.add_argument("--sigma", default=1.0, type=float)
+  parser.add_argument('--custom_checkpoint', type=str)
+  return __main
+
+def __main(base_dir, training_dir, utterance, hparams, denoiser_strength, sigma, custom_checkpoint):
   training_dir_path = os.path.join(base_dir, training_dir)
 
   if custom_checkpoint:
@@ -62,7 +72,7 @@ def main(base_dir, training_dir, utterance, hparams, denoiser_strength, sigma, c
   infer(training_dir_path, infer_dir_path, hparams=hparams, checkpoint=checkpoint, infer_wav_path=infer_utterance_name, denoiser_strength=denoiser_strength, sigma=sigma)
 
 if __name__ == "__main__":
-  main(
+  __main(
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'wg_debug',
     utterance = "LJ001-0001",

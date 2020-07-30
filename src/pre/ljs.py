@@ -5,9 +5,13 @@ import tarfile
 import wget
 from tqdm import tqdm
 from src.pre.calc_mels import calc_mels
+from src.pre.text_pre import preprocess
 
+def init_download_parser(parser):
+  parser.add_argument('--dir_path', type=str, help='LJS dataset directory', required=True)
+  return __ensure_downloaded
 
-def ensure_downloaded(dir_path: str):
+def __ensure_downloaded(dir_path: str):
   metadata_filepath = __get_metadata_filepath(dir_path)
   metadata_file_exists = os.path.exists(metadata_filepath)
   if not metadata_file_exists:
@@ -79,13 +83,28 @@ def __parse(path: str):
 
   return result
 
-def calc_mels(base_dir: str, name: str, path: str, hparams: str):
+def init_calc_mels_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--name', type=str, required=True)
+  parser.add_argument('--path', type=str, required=True)
+  parser.add_argument('--hparams', type=str)
+  return __calc_mels
+
+def __calc_mels(base_dir: str, name: str, path: str, hparams: str):
   data = __parse(path)
-  calc_mels(base_dir, name, data, custom_hparams=hparams)
+  __calc_mels(base_dir, name, data, custom_hparams=hparams)
+
+def init_text_pre_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--mel_name', type=str, required=True)
+  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', required=True)
+  parser.add_argument('--convert_to_ipa', action='store_true', help='transcribe to IPA')
+  parser.set_defaults(ignore_tones=True, ignore_arcs=True, lang="eng")
+  return preprocess
 
 if __name__ == "__main__":
 
-  ensure_downloaded(
+  __ensure_downloaded(
     data_dir = '/datasets/LJSpeech-1.1-tmp'
   )
 
@@ -93,7 +112,7 @@ if __name__ == "__main__":
     path = '/datasets/LJSpeech-1.1-test'
   )
 
-  calc_mels(
+  __calc_mels(
     base_dir="/datasets/models/taco2pt_v2",
     name="ljs",
     path="/datasets/LJSpeech-1.1",

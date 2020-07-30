@@ -11,9 +11,15 @@ from src.common.audio.remove_silence import remove_silence
 from src.common.audio.utils import float_to_wav, upsample
 from src.common.utils import create_parent_folder, download_tar
 from src.pre.calc_mels import calc_mels
+from src.pre.text_pre import preprocess
 
+def init_upsample_parser(parser):
+  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory', required=True)
+  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory', required=True)
+  parser.add_argument('--new_rate', type=int, default=22050)
+  return __ensure_upsampled
 
-def ensure_upsampled(data_src_dir, data_dest_dir, new_rate=22050):
+def __ensure_upsampled(data_src_dir, data_dest_dir, new_rate=22050):
   already_converted = __exists(data_dest_dir)
 
   if already_converted:
@@ -39,7 +45,17 @@ def ensure_upsampled(data_src_dir, data_dest_dir, new_rate=22050):
     b = os.path.join(data_dest_dir, 'doc/trans/train.word.txt')
     copyfile(a, b)
 
-def remove_silence_main(
+def init_remove_silence_parser(parser):
+  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory', required=True)
+  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory', required=True)
+  parser.add_argument('--chunk_size', type=int, required=True)
+  parser.add_argument('--threshold_start', type=float, required=True)
+  parser.add_argument('--threshold_end', type=float, required=True)
+  parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
+  parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
+  return __remove_silence_main
+
+def __remove_silence_main(
     data_src_dir: str,
     data_dest_dir: str,
     chunk_size: int,
@@ -86,7 +102,11 @@ def remove_silence_main(
   copyfile(a, b)
   print("Finished.")
 
-def ensure_downloaded(dir_path: str):
+def init_download_parser(parser):
+  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory', required=True)
+  return __ensure_downloaded
+
+def __ensure_downloaded(dir_path: str):
   is_downloaded = __exists(dir_path)
   if not is_downloaded:
     print("THCHS-30 is not downloaded yet.")
@@ -150,12 +170,28 @@ def __parse(dir_path: str):
 
   return res
 
-def calc_mels(base_dir: str, name: str, path: str, hparams: str):
+def init_calc_mels_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--name', type=str, required=True)
+  parser.add_argument('--path', type=str, required=True)
+  parser.add_argument('--hparams', type=str)
+  return __calc_mels
+
+def __calc_mels(base_dir: str, name: str, path: str, hparams: str):
   data = __parse(path)
-  calc_mels(base_dir, name, data, custom_hparams=hparams)
+  __calc_mels(base_dir, name, data, custom_hparams=hparams)
+
+def init_text_pre_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--mel_name', type=str)
+  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
+  parser.add_argument('--ignore_tones', action='store_true')
+  parser.add_argument('--convert_to_ipa', action='store_true', help='transcribe to IPA')
+  parser.set_defaults(ignore_arcs=True, lang="chn", convert_to_ipa=True)
+  return preprocess
 
 if __name__ == "__main__":
-  ensure_downloaded(
+  __ensure_downloaded(
     dir_path = '/datasets/thchs_wav'
   )
 
@@ -163,7 +199,7 @@ if __name__ == "__main__":
     dir_path='/datasets/thchs_wav'
   )
 
-  remove_silence_main(
+  __remove_silence_main(
     data_src_dir='/datasets/thchs_16bit_22050kHz',
     data_dest_dir='/datasets/thchs_16bit_22050kHz_nosil',
     kaldi_version=False,
@@ -174,13 +210,13 @@ if __name__ == "__main__":
     buffer_end_ms=150
   )
 
-  ensure_upsampled(
+  __ensure_upsampled(
     data_src_dir='/datasets/thchs_wav',
     data_dest_dir='/datasets/thchs_16bit_22050kHz',
     new_rate=22050
   )
 
-  calc_mels(
+  __calc_mels(
     base_dir="/datasets/models/taco2pt_v2",
     name="thchs",
     path="/datasets/thchs_16bit_22050kHz_nosil",

@@ -239,7 +239,19 @@ def start_train(training_dir_path: str, hparams, continue_training: bool):
   duration_m = duration_s / 60
   log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
 
-def main(base_dir, training_dir, continue_training, seed, speakers, train_size, validation_size, hparams):
+def init_train_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--training_dir', type=str, required=True)
+  parser.add_argument('--continue_training', action='store_true')
+  parser.add_argument('--seed', type=str, default=1234)
+  #parser.add_argument('--pretrained_path', type=str)
+  parser.add_argument('--speakers', type=str, help="ds_name,speaker_id;... or ds_name,all;...", required=True)
+  parser.add_argument('--train_size', type=float, default=0.9)
+  parser.add_argument('--validation_size', type=float, default=1.0)
+  parser.add_argument('--hparams', type=str)
+  return __main
+
+def __main(base_dir, training_dir, continue_training, seed, speakers, train_size, validation_size, hparams):
   if not base_dir:
     raise Exception("Argument 'base_dir' is required.")
   elif not training_dir:
@@ -273,7 +285,7 @@ def main(base_dir, training_dir, continue_training, seed, speakers, train_size, 
   )
 
 if __name__ == "__main__":
-  main(
+  __main(
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'wg_debug',
     speakers = 'ljs_en_v2,all',

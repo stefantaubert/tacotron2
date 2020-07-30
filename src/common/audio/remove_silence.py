@@ -5,8 +5,7 @@ from shutil import copyfile
 import matplotlib.pylab as plt
 from pydub import AudioSegment
 
-from src.tacotron.plot_mel import (Mel2Samp, get_audio, get_segment,
-                                   plot_melspec, stack_images_vertically)
+from src.tacotron.plot_mel import (plot_melspec, stack_images_vertically)
 from src.waveglow.hparams import create_hparams
 
 
@@ -60,7 +59,17 @@ def remove_silence(
   trimmed_sound = sound[start_trim:duration - end_trim]
   trimmed_sound.export(out_path, format="wav")
 
-def remove_silence_plot(
+def init_remove_silence_plot_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--wav', type=str, required=True)
+  parser.add_argument('--chunk_size', type=int, required=True)
+  parser.add_argument('--threshold_start', type=float, required=True)
+  parser.add_argument('--threshold_end', type=float, required=True)
+  parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
+  parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
+  return __remove_silence_plot
+
+def __remove_silence_plot(
     in_path: str,
     base_dir: str,
     chunk_size: int,
@@ -110,7 +119,7 @@ def remove_silence_plot(
   print("Saved results to: {}".format(dest_dir))
 
 if __name__ == "__main__":
-  remove_silence_plot(
+  __remove_silence_plot(
     base_dir = "/datasets/models/taco2pt_v2/analysis/trimming",
     wav = "/datasets/thchs_16bit_22050kHz/wav/train/A13/A13_224.wav",
     threshold_start = -25,

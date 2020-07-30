@@ -94,7 +94,7 @@ python -m src.runner tacotron-train \
   --pretrained_model="/datasets/gcp_home/ljs_ipa_ms_from_scratch/checkpoints/113500" \
   --pretrained_model_symbols="/datasets/gcp_home/ljs_ipa_ms_from_scratch/filelist/symbols.json" \
   --weight_map_mode='use_map' \
-  --map="maps/weights/chn_en_tones.json"
+  --weights_map="maps/weights/chn_en_tones.json"
 
 ## Continue training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs_per_checkpoint=1,epochs=2000"

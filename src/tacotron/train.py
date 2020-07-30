@@ -408,12 +408,25 @@ def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_pa
     log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
 # #   #hparams.batch_size=22 only when on all speakers simultanously thchs
 
-def main(base_dir, training_dir, continue_training, seed, warm_start, pretrained_path, speakers, test_size, validation_size, hparams, pretrained_model, pretrained_model_symbols, weight_map_mode, inference_map):
-  if not base_dir:
-    raise Exception("Argument 'base_dir' is required.")
-  elif not training_dir:
-    raise Exception("Argument 'training_dir' is required.")
+from argparse import ArgumentParser
+def init_train_parser(parser: ArgumentParser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--training_dir', type=str, required=True)
+  parser.add_argument('--continue_training', action='store_true')
+  parser.add_argument('--seed', type=int, default=1234)
+  parser.add_argument('--warm_start', action='store_true')
+  parser.add_argument('--warm_start_model', type=str)
+  parser.add_argument('--speakers', type=str, help="ds_name,speaker_id;... or ds_name,all;...", required=True)
+  parser.add_argument('--test_size', type=float, default=0.001)
+  parser.add_argument('--validation_size', type=float, default=0.1)
+  parser.add_argument('--hparams', type=str)
+  parser.add_argument('--weight_map_mode', type=str, choices=['same_symbols_only', 'use_map'])
+  parser.add_argument('--weight_map', type=str)
+  parser.add_argument('--weight_map_model', type=str)
+  parser.add_argument('--weight_map_model_symbols', type=str)
+  return __main
 
+def __main(base_dir, training_dir, continue_training, seed, warm_start, warm_start_model, speakers, test_size, validation_size, hparams, weight_map_model, weight_map_model_symbols, weight_map_mode, weight_map):
   hparams = create_hparams(hparams)
   training_dir_path = os.path.join(base_dir, training_dir)
 
@@ -421,23 +434,23 @@ def main(base_dir, training_dir, continue_training, seed, warm_start, pretrained
     use_map = weight_map_mode == 'use_map'
     map_path = os.path.join(training_dir_path, train_map_file)
     if use_map:
-      log_train_map(training_dir_path, inference_map)
+      log_train_map(training_dir_path, weight_map)
     elif os.path.exists(map_path):
       os.remove(map_path)
 
     reset_log(training_dir_path)
-    prepare_ms(base_dir, training_dir_path, speakers=speakers, pretrained_model=pretrained_model, weight_map_mode=weight_map_mode, hparams=hparams, pretrained_model_symbols=pretrained_model_symbols, test_size=test_size, val_size=validation_size, seed=seed)
+    prepare_ms(base_dir, training_dir_path, speakers=speakers, pretrained_model=weight_map_model, weight_map_mode=weight_map_mode, hparams=hparams, pretrained_model_symbols=weight_map_model_symbols, test_size=test_size, val_size=validation_size, seed=seed)
     #split_ds(base_dir, training_dir_path, train_size=train_size, validation_size=validation_size, seed=seed, duration_col=duration_col)
     
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
   use_weights_map = os.path.exists(weights_path)
-  successfull_training = start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=pretrained_path, warm_start=warm_start, continue_training=continue_training)
+  successfull_training = start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=warm_start_model, warm_start=warm_start, continue_training=continue_training)
   if successfull_training:
     analyse(training_dir_path)
 
 
 if __name__ == "__main__":
-  main(
+  __main(
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'debug',
     continue_training = False,

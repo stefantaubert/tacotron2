@@ -1,243 +1,88 @@
-import argparse
+from argparse import ArgumentParser
 
-if __name__ == "__main__":
-  main_parser = argparse.ArgumentParser()
+from matplotlib import use as use_matplotlib_backend
+use_matplotlib_backend("Agg")
+
+from src.common.audio.remove_silence import init_remove_silence_plot_parser
+from src.paths import init_path_parser
+from src.pre.ljs import init_calc_mels_parser as init_ljs_calc_mels_parser
+from src.pre.ljs import init_download_parser as init_ljs_download_parser
+from src.pre.ljs import init_text_pre_parser as init_ljs_text_pre_parser
+from src.pre.thchs import init_calc_mels_parser as init_thchs_calc_mels_parser
+from src.pre.thchs import init_download_parser as init_thchs_download_parser
+from src.pre.thchs import init_remove_silence_parser as init_thchs_remove_silence_parser
+from src.pre.thchs import init_upsample_parser as init_thchs_upsample_parser
+from src.pre.thchs import init_text_pre_parser as init_thchs_text_pre_parser
+from src.pre.thchs_kaldi import init_calc_mels_parser as init_thchs_kaldi_calc_mels_parser
+from src.pre.thchs_kaldi import init_download_parser as init_thchs_kaldi_download_parser
+from src.pre.thchs_kaldi import init_remove_silence_parser as init_thchs_kaldi_remove_silence_parser
+from src.pre.thchs_kaldi import init_upsample_parser as init_thchs_kaldi_upsample_parser
+from src.pre.thchs_kaldi import init_text_pre_parser as init_thchs_kaldi_text_pre_parser
+from src.tacotron.create_map_template import init_create_map_parser
+from src.tacotron.eval_checkpoints import init_eval_checkpoints_parser
+from src.tacotron.inference import init_inference_parser as init_taco_inference_parser
+from src.tacotron.plot_embeddings import init_plot_emb_parser
+from src.tacotron.train import init_train_parser as init_taco_train_parser
+from src.tacotron.validate import init_validate_parser as init_taco_validate_parser
+from src.waveglow.converter.convert import init_converter_parser as init_wg_converter_parser
+from src.waveglow.dl_pretrained import init_download_parser as init_wg_download_parser
+from src.waveglow.inference import init_inference_parser as init_wg_inference_parser
+from src.waveglow.train import init_train_parser as init_wg_train_parser
+from src.waveglow.validate import init_validate_parser as init_wg_validate_parser
+
+def __add_parser_to(subparsers, name: str, init_method):
+  parser = subparsers.add_parser(name, help='{} help'.format(name))
+  invoke_method = init_method(parser)
+  parser.set_defaults(invoke_handler=invoke_method)
+  return parser
+
+def __init_parser():
+  main_parser = ArgumentParser()
   subparsers = main_parser.add_subparsers(help='sub-command help')
 
-  from src.common.audio.remove_silence import remove_silence_plot as handler
-  parser = subparsers.add_parser('remove-silence')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--wav', type=str)
-  parser.add_argument('--chunk_size', type=int)
-  parser.add_argument('--threshold_start', type=float)
-  parser.add_argument('--threshold_end', type=float)
-  parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
-  parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.paths import main as handler
-  parser = subparsers.add_parser('paths', help='preprocess help')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--custom_training_name', type=str)
-  parser.set_defaults(invoke_handler=handler)
+  __add_parser_to(subparsers, "paths", init_path_parser)
 
-  from src.pre.ljs import ensure_downloaded as handler
-  parser = subparsers.add_parser('ljs-dl')
-  parser.add_argument('--data_dir', type=str, help='LJS dataset directory')
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.thchs import ensure_downloaded as handler
-  parser = subparsers.add_parser('thchs-dl')
-  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.thchs_kaldi import ensure_downloaded as handler
-  parser = subparsers.add_parser('thchs-kaldi-dl')
-  parser.add_argument('--data_dir', type=str, help='THCHS dataset directory')
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.thchs import ensure_upsampled as handler
-  parser = subparsers.add_parser('thchs-upsample')
-  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
-  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
-  parser.add_argument('--new_rate', type=int, default=22050)
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.thchs_kaldi import ensure_upsampled as handler
-  parser = subparsers.add_parser('thchs-upsample')
-  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
-  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
-  parser.add_argument('--new_rate', type=int, default=22050)
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.thchs import remove_silence_main as handler
-  parser = subparsers.add_parser('thchs-remove-silence')
-  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
-  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
-  parser.add_argument('--chunk_size', type=int)
-  parser.add_argument('--threshold_start', type=float)
-  parser.add_argument('--threshold_end', type=float)
-  parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
-  parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.thchs_kaldi import remove_silence_main as handler
-  parser = subparsers.add_parser('thchs-kaldi-remove-silence')
-  parser.add_argument('--data_src_dir', type=str, help='THCHS dataset directory')
-  parser.add_argument('--data_dest_dir', type=str, help='THCHS destination directory')
-  parser.add_argument('--chunk_size', type=int)
-  parser.add_argument('--threshold_start', type=float)
-  parser.add_argument('--threshold_end', type=float)
-  parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
-  parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved")
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.ljs import calc_mels as handler
-  parser = subparsers.add_parser('ljs-mels')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--name', type=str)
-  parser.add_argument('--path', type=str)
-  parser.add_argument('--hparams', type=str)
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.thchs import calc_mels as handler
-  parser = subparsers.add_parser('thchs-mels')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--name', type=str)
-  parser.add_argument('--path', type=str)
-  parser.add_argument('--hparams', type=str)
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.thchs_kaldi import calc_mels as handler
-  parser = subparsers.add_parser('thchs-kaldi-mels')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--name', type=str)
-  parser.add_argument('--path', type=str)
-  parser.add_argument('--hparams', type=str)
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.pre.text_pre import main as handler
-  parser = subparsers.add_parser('txt-pre')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--data_dir', type=str, help='LJSpeech dataset directory')
-  parser.add_argument('--ipa', action='store_true', help='transcribe to IPA')
-  parser.add_argument('--ignore_arcs', action='store_true')
-  parser.add_argument('--ignore_tones', action='store_true')
-  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset')
-  parser.add_argument('--mel_name', type=str)
-  parser.add_argument('--lang', type=str, choices=["eng", "chn"])
-  parser.set_defaults(invoke_handler=handler)
+  __add_parser_to(subparsers, "ljs-dl", init_ljs_download_parser)
+  __add_parser_to(subparsers, "ljs-mels", init_ljs_calc_mels_parser)
+  __add_parser_to(subparsers, "ljs-text", init_ljs_text_pre_parser)
 
-  from src.tacotron.create_map_template import main as handler
-  parser = subparsers.add_parser('create-map')
-  parser.add_argument('--a', type=str)
-  parser.add_argument('--b', type=str)
-  parser.add_argument('--existing_map', type=str, help="if your corpora extended and you want to extend an existing symbolsmap.")
-  parser.add_argument('--mode', type=str, choices=["weights", "infer"])
-  parser.add_argument('--out', type=str, default='/tmp/map.json')
-  parser.add_argument('--reverse', action='store_true')
-  parser.add_argument('--ignore_tones', action='store_true')
-  parser.add_argument('--ignore_arcs', action='store_true')
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.tacotron.eval_checkpoints import main as handler
-  parser = subparsers.add_parser('eval-checkpoints')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--speakers', type=str)
-  parser.add_argument('--hparams', type=str)
-  parser.add_argument('--select', type=int)
-  parser.add_argument('--min_it', type=int)
-  parser.add_argument('--max_it', type=int)
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.tacotron.plot_embeddings import main as handler
-  parser = subparsers.add_parser('plot-embeddings')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--custom_checkpoint', type=str)
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.tacotron.train import main as handler
-  parser = subparsers.add_parser('tacotron-train')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--continue_training', action='store_true')
-  parser.add_argument('--seed', type=int, default=1234)
-  parser.add_argument('--warm_start', action='store_true')
-  parser.add_argument('--pretrained_path', type=str)
-  parser.add_argument('--speakers', type=str, help="ds_name,speaker_id;... or ds_name,all;...")
-  parser.add_argument('--test_size', type=float, default=0.001)
-  parser.add_argument('--validation_size', type=float, default=0.1)
-  parser.add_argument('--hparams', type=str)
-  parser.add_argument('--pretrained_model', type=str)
-  parser.add_argument('--pretrained_model_symbols', type=str)
-  parser.add_argument('--weight_map_mode', type=str, choices=['', 'same_symbols_only', 'use_map'])
-  parser.add_argument('--inference_map', type=str)
-  parser.set_defaults(invoke_handler=handler)
-  
-  from src.tacotron.validate import main as handler
-  parser = subparsers.add_parser('tacotron-validate')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--utterance', type=str, help="Utterance name or random-val or random-val-B12")
-  parser.add_argument('--hparams', type=str)
-  parser.add_argument('--waveglow', type=str)
-  parser.add_argument('--custom_checkpoint', type=str)
-  parser.set_defaults(invoke_handler=handler)
+  __add_parser_to(subparsers, "thchs-dl", init_thchs_download_parser)
+  __add_parser_to(subparsers, "thchs-upsample", init_thchs_upsample_parser)
+  __add_parser_to(subparsers, "thchs-remove-silence", init_thchs_remove_silence_parser)
+  __add_parser_to(subparsers, "thchs-mels", init_thchs_calc_mels_parser)
+  __add_parser_to(subparsers, "thchs-text", init_thchs_text_pre_parser)
 
-  from src.tacotron.inference import main as handler
-  parser = subparsers.add_parser('tacotron-infer')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--ipa', action='store_true')
-  parser.add_argument('--text', type=str)
-  parser.add_argument('--lang', type=str, choices=["ipa", "en", "chn", "ger"])
-  parser.add_argument('--ignore_tones', action='store_true')
-  parser.add_argument('--ignore_arcs', action='store_true')
-  parser.add_argument('--weights_map', type=str)
-  parser.add_argument('--speaker', type=str)
-  parser.add_argument('--subset_id', type=str)
-  parser.add_argument('--hparams', type=str)
-  parser.add_argument('--waveglow', type=str)
-  parser.add_argument('--custom_checkpoint', type=str)
-  parser.add_argument('--sentence_pause_s', type=float, default=0.5)
-  parser.add_argument('--sigma', type=float, default=0.666)
-  parser.add_argument('--denoiser_strength', type=float, default=0.01)
-  parser.add_argument('--sampling_rate', type=float, default=22050)
-  parser.add_argument('--analysis', action='store_true')
-  parser.set_defaults(invoke_handler=handler)
+  __add_parser_to(subparsers, "thchs-kaldi-dl", init_thchs_kaldi_download_parser)
+  __add_parser_to(subparsers, "thchs-kaldi-upsample", init_thchs_kaldi_upsample_parser)
+  __add_parser_to(subparsers, "thchs-kaldi-remove-silence", init_thchs_kaldi_remove_silence_parser)
+  __add_parser_to(subparsers, "thchs-kaldi-mels", init_thchs_kaldi_calc_mels_parser)
+  __add_parser_to(subparsers, "thchs-kaldi-text", init_thchs_kaldi_text_pre_parser)
 
-  from src.waveglow.converter.convert import convert as handler
-  parser = subparsers.add_parser('waveglow-convert')
-  parser.add_argument('--source', type=str)
-  parser.add_argument('--destination', type=str)
-  parser.set_defaults(invoke_handler=handler)
+  __add_parser_to(subparsers, "create-map", init_create_map_parser)
+  __add_parser_to(subparsers, "eval-checkpoints", init_eval_checkpoints_parser)
+  __add_parser_to(subparsers, "plot-embeddings", init_plot_emb_parser)
+  __add_parser_to(subparsers, "remove-silence", init_remove_silence_plot_parser)
 
-  from src.waveglow.dl_pretrained import main as handler
-  parser = subparsers.add_parser('waveglow-dl')
-  parser.add_argument('--destination', type=str)
-  parser.add_argument('--auto_convert', action='store_true')
-  parser.set_defaults(invoke_handler=handler)
+  __add_parser_to(subparsers, "tacotron-train", init_taco_train_parser)
+  __add_parser_to(subparsers, "tacotron-validate", init_taco_validate_parser)
+  __add_parser_to(subparsers, "tacotron-infer", init_taco_inference_parser)
 
-  from src.waveglow.train import main as handler
-  parser = subparsers.add_parser('waveglow-train')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--continue_training', action='store_true')
-  parser.add_argument('--seed', type=str, default=1234)
-  #parser.add_argument('--pretrained_path', type=str)
-  parser.add_argument('--speakers', type=str, help="ds_name,speaker_id;... or ds_name,all;...")
-  parser.add_argument('--train_size', type=float, default=0.9)
-  parser.add_argument('--validation_size', type=float, default=1.0)
-  parser.add_argument('--hparams', type=str)
-  parser.set_defaults(invoke_handler=handler)
+  __add_parser_to(subparsers, "waveglow-convert", init_wg_converter_parser)
+  __add_parser_to(subparsers, "waveglow-dl", init_wg_download_parser)
+  __add_parser_to(subparsers, "waveglow-train", init_wg_train_parser)
+  __add_parser_to(subparsers, "waveglow-validate", init_wg_validate_parser)
+  __add_parser_to(subparsers, "waveglow-infer", init_wg_inference_parser)
+  return main_parser
 
-  from src.waveglow.validate import main as handler
-  parser = subparsers.add_parser('waveglow-validate')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--utterance', type=str, help="Utterance name or random-val or random-val-B12")
-  parser.add_argument('--hparams', type=str)
-  parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias. Start with 0.1 and adjust')
-  parser.add_argument("--sigma", default=1.0, type=float)
-  parser.add_argument('--custom_checkpoint', type=str)
-  parser.set_defaults(invoke_handler=handler)
-
-  from src.waveglow.inference import main as handler
-  parser = subparsers.add_parser('waveglow-infer')
-  parser.add_argument('--base_dir', type=str, help='base directory')
-  parser.add_argument('--training_dir', type=str)
-  parser.add_argument('--wav', type=str)
-  parser.add_argument('--hparams', type=str)
-  parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias.')
-  parser.add_argument("--sigma", default=1.0, type=float)
-  parser.add_argument('--custom_checkpoint', type=int)
-  parser.set_defaults(invoke_handler=handler)
-
-
-  args = main_parser.parse_args()
-  
+def __process_args(args):
   params = vars(args)
   invoke_handler = params.pop("invoke_handler")
   invoke_handler(**params)
+
+if __name__ == "__main__":
+  main_parser = __init_parser()
+  
+  args = main_parser.parse_args()
+  #args = main_parser.parse_args("ljs-text --base_dir=/datasets/models/taco2pt_v2 --mel_name=ljs --ds_name=test_ljs --convert_to_ipa".split())
+
+  __process_args(args)

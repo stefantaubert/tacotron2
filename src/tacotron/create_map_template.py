@@ -46,7 +46,19 @@ def comp(symbolsA: set, symbolsB: set, out: str):
   print("In A & B:\n", set_to_str(symbolsA.intersection(symbolsB)))
   print("A + B:\n", set_to_str(symbolsA.union(symbolsB)))
 
-def main(a, b, existing_map, mode, out, reverse, ignore_tones, ignore_arcs):
+
+def init_create_map_parser(parser):
+  parser.add_argument('--a', type=str, required=True)
+  parser.add_argument('--b', type=str, required=True)
+  parser.add_argument('--existing_map', type=str, help="if your corpora extended and you want to extend an existing symbolsmap.")
+  parser.add_argument('--mode', type=str, choices=["weights", "infer"], required=True)
+  parser.add_argument('--out', type=str, default='/tmp/map.json')
+  parser.add_argument('--reverse', action='store_true')
+  parser.add_argument('--ignore_tones', action='store_true')
+  parser.add_argument('--ignore_arcs', action='store_true')
+  return __main
+
+def __main(a, b, existing_map, mode, out, reverse, ignore_tones, ignore_arcs):
 
   skip = False
   if mode == "weights":
@@ -90,7 +102,7 @@ if __name__ == "__main__":
     ignore_tones = True
     ignore_arcs = True
     
-  main(
+  __main(
     a=a,
     b=b,
     existing_map=existing_map,

@@ -1,17 +1,22 @@
-import numpy as np
-from sklearn.manifold import TSNE
-from nltk.corpus import stopwords
-import plotly.offline as plt
-import plotly.graph_objs as go
-import json
-from scipy.spatial import distance
-import torch
-from sklearn.preprocessing import normalize
-from src.text.symbol_converter import load_from_file
-from src.paths import get_symbols_path, get_analysis_dir, analysis_2d_file_name, analysis_3d_file_name, analysis_sims_file_name, get_checkpoint_dir
-import os
 import argparse
+import json
+import os
+
+import numpy as np
+import plotly.graph_objs as go
+import plotly.offline as plt
+from nltk.corpus import stopwords
+from scipy.spatial import distance
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import normalize
+
+import torch
 from src.common.utils import get_last_checkpoint
+from src.paths import (analysis_2d_file_name, analysis_3d_file_name,
+                       analysis_sims_file_name, get_analysis_dir,
+                       get_checkpoint_dir, get_symbols_path)
+from src.text.symbol_converter import load_from_file
+
 
 def analyse(training_dir_path: str, custom_checkpoint: int = None):
   conv = load_from_file(get_symbols_path(training_dir_path))
@@ -87,6 +92,12 @@ def analyse(training_dir_path: str, custom_checkpoint: int = None):
   layout = go.Layout(title='Embeddings')
   fig = go.Figure(data=plot, layout=layout)
   plt.plot(fig, filename=os.path.join(get_analysis_dir(training_dir_path), "{}_{}".format(str(checkpoint), analysis_2d_file_name)))
+
+def init_plot_emb_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--training_dir', type=str, required=True)
+  parser.add_argument('--custom_checkpoint', type=str)
+  return main
 
 def main(base_dir, training_dir, custom_checkpoint):
   training_dir_path = os.path.join(base_dir, training_dir)

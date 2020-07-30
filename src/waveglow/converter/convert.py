@@ -2,9 +2,14 @@ import argparse
 import os
 import torch
 
-def convert(in_path, out_path):
-  assert os.path.isfile(in_path)
-  checkpoint_dict = torch.load(in_path, map_location='cpu')
+def init_converter_parser(parser):
+  parser.add_argument('--source', type=str, required=True)
+  parser.add_argument('--destination', type=str, required=True)
+  return __convert
+
+def __convert(source, destination):
+  assert os.path.isfile(source)
+  checkpoint_dict = torch.load(source, map_location='cpu')
   res = {}
   if "iteration" in checkpoint_dict:
     res["iteration"] = checkpoint_dict["iteration"]
@@ -19,11 +24,11 @@ def convert(in_path, out_path):
     model = checkpoint_dict["model"]
     res["state_dict"] = model.state_dict()
   
-  torch.save(res, out_path)
-  print("Successfully converted. Output:", out_path)
+  torch.save(res, destination)
+  print("Successfully converted. Output:", destination)
 
 if __name__ == "__main__":
-  convert(
+  __convert(
     source = '/datasets/phil_home/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt',
     destination = '/datasets/phil_home/taco2pt_v2/pretrained/waveglow_256channels_universal_v5_out.pt'
   )

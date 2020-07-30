@@ -2,6 +2,7 @@ import os
 import random
 import sys
 
+import matplotlib
 import matplotlib.pylab as plt
 import numpy as np
 from scipy.io.wavfile import read
@@ -68,7 +69,7 @@ def stack_images_vertically(list_im, out_path):
     y_offset += im.size[1]
   new_im.save(out_path)
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
   # hparams = create_hparams()
 
   # mel2samp = Mel2Samp(hparams)

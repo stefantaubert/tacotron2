@@ -1,7 +1,6 @@
 import os
 import datetime
 from shutil import copyfile
-import argparse
 from src.common.utils import args_to_str
 
 log_dir = 'logs'
@@ -127,6 +126,11 @@ def create_description_file(training_dir_path: str):
     with open(desc_file, 'w', encoding='utf-8') as f:
       f.write('Description\n')
       f.write('-----------\n')
+
+def init_path_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--custom_training_name', type=str)
+  return main
 
 def main(base_dir: str, custom_training_name: str):
   print(base_dir)

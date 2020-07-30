@@ -31,7 +31,6 @@ from src.waveglow.inference import Synthesizer as WGSynthesizer
 from src.waveglow.mel2samp import MelParser
 from src.waveglow.synthesizer import Synthesizer as WGSynthesizer
 
-matplotlib.use("Agg")
 
 def validate(training_dir_path: str, infer_dir_path: str, hparams: str, waveglow: str, checkpoint_path: str, infer_data: tuple) -> None:
   n_symbols, conv = get_symbols_count(training_dir_path)

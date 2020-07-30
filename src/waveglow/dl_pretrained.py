@@ -3,8 +3,13 @@ import os
 import gdown
 import shutil
 from pathlib import Path
-from src.waveglow.converter.convert import convert
+from src.waveglow.converter.convert import __convert
 from src.common.utils import create_parent_folder
+
+def init_download_parser(parser):
+  parser.add_argument('--destination', type=str, required=True)
+  parser.add_argument('--auto_convert', action='store_true')
+  return main
 
 def main(destination, auto_convert):
   if not os.path.exists(destination):
@@ -25,7 +30,7 @@ def main(destination, auto_convert):
       sys.path.append("converter/")
       import tempfile
       tmp_out = tempfile.mktemp()
-      convert(destination, tmp_out)
+      __convert(destination, tmp_out)
       shutil.move(destination, original_path)
       shutil.move(tmp_out, destination)
 

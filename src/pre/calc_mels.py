@@ -13,7 +13,7 @@ from src.tacotron.layers import TacotronSTFT
 __csv_separator = "\t"
 
 
-def create_hparams(hparams_string=None, verbose=False):
+def __create_hparams(hparams_string=None, verbose=False):
   """Create model hyperparameters. Parse nondefault from given string."""
 
   hparams = tf.contrib.training.HParams(
@@ -93,7 +93,7 @@ def parse_data(base_dir: str, name: str):
 
 def calc_mels(base_dir: str, name: str, data: list, custom_hparams: str):
   result = []
-  hparams = create_hparams(custom_hparams)
+  hparams = __create_hparams(custom_hparams)
   mel_parser = MelParser(hparams)
   dest_dir = get_mels_dir(base_dir, name)
   # with torch.no_grad():

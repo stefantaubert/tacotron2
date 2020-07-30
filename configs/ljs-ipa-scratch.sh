@@ -40,23 +40,20 @@ export batch_size=26
 
 # Preprocessing
 python -m src.runner ljs-dl \
-  --data_dir="$ljs_data" \
+  --dir_path="$ljs_data"
   
 python -m src.runner ljs-mels \
   --base_dir=$base_dir \
-  --name="$mel_name" \
-  --path="$ljs_data" \
+  --name=$mel_name \
+  --path=$ljs_data \
   --hparams=segment_length=0
 
-python -m src.runner text-pre \
+python -m src.runner ljs-text \
   --base_dir=$base_dir \
-  --data_dir="$ljs_data" \
-  --ipa \
-  --ignore_arcs \
-  --ignore_tones \
-  --mel_name="$mel_name" \
-  --lang="eng" \
-  --ds_name=$ds_name
+  --mel_name=$mel_name \
+  --ds_name=$ds_name \
+  --convert_to_ipa
+
 
 # Training from scratch
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=1000"
@@ -67,11 +64,11 @@ python -m src.runner paths \
 python -m src.runner tacotron-train \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
+  --seed=1234 \
   --speakers=$speakers \
   --hparams=$hparams \
   --validation_size=0.1 \
   --test_size=0
-
 
 ## Continue training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=1000"

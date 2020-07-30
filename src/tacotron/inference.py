@@ -19,7 +19,30 @@ from src.tacotron.train import start_train
 from src.tacotron.txt_pre import process_input_text
 from src.common.utils import get_last_checkpoint
 
-def main(base_dir: str, training_dir: str, ipa: bool, text: str, lang: str, ignore_tones: bool, ignore_arcs:bool, weights_map: str, speaker: str, hparams: str, waveglow: str, custom_checkpoint: str, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: float, analysis: bool):
+
+def init_inference_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--training_dir', type=str, required=True)
+  parser.add_argument('--ipa', action='store_true')
+  parser.add_argument('--text', type=str, required=True)
+  parser.add_argument('--lang', type=str, choices=["ipa", "en", "chn", "ger"], required=True)
+  parser.add_argument('--ignore_tones', action='store_true')
+  parser.add_argument('--ignore_arcs', action='store_true')
+  parser.add_argument('--weights_map', type=str)
+  parser.add_argument('--speaker', type=str, required=True)
+  #parser.add_argument('--subset_id', type=str)
+  parser.add_argument('--hparams', type=str)
+  parser.add_argument('--waveglow', type=str, required=True)
+  parser.add_argument('--custom_checkpoint', type=str)
+  parser.add_argument('--sentence_pause_s', type=float, default=0.5)
+  parser.add_argument('--sigma', type=float, default=0.666)
+  parser.add_argument('--denoiser_strength', type=float, default=0.01)
+  parser.add_argument('--sampling_rate', type=float, default=22050)
+  parser.add_argument('--analysis', action='store_true')
+  return __main
+
+
+def __main(base_dir: str, training_dir: str, ipa: bool, text: str, lang: str, ignore_tones: bool, ignore_arcs:bool, weights_map: str, speaker: str, hparams: str, waveglow: str, custom_checkpoint: str, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: float, analysis: bool):
   training_dir_path = os.path.join(base_dir, training_dir)
 
   assert os.path.isfile(text)
@@ -74,7 +97,7 @@ def main(base_dir: str, training_dir: str, ipa: bool, text: str, lang: str, igno
 
 
 if __name__ == "__main__":
-  main(
+  __main(
     base_dir = '/datasets/models/taco2pt_v2',
     #training_dir = 'ljs_ipa_ms_from_scratch',
     training_dir = 'thchs_ipa_warm_mapped_all_tones',
