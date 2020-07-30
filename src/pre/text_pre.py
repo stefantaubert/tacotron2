@@ -1,24 +1,35 @@
 import os
 from collections import Counter, OrderedDict
+
 import epitran
-import pandas as pd
 from tqdm import tqdm
 
-from src.common.utils import download_tar, save_json
-from src.paths import (ds_preprocessed_file_name,
-                              ds_preprocessed_symbols_name,
-                              get_all_speakers_path, get_all_symbols_path,
-                              get_ds_dir)
+from src.common.utils import load_csv, save_csv, save_json
+from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
+                       get_all_speakers_path, get_all_symbols_path, get_ds_dir)
+from src.pre.calc_mels import parse_data
 from src.text.adjustments import normalize_text
 from src.text.chn_tools import chn_to_ipa
 from src.text.ipa2symb import extract_from_sentence
 from src.text.symbol_converter import init_from_symbols, serialize_symbol_ids
-from src.pre.calc_mels import parse_data
 
-csv_separator = '\t'
 
-def parse():
-  pass
+
+def init_thchs_text_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--mel_name', type=str, required=True)
+  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', required=True)
+  parser.add_argument('--ignore_tones', action='store_true')
+  parser.set_defaults(ignore_arcs=True, lang="chn", convert_to_ipa=True)
+  return preprocess
+
+def init_ljs_text_pre_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--mel_name', type=str, required=True)
+  parser.add_argument('--ds_name', type=str, help='the name you want to call the dataset', required=True)
+  parser.add_argument('--convert_to_ipa', action='store_true', help='transcribe to IPA')
+  parser.set_defaults(ignore_tones=True, ignore_arcs=True, lang="eng")
+  return preprocess
 
 def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool, lang: str, convert_to_ipa: bool):
   all_symbols_path = get_all_symbols_path(base_dir, ds_name)
@@ -100,8 +111,7 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
       #result.append((bn, wav, py, ipa_txt, serialized_symbol_ids, symbols_str, duration))
       result.append((basename, mel_path, serialized_symbol_ids, duration, text, ipa, symbols_str))
 
-    df = pd.DataFrame(result)
-    df.to_csv(os.path.join(ds_dir, ds_preprocessed_file_name), header=None, index=None, sep=csv_separator)
+    save_csv(result, os.path.join(ds_dir, ds_preprocessed_file_name))
 
   print("Dataset preprocessing finished.")
 

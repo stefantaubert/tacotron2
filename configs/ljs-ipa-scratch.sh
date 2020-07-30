@@ -9,7 +9,7 @@ source /datasets/code/tacotron2/configs/envs/dev-caps.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa_v2"
 export speakers="$ds_name,all"
-export mel_name="taco_ljs"
+export mel_name="ljs"
 export batch_size=26
 
 ## Capslock GCP
@@ -17,7 +17,7 @@ source /datasets/code/tacotron2/configs/envs/prod-caps.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa_v2"
 export speakers="$ds_name,all"
-export mel_name="taco_ljs"
+export mel_name="ljs"
 export batch_size=26
 
 ## GCP
@@ -26,7 +26,7 @@ source /home/stefan_taubert/tacotron2/configs/envs/prod-gcp.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa"
 export speakers="$ds_name,all"
-export mel_name="taco_ljs"
+export mel_name="ljs"
 export batch_size=52
 
 ## Phil
@@ -34,7 +34,7 @@ source /home/stefan/tacotron2/configs/envs/prod-phil.sh
 export custom_training_name="ljs_ipa_ms_from_scratch"
 export ds_name="ljs_ipa"
 export speakers="$ds_name,all"
-export mel_name="taco_ljs"
+export mel_name="ljs"
 export batch_size=26
 
 

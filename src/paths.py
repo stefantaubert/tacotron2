@@ -30,6 +30,9 @@ ds_preprocessed_all_speakers_name = 'all_speakers.json'
 mels_dir = 'mels'
 mels_file_name = 'mels.csv'
 
+wavs_dir = 'wavs'
+wavs_file_name = 'wavs.csv'
+
 inference_dir = 'inference'
 inference_input_file_name = 'input.txt'
 inference_input_map_file_name = 'input_map.json'
@@ -72,6 +75,9 @@ def get_all_speakers_path(base_dir: str, name: str, create: bool = True) -> str:
 
 def get_ds_dir(base_dir: str, name: str, speaker: str, create: bool = True) -> str:
   return __get_subdir(base_dir, os.path.join(ds_dir, name, str(speaker)), create)
+
+def get_wavs_dir(base_dir: str, name: str, create: bool = True) -> str:
+  return __get_subdir(base_dir, os.path.join(wavs_dir, name), create)
 
 def get_mels_dir(base_dir: str, name: str, create: bool = True) -> str:
   return __get_subdir(base_dir, os.path.join(mels_dir, name), create)

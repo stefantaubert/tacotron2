@@ -23,6 +23,15 @@ duration_col = 3
 speaker_id_col = 4
 speaker_name_col = 5
 
+def save_csv(data: list, path: str):
+  df = pd.DataFrame(data)
+  df.to_csv(path, header=None, index=None, sep=csv_separator)
+  return df
+  
+def load_csv(path: str):
+  speaker_data = pd.read_csv(path, header=None, sep=csv_separator)
+  return speaker_data
+
 def get_last_checkpoint(checkpoint_dir) -> str:
   #checkpoint_dir = get_checkpoint_dir(training_dir_path)
   _, _, filenames = next(os.walk(checkpoint_dir))
@@ -37,6 +46,7 @@ def get_last_checkpoint(checkpoint_dir) -> str:
 def create_parent_folder(file: str):
   path = Path(file)
   os.makedirs(path.parent, exist_ok=True)
+  return path.parent
 
 def compare_mels(path_a, path_b):
   img_a = imageio.imread(path_a)

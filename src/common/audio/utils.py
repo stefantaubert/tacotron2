@@ -48,6 +48,11 @@ def upsample(origin, dest, new_rate):
   new_data, _ = librosa.load(origin, sr=new_rate, mono=True, dtype=np.float32)
   float_to_wav(wav=new_data, path=dest, sample_rate=new_rate, normalize=False)
 
+def get_duration(wav_path) -> float:
+  sampling_rate, wav = read(wav_path)
+  duration = len(wav) / sampling_rate
+  return duration
+
 def mel_to_numpy(mel):
     mel = mel.squeeze(0)
     mel = mel.cpu()

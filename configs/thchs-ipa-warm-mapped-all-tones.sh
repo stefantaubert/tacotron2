@@ -1,8 +1,6 @@
 ########################################################################################
 # THCHS-30 based IPA Synthesis with Chinese Accents
 ########################################################################################
-# Config: toneless, without arcs
-# you have to first train ljs-en-ipa
 
 # Init
 
@@ -11,6 +9,7 @@ source /datasets/code/tacotron2/configs/envs/dev-caps.sh
 export custom_training_name="thchs_ipa_warm_mapped_all_tones"
 export ds_name="thchs_nosil_tones"
 export speakers="$ds_name,all"
+export mel_name="thchs"
 export batch_size=17
 
 ## Capslock GCP
@@ -18,6 +17,7 @@ source /datasets/code/tacotron2/configs/envs/prod-caps.sh
 export custom_training_name="thchs_ipa_warm_mapped_all_tones"
 export ds_name="thchs_nosil_tones"
 export speakers="$ds_name,all"
+export mel_name="thchs"
 export batch_size=0
 
 ## GCP
@@ -26,6 +26,7 @@ source /home/stefan_taubert/tacotron2/configs/envs/prod-gcp.sh
 export custom_training_name="thchs_ipa_warm_mapped_all_tones"
 export ds_name="thchs_nosil_tones"
 export speakers="$ds_name,all"
+export mel_name="thchs"
 export batch_size=45
 
 ## Phil
@@ -33,14 +34,14 @@ source /home/stefan/tacotron2/configs/envs/prod-phil.sh
 export custom_training_name="thchs_ipa_warm_mapped_all_tones"
 export ds_name="thchs_nosil_tones"
 export speakers="$ds_name,all"
+export mel_name="thchs"
 export batch_size=0
 
 
 # Preprocessing
 
 python -m src.runner thchs-dl \
-  --data_dir=$thchs_original_data \
-  --ds_name=$ds_name
+  --dir_path=$thchs_original_data
 
 python -m src.runner thchs-upsample \
   --data_src_dir=$thchs_original_data \
@@ -55,19 +56,17 @@ python -m src.runner thchs-remove-silence \
   --buffer_start_ms=100 \
   --buffer_end_ms=150
 
-python -m src.runner calc-mels \
+python -m src.runner thchs-mels \
   --base_dir=$base_dir \
-  --data_dir="$thchs_nosil_data" \
-  --ignore_arcs \
+  --path=$thchs_nosil_data
+  --name=$mel_name \
+
+python -m src.runner thchs-text \
+  --base_dir=$base_dir \
+  --mel_name=$mel_name \
   --ds_name=$ds_name
 
-python -m src.runner thchs-pre \
-  --base_dir=$base_dir \
-  --data_dir="$thchs_nosil_data" \
-  --ignore_arcs \
-  --ds_name=$ds_name
-
-# Create Weights Map (do not run again)
+# Create Weights Map (do not run after adjusting)
 python -m src.runner create-map \
   --a="$base_dir/ds/ljs_ipa_v2/all_symbols.json" \
   --b="$base_dir/ds/thchs_nosil_tones/all_symbols.json" \
@@ -81,6 +80,7 @@ export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs_per_check
 python -m src.runner paths \
   --base_dir=$base_dir \
   --custom_training_name=$custom_training_name
+
 python -m src.runner tacotron-train \
   --base_dir=$base_dir \
   --training_dir=$custom_training_name \
@@ -90,11 +90,11 @@ python -m src.runner tacotron-train \
   --validation_size=0.1 \
   --test_size=0.01 \
   --warm_start \
-  --pretrained_path="/datasets/gcp_home/ljs_ipa_ms_from_scratch/checkpoints/113500" \
-  --pretrained_model="/datasets/gcp_home/ljs_ipa_ms_from_scratch/checkpoints/113500" \
-  --pretrained_model_symbols="/datasets/gcp_home/ljs_ipa_ms_from_scratch/filelist/symbols.json" \
+  --warm_start_model="/datasets/gcp_home/ljs_ipa_ms_from_scratch/checkpoints/113500" \
   --weight_map_mode='use_map' \
-  --weights_map="maps/weights/chn_en_tones.json"
+  --weight_map_model="/datasets/gcp_home/ljs_ipa_ms_from_scratch/checkpoints/113500" \
+  --weight_map_model_symbols="/datasets/gcp_home/ljs_ipa_ms_from_scratch/filelist/symbols.json" \
+  --weight_map="maps/weights/chn_en_tones.json"
 
 ## Continue training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs_per_checkpoint=1,epochs=2000"

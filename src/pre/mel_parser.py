@@ -1,7 +1,6 @@
 import os
 import random
 
-import pandas as pd
 import tensorflow as tf
 from tqdm import tqdm
 
@@ -10,14 +9,11 @@ from src.common.audio.utils import wav_to_float32
 from src.paths import get_mels_dir, mels_file_name
 from src.tacotron.layers import TacotronSTFT
 
-__csv_separator = "\t"
-
-
 def __create_hparams(hparams_string=None, verbose=False):
   """Create model hyperparameters. Parse nondefault from given string."""
 
   hparams = tf.contrib.training.HParams(
-    segment_length=16000, # waveglow 16000, tacotron None
+    #segment_length=16000, # waveglow 16000, tacotron None
     sampling_rate=22050,
     filter_length=1024,
     hop_length=256,
@@ -38,8 +34,9 @@ def __create_hparams(hparams_string=None, verbose=False):
 
 
 class MelParser():
-  def __init__(self, hparams):
+  def __init__(self, custom_hparams: str):
     super().__init__()
+    hparams = __create_hparams(custom_hparams)
     self.stft = TacotronSTFT(
       filter_length=hparams.filter_length,
       hop_length=hparams.hop_length,
@@ -50,7 +47,7 @@ class MelParser():
       mel_fmax=hparams.mel_fmax
     )
 
-  def get_mel(self, path, segment_length=None) -> tuple:
+  def get_mel(self, path: str, segment_length: int = 0) -> tuple:
     '''
     returns mel and wav_tensor
     - mel is float32 = FloatTensor
@@ -64,18 +61,12 @@ class MelParser():
     wav_tensor = torch.FloatTensor(wav)
 
     if segment_length:
-      # Take segment
-      if wav_tensor.size(0) >= segment_length:
-        max_audio_start = wav_tensor.size(0) - segment_length
-        audio_start = random.randint(0, max_audio_start)
-        wav_tensor = wav_tensor[audio_start:audio_start+segment_length]
-      else:
-        wav_tensor = torch.nn.functional.pad(wav_tensor, (0, segment_length - wav_tensor.size(0)), 'constant').data
+      wav_tensor = __get_segment(wav_tensor, segment_length)
     
     mel = self.__get_mel_core(wav_tensor)
 
     return (mel, wav_tensor, duration)
-      
+
   def __get_mel_core(self, wav_tensor):
     wav_tensor = wav_tensor.unsqueeze(0)
     wav_tensor = torch.autograd.Variable(wav_tensor, requires_grad=False)
@@ -83,28 +74,26 @@ class MelParser():
     melspec = melspec.squeeze(0)
     return melspec
 
-# output: basename, speaker_name, text, mel_path, duration
-def parse_data(base_dir: str, name: str):
-  dest_dir = get_mels_dir(base_dir, name)
-  dest_file_path = os.path.join(dest_dir, mels_file_name)
-  speaker_data = pd.read_csv(dest_file_path, header=None, sep=__csv_separator)
-  speaker_data = speaker_data.values
-  return speaker_data
+def __get_segment(wav_tensor, segment_length: int):
+  if wav_tensor.size(0) >= segment_length:
+    max_audio_start = wav_tensor.size(0) - segment_length
+    audio_start = random.randint(0, max_audio_start)
+    wav_tensor = wav_tensor[audio_start:audio_start+segment_length]
+  else:
+    fill_size = segment_length - wav_tensor.size(0)
+    wav_tensor = torch.nn.functional.pad(wav_tensor, (0, fill_size), 'constant').data
+  
+  return wav_tensor
 
-def calc_mels(base_dir: str, name: str, data: list, custom_hparams: str):
-  result = []
-  hparams = __create_hparams(custom_hparams)
-  mel_parser = MelParser(hparams)
-  dest_dir = get_mels_dir(base_dir, name)
-  # with torch.no_grad():
-  for i, values in tqdm(enumerate(data), total=len(data)):
-    name, speaker_name, text, wav_path = values[0], values[1], values[2], values[3]
-    mel_path = os.path.join(dest_dir, "{}.pt".format(i))
-    mel, _, duration = mel_parser.get_mel(wav_path, segment_length=hparams.segment_length)
-    torch.save(mel, mel_path)
-    result.append((name, speaker_name, text, mel_path, duration))
-    
-  dest_file_path = os.path.join(dest_dir, mels_file_name)
-  df = pd.DataFrame(result)
-  df.to_csv(dest_file_path, header=None, index=None, sep=__csv_separator)
-  print("Dataset saved.")
+if __name__ == "__main__":
+  wav_path = "/datasets/thchs_16bit_22050kHz_nosil/wav/train/A32/A32_11.wav"
+  mel_parser = MelParser()
+  mel, mel_tensor, duration = mel_parser.get_mel(wav_path, segment_length=4000)
+  print(mel[:,:8])
+  print(mel.size())
+  print(mel_tensor.size())
+
+  mel, mel_tensor, duration = mel_parser.get_mel(wav_path, segment_length=2000)
+  print(mel[:,:8])
+  print(mel.size())
+  print(mel_tensor.size())

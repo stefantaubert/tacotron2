@@ -44,7 +44,7 @@ from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
                        log_input_file, log_map_file, log_train_config,
                        log_train_map, train_config_file, train_map_file)
 from src.waveglow.hparams import create_hparams
-from src.waveglow.mel2samp import Mel2Samp
+from src.waveglow.mel2samp import MelLoader
 from src.waveglow.model import WaveGlow, WaveGlowLoss
 from src.waveglow.prepare_ds import duration_col, prepare
 from torch.utils.data import DataLoader
@@ -133,7 +133,7 @@ def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
   trainset_path = os.path.join(filelist_dir_path, filelist_training_file_name)
   train_dur = get_total_duration_min_df(trainset_path, duration_column=duration_col)
   print("Duration trainset {:.2f}min / {:.2f}h".format(train_dur, train_dur / 60))
-  trainset = Mel2Samp(trainset_path, hparams)
+  trainset = MelLoader(trainset_path, hparams)
   train_sampler = None
   # # =====START: ADDED FOR DISTRIBUTED======
   # train_sampler = DistributedSampler(trainset) if n_gpus > 1 else None
