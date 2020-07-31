@@ -58,6 +58,9 @@ def remove_silence(
   duration = len(sound)
   trimmed_sound = sound[start_trim:duration - end_trim]
   trimmed_sound.export(out_path, format="wav")
+  
+  # sound.duration_seconds is not actualized
+  
 
 def init_remove_silence_plot_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -119,6 +122,20 @@ def __remove_silence_plot(
   print("Saved results to: {}".format(dest_dir))
 
 if __name__ == "__main__":
+  import tempfile
+  dest = tempfile.mktemp()
+  remove_silence(
+    in_path = "/datasets/thchs_16bit_22050kHz/wav/train/A13/A13_224.wav",
+    out_path = dest,
+    threshold_start = -25,
+    threshold_end = -25,
+    chunk_size = 5,
+    buffer_start_ms = 25,
+    buffer_end_ms = 25
+  )
+
+
+
   __remove_silence_plot(
     base_dir = "/datasets/models/taco2pt_v2/analysis/trimming",
     wav = "/datasets/thchs_16bit_22050kHz/wav/train/A13/A13_224.wav",

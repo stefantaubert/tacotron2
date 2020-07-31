@@ -1,6 +1,8 @@
 import librosa
+import torch
 import numpy as np
 from scipy.io.wavfile import read, write
+import random
 
 float32_64_max_wav = 1.0
 int16_max_wav = np.iinfo(np.int16).max # 32767 = 2**15 - 1
@@ -32,7 +34,7 @@ def float_to_wav(wav, path, dtype=np.int16, normalize=True, sample_rate=22050):
   wav = wav.astype(dtype)
   write(filename=path, rate=sample_rate, data=wav)
 
-def wav_to_float32(path) -> (np.float32, int):
+def wav_to_float32(path: str) -> (np.float32, int):
   sampling_rate, wav = read(path)
 
   if wav.dtype == np.int16:
@@ -58,6 +60,23 @@ def mel_to_numpy(mel):
     mel = mel.cpu()
     mel = mel.numpy()
     return mel
+
+def wav_to_float32_tensor(path: str) -> (torch.float32, int):
+  wav, sampling_rate = wav_to_float32(path)
+  wav_tensor = torch.FloatTensor(wav)
+
+  return wav_tensor, sampling_rate
+
+def get_wav_tensor_segment(wav_tensor: torch.float32, segment_length: int) -> torch.float32:
+  if wav_tensor.size(0) >= segment_length:
+    max_audio_start = wav_tensor.size(0) - segment_length
+    audio_start = random.randint(0, max_audio_start)
+    wav_tensor = wav_tensor[audio_start:audio_start+segment_length]
+  else:
+    fill_size = segment_length - wav_tensor.size(0)
+    wav_tensor = torch.nn.functional.pad(wav_tensor, (0, fill_size), 'constant').data
+  
+  return wav_tensor
 
 if __name__ == "__main__":
   wav, _ = wav_to_float32("/datasets/models/taco2pt_v2/thchs_ipa_warm_mapped_all_tones/inference/validation_2020-07-27_08-54-17_D31_769_D31_50777/validation_2020-07-27_08-54-17_D31_769_D31_50777_inferred.wav")

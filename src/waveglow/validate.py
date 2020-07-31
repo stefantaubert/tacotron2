@@ -52,8 +52,8 @@ def __main(base_dir, training_dir, utterance, hparams, denoiser_strength, sigma,
       speaker = tmp[2]
 
     valset_path = os.path.join(get_filelist_dir(training_dir_path), filelist_validation_file_name)
-    all_names = list(load_filepaths(valset_path))
-    infer_utterance_name = random.choice(all_names)[0]
+    all_names = load_filepaths(valset_path)
+    infer_utterance_name = random.choice(all_names)
     while speaker_is_given:
       if speaker in infer_utterance_name:
         break
@@ -61,10 +61,10 @@ def __main(base_dir, training_dir, utterance, hparams, denoiser_strength, sigma,
     print("Selected random validationset utterance: {}".format(infer_utterance_name))
   else:
     valset_path = os.path.join(get_filelist_dir(training_dir_path), filelist_validation_file_name)
-    all_names = list(load_filepaths(valset_path))
+    all_names = load_filepaths(valset_path)
     for x in all_names:
-      if infer_utterance_name in x[0]:
-        infer_utterance_name = x[0]
+      if infer_utterance_name in x:
+        infer_utterance_name = x
   basename = os.path.basename(infer_utterance_name)[:-4]
 
   infer_dir_path = get_validation_dir(training_dir_path, basename, checkpoint, "{}_{}".format(sigma, denoiser_strength))

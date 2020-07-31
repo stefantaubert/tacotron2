@@ -6,14 +6,11 @@ import tempfile
 from tqdm import tqdm
 
 from src.common.utils import create_parent_folder, download_tar
+from src.pre.parser.pre_data import to_values
 
-def init_download_parser(parser):
-  parser.add_argument('--data_dir', type=str, help='THCHS (Kaldi version) dataset directory', required=True)
-  return __ensure_downloaded
-
-def __ensure_downloaded(dir_path: str):
-  is_downloaded = exists(dir_path)
-  if not is_downloaded:
+def ensure_downloaded(dir_path: str):
+  dir_exists = os.path.exists(dir_path)
+  if not dir_exists:
     print("THCHS-30 is not downloaded yet.")
     download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
     tmp_dir = tempfile.mkdtemp()
@@ -25,12 +22,7 @@ def __ensure_downloaded(dir_path: str):
     shutil.move(content_dir, dest)
     os.rename(dest, dir_path)
 
-def exists(dir_path: str):
-  path_to_check = os.path.join(dir_path, "data", 'D32_999.wav.trn')
-  result = os.path.exists(path_to_check)
-  return result
-
-def parse(dir_path: str):
+def parse(dir_path: str) -> list:
   if not os.path.exists(dir_path):
     print("Directory not found:", dir_path)
     raise Exception()
@@ -45,7 +37,7 @@ def parse(dir_path: str):
   skipped = [x for x in wavs_sents if x[1] not in sent_files]
   wavs_sents = [x for x in wavs_sents if x[1] in sent_files]
   
-  print("Skipped:", len(skipped), "of", len(wavs_sents))
+  print("Skipped:", len(skipped), "of", len(sent_files_gen))
   #print(skipped)
 
   res = []
@@ -63,12 +55,15 @@ def parse(dir_path: str):
     #res.append((nr, speaker, basename, wav, chn, sent_file))
     res.append((basename, speaker, chn, wav))
   print("Done.")
+  
+  res.sort()
+  res = [to_values(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3]) for x in res]
 
   return res
 
 if __name__ == "__main__":
-  __ensure_downloaded(
-    dir_path = '/datasets/THCHS-30-test'
+  ensure_downloaded(
+    dir_path = '/datasets/THCHS-30'
   )
 
   res = parse(

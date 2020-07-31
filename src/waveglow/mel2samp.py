@@ -24,19 +24,16 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # *****************************************************************************
-import os
 import random
-import argparse
-import json
-import torch
-import torch.utils.data
-import sys
-from scipy.io.wavfile import read
+
 from tqdm import tqdm
 
-from src.tacotron.layers import TacotronSTFT
+import torch.utils.data
+from src.common.audio.utils import (get_wav_tensor_segment,
+                                    wav_to_float32_tensor)
+from src.pre.mel_parser import MelParser
 from src.waveglow.prepare_ds import load_filepaths
-from src.common.audio.utils import wav_to_float32
+
 
 class MelLoader(torch.utils.data.Dataset):
   """
@@ -44,25 +41,27 @@ class MelLoader(torch.utils.data.Dataset):
   spectrogram, audio pair.
   """
   def __init__(self, training_files, hparams):
+    self.segment_length = hparams.segment_length
+    self.mel_parser = MelParser(hparams)
+
     audio_files = load_filepaths(training_files)
 
     random.seed(hparams.seed)
     random.shuffle(audio_files)
 
-    print("Loading mels into memory...")
+    print("Loading wavs into memory...")
     self.cache = {}
-    for i, data in tqdm(enumerate(audio_files), total=len(audio_files)):
-      mel_path = data[0]
-      mel_tensor = torch.load(mel_path, map_location='cpu')
-      self.cache[i] = (mel_tensor, wav_tensor)
-
-    self.segment_length = hparams.segment_length
+    for i, wav_path in tqdm(enumerate(audio_files), total=len(audio_files)):
+      wav_tensor, sr = wav_to_float32_tensor(wav_path)
+      if sr != self.stft.sampling_rate :
+        raise ValueError("{} {} SR doesn't match target {} SR".format(wav_path, sr, hparams.sampling_rate))
+      self.cache[i] = wav_tensor
 
   def __getitem__(self, index):
-    mel_tensor, wav_tensor = self.cache[index]
-    
-    mel, wav_tensor = self.mel_parser.get_mel(filename, segment_length=self.segment_length)
-    return (mel, wav_tensor)
+    wav_tensor = self.cache[index].clone().detach()
+    wav_tensor = get_wav_tensor_segment(wav_tensor, self.segment_length)
+    mel_tensor = self.mel_parser.get_mel_tensor(wav_tensor)
+    return (mel_tensor, wav_tensor)
 
   def __len__(self):
-    return len(self.audio_files)
+    return len(self.cache)

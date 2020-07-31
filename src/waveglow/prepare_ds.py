@@ -3,35 +3,40 @@ import os
 from collections import OrderedDict
 from math import sqrt
 from shutil import copyfile
-from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from tqdm import tqdm
 
 import torch
-from src.tacotron.hparams import create_hparams
-from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
-                   filelist_file_log_name, filelist_file_name,
-                   filelist_symbols_file_name, filelist_weights_file_name,
-                   get_all_speakers_path, get_ds_dir, get_filelist_dir,
-                   train_map_file, filelist_speakers_name)
-from src.text.symbol_converter import (deserialize_symbol_ids, init_from_symbols,
-                                   load_from_file, serialize_symbol_ids)
-from torch import nn
 from src.common.train_log import log
-from src.common.utils import (csv_separator, duration_col, parse_ds_speakers, parse_json,
-                   serialize_ds_speaker, serialize_ds_speakers, speaker_id_col,
-                   speaker_name_col, symbols_str_col, utt_name_col,
-                   wavpath_col, save_json)
+from src.common.utils import (csv_separator, duration_col, load_csv,
+                              parse_ds_speakers, parse_json, save_json,
+                              serialize_ds_speaker, serialize_ds_speakers,
+                              speaker_id_col, speaker_name_col,
+                              symbols_str_col, utt_name_col, wavpath_col)
+from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
+                       filelist_file_log_name, filelist_file_name,
+                       filelist_speakers_name, filelist_symbols_file_name,
+                       filelist_weights_file_name, get_all_speakers_path,
+                       get_ds_dir, get_filelist_dir, train_map_file)
+from src.tacotron.hparams import create_hparams
+from src.text.symbol_converter import (deserialize_symbol_ids,
+                                       init_from_symbols, load_from_file,
+                                       serialize_symbol_ids)
+from torch import nn
 
 wav_path_col = 0
 duration_col = 1
 
-def load_filepaths(filename):
-  data = pd.read_csv(filename, header=None, sep=csv_separator)
+
+def load_filepaths(filename) -> list:
+  data = load_csv(filename)
   data = data.iloc[:, [wav_path_col]]
   data = data.values
+  data = np.squeeze(data)
+  data = data.tolist()
   return data
 
 def prepare(base_dir: str, training_dir_path: str, speakers: str):
@@ -78,3 +83,9 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str):
   df.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_file_name), header=None, index=None, sep=csv_separator)
 
   log(training_dir_path, "Done.")
+
+if __name__ == "__main__":
+    
+  res = load_filepaths("/datasets/models/taco2pt_v2/ljs_waveglow/filelist/filelist.csv")
+  for x in res:
+    print(x)

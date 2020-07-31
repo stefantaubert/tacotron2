@@ -5,11 +5,9 @@ import tarfile
 import wget
 from tqdm import tqdm
 
-def init_download_parser(parser):
-  parser.add_argument('--dir_path', type=str, help='LJS dataset directory', required=True)
-  return __ensure_downloaded
+from src.pre.parser.pre_data import to_values
 
-def __ensure_downloaded(dir_path: str):
+def ensure_downloaded(dir_path: str):
   dir_exists = os.path.exists(dir_path)
   if not dir_exists:
     print("LJSpeech is not downloaded yet.")
@@ -70,13 +68,17 @@ def parse(path: str):
     result.append(tmp)
   print("Done.")
 
+  # sort after basename
+  result.sort(key=lambda tup: tup[0], reverse=False)
+  result = [to_values(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3]) for i, x in enumerate(result)]
+
   return result
 
 if __name__ == "__main__":
-  __ensure_downloaded(
-    data_dir = '/datasets/LJSpeech-1.1-tmp'
+  ensure_downloaded(
+    dir_path = '/datasets/LJSpeech-1.1'
   )
 
   result = parse(
-    path = '/datasets/LJSpeech-1.1-test'
+    path = '/datasets/LJSpeech-1.1'
   )

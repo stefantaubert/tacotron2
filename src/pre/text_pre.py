@@ -1,19 +1,12 @@
 import os
 from collections import Counter, OrderedDict
 
-import epitran
 from tqdm import tqdm
 
-from src.common.utils import load_csv, save_csv, save_json
-from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
-                       get_all_speakers_path, get_all_symbols_path, get_ds_dir)
-from src.pre.calc_mels import parse_data
 from src.text.adjustments import normalize_text
-from src.text.chn_tools import chn_to_ipa
-from src.text.ipa2symb import extract_from_sentence
 from src.text.symbol_converter import init_from_symbols, serialize_symbol_ids
-
-
+from src.pre.mel_data import parse_data, get_basename, get_id, get_path, get_duration, get_id, get_speaker_name, get_text
+from src.pre.text_data import to_values, save_symbols, save_data, already_exists, save_all_symbols, save_all_speakers
 
 def init_thchs_text_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -32,18 +25,19 @@ def init_ljs_text_pre_parser(parser):
   return preprocess
 
 def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, ignore_arcs: bool, lang: str, convert_to_ipa: bool):
-  all_symbols_path = get_all_symbols_path(base_dir, ds_name)
-  all_speakers_path = get_all_speakers_path(base_dir, ds_name)
-  
-  already_preprocessed = os.path.exists(all_speakers_path) and os.path.exists(all_symbols_path)
-  if already_preprocessed:
+  if already_exists(base_dir, ds_name):
     print("Data is already preprocessed for dataset: {}".format(ds_name))
     return
 
   data = {}
 
-  if convert_to_ipa and lang == 'eng':
-    epi = epitran.Epitran('eng-Latn')
+  if convert_to_ipa:
+    from src.text.ipa2symb import extract_from_sentence
+    if lang == 'eng':
+      import epitran
+      epi = epitran.Epitran('eng-Latn')
+    if lang == 'chn':
+      from src.text.chn_tools import chn_to_ipa
 
   ### normalize input
   symbol_counter = Counter()
@@ -52,7 +46,9 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
   else:
     print("Processing text...")
   parsed_data = parse_data(base_dir, mel_name)
-  for basename, speaker_name, text, mel_path, duration in tqdm(parsed_data):
+  for values in tqdm(parsed_data):
+    #basename, speaker_name, text, mel_path, duration
+    text = get_text(values)
     if lang == "chn":
       if convert_to_ipa:
         try:
@@ -72,19 +68,22 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
       ipa = '-- no IPA --'
       symbols = list(text)
 
+    speaker_name = get_speaker_name(values)
     if speaker_name not in data:
       data[speaker_name] = []
 
     symbol_counter.update(symbols)
-    data[speaker_name].append((basename, text, ipa, symbols, mel_path, duration))
+
+    data[speaker_name].append((get_basename(values), text, ipa, symbols, get_path(values), get_duration(values)))
 
   all_symbols = OrderedDict(symbol_counter.most_common())
-  save_json(all_symbols_path, all_symbols)
+  save_all_symbols(base_dir, ds_name, all_symbols)
 
   all_speakers = [(k, len(v)) for k, v in data.items()]
   all_speakers.sort(key=lambda tup: tup[1], reverse=True)
   all_speakers = OrderedDict(all_speakers)
-  save_json(all_speakers_path, all_speakers)
+  save_all_speakers(base_dir, ds_name, all_speakers)
+
   print("Done.")
 
   print("Processing symbols.")
@@ -98,9 +97,7 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
       symbols = symbols.union(current_symbols)
 
     conv = init_from_symbols(symbols)
-    ds_dir = get_ds_dir(base_dir, ds_name, speaker, create=True)
-    ds_symbols_path = os.path.join(ds_dir, ds_preprocessed_symbols_name)
-    conv.dump(ds_symbols_path)
+    save_symbols(base_dir, ds_name, speaker)
 
     ### convert text to symbols
     result = []
@@ -109,9 +106,9 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
       serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
       symbols_str = ''.join(symbols)
       #result.append((bn, wav, py, ipa_txt, serialized_symbol_ids, symbols_str, duration))
-      result.append((basename, mel_path, serialized_symbol_ids, duration, text, ipa, symbols_str))
+      result.append(to_values(basename, mel_path, serialized_symbol_ids, duration, text, ipa, symbols_str))
 
-    save_csv(result, os.path.join(ds_dir, ds_preprocessed_file_name))
+    save_data(base_dir, ds_name, speaker, result)
 
   print("Dataset preprocessing finished.")
 

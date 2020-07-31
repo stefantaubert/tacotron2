@@ -1,23 +1,20 @@
+"""
+input: wav data
+output: mel data
+"""
 import os
 
 from tqdm import tqdm
-
+from argparse import ArgumentParser
 import torch
 from src.common.utils import load_csv, save_csv
 from src.paths import get_mels_dir, mels_file_name
 from src.pre.mel_parser import MelParser
-from src.pre.wav_pre import parse_data as parse_data_wav
+from src.tacotron.hparams import create_hparams
+from src.pre.wav_data import parse_data, get_path, set_path, set_duration, get_basename, get_id
+from src.pre.mel_data import to_values, already_exists, save_data
 
-
-def save_data(base_dir: str, name: str, data: list):
-  dest_file_path = os.path.join(get_mels_dir(base_dir, name), mels_file_name)
-  save_csv(data, dest_file_path)
-
-def parse_data(base_dir: str, name: str):
-  dest_file_path = os.path.join(get_mels_dir(base_dir, name), mels_file_name)
-  return load_csv(dest_file_path).values
-
-def init_calc_mels_parser(parser):
+def init_calc_mels_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--origin_name', type=str, required=True)
   parser.add_argument('--destination_name', type=str, required=True)
@@ -25,36 +22,40 @@ def init_calc_mels_parser(parser):
   return __calc_mels
 
 def __calc_mels(base_dir: str, origin_name: str, destination_name: str, custom_hparams: str):
-  result = []
-  mel_parser = MelParser(custom_hparams)
-  data = parse_data_wav(base_dir, origin_name)
-  dest_dir = get_mels_dir(base_dir, destination_name)
-  # with torch.no_grad():
-  print("Calculating mels...")
-  for i, values in tqdm(enumerate(data), total=len(data)):
-    name, speaker_name, text, wav_path = values[0], values[1], values[2], values[3]
-    mel_path = os.path.join(dest_dir, "{}.pt".format(i))
-    mel, _, duration = mel_parser.get_mel(wav_path)
-    torch.save(mel, mel_path)
-    result.append((name, speaker_name, text, mel_path, duration))
-  save_data(base_dir, destination_name, result)
-  print("Dataset saved.")
+  if not already_exists(base_dir, destination_name):
+    result = []
+    haparms = create_hparams(custom_hparams)
+    mel_parser = MelParser(haparms)
+
+    data = parse_data(base_dir, origin_name)
+    dest_dir = get_mels_dir(base_dir, destination_name)
+    # with torch.no_grad():
+    print("Calculating mels...")
+    for values in tqdm(data):
+      mel_path = os.path.join(dest_dir, "{}_{}.pt".format(get_id(values), get_basename(values)))
+      wav_path = get_path(values)
+      mel_tensor = mel_parser.get_mel_tensor_from_file(wav_path)
+      torch.save(mel_tensor, mel_path)
+      set_path(values, mel_path)
+      result.append(values)
+    save_data(base_dir, destination_name, result)
+    print("Dataset saved.")
 
 if __name__ == "__main__":
   __calc_mels(
     base_dir="/datasets/models/taco2pt_v2",
-    origin_name="ljs",
+    origin_name="ljs_22050kHz",
     destination_name="ljs",
   )
 
   __calc_mels(
     base_dir="/datasets/models/taco2pt_v2",
-    origin_name="thchs",
+    origin_name="thchs_22050kHz_nosil",
     destination_name="thchs",
   )
 
   __calc_mels(
     base_dir="/datasets/models/taco2pt_v2",
-    origin_name="thchs_kaldi",
+    origin_name="thchs_kaldi_22050kHz_nosil",
     destination_name="thchs_kaldi"
   )

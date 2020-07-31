@@ -1,14 +1,15 @@
-import argparse
+from argparse import ArgumentParser
 import os
 import gdown
 import shutil
 from pathlib import Path
-from src.waveglow.converter.convert import __convert
+from src.waveglow.converter.convert import convert
 from src.common.utils import create_parent_folder
 
-def init_download_parser(parser):
+def init_download_parser(parser: ArgumentParser):
   parser.add_argument('--destination', type=str, required=True)
-  parser.add_argument('--auto_convert', action='store_true')
+  #parser.add_argument('--auto_convert', action='store_true')
+  parser.set_defaults(auto_convert=True)
   return main
 
 def main(destination, auto_convert):
@@ -21,6 +22,7 @@ def main(destination, auto_convert):
     shutil.move(filename, destination)
 
   if auto_convert:
+    print("Pretrained model is now beeing converted to be able to use it...")
     original_path = "{}.orig".format(destination)
     already_converted = os.path.exists(original_path)
     if already_converted:
@@ -30,7 +32,7 @@ def main(destination, auto_convert):
       sys.path.append("converter/")
       import tempfile
       tmp_out = tempfile.mktemp()
-      __convert(destination, tmp_out)
+      convert(destination, tmp_out)
       shutil.move(destination, original_path)
       shutil.move(tmp_out, destination)
 

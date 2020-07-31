@@ -1,13 +1,7 @@
-import argparse
 import os
 import torch
 
-def init_converter_parser(parser):
-  parser.add_argument('--source', type=str, required=True)
-  parser.add_argument('--destination', type=str, required=True)
-  return __convert
-
-def __convert(source, destination):
+def convert(source, destination):
   assert os.path.isfile(source)
   checkpoint_dict = torch.load(source, map_location='cpu')
   res = {}
@@ -28,7 +22,7 @@ def __convert(source, destination):
   print("Successfully converted. Output:", destination)
 
 if __name__ == "__main__":
-  __convert(
+  convert(
     source = '/datasets/phil_home/taco2pt_v2/pretrained/waveglow_256channels_universal_v5.pt',
     destination = '/datasets/phil_home/taco2pt_v2/pretrained/waveglow_256channels_universal_v5_out.pt'
   )
