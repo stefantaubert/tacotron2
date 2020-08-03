@@ -14,7 +14,7 @@ from scipy.io.wavfile import write
 from tqdm import tqdm
 
 import torch
-from src.common.audio.utils import float_to_wav, mel_to_numpy
+from src.common.audio.utils import float_to_wav, mel_to_numpy, is_overamp
 from src.common.utils import parse_ds_speakers, parse_json
 from src.paths import (filelist_speakers_name, get_checkpoint_dir,
                        get_filelist_dir, get_symbols_path,
@@ -79,6 +79,7 @@ def validate(training_dir_path: str, infer_dir_path: str, hparams: str, waveglow
   path_inferred_plot = "{}_inferred.png".format(out_path_template)
   path_compared_plot = "{}_comparison.png".format(out_path_template)
 
+  assert not is_overamp(synthesized_sentence)
   float_to_wav(
     wav=synthesized_sentence,
     path=path_inferred_wav,
@@ -186,6 +187,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
       path_pre_postnet_plot = os.path.join(infer_dir_path, "{}_pre_post.png".format(i))
       path_alignments_plot = os.path.join(infer_dir_path, "{}_alignments.png".format(i))
       
+      assert not is_overamp(synthesized_sentence)
       float_to_wav(
         wav=synthesized_sentence,
         path=path_inferred_wav,
@@ -212,6 +214,8 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   print("Saving...")
   output_name = "{}.wav".format(last_dir_name)
   out_path = os.path.join(infer_dir_path, output_name)
+
+  assert not is_overamp(output)
   float_to_wav(
     wav=output,
     path=out_path,

@@ -16,6 +16,7 @@ def __upsample_wavs(base_dir: str, source_name: str, destination_name: str, new_
     for values in tqdm(data):
       dest_wav_path = os.path.join(dest_dir, "{}_{}.wav".format(get_id(values), get_basename(values)))
       wav_path = get_path(values)
+      # todo assert not is_overamp
       upsample(wav_path, dest_wav_path, new_rate)
       set_path(values, dest_wav_path)
       result.append(values)
@@ -31,8 +32,8 @@ def init_upsample_parser(parser):
 if __name__ == "__main__":
   __upsample_wavs(
     base_dir="/datasets/models/taco2pt_v2",
-    source_name='thchs_16000kHz',
-    destination_name='thchs_22050kHz',
+    source_name='thchs_16000kHz_normalized',
+    destination_name='thchs_22050kHz_normalized',
     new_rate=22050,
   )
 

@@ -6,7 +6,7 @@ import os
 
 from tqdm import tqdm
 
-from src.common.audio.utils import get_duration
+from src.common.audio.utils import get_duration_s_file
 from argparse import ArgumentParser
 from src.pre.wav_data import to_values, save_data, already_exists
 from src.pre.parser.pre_data import get_basename, get_path, get_speaker_name, get_text
@@ -16,7 +16,7 @@ def __read_wavs(base_dir: str, ds_name: str, data: list):
   print("Reading durations...")
   for i, values in tqdm(enumerate(data), total=len(data)):
     name, speaker_name, text, wav_path = get_basename(values), get_speaker_name(values), get_text(values), get_path(values)
-    duration = get_duration(wav_path)
+    duration = get_duration_s_file(wav_path)
     vals = to_values(i, name, speaker_name, text, wav_path, duration)
     result.append(vals)
     

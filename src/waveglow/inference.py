@@ -37,7 +37,7 @@ import numpy as np
 from scipy.io.wavfile import write
 
 import torch
-from src.common.audio.utils import float_to_wav
+from src.common.audio.utils import float_to_wav, is_overamp
 from src.common.utils import compare_mels
 from src.paths import get_inference_dir
 from src.tacotron.layers import TacotronSTFT
@@ -115,6 +115,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   path_inferred_plot = "{}_inferred.png".format(out_path_template)
   path_compared_plot = "{}_comparison.png".format(out_path_template)
 
+  assert not is_overamp(audio)
   float_to_wav(
     wav=audio,
     path=path_inferred_wav,

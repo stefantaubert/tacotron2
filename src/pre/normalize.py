@@ -3,41 +3,26 @@ import os
 from tqdm import tqdm
 
 from src.paths import get_wavs_dir
-from src.common.audio.utils import remove_silence_file
-from src.pre.wav_data import parse_data, save_data, get_path, set_path, set_duration, get_basename, get_id, already_exists
+from src.common.audio.utils import normalize_file
+from src.pre.wav_data import parse_data, save_data, get_path, set_path, get_basename, get_id, already_exists
 
-def __remove_silence(
-  base_dir: str,
-  source_name: str,
-  destination_name: str,
-  chunk_size: int,
-  threshold_start: float,
-  threshold_end: float,
-  buffer_start_ms: float,
-  buffer_end_ms: float):
-  
+def __normalize(base_dir: str, source_name: str, destination_name: str):
   if not already_exists(base_dir, destination_name):
     data = parse_data(base_dir, source_name)
     dest_dir = get_wavs_dir(base_dir, destination_name)
     result = []
 
-    print("Removing silence...")
+    print("Normalizing...")
     for values in tqdm(data):
       dest_wav_path = os.path.join(dest_dir, "{}_{}.wav".format(get_id(values), get_basename(values)))
       wav_path = get_path(values)
       
-      new_duration = remove_silence_file(
+      normalize_file(
         in_path = wav_path,
-        out_path = dest_wav_path,
-        chunk_size = chunk_size,
-        threshold_start = threshold_start,
-        threshold_end = threshold_end,
-        buffer_start_ms = buffer_start_ms,
-        buffer_end_ms = buffer_end_ms
+        out_path = dest_wav_path
       )
 
       set_path(values, dest_wav_path)
-      set_duration(values, new_duration)
       result.append(values)
 
     save_data(base_dir, destination_name, result)
@@ -51,18 +36,13 @@ def init_remove_silence_parser(parser):
   parser.add_argument('--threshold_end', type=float, required=True)
   parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
   parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
-  return __remove_silence
+  return __normalize
 
 if __name__ == "__main__":
-  __remove_silence(
+  __normalize(
     base_dir="/datasets/models/taco2pt_v2",
-    source_name='thchs_22050kHz_normalized',
-    destination_name='thchs_22050kHz_normalized_nosil',
-    chunk_size=5,
-    threshold_start=-25,
-    threshold_end=-35,
-    buffer_start_ms=100,
-    buffer_end_ms=150
+    source_name='thchs_16000kHz',
+    destination_name='thchs_16000kHz_normalized'
   )
 
   # __remove_silence(
