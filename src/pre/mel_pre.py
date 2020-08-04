@@ -11,8 +11,8 @@ from src.common.utils import load_csv, save_csv
 from src.paths import get_mels_dir, mels_file_name
 from src.pre.mel_parser import MelParser
 from src.tacotron.hparams import create_hparams
-from src.pre.wav_data import parse_data, get_path, set_path, set_duration, get_basename, get_id
-from src.pre.mel_data import to_values, already_exists, save_data
+from src.pre.wav_pre_io import parse_data, get_wav, set_path, set_duration, get_basename, get_id
+from src.pre.mel_pre_io import to_values, already_exists, save_data
 
 def init_calc_mels_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -33,7 +33,7 @@ def __calc_mels(base_dir: str, origin_name: str, destination_name: str, custom_h
     print("Calculating mels...")
     for values in tqdm(data):
       mel_path = os.path.join(dest_dir, "{}_{}.pt".format(get_id(values), get_basename(values)))
-      wav_path = get_path(values)
+      wav_path = get_wav(values)
       mel_tensor = mel_parser.get_mel_tensor_from_file(wav_path)
       torch.save(mel_tensor, mel_path)
       set_path(values, mel_path)
@@ -44,18 +44,19 @@ def __calc_mels(base_dir: str, origin_name: str, destination_name: str, custom_h
 if __name__ == "__main__":
   __calc_mels(
     base_dir="/datasets/models/taco2pt_v2",
-    origin_name="ljs_22050kHz",
-    destination_name="ljs",
-  )
-
-  __calc_mels(
-    base_dir="/datasets/models/taco2pt_v2",
-    origin_name="thchs_22050kHz_nosil",
+    origin_name="thchs_22050kHz_normalized_nosil",
     destination_name="thchs",
+    custom_hparams=None,
   )
 
-  __calc_mels(
-    base_dir="/datasets/models/taco2pt_v2",
-    origin_name="thchs_kaldi_22050kHz_nosil",
-    destination_name="thchs_kaldi"
-  )
+  # __calc_mels(
+  #   base_dir="/datasets/models/taco2pt_v2",
+  #   origin_name="ljs_22050kHz",
+  #   destination_name="ljs",
+  # )
+
+  # __calc_mels(
+  #   base_dir="/datasets/models/taco2pt_v2",
+  #   origin_name="thchs_kaldi_22050kHz_nosil",
+  #   destination_name="thchs_kaldi"
+  # )

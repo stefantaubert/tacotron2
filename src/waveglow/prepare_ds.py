@@ -1,91 +1,51 @@
-import argparse
-import os
-from collections import OrderedDict
-from math import sqrt
-from shutil import copyfile
-
-import numpy as np
-import pandas as pd
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-import torch
 from src.common.train_log import log
-from src.common.utils import (csv_separator, duration_col, load_csv,
-                              parse_ds_speakers, parse_json, save_json,
-                              serialize_ds_speaker, serialize_ds_speakers,
-                              speaker_id_col, speaker_name_col,
-                              symbols_str_col, utt_name_col, wavpath_col)
-from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
-                       filelist_file_log_name, filelist_file_name,
-                       filelist_speakers_name, filelist_symbols_file_name,
-                       filelist_weights_file_name, get_all_speakers_path,
-                       get_ds_dir, get_filelist_dir, train_map_file)
-from src.tacotron.hparams import create_hparams
-from src.text.symbol_converter import (deserialize_symbol_ids,
-                                       init_from_symbols, load_from_file,
-                                       serialize_symbol_ids)
-from torch import nn
-
-wav_path_col = 0
-duration_col = 1
+from src.pre.wav_pre_io import get_basename, get_duration, get_wav, parse_data
+from src.waveglow.prepare_ds_io import (save_testset, save_trainset,
+                                        save_validationset, save_wholeset,
+                                        to_values)
 
 
-def load_filepaths(filename) -> list:
-  data = load_csv(filename)
-  data = data.iloc[:, [wav_path_col]]
-  data = data.values
-  data = np.squeeze(data)
-  data = data.tolist()
-  return data
+def prepare(base_dir: str, training_dir_path: str, wav_ds_name: str, test_size: float, validation_size: float, seed: int):
+  wholeset = []
+  print("Reading wavs...")
+  for values in tqdm(parse_data(base_dir, wav_ds_name)):
+    wholeset.append(to_values(
+      basename=get_basename(values),
+      wav_path=get_wav(values),
+      duration=get_duration(values)
+    ))
 
-def prepare(base_dir: str, training_dir_path: str, speakers: str):
-  ds_speakers = parse_ds_speakers(speakers)
+  trainset = wholeset
+  print("Splitting datasets...")
+  testset = []
+  create_testset = test_size > 0
+  if create_testset:
+    trainset, testset = train_test_split(trainset, test_size=test_size, random_state=seed)
+    save_testset(training_dir_path, testset)
+  else:
+    log(training_dir_path, "Create no testset.")
+
+  valset = []
+  create_valset = validation_size > 0
+  if create_valset:
+    trainset, valset = train_test_split(trainset, test_size=validation_size, random_state=seed)
+    save_validationset(training_dir_path, valset)
+  else:
+    log(training_dir_path, "Create no valset.")
   
-  # expand all
-  expanded_speakers = []
-  for ds, speaker, _ in ds_speakers:
-    if speaker == 'all':
-      all_speakers_path = get_all_speakers_path(base_dir, ds)
-      all_speakers = parse_json(all_speakers_path)
-      all_speakers = sorted(all_speakers.keys())
-      for speaker_name in all_speakers:
-        expanded_speakers.append((ds, speaker_name))
-    else:
-      expanded_speakers.append((ds, speaker))
-  
-  expanded_speakers = list(sorted(set(expanded_speakers)))
-  new_speakers_str = serialize_ds_speakers(expanded_speakers)
-  ds_speakers = parse_ds_speakers(new_speakers_str)
-  speakers_info = OrderedDict([(serialize_ds_speaker(ds, speaker), s_id) for ds, speaker, s_id in ds_speakers])
-  speakers_file = os.path.join(get_filelist_dir(training_dir_path), filelist_speakers_name)
-  save_json(speakers_file, speakers_info)
-  print(speakers_info)
-
-  result = []
-
-  for ds, speaker, speaker_id in tqdm(ds_speakers):
-    speaker_dir_path = get_ds_dir(base_dir, ds, speaker)
-    prepr_path = os.path.join(speaker_dir_path, ds_preprocessed_file_name)
-    speaker_data = pd.read_csv(prepr_path, header=None, sep=csv_separator)
-
-    for _, row in speaker_data.iterrows():
-      wav_path = row[1]
-      duration = row[3]
-      new_row = [''] * 2
-      new_row[wav_path_col] = wav_path
-      new_row[duration_col] = duration
-      result.append(new_row)
-
-  # filelist.csv
-  df = pd.DataFrame(result)
-  print(df.head())
-  df.to_csv(os.path.join(get_filelist_dir(training_dir_path), filelist_file_name), header=None, index=None, sep=csv_separator)
-
+  save_trainset(training_dir_path, trainset)
+  save_wholeset(training_dir_path, wholeset)
   log(training_dir_path, "Done.")
 
 if __name__ == "__main__":
-    
-  res = load_filepaths("/datasets/models/taco2pt_v2/ljs_waveglow/filelist/filelist.csv")
-  for x in res:
-    print(x)
+  prepare(
+    base_dir = '/datasets/models/taco2pt_v2',
+    training_dir_path = '/datasets/models/taco2pt_v2/wg_debug',
+    wav_ds_name = 'ljs_22050kHz',
+    test_size = 0.001,
+    validation_size = 0.01,
+    seed = 1234,
+  )

@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 import torch
 import torch.utils.data
-from src.common.utils import load_filepaths_and_symbols
+from src.tacotron.prepare_ds_ms_io import get_mel_path, get_serialized_ids, get_speaker_id
 from src.tacotron.layers import TacotronSTFT
 from src.text.symbol_converter import deserialize_symbol_ids
 
@@ -16,20 +16,19 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
     2) normalizes text and converts them to sequences of one-hot vectors
     3) computes mel-spectrograms from audio files.
   """
-  def __init__(self, audiopaths_and_text, hparams):
-    audiopaths_and_symbols = load_filepaths_and_symbols(audiopaths_and_text)
+  def __init__(self, prepare_ds_ms_data, hparams):
+    data = prepare_ds_ms_data
 
     random.seed(hparams.seed)
-    random.shuffle(audiopaths_and_symbols)
+    random.shuffle(data)
 
     print("Loading mels into memory...")
     self.cache = {}
-    for i, data in tqdm(enumerate(audiopaths_and_symbols), total=len(audiopaths_and_symbols)):
-      audiopath, serialized_symbol_ids, speaker_id = data
-      symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
+    for i, values in tqdm(enumerate(data), total=len(data)):
+      symbol_ids = deserialize_symbol_ids(get_serialized_ids(values))
       symbols_tensor = torch.IntTensor(symbol_ids)
-      mel_tensor = torch.load(audiopath, map_location='cpu')
-      self.cache[i] = (symbols_tensor, mel_tensor, speaker_id)
+      mel_tensor = torch.load(get_mel_path(values), map_location='cpu')
+      self.cache[i] = (symbols_tensor, mel_tensor, get_speaker_id(values))
 
   def __getitem__(self, index):
     #return self.cache[index]

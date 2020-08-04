@@ -38,13 +38,12 @@ from scipy.io.wavfile import write
 
 import torch
 from src.common.audio.utils import float_to_wav, is_overamp
-from src.common.utils import compare_mels
+from src.common.utils import stack_images_vertically
 from src.paths import get_inference_dir
 from src.tacotron.layers import TacotronSTFT
-from src.tacotron.plot_mel import plot_melspec, stack_images_vertically
+from src.pre.mel_parser import MelParser, plot_melspec, compare_mels
 from src.waveglow.denoiser import Denoiser
 from src.waveglow.hparams import create_hparams
-from src.waveglow.mel2samp import MelParser
 from src.waveglow.train import (get_checkpoint_dir,
                                 load_model)
 from src.common.utils import get_last_checkpoint

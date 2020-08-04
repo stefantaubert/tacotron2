@@ -3,13 +3,13 @@ import os
 import tarfile
 from collections import OrderedDict
 
-import imageio
 import numpy as np
 import pandas as pd
 import wget
 from scipy.io.wavfile import read
 from skimage.metrics import structural_similarity
 from pathlib import Path
+from PIL import Image
 
 import torch
 from src.text.ipa2symb import extract_from_sentence
@@ -23,11 +23,30 @@ duration_col = 3
 speaker_id_col = 4
 speaker_name_col = 5
 
+def stack_images_vertically(list_im, out_path):
+  images = [Image.open(i) for i in list_im]
+  widths, heights = zip(*(i.size for i in images))
+
+  total_height = sum(heights)
+  max_width = max(widths)
+
+  new_im = Image.new(
+    mode='RGB',
+    size=(max_width, total_height),
+    color=(255, 255, 255) # white
+  )
+
+  y_offset = 0
+  for im in images:
+    new_im.paste(im, (0, y_offset))
+    y_offset += im.size[1]
+  new_im.save(out_path)
+
 def save_csv(data: list, path: str):
   df = pd.DataFrame(data)
   df.to_csv(path, header=None, index=None, sep=csv_separator)
   return df
-  
+
 def load_csv(path: str):
   speaker_data = pd.read_csv(path, header=None, sep=csv_separator)
   return speaker_data
@@ -47,22 +66,6 @@ def create_parent_folder(file: str):
   path = Path(file)
   os.makedirs(path.parent, exist_ok=True)
   return path.parent
-
-def compare_mels(path_a, path_b):
-  img_a = imageio.imread(path_a)
-  img_b = imageio.imread(path_b)
-  #img_b = imageio.imread(path_original_plot)
-  assert img_a.shape[0] == img_b.shape[0]
-  img_a_width = img_a.shape[1]
-  img_b_width = img_b.shape[1]
-  resize_width = img_a_width if img_a_width < img_b_width else img_b_width
-  img_a = img_a[:,:resize_width]
-  img_b = img_b[:,:resize_width]
-  #imageio.imsave("/tmp/a.png", img_a)
-  #imageio.imsave("/tmp/b.png", img_b)
-  score, diff_img = structural_similarity(img_a, img_b, full=True, multichannel=True)
-  #imageio.imsave(path_out, diff)
-  return score, diff_img
 
 def str_to_int(val: str) -> int:
   '''maps a string to int'''
@@ -142,13 +145,6 @@ def get_mask_from_lengths(lengths):
   ids = torch.arange(0, max_len, out=torch.cuda.LongTensor(max_len))
   mask = (ids < lengths.unsqueeze(1)).bool()
   return mask
-
-def load_filepaths_and_symbols(filename):
-  data = pd.read_csv(filename, header=None, sep=csv_separator)
-  data = data.iloc[:, [wavpath_col, symbols_str_col, speaker_id_col]]
-  data = data.values
-  return data
-
 
 def to_gpu(x):
   x = x.contiguous()

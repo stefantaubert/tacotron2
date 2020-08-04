@@ -15,20 +15,19 @@ from tqdm import tqdm
 
 import torch
 from src.common.audio.utils import float_to_wav, mel_to_numpy, is_overamp
-from src.common.utils import parse_ds_speakers, parse_json
+from src.common.utils import parse_ds_speakers, parse_json, stack_images_vertically
 from src.paths import (filelist_speakers_name, get_checkpoint_dir,
                        get_filelist_dir, get_symbols_path,
                        inference_input_file_name,
                        inference_input_symbols_file_name)
 from src.tacotron.hparams import create_hparams
 from src.tacotron.model import Tacotron2
-from src.tacotron.plot_mel import plot_melspec, stack_images_vertically
+from src.pre.mel_parser import MelParser, plot_melspec
 from src.tacotron.synthesizer import Synthesizer as TacoSynthesizer
 from src.common.utils import get_last_checkpoint
 from src.tacotron.train import load_model
 from src.text.symbol_converter import deserialize_symbol_ids, load_from_file
 from src.waveglow.inference import Synthesizer as WGSynthesizer
-from src.waveglow.mel2samp import MelParser
 from src.waveglow.synthesizer import Synthesizer as WGSynthesizer
 
 

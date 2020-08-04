@@ -24,33 +24,37 @@ def get_dBFS(wav, max_value) -> float:
     result = 20 * log10(new)
     return result
 
-def detect_leading_silence(wav, silence_threshold=-50.0, chunk_size=10, buffer_ms: int = 0):
+def detect_leading_silence(wav: np.array, silence_threshold: float, chunk_size: int, buffer: int):
     assert chunk_size > 0
+    if chunk_size > len(wav):
+      chunk_size = len(wav)
 
-    trim_ms = 0
+    trim = 0
     max_value = -get_min_value(wav.dtype)
-    while get_dBFS(wav[trim_ms:trim_ms + chunk_size], max_value) < silence_threshold and trim_ms < len(wav):
-      trim_ms += chunk_size
+    while get_dBFS(wav[trim:trim + chunk_size], max_value) < silence_threshold and trim < len(wav):
+      trim += chunk_size
 
-    if buffer_ms <= trim_ms:
-      trim_ms -= buffer_ms
+    if trim >= buffer:
+      trim -= buffer
+    else:
+      trim = 0
 
-    return trim_ms
+    return trim
 
 def remove_silence(
     wav,
     chunk_size: int,
     threshold_start: float,
     threshold_end: float,
-    buffer_start_ms: float,
-    buffer_end_ms: float
+    buffer_start: float,
+    buffer_end: float
   ):
 
   start_trim = detect_leading_silence(
     wav=wav,
     silence_threshold=threshold_start,
     chunk_size=chunk_size,
-    buffer_ms=buffer_start_ms
+    buffer=buffer_start
   )
 
   wav_reversed = wav[::-1]
@@ -58,11 +62,16 @@ def remove_silence(
     wav=wav_reversed,
     silence_threshold=threshold_end,
     chunk_size=chunk_size,
-    buffer_ms=buffer_end_ms
+    buffer=buffer_end
   )
   
   wav = wav[start_trim:len(wav) - end_trim]
   return wav
+
+def ms_to_samples(ms, sampling_rate):
+  res = int(ms * sampling_rate / 1000)
+  return res
+
 
 def remove_silence_file(
     in_path: str,
@@ -76,13 +85,16 @@ def remove_silence_file(
 
   sampling_rate, wav = read(in_path)
 
+  buffer_start = ms_to_samples(buffer_start_ms, sampling_rate)
+  buffer_end = ms_to_samples(buffer_end_ms, sampling_rate)
+
   wav = remove_silence(
     wav = wav,
     chunk_size = chunk_size,
     threshold_start = threshold_start,
     threshold_end = threshold_end,
-    buffer_start_ms = buffer_start_ms,
-    buffer_end_ms = buffer_end_ms
+    buffer_start = buffer_start,
+    buffer_end = buffer_end
   )
   new_duration = get_duration_s(wav, sampling_rate)
 

@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from src.common.audio.utils import get_duration_s_file
 from argparse import ArgumentParser
-from src.pre.wav_data import to_values, save_data, already_exists
+from src.pre.wav_pre_io import to_values, save_data, already_exists
 from src.pre.parser.pre_data import get_basename, get_path, get_speaker_name, get_text
 
 def __read_wavs(base_dir: str, ds_name: str, data: list):

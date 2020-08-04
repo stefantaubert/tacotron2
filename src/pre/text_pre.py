@@ -5,8 +5,8 @@ from tqdm import tqdm
 
 from src.text.adjustments import normalize_text
 from src.text.symbol_converter import init_from_symbols, serialize_symbol_ids
-from src.pre.mel_data import parse_data, get_basename, get_id, get_path, get_duration, get_id, get_speaker_name, get_text
-from src.pre.text_data import to_values, save_symbols, save_data, already_exists, save_all_symbols, save_all_speakers
+from src.pre.mel_pre_io import parse_data, get_basename, get_id, get_path, get_duration, get_id, get_speaker_name, get_text
+from src.pre.text_pre_io import to_values, save_symbols, save_data, already_exists, save_all_symbols, save_all_speakers
 
 def init_thchs_text_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -97,7 +97,7 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
       symbols = symbols.union(current_symbols)
 
     conv = init_from_symbols(symbols)
-    save_symbols(base_dir, ds_name, speaker)
+    save_symbols(base_dir, ds_name, speaker, conv)
 
     ### convert text to symbols
     result = []
@@ -113,24 +113,23 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
   print("Dataset preprocessing finished.")
 
 
-
 if __name__ == "__main__":
-  # preprocess(
-  #   base_dir = '/datasets/models/taco2pt_v2',
-  #   mel_name = 'thchs',
-  #   ds_name = 'thchs_v6',
-  #   ignore_arcs = True,
-  #   ignore_tones = False,
-  #   lang = "chn",
-  #   convert_to_ipa=True
-  # )
-
   preprocess(
     base_dir = '/datasets/models/taco2pt_v2',
-    mel_name = 'ljs',
-    ds_name = 'ljs_ipa_v3',
+    mel_name = 'thchs',
+    ds_name = 'thchs_mel_v1',
     ignore_arcs = True,
-    ignore_tones = True,
-    lang = "eng",
+    ignore_tones = False,
+    lang = "chn",
     convert_to_ipa=True
   )
+
+  # preprocess(
+  #   base_dir = '/datasets/models/taco2pt_v2',
+  #   mel_name = 'ljs',
+  #   ds_name = 'ljs_ipa_v3',
+  #   ignore_arcs = True,
+  #   ignore_tones = True,
+  #   lang = "eng",
+  #   convert_to_ipa=True
+  # )

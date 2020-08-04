@@ -37,7 +37,7 @@ from src.tacotron.txt_pre import process_input_text
 from src.text.symbol_converter import load_from_file
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
-
+from src.tacotron.prepare_ds_ms_io import parse_traindata, parse_validationset
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -61,16 +61,23 @@ def init_distributed(hparams, n_gpus, rank, group_name, training_dir_path):
   log(training_dir_path, "Done initializing distributed")
 
 
-def prepare_dataloaders(hparams, filelist_dir_path):
+def prepare_dataloaders(hparams, training_dir_path):
   # Get data, data loaders and collate function ready
-  trainset_path = os.path.join(filelist_dir_path, filelist_training_file_name)
-  train_dur = get_total_duration_min_df(trainset_path)
-  print("Duration trainset {:.2f}min / {:.2f}h".format(train_dur, train_dur / 60))
-  trainset = SymbolsMelLoader(trainset_path, hparams)
-  valset_path = os.path.join(filelist_dir_path, filelist_validation_file_name)
-  val_dur = get_total_duration_min_df(valset_path)
-  print("Duration valset {:.2f}min / {:.2f}h".format(val_dur, val_dur / 60))
-  valset = SymbolsMelLoader(valset_path, hparams)
+  # trainset_path = os.path.join(filelist_dir_path, filelist_training_file_name)
+  # train_dur = get_total_duration_min_df(trainset_path)
+  # print("Duration trainset {:.2f}min / {:.2f}h".format(train_dur, train_dur / 60))
+  
+  # valset_path = os.path.join(filelist_dir_path, filelist_validation_file_name)
+  # val_dur = get_total_duration_min_df(valset_path)
+  # print("Duration valset {:.2f}min / {:.2f}h".format(val_dur, val_dur / 60))
+  # valset = SymbolsMelLoader(valset_path, hparams)
+
+  traindata = parse_traindata(training_dir_path)
+  trainset = SymbolsMelLoader(traindata, hparams)
+
+  valdata = parse_validationset(training_dir_path)
+  valset = SymbolsMelLoader(valdata, hparams)
+
   collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
 
   if hparams.distributed_run:
@@ -80,10 +87,17 @@ def prepare_dataloaders(hparams, filelist_dir_path):
     train_sampler = None
     shuffle = True
 
-  train_loader = DataLoader(trainset, num_workers=1, shuffle=shuffle,
-                sampler=train_sampler,
-                batch_size=hparams.batch_size, pin_memory=False,
-                drop_last=True, collate_fn=collate_fn)
+  train_loader = DataLoader(
+    trainset,
+    num_workers=1,
+    shuffle=shuffle,
+    sampler=train_sampler,
+    batch_size=hparams.batch_size,
+    pin_memory=False,
+    drop_last=True,
+    collate_fn=collate_fn
+  )
+  
   return train_loader, valset, collate_fn
 
 
@@ -100,11 +114,11 @@ def prepare_directories_and_logger(output_directory, log_directory, rank):
 
 def load_model(hparams):
   model = Tacotron2(hparams).cuda()
-  if hparams.fp16_run:
-    model.decoder.attention_layer.score_mask_value = finfo('float16').min
+  # if hparams.fp16_run:
+  #   model.decoder.attention_layer.score_mask_value = finfo('float16').min
 
-  if hparams.distributed_run:
-    model = apply_gradient_allreduce(model)
+  # if hparams.distributed_run:
+  #   model = apply_gradient_allreduce(model)
 
   return model
 
@@ -247,7 +261,7 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   filelist_dir_path = get_filelist_dir(training_dir_path)
 
   logger = prepare_directories_and_logger(output_directory, log_directory, rank)
-  train_loader, valset, collate_fn = prepare_dataloaders(hparams, filelist_dir_path)
+  train_loader, valset, collate_fn = prepare_dataloaders(hparams, training_dir_path)
 
   if not len(train_loader):
     print("Not enough trainingdata.")
@@ -413,7 +427,6 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--training_dir', type=str, required=True)
   parser.add_argument('--continue_training', action='store_true')
-  parser.add_argument('--seed', type=int, default=1234)
   parser.add_argument('--warm_start', action='store_true')
   parser.add_argument('--warm_start_model', type=str)
   parser.add_argument('--speakers', type=str, help="ds_name,speaker_id;... or ds_name,all;...", required=True)
@@ -426,7 +439,7 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--weight_map_model_symbols', type=str)
   return __main
 
-def __main(base_dir, training_dir, continue_training, seed, warm_start, warm_start_model, speakers, test_size, validation_size, hparams, weight_map_model, weight_map_model_symbols, weight_map_mode, weight_map):
+def __main(base_dir, training_dir, continue_training, warm_start, warm_start_model, speakers, test_size, validation_size, hparams, weight_map_model, weight_map_model_symbols, weight_map_mode, weight_map):
   hparams = create_hparams(hparams)
   training_dir_path = os.path.join(base_dir, training_dir)
 
@@ -439,8 +452,7 @@ def __main(base_dir, training_dir, continue_training, seed, warm_start, warm_sta
       os.remove(map_path)
 
     reset_log(training_dir_path)
-    prepare_ms(base_dir, training_dir_path, speakers=speakers, pretrained_model=weight_map_model, weight_map_mode=weight_map_mode, hparams=hparams, pretrained_model_symbols=weight_map_model_symbols, test_size=test_size, val_size=validation_size, seed=seed)
-    #split_ds(base_dir, training_dir_path, train_size=train_size, validation_size=validation_size, seed=seed, duration_col=duration_col)
+    prepare_ms(base_dir, training_dir_path, speakers=speakers, pretrained_model=weight_map_model, weight_map_mode=weight_map_mode, hparams=hparams, pretrained_model_symbols=weight_map_model_symbols, test_size=test_size, val_size=validation_size, seed=hparams.seed)
     
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
   use_weights_map = os.path.exists(weights_path)
@@ -454,17 +466,16 @@ if __name__ == "__main__":
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'debug',
     continue_training = False,
-    seed = 1234,
-    warm_start = False,
-    pretrained_path = "/datasets/models/pretrained/ljs_ipa_scratch_80000",
-    speakers = 'thchs_v6,all',
+    warm_start = True,
+    warm_start_model = "/datasets/models/pretrained/ljs_ipa_scratch_80000",
+    speakers = 'thchs_mel_v1,D31',
     test_size = 0.1,
     validation_size = 0.05,
     hparams = 'batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight, speakers_embedding.weight]',
-    pretrained_model = None,
-    pretrained_model_symbols = None,
+    weight_map_model = None,
+    weight_map_model_symbols = None,
     weight_map_mode = None,
-    inference_map = None,
+    weight_map = None,
     #weight_map_mode = 'same_symbols_only',
     #weight_map_mode = 'use_map',
     #map = "maps/weights/chn_en_v1.json",
