@@ -12,21 +12,18 @@ import torch
 from src.common.train_log import log
 from src.common.utils import (parse_ds_speakers, parse_json, str_to_int,
                               serialize_ds_speaker, serialize_ds_speakers)
-from src.pre.text_pre_io import (get_all_speakers_path, get_basename, get_id,
-                                 get_duration, get_mel_path, get_wav_path,
-                                 get_serialized_symbol_ids, parse_data,
-                                 parse_symbols)
+from src.pre.text_pre_io import TextData, TextDataList, parse_data, parse_symbols
 from src.tacotron.prepare_ds_ms_io import (parse_weights_map,
                                            remove_weights_file,
                                            save_all_speakers, save_all_symbols,
                                            save_testset, save_trainset,
                                            save_validationset, save_weights,
-                                           save_wholeset, to_values)
+                                           save_wholeset, PreparedData, PreparedDataList)
 from src.text.symbol_converter import (deserialize_symbol_ids,
                                        init_from_symbols, load_from_file,
                                        serialize_symbol_ids)
 from torch import nn
-
+from src.paths import get_all_speakers_path
 
 def expand_speakers(base_dir, speakers):
   # expand all
@@ -62,10 +59,10 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
 
   save_all_symbols(training_dir_path, final_conv)
 
-  wholeset = []
-  testset = []
-  trainset = []
-  valset = []
+  wholeset: PreparedDataList = []
+  testset: PreparedDataList = []
+  trainset: PreparedDataList = []
+  valset: PreparedDataList = []
 
   create_testset = test_size > 0
   create_valset = val_size > 0
@@ -75,25 +72,17 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
     speaker_conv = parse_symbols(base_dir, ds, speaker_name)
     speaker_data = parse_data(base_dir, ds, speaker_name)
 
-    speaker_new_rows = []
+    speaker_new_rows: PreparedDataList = []
 
+    values: TextData
     for values in speaker_data:
-      serialized_ids = get_serialized_symbol_ids(values)
-      deserialized_ids = deserialize_symbol_ids(serialized_ids)
+      deserialized_ids = deserialize_symbol_ids(values.serialized_symbol_ids)
       original_symbols = speaker_conv.ids_to_symbols(deserialized_ids)
       updated_ids = final_conv.symbols_to_ids(original_symbols, subset_id_if_multiple=1, add_eos=False, replace_unknown_with_pad=True)
       serialized_updated_ids = serialize_symbol_ids(updated_ids)
       
-      speaker_new_rows.append(to_values(
-        i=get_id(values),
-        basename=get_basename(values),
-        wav_path=get_wav_path(values),
-        mel_path=get_mel_path(values),
-        serialized_updated_ids=serialized_updated_ids,
-        duration=get_duration(values),
-        speaker_id=speaker_id,
-        speaker_name=speaker_name
-      ))
+      prepared_data = PreparedData(values.i, values.basename, values.wav_path, values.mel_path, serialized_updated_ids, values.duration, speaker_id, speaker_name)
+      speaker_new_rows.append(prepared_data)
     
     # reason: speakers with same utterance counts should not have the same validation sets
     speaker_seed = seed + str_to_int(speaker_name)

@@ -6,7 +6,7 @@ import tempfile
 from tqdm import tqdm
 
 from src.common.utils import create_parent_folder, download_tar
-from src.pre.parser.pre_data import to_values
+from src.pre.parser.pre_data import PreData, PreDataList
 
 def ensure_downloaded(dir_path: str):
   dir_exists = os.path.exists(dir_path)
@@ -22,7 +22,7 @@ def ensure_downloaded(dir_path: str):
     shutil.move(content_dir, dest)
     os.rename(dest, dir_path)
 
-def parse(dir_path: str) -> list:
+def parse(dir_path: str) -> PreDataList:
   if not os.path.exists(dir_path):
     print("Directory not found:", dir_path)
     raise Exception()
@@ -57,7 +57,7 @@ def parse(dir_path: str) -> list:
   print("Done.")
   
   res.sort()
-  res = [to_values(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3]) for x in res]
+  res = [PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3]) for x in res]
 
   return res
 

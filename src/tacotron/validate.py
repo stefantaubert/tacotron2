@@ -19,12 +19,9 @@ from tqdm import tqdm
 import torch
 from src.common.audio.utils import float_to_wav, is_overamp, mel_to_numpy
 from src.common.train_log import reset_log
-from src.common.utils import (csv_separator, get_last_checkpoint,
-                              get_speaker_count_csv, get_utterance_names_csv,
+from src.common.utils import (get_last_checkpoint,
                               parse_ds_speaker, parse_ds_speakers, parse_json,
-                              speaker_id_col, speaker_name_col,
-                              stack_images_vertically, symbols_str_col,
-                              utt_name_col, wavpath_col)
+                              stack_images_vertically)
 from src.paths import (ds_preprocessed_file_name, filelist_speakers_name,
                        filelist_test_file_name, filelist_validation_file_name,
                        get_checkpoint_dir, get_filelist_dir, get_inference_dir,
@@ -40,7 +37,7 @@ from src.tacotron.train import load_model
 from src.text.symbol_converter import deserialize_symbol_ids, load_from_file
 from src.waveglow.inference import Synthesizer as WGSynthesizer
 from src.waveglow.synthesizer import Synthesizer as WGSynthesizer
-from src.tacotron.prepare_ds_ms_io import parse_all_speakers, parse_all_symbols, get_wav_path, get_random_val_utterance, get_random_test_utterance, get_values_entry, get_basename, get_id, get_speaker_id, get_speaker_name, get_serialized_ids
+from src.tacotron.prepare_ds_ms_io import parse_all_speakers, parse_all_symbols, get_random_val_utterance, get_random_test_utterance, get_values_entry, PreparedData, PreparedDataList
 
 
 def init_validate_parser(parser):
@@ -54,7 +51,7 @@ def init_validate_parser(parser):
   parser.add_argument("--sigma", default=0.666, type=float)
   return validate
 
-def get_utterance(training_dir_path, utterance: str):
+def get_utterance(training_dir_path, utterance: str) -> PreparedData:
   if "random" in utterance:
     tmp = utterance.split('-')
     custom_speaker = tmp[2] if len(tmp) == 3 else None
@@ -78,11 +75,11 @@ def validate(base_dir, training_dir, utterance: str, hparams, waveglow, custom_c
     checkpoint = get_last_checkpoint(checkpoint_dir)
 
   dataset_values_entry = get_utterance(training_dir_path, utterance)
-  print("Selected utterance: {} ({})".format(get_id(dataset_values_entry), get_basename(dataset_values_entry)))
+  print("Selected utterance: {} ({})".format(dataset_values_entry.i, dataset_values_entry.basename))
   
-  print("Speaker is: {} ({})".format(get_speaker_name(dataset_values_entry), get_speaker_id(dataset_values_entry)))
+  print("Speaker is: {} ({})".format(dataset_values_entry.speaker_name, dataset_values_entry.speaker_id))
 
-  infer_dir_path = get_validation_dir(training_dir_path, get_id(dataset_values_entry), get_basename(dataset_values_entry), checkpoint, get_speaker_name(dataset_values_entry))
+  infer_dir_path = get_validation_dir(training_dir_path, dataset_values_entry.i, dataset_values_entry.basename, checkpoint, dataset_values_entry.speaker_name)
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
 
   conv = parse_all_symbols(training_dir_path)
@@ -97,17 +94,17 @@ def validate(base_dir, training_dir, utterance: str, hparams, waveglow, custom_c
   print("Using waveglow model:", waveglow)
   wg_synt = WGSynthesizer(checkpoint_path=waveglow, custom_hparams=None)
  
-  symbol_ids = deserialize_symbol_ids(get_serialized_ids(dataset_values_entry))
+  symbol_ids = deserialize_symbol_ids(dataset_values_entry.serialized_updated_ids)
   orig_text = conv.ids_to_text(symbol_ids)
   
   with open(os.path.join(infer_dir_path, inference_input_file_name), 'w', encoding='utf-8') as f:
     f.writelines([orig_text])
   
-  print("Inferring {}...".format(get_basename(dataset_values_entry)))
+  print("Inferring {}...".format(dataset_values_entry.basename))
   print("{} ({})".format(orig_text, len(symbol_ids)))
   mel_outputs, mel_outputs_postnet, alignments = taco_synt.infer(
     symbol_ids=symbol_ids,
-    speaker_id=get_speaker_id(dataset_values_entry)
+    speaker_id=dataset_values_entry.speaker_id
   )
   synthesized_sentence = wg_synt.infer_mel(
     mel=mel_outputs_postnet,
@@ -130,7 +127,7 @@ def validate(base_dir, training_dir, utterance: str, hparams, waveglow, custom_c
   path_compared_plot = "{}_comparison.png".format(out_path_template)
 
   if is_overamp(synthesized_sentence):
-    print("Overamplified out.")
+    print("Overamplified output!.")
   #assert not is_overamp(synthesized_sentence)
   float_to_wav(
     wav=synthesized_sentence,
@@ -145,7 +142,7 @@ def validate(base_dir, training_dir, utterance: str, hparams, waveglow, custom_c
   print("Plotting...")
 
   mel_parser = MelParser(taco_synt.hparams)
-  mel_orig = mel_parser.get_mel_tensor_from_file(get_wav_path(dataset_values_entry))
+  mel_orig = mel_parser.get_mel_tensor_from_file(dataset_values_entry.wav_path)
 
   plot_melspec(mel_to_numpy(mel_outputs_postnet), title="Inferred")
   plt.savefig(path_inferred_plot, bbox_inches='tight')
@@ -160,7 +157,7 @@ def validate(base_dir, training_dir, utterance: str, hparams, waveglow, custom_c
   plt.savefig(path_alignments_plot, bbox_inches='tight')
 
   stack_images_vertically([path_original_plot, path_inferred_plot, path_pre_postnet_plot, path_alignments_plot], path_compared_plot)
-  copyfile(get_wav_path(dataset_values_entry), path_original_wav)
+  copyfile(dataset_values_entry.wav_path, path_original_wav)
 
   print("Finished.")
 

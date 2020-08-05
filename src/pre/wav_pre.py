@@ -8,25 +8,25 @@ from tqdm import tqdm
 
 from src.common.audio.utils import get_duration_s_file
 from argparse import ArgumentParser
-from src.pre.wav_pre_io import to_values, save_data, already_exists
-from src.pre.parser.pre_data import get_basename, get_path, get_speaker_name, get_text
+from src.pre.wav_pre_io import save_data, already_exists, WavData, WavDataList
+from src.pre.parser.pre_data import PreDataList, PreData
 
-def __read_wavs(base_dir: str, ds_name: str, data: list):
-  result = []
+def __read_wavs(base_dir: str, ds_name: str, data: PreDataList):
+  result: WavDataList = []
   print("Reading durations...")
-  for i, values in tqdm(enumerate(data), total=len(data)):
-    name, speaker_name, text, wav_path = get_basename(values), get_speaker_name(values), get_text(values), get_path(values)
-    duration = get_duration_s_file(wav_path)
-    vals = to_values(i, name, speaker_name, text, wav_path, duration)
-    result.append(vals)
-    
+  values: PreData
+  for i, values in enumerate(tqdm(data)):
+    duration = get_duration_s_file(values.wav_path)
+    wav_data = WavData(i, values.name, values.speaker_name, values.text, values.wav_path, duration)
+    result.append(wav_data)
+  
   save_data(base_dir, ds_name, result)
   print("Dataset saved.")
 
 def __read_wavs_ds(base_dir: str, name: str, path: str, parse):
   if not already_exists(base_dir, name):
     data = parse(path)
-    __read_wavs(base_dir, name, data)
+    __read_wavs(base_dir, name, data[:10])
   else:
     print("Nothing to do.")
 
@@ -71,20 +71,20 @@ if __name__ == "__main__":
   __read_wavs_thchs(
     base_dir="/datasets/models/taco2pt_v2",
     path="/datasets/thchs_wav",
-    name="thchs_16000kHz",
+    name="thchs_16000kHz-test",
     auto_dl=True,
   )
 
-  __read_wavs_ljs(
-    base_dir="/datasets/models/taco2pt_v2",
-    path="/datasets/LJSpeech-1.1",
-    name="ljs_22050kHz",
-    auto_dl=True,
-  )
+  # __read_wavs_ljs(
+  #   base_dir="/datasets/models/taco2pt_v2",
+  #   path="/datasets/LJSpeech-1.1",
+  #   name="ljs_22050kHz",
+  #   auto_dl=True,
+  # )
 
-  __read_wavs_thchs_kaldi(
-    base_dir="/datasets/models/taco2pt_v2",
-    path="/datasets/THCHS-30",
-    name="thchs_kaldi_16000kHz",
-    auto_dl=True,
-  )
+  # __read_wavs_thchs_kaldi(
+  #   base_dir="/datasets/models/taco2pt_v2",
+  #   path="/datasets/THCHS-30",
+  #   name="thchs_kaldi_16000kHz",
+  #   auto_dl=True,
+  # )

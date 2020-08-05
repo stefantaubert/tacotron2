@@ -4,58 +4,91 @@ from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
                        filelist_test_file_name, filelist_training_file_name,
                        filelist_validation_file_name,
                        filelist_weights_file_name, get_all_speakers_path,
-                       get_ds_dir, get_filelist_dir, train_map_file)
+                       get_ds_dir, get_filelist_dir)
 import os
-from src.common.utils import load_csv, save_csv, save_json
-from collections import OrderedDict
+from src.common.utils import load_csv, save_csv
 from src.common.train_log import log
-from src.common.utils import get_total_duration_min, parse_json
 import numpy as np
+from dataclasses import dataclass
+from typing import List
+import random
+@dataclass()
+class PreparedData:
+  #i: int
+  basename: str
+  wav_path: str
+  duration: float
 
-__basename_idx = 0
-__wavepath_idx = 1
-__duration_idx = 2
+PreparedDataList = List[PreparedData]
 
-def get_basename(values):
-  return values[__basename_idx]
-
-def get_wavepath(values):
-  return values[__wavepath_idx]
-
-def get_duration(values):
-  return values[__duration_idx]
-
-def to_values(basename, wav_path, duration):
-  return (basename, wav_path, duration)
-
-def save_trainset(training_dir_path, dataset: list):
+def get_total_duration(values: PreparedDataList):
+  x: PreparedData
+  durations = [x.duration for x in values]
+  duration = sum(durations)
+  return duration
+  
+def save_trainset(training_dir_path, dataset: PreparedDataList):
   dest_path = os.path.join(get_filelist_dir(training_dir_path), filelist_training_file_name)
-  df = save_csv(dataset, dest_path)
-  total_dur_min = get_total_duration_min(df, __duration_idx)
-  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_training_file_name, len(df), total_dur_min, total_dur_min / 60))
+  save_csv(dataset, dest_path)
+  total_dur_min = get_total_duration(dataset) / 60
+  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_training_file_name, len(dataset), total_dur_min, total_dur_min / 60))
 
-def save_testset(training_dir_path, dataset: list):
+def save_testset(training_dir_path, dataset: PreparedDataList):
   dest_path = os.path.join(get_filelist_dir(training_dir_path), filelist_test_file_name)
-  df = save_csv(dataset, dest_path)
-  total_dur_min = get_total_duration_min(df, __duration_idx)
-  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_test_file_name, len(df), total_dur_min, total_dur_min / 60))
+  save_csv(dataset, dest_path)
+  total_dur_min = get_total_duration(dataset) / 60
+  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_test_file_name, len(dataset), total_dur_min, total_dur_min / 60))
 
-def save_validationset(training_dir_path, dataset: list):
+def save_validationset(training_dir_path, dataset: PreparedDataList):
   dest_path = os.path.join(get_filelist_dir(training_dir_path), filelist_validation_file_name)
-  df = save_csv(dataset, dest_path)
-  total_dur_min = get_total_duration_min(df, __duration_idx)
-  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_validation_file_name, len(df), total_dur_min, total_dur_min / 60))
+  save_csv(dataset, dest_path)
+  total_dur_min = get_total_duration(dataset) / 60
+  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_validation_file_name, len(dataset), total_dur_min, total_dur_min / 60))
 
-def save_wholeset(training_dir_path, dataset: list):
+def save_wholeset(training_dir_path, dataset: PreparedDataList):
   dest_path = os.path.join(get_filelist_dir(training_dir_path), filelist_file_name)
-  df = save_csv(dataset, dest_path)
-  total_dur_min = get_total_duration_min(df, __duration_idx)
-  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_file_name, len(df), total_dur_min, total_dur_min / 60))
+  save_csv(dataset, dest_path)
+  total_dur_min = get_total_duration(dataset) / 60
+  log(training_dir_path, "{} => Size: {}, Duration: {:.2f}min / {:.2f}h".format(filelist_file_name, len(dataset), total_dur_min, total_dur_min / 60))
 
-def parse_traindata(training_dir_path: str):
+def parse_traindata(training_dir_path: str) -> PreparedDataList:
   dest_path = os.path.join(get_filelist_dir(training_dir_path), filelist_training_file_name)
-  return load_csv(dest_path).values
+  return load_csv(dest_path, PreparedData)
 
-def parse_validationset(training_dir_path: str):
+def parse_validationset(training_dir_path: str) -> PreparedDataList:
   dest_path = os.path.join(get_filelist_dir(training_dir_path), filelist_validation_file_name)
-  return load_csv(dest_path).values
+  return load_csv(dest_path, PreparedData)
+
+def parse_testset(training_dir_path: str) -> PreparedDataList:
+  dest_path = os.path.join(get_filelist_dir(training_dir_path), filelist_test_file_name)
+  return load_csv(dest_path, PreparedData)
+
+def parse_wholeset(training_dir_path: str) -> PreparedDataList:
+  dest_path = os.path.join(get_filelist_dir(training_dir_path), filelist_file_name)
+  return load_csv(dest_path, PreparedData)
+
+def get_random_val_utterance(training_dir_path: str, custom_speaker: str) -> PreparedData:
+  dataset = parse_testset(training_dir_path)
+  return __get_random_utterance(dataset, custom_speaker)
+
+def get_random_test_utterance(training_dir_path: str, custom_speaker: str) -> PreparedData:
+  dataset = parse_testset(training_dir_path)
+  return __get_random_utterance(dataset, custom_speaker)
+
+def __get_random_utterance(dataset: PreparedDataList, custom_speaker: str) -> PreparedData:
+  random_value: PreparedData = random.choice(dataset)
+  if custom_speaker:
+    while True:
+      if random_value.speaker_name == custom_speaker:
+        break
+      random_value: PreparedData = random.choice(dataset)
+  return random_value
+
+def get_values_entry(training_dir_path, dest_id: int) -> PreparedData:
+  wholeset = parse_wholeset(training_dir_path)
+  values: PreparedData
+  for values in wholeset:
+    if values.i == dest_id:
+      return values
+  raise Exception()
+

@@ -19,12 +19,9 @@ from tqdm import tqdm
 import torch
 from src.common.audio.utils import float_to_wav, is_overamp, mel_to_numpy
 from src.common.train_log import reset_log
-from src.common.utils import (csv_separator, get_last_checkpoint,
-                              get_speaker_count_csv, get_utterance_names_csv,
+from src.common.utils import (get_last_checkpoint,
                               parse_ds_speaker, parse_ds_speakers, parse_json,
-                              speaker_id_col, speaker_name_col,
-                              stack_images_vertically, symbols_str_col,
-                              utt_name_col, wavpath_col)
+                              stack_images_vertically)
 from src.paths import (ds_preprocessed_file_name, filelist_speakers_name,
                        filelist_test_file_name, filelist_validation_file_name,
                        get_checkpoint_dir, get_filelist_dir, get_inference_dir,
@@ -75,7 +72,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   alignment_plots = []
   pre_post_plots = []
 
-  for i, serialized_symbol_ids in tqdm(enumerate(serialized_symbol_ids_sentences), total=len(serialized_symbol_ids_sentences)):
+  for i, serialized_symbol_ids in enumerate(tqdm(serialized_symbol_ids_sentences)):
     #print(sentence_symbols)
     symbol_ids = deserialize_symbol_ids(serialized_symbol_ids)
     print("{} ({})".format(conv.ids_to_text(symbol_ids), len(symbol_ids)))
@@ -94,8 +91,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
       path_inferred_plot = os.path.join(infer_dir_path, "{}.png".format(i))
       path_pre_postnet_plot = os.path.join(infer_dir_path, "{}_pre_post.png".format(i))
       path_alignments_plot = os.path.join(infer_dir_path, "{}_alignments.png".format(i))
-      
-      assert not is_overamp(synthesized_sentence)
+       
       float_to_wav(
         wav=synthesized_sentence,
         path=path_inferred_wav,
@@ -123,7 +119,8 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   output_name = "{}.wav".format(last_dir_name)
   out_path = os.path.join(infer_dir_path, output_name)
 
-  assert not is_overamp(output)
+  if is_overamp(output):
+    print("Overamplified output!.")
   float_to_wav(
     wav=output,
     path=out_path,

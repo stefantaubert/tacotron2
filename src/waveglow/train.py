@@ -29,8 +29,7 @@ import time
 
 import torch
 from src.common.train_log import log, reset_log
-from src.common.utils import (args_to_str, get_last_checkpoint,
-                              get_total_duration_min_df)
+from src.common.utils import (args_to_str, get_last_checkpoint)
 from src.paths import get_checkpoint_dir, get_log_dir
 from src.waveglow.data_utils import MelLoader
 from src.waveglow.hparams import create_hparams
@@ -233,7 +232,7 @@ if __name__ == "__main__":
     training_dir = 'wg_debug',
     wav_ds_name = 'ljs_22050kHz',
     test_size = 0.01,
-    validation_size = 0.5,
+    validation_size = 0.9,
     hparams = 'batch_size=4,iters_per_checkpoint=5,fp16_run=False,with_tensorboard=True',
     continue_training = False,
   )

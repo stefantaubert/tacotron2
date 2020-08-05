@@ -50,8 +50,6 @@ from src.common.utils import get_last_checkpoint
 from src.waveglow.synthesizer import Synthesizer
 
 def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str, infer_wav_path: str, denoiser_strength: float, sigma: float):
-  hparams = create_hparams(hparams)
-
   checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), str(checkpoint))
   print("Using model:", checkpoint_path)
   synth = Synthesizer(checkpoint_path, hparams)
@@ -62,7 +60,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
 
   print("Inferring {}...".format(infer_wav_path))
 
-  mel_parser = MelParser(hparams)
+  mel_parser = MelParser(synth.hparams)
   mel = mel_parser.get_mel_tensor_from_file(infer_wav_path)
   mel = mel.cuda()
   mel = torch.autograd.Variable(mel)
@@ -80,14 +78,16 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   path_inferred_wav = "{}_inferred.wav".format(out_path_template)
   path_inferred_plot = "{}_inferred.png".format(out_path_template)
   path_compared_plot = "{}_comparison.png".format(out_path_template)
+   
+  if is_overamp(audio):
+    print("Overamplified output!.")
 
-  assert not is_overamp(audio)
   float_to_wav(
     wav=audio,
     path=path_inferred_wav,
     dtype=np.int16,
     normalize=False,
-    sample_rate=hparams.sampling_rate
+    sample_rate=synth.hparams.sampling_rate
   )
 
   print("Plotting...")
@@ -161,7 +161,8 @@ if __name__ == "__main__":
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'wg_debug',
     wav = "/datasets/LJSpeech-1.1-test/wavs/LJ001-0100.wav",
+    hparams = None,
     denoiser_strength = 0,
     sigma = 0.666,
-    custom_checkpoint = ''
+    custom_checkpoint = '',
   )

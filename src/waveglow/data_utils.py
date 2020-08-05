@@ -32,7 +32,7 @@ import torch.utils.data
 from src.common.audio.utils import (get_wav_tensor_segment,
                                     wav_to_float32_tensor)
 from src.pre.mel_parser import MelParser
-from src.waveglow.prepare_ds_io import get_wavepath
+from src.waveglow.prepare_ds_io import PreparedData, PreparedDataList
 
 
 class MelLoader(torch.utils.data.Dataset):
@@ -40,7 +40,7 @@ class MelLoader(torch.utils.data.Dataset):
   This is the main class that calculates the spectrogram and returns the
   spectrogram, audio pair.
   """
-  def __init__(self, prepare_ds_data, hparams):
+  def __init__(self, prepare_ds_data: PreparedDataList, hparams):
     self.segment_length = hparams.segment_length
     self.mel_parser = MelParser(hparams)
 
@@ -50,11 +50,11 @@ class MelLoader(torch.utils.data.Dataset):
 
     print("Loading wavs into memory...")
     self.cache = {}
-    for i, values in tqdm(enumerate(data), total=len(data)):
-      wav_path = get_wavepath(values)
-      wav_tensor, sr = wav_to_float32_tensor(wav_path)
+    values: PreparedData
+    for i, values in enumerate(tqdm(data)):
+      wav_tensor, sr = wav_to_float32_tensor(values.wav_path)
       if sr != hparams.sampling_rate:
-        raise ValueError("{} {} SR doesn't match target {} SR".format(wav_path, sr, hparams.sampling_rate))
+        raise ValueError("{} {} SR doesn't match target {} SR".format(values.wav_path, sr, hparams.sampling_rate))
       self.cache[i] = wav_tensor
     print("Done")
 

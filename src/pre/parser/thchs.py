@@ -3,7 +3,7 @@ import os
 from tqdm import tqdm
 
 from src.common.utils import download_tar
-from src.pre.parser.pre_data import to_values
+from src.pre.parser.pre_data import PreData, PreDataList
 
 def ensure_downloaded(dir_path: str):
   dir_exists = os.path.exists(dir_path)
@@ -12,7 +12,7 @@ def ensure_downloaded(dir_path: str):
     download_tar("http://data.cslt.org/thchs30/zip/wav.tgz", dir_path)
     download_tar("http://data.cslt.org/thchs30/zip/doc.tgz", dir_path)
 
-def parse(dir_path: str) -> list:
+def parse(dir_path: str) -> PreDataList:
   if not os.path.exists(dir_path):
     print("Directory not found:", dir_path)
     raise Exception()
@@ -56,7 +56,7 @@ def parse(dir_path: str) -> list:
 
   # sort after wav_path
   files.sort(key=lambda tup: (tup[4], tup[5], tup[6]), reverse=False)
-  files = [to_values(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3]) for x in files]
+  files: PreDataList = [PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3]) for x in files]
   return files
 
 if __name__ == "__main__":

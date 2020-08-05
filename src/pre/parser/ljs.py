@@ -5,7 +5,7 @@ import tarfile
 import wget
 from tqdm import tqdm
 
-from src.pre.parser.pre_data import to_values
+from src.pre.parser.pre_data import PreData, PreDataList
 
 def ensure_downloaded(dir_path: str):
   dir_exists = os.path.exists(dir_path)
@@ -32,7 +32,7 @@ def ensure_downloaded(dir_path: str):
     os.remove(downloaded_file)
     os.rmdir(ljs_data_dir)
 
-def parse(path: str):
+def parse(path: str) -> PreDataList:
   if not os.path.exists(path):
     print("Directory not found:", path)
     raise Exception()
@@ -70,7 +70,7 @@ def parse(path: str):
 
   # sort after basename
   result.sort(key=lambda tup: tup[0], reverse=False)
-  result = [to_values(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3]) for i, x in enumerate(result)]
+  result = [PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3]) for i, x in enumerate(result)]
 
   return result
 

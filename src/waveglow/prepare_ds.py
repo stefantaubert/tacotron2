@@ -2,21 +2,19 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 from src.common.train_log import log
-from src.pre.wav_pre_io import get_basename, get_duration, get_wav, parse_data
+from src.pre.wav_pre_io import parse_data, WavData, WavDataList
 from src.waveglow.prepare_ds_io import (save_testset, save_trainset,
-                                        save_validationset, save_wholeset,
-                                        to_values)
+                                        save_validationset, save_wholeset, PreparedData, PreparedDataList)
 
 
 def prepare(base_dir: str, training_dir_path: str, wav_ds_name: str, test_size: float, validation_size: float, seed: int):
-  wholeset = []
+  wholeset: PreparedDataList = []
   print("Reading wavs...")
-  for values in tqdm(parse_data(base_dir, wav_ds_name)):
-    wholeset.append(to_values(
-      basename=get_basename(values),
-      wav_path=get_wav(values),
-      duration=get_duration(values)
-    ))
+  wav_data = parse_data(base_dir, wav_ds_name)
+  values: WavData
+  for values in tqdm(wav_data):
+    prepared_data = PreparedData(values.basename, values.wav, values.duration)
+    wholeset.append(prepared_data)
 
   trainset = wholeset
   print("Splitting datasets...")

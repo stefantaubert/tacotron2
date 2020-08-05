@@ -2,6 +2,7 @@ import json
 import os
 import tarfile
 from collections import OrderedDict
+from dataclasses import astuple
 
 import numpy as np
 import pandas as pd
@@ -14,14 +15,7 @@ from PIL import Image
 import torch
 from src.text.ipa2symb import extract_from_sentence
 
-csv_separator = '\t'
-
-utt_name_col = 0
-wavpath_col = 1
-symbols_str_col = 2
-duration_col = 3
-speaker_id_col = 4
-speaker_name_col = 5
+__csv_separator = '\t'
 
 def stack_images_vertically(list_im, out_path):
   images = [Image.open(i) for i in list_im]
@@ -43,13 +37,14 @@ def stack_images_vertically(list_im, out_path):
   new_im.save(out_path)
 
 def save_csv(data: list, path: str):
+  data = [astuple(xi) for xi in data]
   df = pd.DataFrame(data)
-  df.to_csv(path, header=None, index=None, sep=csv_separator)
-  return df
+  df.to_csv(path, header=None, index=None, sep=__csv_separator)
 
-def load_csv(path: str):
-  speaker_data = pd.read_csv(path, header=None, sep=csv_separator)
-  return speaker_data
+def load_csv(path: str, dc_type) -> list:
+  data = pd.read_csv(path, header=None, sep=__csv_separator)
+  data_loaded = [dc_type(*xi) for xi in data.values]
+  return data_loaded
 
 def get_last_checkpoint(checkpoint_dir) -> str:
   #checkpoint_dir = get_checkpoint_dir(training_dir_path)
@@ -85,26 +80,6 @@ def download_tar(download_url, dir_path, tarmode: str = "r:gz"):
   tar.close()
   os.remove(downloaded_file)
   print("Done.")
-
-def get_utterance_names_csv(csv) -> list:
-  all_names = set(np.unique(csv.iloc[:, [utt_name_col]].values))
-  return all_names
-
-def get_speakers_csv(csv) -> set:
-  all_speakers = set(np.unique(csv.iloc[:, [speaker_id_col]].values))
-  return all_speakers
-
-def get_speaker_count_csv(csv) -> int:
-  speaker_count = len(get_speakers_csv(csv))
-  return speaker_count
-
-def get_total_duration_min_df(csv_file, duration_column=duration_col) -> float:
-  data = pd.read_csv(csv_file, header=None, sep=csv_separator)
-  return get_total_duration_min(data, duration_column)
-
-def get_total_duration_min(dataset_csv, duration_column=duration_col) -> float:
-  total_dur_min = float(dataset_csv.iloc[:, [duration_column]].sum(axis=0)) / 60
-  return total_dur_min
 
 def serialize_ds_speaker(ds: str, speaker: str):
   return "{},{}".format(ds, speaker)
@@ -157,4 +132,3 @@ if __name__ == "__main__":
   x = "/datasets/models/taco2pt_v2/debug/filelist/filelist.csv"
   data = pd.read_csv(x, header=None, sep=csv_separator)
   #get_speaker_count_csv(data)
-  get_utterance_names_csv(data)

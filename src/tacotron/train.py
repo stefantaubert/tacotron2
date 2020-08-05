@@ -13,7 +13,7 @@ import torch
 #from distributed_tacotron import apply_gradient_allreduce
 import torch.distributed as dist
 from src.common.train_log import log, reset_log
-from src.common.utils import (args_to_str, duration_col, get_last_checkpoint,
+from src.common.utils import (args_to_str, get_last_checkpoint,
                               parse_ds_speakers,
                               parse_json)
 from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
@@ -32,7 +32,7 @@ from src.tacotron.logger import Tacotron2Logger
 from src.tacotron.loss_function import Tacotron2Loss
 from src.tacotron.model import Tacotron2
 from src.tacotron.plot_embeddings import analyse
-from src.tacotron.prepare_ds_ms import prepare as prepare_ms
+from src.tacotron.prepare_ds_ms import prepare
 #from torch.utils.data.distributed import DistributedSampler
 from src.tacotron.prepare_ds_ms_io import parse_traindata, parse_validationset, get_total_duration
 from src.tacotron.txt_pre import process_input_text
@@ -446,7 +446,7 @@ def __main(base_dir, training_dir, continue_training, warm_start, warm_start_mod
       os.remove(map_path)
 
     reset_log(training_dir_path)
-    prepare_ms(base_dir, training_dir_path, speakers=speakers, pretrained_model=weight_map_model, weight_map_mode=weight_map_mode, hparams=hparams, pretrained_model_symbols=weight_map_model_symbols, test_size=test_size, val_size=validation_size, seed=hparams.seed)
+    prepare(base_dir, training_dir_path, speakers=speakers, pretrained_model=weight_map_model, weight_map_mode=weight_map_mode, hparams=hparams, pretrained_model_symbols=weight_map_model_symbols, test_size=test_size, val_size=validation_size, seed=hparams.seed)
     
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
   use_weights_map = os.path.exists(weights_path)

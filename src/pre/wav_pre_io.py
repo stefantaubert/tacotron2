@@ -1,46 +1,28 @@
 from src.paths import get_wavs_dir, wavs_file_name
-from src.common.utils import load_csv, save_csv
 import os
+from dataclasses import dataclass
+from typing import List
+from src.common.utils import load_csv, save_csv
 
-def get_id(values: tuple):
-  wav = values[0]
-  return wav
 
-def get_basename(values: tuple):
-  wav = values[1]
-  return wav
+@dataclass()
+class WavData:
+  i: int
+  basename: str
+  speaker_name: str
+  text: str
+  wav: str
+  duration: float
 
-def get_speaker_name(values: tuple):
-  wav = values[2]
-  return wav
+WavDataList = List[WavData]
 
-def get_text(values: tuple):
-  wav = values[3]
-  return wav
-
-def get_wav(values: tuple):
-  wav = values[4]
-  return wav
-
-def get_duration(values: tuple) -> float:
-  return values[5]
-
-def set_wav(values: tuple, wav: str):
-  values[4] = wav
-
-def set_duration(values: tuple, duration: float):
-  values[5] = duration
-
-def to_values(i, name, speaker_name, text, wav_path, duration):
-  return (i, name, speaker_name, text, wav_path, duration)
-
-def save_data(base_dir: str, name: str, data: list):
+def save_data(base_dir: str, name: str, data: WavDataList):
   dest_file_path = os.path.join(get_wavs_dir(base_dir, name), wavs_file_name)
   save_csv(data, dest_file_path)
 
-def parse_data(base_dir: str, name: str):
+def parse_data(base_dir: str, name: str) -> WavDataList:
   dest_file_path = os.path.join(get_wavs_dir(base_dir, name), wavs_file_name)
-  return load_csv(dest_file_path).values
+  return load_csv(dest_file_path, WavData)
 
 def already_exists(base_dir: str, name: str):
   dest_dir = get_wavs_dir(base_dir, name, create=False)

@@ -5,8 +5,8 @@ from tqdm import tqdm
 
 from src.text.adjustments import normalize_text
 from src.text.symbol_converter import init_from_symbols, serialize_symbol_ids
-from src.pre.mel_pre_io import parse_data, get_basename, get_id, get_mel_path, get_duration, get_id, get_speaker_name, get_text, get_wav_path
-from src.pre.text_pre_io import to_values, save_symbols, save_data, already_exists, save_all_symbols, save_all_speakers
+from src.pre.mel_pre_io import parse_data, MelData, MelDataList
+from src.pre.text_pre_io import save_symbols, save_data, already_exists, save_all_symbols, save_all_speakers, TextData, TextDataList
 
 def init_thchs_text_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -46,9 +46,10 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
   else:
     print("Processing text...")
   parsed_data = parse_data(base_dir, mel_name)
+  values: MelData
   for values in tqdm(parsed_data):
     #basename, speaker_name, text, mel_path, duration
-    text = get_text(values)
+    text = values.text
     if lang == "chn":
       if convert_to_ipa:
         try:
@@ -61,6 +62,7 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
 
       if convert_to_ipa:
         ipa = epi.transliterate(text)
+    else: assert False
 
     if convert_to_ipa:
       symbols = extract_from_sentence(ipa, ignore_tones, ignore_arcs)
@@ -68,13 +70,11 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
       ipa = '-- no IPA --'
       symbols = list(text)
 
-    speaker_name = get_speaker_name(values)
-    if speaker_name not in data:
-      data[speaker_name] = []
+    if values.speaker_name not in data:
+      data[values.speaker_name] = []
 
     symbol_counter.update(symbols)
-
-    data[speaker_name].append((get_id(values), get_basename(values), text, ipa, symbols, get_wav_path(values), get_mel_path(values), get_duration(values)))
+    data[values.speaker_name].append((values.i, values.name, text, ipa, symbols, values.wav_path, values.mel_path, values.duration))
 
   all_symbols = OrderedDict(symbol_counter.most_common())
   save_all_symbols(base_dir, ds_name, all_symbols)
@@ -100,23 +100,14 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
     save_symbols(base_dir, ds_name, speaker, conv)
 
     ### convert text to symbols
-    result = []
+    result: TextDataList = []
     for i, basename, text, ipa, symbols, wav_path, mel_path, duration in recordings:
       symbol_ids = conv.symbols_to_ids(symbols, add_eos=True, replace_unknown_with_pad=True)
       serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
       symbols_str = ''.join(symbols)
       #result.append((bn, wav, py, ipa_txt, serialized_symbol_ids, symbols_str, duration))
-      result.append(to_values(
-        i = i,
-        basename = basename,
-        wav_path = wav_path,
-        mel_path = mel_path,
-        serialized_symbol_ids = serialized_symbol_ids,
-        duration = duration,
-        text = text,
-        ipa = ipa,
-        symbols_str = symbols_str
-      ))
+      text_data = TextData(i, basename, wav_path, mel_path, serialize_symbol_ids, duration, text, ipa, symbols_str)
+      result.append(text_data)
 
     save_data(base_dir, ds_name, speaker, result)
 
