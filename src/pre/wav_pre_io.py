@@ -10,18 +10,26 @@ def get_basename(values: tuple):
   wav = values[1]
   return wav
 
+def get_speaker_name(values: tuple):
+  wav = values[2]
+  return wav
+
+def get_text(values: tuple):
+  wav = values[3]
+  return wav
+
 def get_wav(values: tuple):
   wav = values[4]
   return wav
 
-def set_path(values: tuple, wav: str):
+def get_duration(values: tuple) -> float:
+  return values[5]
+
+def set_wav(values: tuple, wav: str):
   values[4] = wav
 
 def set_duration(values: tuple, duration: float):
   values[5] = duration
-
-def get_duration(values: tuple) -> float:
-  return values[5]
 
 def to_values(i, name, speaker_name, text, wav_path, duration):
   return (i, name, speaker_name, text, wav_path, duration)

@@ -12,8 +12,8 @@ import torch
 from src.common.train_log import log
 from src.common.utils import (parse_ds_speakers, parse_json, str_to_int,
                               serialize_ds_speaker, serialize_ds_speakers)
-from src.pre.text_pre_io import (get_all_speakers_path, get_basename,
-                                 get_duration, get_mel_path,
+from src.pre.text_pre_io import (get_all_speakers_path, get_basename, get_id,
+                                 get_duration, get_mel_path, get_wav_path,
                                  get_serialized_symbol_ids, parse_data,
                                  parse_symbols)
 from src.tacotron.prepare_ds_ms_io import (parse_weights_map,
@@ -85,7 +85,9 @@ def prepare(base_dir: str, training_dir_path: str, speakers: str, pretrained_mod
       serialized_updated_ids = serialize_symbol_ids(updated_ids)
       
       speaker_new_rows.append(to_values(
+        i=get_id(values),
         basename=get_basename(values),
+        wav_path=get_wav_path(values),
         mel_path=get_mel_path(values),
         serialized_updated_ids=serialized_updated_ids,
         duration=get_duration(values),

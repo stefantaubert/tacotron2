@@ -47,40 +47,7 @@ from src.waveglow.hparams import create_hparams
 from src.waveglow.train import (get_checkpoint_dir,
                                 load_model)
 from src.common.utils import get_last_checkpoint
-
-
-
-class Synthesizer():
-  def __init__(self, checkpoint_path, hparams=None):
-    super().__init__()
-    assert os.path.isfile(checkpoint_path)
-    checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-    model_state_dict = checkpoint_dict['state_dict']
-    # TODO pass waveglow hparams in tacotron with arguments (only required if used non default hparams)
-    hparams = create_hparams()
-    model = load_model(hparams)
-    model.load_state_dict(model_state_dict)
-
-    model = model.remove_weightnorm(model)
-    model = model.cuda()
-    model = model.eval()
-    
-    denoiser = Denoiser(model)
-    denoiser = denoiser.cuda()
-    
-    self.model = model
-    self.denoiser = denoiser
-
-  def infer_mel(self, mel, sigma, denoiser_strength):
-    with torch.no_grad():
-      audio = self.model.infer(mel, sigma=sigma)
-      if denoiser_strength > 0:
-        assert self.denoiser
-        audio = self.denoiser(audio, denoiser_strength)
-    audio = audio.squeeze()
-    audio = audio.cpu()
-    audio = audio.numpy()
-    return audio
+from src.waveglow.synthesizer import Synthesizer
 
 def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str, infer_wav_path: str, denoiser_strength: float, sigma: float):
   hparams = create_hparams(hparams)
@@ -96,7 +63,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   print("Inferring {}...".format(infer_wav_path))
 
   mel_parser = MelParser(hparams)
-  mel = mel_parser.get_mel(infer_wav_path, segment_length=None)[0]
+  mel = mel_parser.get_mel_tensor_from_file(infer_wav_path)
   mel = mel.cuda()
   mel = torch.autograd.Variable(mel)
   mel = mel.unsqueeze(0)
@@ -125,8 +92,8 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
 
   print("Plotting...")
 
-  mel_inferred = mel_parser.get_mel(path_inferred_wav)[0]
-  mel_orig = mel_parser.get_mel(infer_wav_path)[0]
+  mel_inferred = mel_parser.get_mel_tensor_from_file(path_inferred_wav)
+  mel_orig = mel_parser.get_mel_tensor_from_file(infer_wav_path)
 
   ax = plot_melspec(mel_inferred, title="Inferred")
   plt.savefig(path_inferred_plot, bbox_inches='tight')

@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from src.text.adjustments import normalize_text
 from src.text.symbol_converter import init_from_symbols, serialize_symbol_ids
-from src.pre.mel_pre_io import parse_data, get_basename, get_id, get_path, get_duration, get_id, get_speaker_name, get_text
+from src.pre.mel_pre_io import parse_data, get_basename, get_id, get_mel_path, get_duration, get_id, get_speaker_name, get_text, get_wav_path
 from src.pre.text_pre_io import to_values, save_symbols, save_data, already_exists, save_all_symbols, save_all_speakers
 
 def init_thchs_text_parser(parser):
@@ -74,7 +74,7 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
 
     symbol_counter.update(symbols)
 
-    data[speaker_name].append((get_basename(values), text, ipa, symbols, get_path(values), get_duration(values)))
+    data[speaker_name].append((get_id(values), get_basename(values), text, ipa, symbols, get_wav_path(values), get_mel_path(values), get_duration(values)))
 
   all_symbols = OrderedDict(symbol_counter.most_common())
   save_all_symbols(base_dir, ds_name, all_symbols)
@@ -92,7 +92,7 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
     ### get all symbols
     symbols = set()
     for recording in recordings:
-      symbs = recording[3]
+      symbs = recording[4]
       current_symbols = set(symbs)
       symbols = symbols.union(current_symbols)
 
@@ -101,12 +101,22 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
 
     ### convert text to symbols
     result = []
-    for basename, text, ipa, symbols, mel_path, duration in recordings:
+    for i, basename, text, ipa, symbols, wav_path, mel_path, duration in recordings:
       symbol_ids = conv.symbols_to_ids(symbols, add_eos=True, replace_unknown_with_pad=True)
       serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
       symbols_str = ''.join(symbols)
       #result.append((bn, wav, py, ipa_txt, serialized_symbol_ids, symbols_str, duration))
-      result.append(to_values(basename, mel_path, serialized_symbol_ids, duration, text, ipa, symbols_str))
+      result.append(to_values(
+        i = i,
+        basename = basename,
+        wav_path = wav_path,
+        mel_path = mel_path,
+        serialized_symbol_ids = serialized_symbol_ids,
+        duration = duration,
+        text = text,
+        ipa = ipa,
+        symbols_str = symbols_str
+      ))
 
     save_data(base_dir, ds_name, speaker, result)
 

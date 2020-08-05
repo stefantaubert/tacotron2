@@ -21,22 +21,33 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
 
     random.seed(hparams.seed)
     random.shuffle(data)
-
-    print("Loading mels into memory...")
-    self.cache = {}
+    
+    print("Reading mels...")
+    self.data = {}
     for i, values in tqdm(enumerate(data), total=len(data)):
       symbol_ids = deserialize_symbol_ids(get_serialized_ids(values))
       symbols_tensor = torch.IntTensor(symbol_ids)
-      mel_tensor = torch.load(get_mel_path(values), map_location='cpu')
-      self.cache[i] = (symbols_tensor, mel_tensor, get_speaker_id(values))
+      self.data[i] = (symbols_tensor, get_mel_path(values), get_speaker_id(values))
+    
+    if hparams.cache_mels:
+      print("Loading mels into memory...")
+      self.cache = {}
+      for i, values in tqdm(self.data.items()):
+        mel_tensor = torch.load(values[1], map_location='cpu')
+        self.cache[i] = mel_tensor
+    self.use_cache = hparams.cache_mels
 
   def __getitem__(self, index):
     #return self.cache[index]
-    symbols_tensor, mel_tensor, speaker_id = self.cache[index]
-    return symbols_tensor.clone().detach(), mel_tensor.clone().detach(), speaker_id
+    symbols_tensor, mel_path, speaker_id = self.data[index]
+    if self.use_cache:
+      mel_tensor = self.cache[index].clone().detach()
+    else:
+      mel_tensor = torch.load(mel_path, map_location='cpu')
+    return symbols_tensor.clone().detach(), mel_tensor, speaker_id
 
   def __len__(self):
-    return len(self.cache)
+    return len(self.data)
 
 
 class SymbolsMelCollate():
@@ -80,7 +91,6 @@ class SymbolsMelCollate():
       gate_padded[i, mel.size(1)-1:] = 1
       output_lengths[i] = mel.size(1)
 
-
     # count number of items - characters in text
     #len_x = []
     speaker_ids = []
@@ -92,9 +102,4 @@ class SymbolsMelCollate():
     #len_x = torch.Tensor(len_x)
     speaker_ids = torch.Tensor(speaker_ids)
 
-    return text_padded, input_lengths, mel_padded, gate_padded, \
-      output_lengths, speaker_ids
-
-
-    return text_padded, input_lengths, mel_padded, gate_padded, \
-      output_lengths
+    return text_padded, input_lengths, mel_padded, gate_padded, output_lengths, speaker_ids

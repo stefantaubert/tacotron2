@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 from src.common.audio.utils import upsample
 from src.paths import get_wavs_dir
-from src.pre.wav_pre_io import parse_data, save_data, get_wav, set_path, get_basename, get_id, already_exists
+from src.pre.wav_pre_io import parse_data, save_data, get_wav, set_wav, get_basename, get_id, already_exists
 
 def __upsample_wavs(base_dir: str, source_name: str, destination_name: str, new_rate: int):
   if not already_exists(base_dir, destination_name):
@@ -18,7 +18,7 @@ def __upsample_wavs(base_dir: str, source_name: str, destination_name: str, new_
       wav_path = get_wav(values)
       # todo assert not is_overamp
       upsample(wav_path, dest_wav_path, new_rate)
-      set_path(values, dest_wav_path)
+      set_wav(values, dest_wav_path)
       result.append(values)
     save_data(base_dir, destination_name, result)
 

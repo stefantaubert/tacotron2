@@ -98,8 +98,8 @@ def get_inference_dir(training_dir_path: str, input_name: str, checkpoint: str, 
   subdir_name = "{}_{}_{}_{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), input_name, speaker, checkpoint)
   return __get_subdir(training_dir_path, os.path.join(inference_dir, subdir_name), create)
 
-def get_validation_dir(training_dir_path: str, input_name: str, checkpoint: str, speaker: str, create: bool = True) -> str:
-  subdir_name = "validation_{}_{}_{}_{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), input_name, speaker, checkpoint)
+def get_validation_dir(training_dir_path: str, i, input_name: str, checkpoint: str, speaker: str, create: bool = True) -> str:
+  subdir_name = "validation_{}_({})_{}_{}_{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), i, input_name, speaker, checkpoint)
   return __get_subdir(training_dir_path, os.path.join(inference_dir, subdir_name), create)
 
 def log_train_config(training_dir_path: str, args):

@@ -3,6 +3,7 @@ import json
 import math
 import os
 import time
+from argparse import ArgumentParser
 from shutil import copyfile
 
 import numpy as np
@@ -13,7 +14,7 @@ import torch
 import torch.distributed as dist
 from src.common.train_log import log, reset_log
 from src.common.utils import (args_to_str, duration_col, get_last_checkpoint,
-                              get_total_duration_min_df, parse_ds_speakers,
+                              parse_ds_speakers,
                               parse_json)
 from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
                        filelist_file_name, filelist_speakers_name,
@@ -31,13 +32,13 @@ from src.tacotron.logger import Tacotron2Logger
 from src.tacotron.loss_function import Tacotron2Loss
 from src.tacotron.model import Tacotron2
 from src.tacotron.plot_embeddings import analyse
-from src.tacotron.prepare_ds import prepare
 from src.tacotron.prepare_ds_ms import prepare as prepare_ms
+#from torch.utils.data.distributed import DistributedSampler
+from src.tacotron.prepare_ds_ms_io import parse_traindata, parse_validationset, get_total_duration
 from src.tacotron.txt_pre import process_input_text
 from src.text.symbol_converter import load_from_file
 from torch.utils.data import DataLoader
-from torch.utils.data.distributed import DistributedSampler
-from src.tacotron.prepare_ds_ms_io import parse_traindata, parse_validationset
+
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -45,47 +46,40 @@ def reduce_tensor(tensor, n_gpus):
   rt /= n_gpus
   return rt
 
+# def init_distributed(hparams, n_gpus, rank, group_name, training_dir_path):
+#   assert torch.cuda.is_available(), "Distributed mode requires CUDA."
+#   log(training_dir_path, "Initializing Distributed")
 
-def init_distributed(hparams, n_gpus, rank, group_name, training_dir_path):
-  assert torch.cuda.is_available(), "Distributed mode requires CUDA."
-  log(training_dir_path, "Initializing Distributed")
+#   # Set cuda device so everything is done on the right GPU.
+#   torch.cuda.set_device(rank % torch.cuda.device_count())
 
-  # Set cuda device so everything is done on the right GPU.
-  torch.cuda.set_device(rank % torch.cuda.device_count())
+#   # Initialize distributed communication
+#   dist.init_process_group(
+#     backend=hparams.dist_backend, init_method=hparams.dist_url,
+#     world_size=n_gpus, rank=rank, group_name=group_name)
 
-  # Initialize distributed communication
-  dist.init_process_group(
-    backend=hparams.dist_backend, init_method=hparams.dist_url,
-    world_size=n_gpus, rank=rank, group_name=group_name)
-
-  log(training_dir_path, "Done initializing distributed")
-
+#   log(training_dir_path, "Done initializing distributed")
 
 def prepare_dataloaders(hparams, training_dir_path):
   # Get data, data loaders and collate function ready
-  # trainset_path = os.path.join(filelist_dir_path, filelist_training_file_name)
-  # train_dur = get_total_duration_min_df(trainset_path)
-  # print("Duration trainset {:.2f}min / {:.2f}h".format(train_dur, train_dur / 60))
-  
-  # valset_path = os.path.join(filelist_dir_path, filelist_validation_file_name)
-  # val_dur = get_total_duration_min_df(valset_path)
-  # print("Duration valset {:.2f}min / {:.2f}h".format(val_dur, val_dur / 60))
-  # valset = SymbolsMelLoader(valset_path, hparams)
-
   traindata = parse_traindata(training_dir_path)
+  total_dur_min = get_total_duration(traindata) / 60
+  print("Duration trainset {:.2f}min / {:.2f}h".format(total_dur_min, total_dur_min / 60))
   trainset = SymbolsMelLoader(traindata, hparams)
-
+  
   valdata = parse_validationset(training_dir_path)
+  total_dur_min = get_total_duration(valdata) / 60
+  print("Duration trainset {:.2f}min / {:.2f}h".format(total_dur_min, total_dur_min / 60))
   valset = SymbolsMelLoader(valdata, hparams)
 
   collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
 
-  if hparams.distributed_run:
-    train_sampler = DistributedSampler(trainset)
-    shuffle = False
-  else:
-    train_sampler = None
-    shuffle = True
+  train_sampler = None
+  shuffle = True
+
+  # if hparams.distributed_run:
+  #   train_sampler = DistributedSampler(trainset)
+  #   shuffle = False
 
   train_loader = DataLoader(
     trainset,
@@ -194,7 +188,11 @@ def validate_core(model, criterion, valset, batch_size, n_gpus,
   """Handles all the validation scoring and printing"""
   model.eval()
   with torch.no_grad():
-    val_sampler = DistributedSampler(valset) if distributed_run else None
+    val_sampler = None
+
+    # if distributed_run:
+    #   val_sampler = DistributedSampler(valset)
+
     val_loader = DataLoader(valset, sampler=val_sampler, num_workers=1,
                 shuffle=False, batch_size=batch_size,
                 pin_memory=False, collate_fn=collate_fn)
@@ -237,8 +235,8 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   rank (int): rank of current gpu
   hparams (object): comma separated list of "name=value" pairs.
   """
-  if hparams.distributed_run:
-    init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
+  # if hparams.distributed_run:
+  #   init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
 
   torch.manual_seed(hparams.seed)
   torch.cuda.manual_seed(hparams.seed)
@@ -251,8 +249,8 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   #   from apex import amp
   #   model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
 
-  if hparams.distributed_run:
-    model = apply_gradient_allreduce(model)
+  # if hparams.distributed_run:
+  #   model = apply_gradient_allreduce(model)
 
   criterion = Tacotron2Loss()
 
@@ -279,11 +277,8 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
       raise Exception("No checkpoint was found to continue training!")
 
     full_checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), last_checkpoint)
-
     log(training_dir_path, "Loading checkpoint '{}'".format(full_checkpoint_path))
-    
     model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer, training_dir_path)
-
     log(training_dir_path, "Loaded checkpoint '{}' from iteration {}" .format(full_checkpoint_path, iteration))
 
     if hparams.use_saved_learning_rate:
@@ -422,7 +417,6 @@ def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_pa
     log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
 # #   #hparams.batch_size=22 only when on all speakers simultanously thchs
 
-from argparse import ArgumentParser
 def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--training_dir', type=str, required=True)
@@ -467,11 +461,11 @@ if __name__ == "__main__":
     training_dir = 'debug',
     continue_training = False,
     warm_start = True,
-    warm_start_model = "/datasets/models/pretrained/ljs_ipa_scratch_80000",
-    speakers = 'thchs_mel_v1,D31',
-    test_size = 0.1,
-    validation_size = 0.05,
-    hparams = 'batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight, speakers_embedding.weight]',
+    warm_start_model = "/datasets/models/pretrained/ljs_ipa_scratch_113500",
+    speakers = 'thchs_mel_v1,all',
+    test_size = 0.001,
+    validation_size = 0.01,
+    hparams = 'batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight, speakers_embedding.weight],cache_mels=True',
     weight_map_model = None,
     weight_map_model_symbols = None,
     weight_map_mode = None,

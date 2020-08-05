@@ -11,7 +11,7 @@ from src.common.utils import load_csv, save_csv
 from src.paths import get_mels_dir, mels_file_name
 from src.pre.mel_parser import MelParser
 from src.tacotron.hparams import create_hparams
-from src.pre.wav_pre_io import parse_data, get_wav, set_path, set_duration, get_basename, get_id
+from src.pre.wav_pre_io import parse_data, get_wav, get_basename, get_id, get_speaker_name, get_text, get_duration
 from src.pre.mel_pre_io import to_values, already_exists, save_data
 
 def init_calc_mels_parser(parser: ArgumentParser):
@@ -32,12 +32,20 @@ def __calc_mels(base_dir: str, origin_name: str, destination_name: str, custom_h
     # with torch.no_grad():
     print("Calculating mels...")
     for values in tqdm(data):
+      mel_tensor = mel_parser.get_mel_tensor_from_file(get_wav(values))
       mel_path = os.path.join(dest_dir, "{}_{}.pt".format(get_id(values), get_basename(values)))
-      wav_path = get_wav(values)
-      mel_tensor = mel_parser.get_mel_tensor_from_file(wav_path)
       torch.save(mel_tensor, mel_path)
-      set_path(values, mel_path)
-      result.append(values)
+
+      result.append(to_values(
+        i=get_id(values),
+        name=get_basename(values),
+        speaker_name=get_speaker_name(values),
+        text=get_text(values),
+        wav_path=get_wav(values),
+        mel_path=mel_path,
+        duration=get_duration(values)
+      ))
+
     save_data(base_dir, destination_name, result)
     print("Dataset saved.")
 

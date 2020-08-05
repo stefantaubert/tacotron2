@@ -18,22 +18,20 @@ def get_text(values: tuple):
   wav = values[3]
   return wav
 
-def get_path(values: tuple):
+def get_wav_path(values: tuple):
   wav = values[4]
   return wav
 
-def get_duration(values: tuple):
+def get_mel_path(values: tuple):
   wav = values[5]
   return wav
 
-def set_path(values: tuple, wav: str):
-  values[4] = wav
+def get_duration(values: tuple):
+  wav = values[6]
+  return wav
 
-def set_duration(values: tuple, duration: float):
-  values[5] = duration
-
-def to_values(i, name, speaker_name, text, mel_path, duration):
-  return (i, name, speaker_name, text, mel_path, duration)
+def to_values(i, name, speaker_name, text, wav_path, mel_path, duration):
+  return (i, name, speaker_name, text, wav_path, mel_path, duration)
 
 def save_data(base_dir: str, name: str, data: list):
   dest_file_path = os.path.join(get_mels_dir(base_dir, name), mels_file_name)

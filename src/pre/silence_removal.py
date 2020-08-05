@@ -9,7 +9,7 @@ from src.common.utils import stack_images_vertically
 from src.paths import get_wavs_dir
 from src.pre.mel_parser import MelParser, plot_melspec
 from src.pre.wav_pre_io import (already_exists, get_basename, get_id, get_wav,
-                              parse_data, save_data, set_duration, set_path, get_duration)
+                              parse_data, save_data, set_duration, set_wav, get_duration)
 from src.tacotron.hparams import create_hparams
 
 
@@ -102,7 +102,7 @@ def __remove_silence(
         buffer_end_ms = buffer_end_ms
       )
 
-      set_path(values, dest_wav_path)
+      set_wav(values, dest_wav_path)
       set_duration(values, new_duration)
       result.append(values)
 
