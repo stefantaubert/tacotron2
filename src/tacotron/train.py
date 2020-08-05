@@ -465,7 +465,7 @@ if __name__ == "__main__":
     speakers = 'thchs_mel_v1,all',
     test_size = 0.001,
     validation_size = 0.01,
-    hparams = 'batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight, speakers_embedding.weight],cache_mels=True',
+    hparams = 'batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight, speakers_embedding.weight],cache_mels=False',
     weight_map_model = None,
     weight_map_model_symbols = None,
     weight_map_mode = None,

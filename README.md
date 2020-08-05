@@ -112,7 +112,8 @@ rm Anaconda3-2020.02-Linux-x86_64.sh
 
 git clone https://github.com/stefantaubert/tacotron2
 cd tacotron2
-conda create -n taco2pytorch python=3.6 -y
+# Python 3.8 is not yet supported because tensorflow 1.x will not run there
+conda create -n taco2pytorch python=3.7 -y
 conda activate taco2pytorch
 pip install -r requirements.txt
 ```
