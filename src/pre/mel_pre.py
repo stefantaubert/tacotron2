@@ -8,11 +8,10 @@ from tqdm import tqdm
 from argparse import ArgumentParser
 import torch
 from src.common.utils import load_csv, save_csv
-from src.paths import get_mels_dir, mels_file_name
 from src.pre.mel_parser import MelParser
 from src.tacotron.hparams import create_hparams
 from src.pre.wav_pre_io import parse_data, WavData, WavDataList
-from src.pre.mel_pre_io import already_exists, save_data, MelData, MelDataList
+from src.pre.mel_pre_io import already_exists, save_data, MelData, MelDataList, get_mels_dir
 
 def init_calc_mels_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)

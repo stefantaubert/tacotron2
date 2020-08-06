@@ -6,7 +6,6 @@ from tqdm import tqdm
 import torch
 import torch.utils.data
 from src.tacotron.prepare_ds_ms_io import PreparedData, PreparedDataList
-from src.tacotron.layers import TacotronSTFT
 from src.text.symbol_converter import deserialize_symbol_ids
 
 

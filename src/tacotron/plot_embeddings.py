@@ -9,14 +9,20 @@ from nltk.corpus import stopwords
 from scipy.spatial import distance
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import normalize
+from src.common.utils import get_subdir
 
 import torch
 from src.common.utils import get_last_checkpoint
-from src.paths import (analysis_2d_file_name, analysis_3d_file_name,
-                       analysis_sims_file_name, get_analysis_dir,
-                       get_checkpoint_dir, get_symbols_path)
 from src.text.symbol_converter import load_from_file
 
+
+analysis_dir = 'analysis'
+analysis_sims_file_name = 'similarities.txt'
+analysis_2d_file_name = '2d.html'
+analysis_3d_file_name = '3d.html'
+
+def get_analysis_dir(training_dir_path: str, create: bool = True) -> str:
+  return get_subdir(training_dir_path, analysis_dir, create)
 
 def analyse(training_dir_path: str, custom_checkpoint: int = None):
   conv = load_from_file(get_symbols_path(training_dir_path))

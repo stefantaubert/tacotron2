@@ -1,10 +1,8 @@
 import os
 
-from src.common.utils import load_csv, save_csv, save_json
+from src.common.utils import load_csv, save_csv, save_json, parse_json
 from collections import OrderedDict
-from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
-                       get_all_speakers_path, get_all_symbols_path, get_ds_dir,
-                       get_mels_dir, mels_file_name)
+from src.common.utils import get_subdir
 from src.text.symbol_converter import load_from_file, SymbolConverter
 from typing import List
 from src.common.utils import load_csv, save_csv
@@ -24,6 +22,23 @@ class TextData:
 
 TextDataList = List[TextData]
 
+ds_dir = 'ds'
+ds_preprocessed_file_name = 'filelist.csv'
+ds_preprocessed_symbols_name = 'symbols.json'
+ds_preprocessed_all_symbols_name = 'all_symbols.json'
+ds_preprocessed_all_speakers_name = 'all_speakers.json'
+
+def get_all_symbols_path(base_dir: str, name: str, create: bool = False) -> str:
+  path = os.path.join(get_subdir(base_dir, os.path.join(ds_dir, name), create), ds_preprocessed_all_symbols_name)
+  return path
+
+def get_all_speakers_path(base_dir: str, name: str, create: bool = False) -> str:
+  path = os.path.join(get_subdir(base_dir, os.path.join(ds_dir, name), create), ds_preprocessed_all_speakers_name)
+  return path
+
+def get_ds_dir(base_dir: str, name: str, speaker: str, create: bool = False) -> str:
+  return get_subdir(base_dir, os.path.join(ds_dir, name, str(speaker)), create)
+
 def save_symbols(base_dir: str, ds_name: str, speaker: str, conv: SymbolConverter):
   ds_dir = get_ds_dir(base_dir, ds_name, speaker, create=True)
   ds_symbols_path = os.path.join(ds_dir, ds_preprocessed_symbols_name)
@@ -35,12 +50,28 @@ def parse_symbols(base_dir: str, ds_name: str, speaker: str) -> SymbolConverter:
   conv = load_from_file(symbols_path)
   return conv
 
+def expand_speakers(base_dir, ds_speakers):
+  # expand all
+  expanded_speakers = []
+  for ds, speaker_name, _ in ds_speakers:
+    if speaker_name == 'all':
+      all_speakers_path = get_all_speakers_path(base_dir, ds)
+      all_speakers = parse_json(all_speakers_path)
+      all_speakers = sorted(all_speakers.keys())
+      for speaker_name in all_speakers:
+        expanded_speakers.append((ds, speaker_name))
+    else:
+      expanded_speakers.append((ds, speaker_name))
+
+  expanded_speakers = list(sorted(set(expanded_speakers)))
+  return expanded_speakers
+
 def save_all_symbols(base_dir: str, ds_name: str, all_symbols: OrderedDict):
-  all_symbols_path = get_all_symbols_path(base_dir, ds_name)
+  all_symbols_path = get_all_symbols_path(base_dir, ds_name, create=True)
   save_json(all_symbols_path, all_symbols)
 
 def save_all_speakers(base_dir: str, ds_name: str, all_speakers: OrderedDict):
-  all_speakers_path = get_all_speakers_path(base_dir, ds_name)
+  all_speakers_path = get_all_speakers_path(base_dir, ds_name, create=True)
   save_json(all_speakers_path, all_speakers)
 
 def save_data(base_dir: str, ds_name: str, speaker: str, data: TextDataList):

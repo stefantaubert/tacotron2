@@ -2,9 +2,8 @@ import os
 
 from tqdm import tqdm
 
-from src.paths import get_wavs_dir
 from src.common.audio.utils import normalize_file
-from src.pre.wav_pre_io import parse_data, save_data, already_exists, WavData, WavDataList
+from src.pre.wav_pre_io import parse_data, save_data, already_exists, WavData, WavDataList, get_wavs_dir
 
 def __normalize(base_dir: str, source_name: str, destination_name: str):
   if not already_exists(base_dir, destination_name):

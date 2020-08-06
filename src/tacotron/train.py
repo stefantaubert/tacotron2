@@ -8,24 +8,14 @@ from shutil import copyfile
 
 import numpy as np
 from numpy import finfo
-
+from tqdm import tqdm
 import torch
 #from distributed_tacotron import apply_gradient_allreduce
 import torch.distributed as dist
-from src.common.train_log import log, reset_log
+from src.common.train_log import log, reset_log, get_log_dir
 from src.common.utils import (args_to_str, get_last_checkpoint,
                               parse_ds_speakers,
                               parse_json)
-from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
-                       filelist_file_name, filelist_speakers_name,
-                       filelist_symbols_file_name, filelist_training_file_name,
-                       filelist_validation_file_name,
-                       filelist_weights_file_name, get_checkpoint_dir,
-                       get_ds_dir, get_filelist_dir, get_log_dir,
-                       get_symbols_path, inference_config_file,
-                       log_inference_config, log_input_file, log_map_file,
-                       log_train_config, log_train_map, train_config_file,
-                       train_map_file)
 from src.tacotron.data_utils import SymbolsMelCollate, SymbolsMelLoader
 from src.tacotron.hparams import create_hparams
 from src.tacotron.logger import Tacotron2Logger
@@ -34,11 +24,11 @@ from src.tacotron.model import Tacotron2
 from src.tacotron.plot_embeddings import analyse
 from src.tacotron.prepare_ds_ms import prepare
 #from torch.utils.data.distributed import DistributedSampler
-from src.tacotron.prepare_ds_ms_io import parse_traindata, parse_validationset, get_total_duration
+from src.tacotron.prepare_ds_ms_io import parse_traindata, parse_validationset, get_total_duration, get_filelist_dir, load_weights, weights_map_exists, parse_all_symbols, parse_all_speakers
+from src.tacotron.train_io import load_checkpoint, save_checkpoint, save_checkpoint_score, get_continue_training_model_checkpoint
 from src.tacotron.txt_pre import process_input_text
 from src.text.symbol_converter import load_from_file
 from torch.utils.data import DataLoader
-
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -95,15 +85,15 @@ def prepare_dataloaders(hparams, training_dir_path):
   return train_loader, valset, collate_fn
 
 
-def prepare_directories_and_logger(output_directory, log_directory, rank):
-  if rank == 0:
-    if not os.path.isdir(output_directory):
-      os.makedirs(output_directory)
-      os.chmod(output_directory, 0o775)
-    logger = Tacotron2Logger(os.path.join(output_directory, log_directory))
-  else:
-    logger = None
-  return logger
+# def prepare_directories_and_logger(output_directory, log_directory, rank):
+#   if rank == 0:
+#     if not os.path.isdir(output_directory):
+#       os.makedirs(output_directory)
+#       os.chmod(output_directory, 0o775)
+#     logger = Tacotron2Logger(os.path.join(output_directory, log_directory))
+#   else:
+#     logger = None
+#   return logger
 
 
 def load_model(hparams):
@@ -128,61 +118,6 @@ def warm_start_model(checkpoint_path, model, ignore_layers, training_dir_path):
     model_dict = dummy_dict
   model.load_state_dict(model_dict)
 
-def init_weights(weights_path, model, training_dir_path):
-  assert os.path.isfile(weights_path)
-  log(training_dir_path, "Init weights from '{}'".format(weights_path))
-  weights = np.load(weights_path)
-  weights = torch.from_numpy(weights)
-  dummy_dict = model.state_dict()
-  update = { 'embedding.weight': weights }
-  dummy_dict.update(update)
-  model_dict = dummy_dict
-  model.load_state_dict(model_dict)
-
-def load_checkpoint(checkpoint_path, model, optimizer, training_dir_path):
-  #weights_path = os.path.join(speaker_dir, weights_name)
-  #assert os.path.isfile(weights_path)
-  assert os.path.isfile(checkpoint_path)
-  checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-  ### Didn't worked out bc the optimizer has old weight size
-  # if overwrite_weights:
-  #   weights = np.load(weights_path)
-  #   weights = torch.from_numpy(weights)
-  #   dummy_dict = model.state_dict()
-  #   update = { 
-  #       'embedding.weight': weights 
-  #   }
-  #   checkpoint_dict.update({'iteration':0})
-  #   y_ref = weights[0]
-  #   x = checkpoint_dict['state_dict']['embedding.weight'][0]
-  #   checkpoint_dict['state_dict'].update(update)
-  #   y = checkpoint_dict['state_dict']['embedding.weight'][0]
-  #   #checkpoint_dict['state_dict']['embedding.weights'] = weights
-  model.load_state_dict(checkpoint_dict['state_dict'])
-  optimizer.load_state_dict(checkpoint_dict['optimizer'])
-  learning_rate = checkpoint_dict['learning_rate']
-  iteration = checkpoint_dict['iteration']
-  return model, optimizer, learning_rate, iteration
-
-
-def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, training_dir_path):
-  log(training_dir_path, "Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
-  torch.save(
-    {
-      'iteration': iteration,
-      'state_dict': model.state_dict(),
-      'optimizer': optimizer.state_dict(),
-      'learning_rate': learning_rate
-    },
-    filepath
-  )
-
-def save_checkpoint_score(checkpoint_path, gradloss, trainloss, valloss, epoch, i):
-  loss_avg = (trainloss + valloss) / 2
-  name = "{}_epoch-{}_it-{}_grad-{:.6f}_train-{:.6f}_val-{:.6f}_avg-{:.6f}.log".format(checkpoint_path, epoch, i, gradloss, trainloss, valloss, loss_avg)
-  with open(name, mode='w', encoding='utf-8') as f:
-    f.write("Training Grad Norm: {:.6f}\nTraining Loss: {:.6f}\nValidation Loss: {:.6f}".format(gradloss, trainloss, valloss))
-
 def validate_core(model, criterion, valset, batch_size, n_gpus,
        collate_fn, distributed_run):
   """Handles all the validation scoring and printing"""
@@ -198,14 +133,16 @@ def validate_core(model, criterion, valset, batch_size, n_gpus,
                 pin_memory=False, collate_fn=collate_fn)
 
     val_loss = 0.0
-    for i, batch in enumerate(val_loader):
+    print("Validating...")
+    for i, batch in enumerate(tqdm(val_loader)):
       x, y = model.parse_batch(batch)
       y_pred = model(x)
       loss = criterion(y_pred, y)
-      if distributed_run:
-        reduced_val_loss = reduce_tensor(loss.data, n_gpus).item()
-      else:
-        reduced_val_loss = loss.item()
+      # if distributed_run:
+      #   reduced_val_loss = reduce_tensor(loss.data, n_gpus).item()
+      # else:
+      #  reduced_val_loss = loss.item()
+      reduced_val_loss = loss.item()
       val_loss += reduced_val_loss
     val_loss = val_loss / (i + 1)
 
@@ -221,6 +158,14 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
     logger.log_validation(val_loss, model, y, y_pred, iteration)
   
   return val_loss
+
+def init_weights(model, training_dir_path: str):
+  weights = load_weights(training_dir_path)
+  dummy_dict = model.state_dict()
+  update = { 'embedding.weight': weights }
+  dummy_dict.update(update)
+  model_dict = dummy_dict
+  model.load_state_dict(model_dict)
 
 def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
       rank, group_name, hparams, continue_training, training_dir_path):
@@ -254,11 +199,8 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
 
   criterion = Tacotron2Loss()
 
-  output_directory = get_checkpoint_dir(training_dir_path)
-  log_directory = get_log_dir(training_dir_path)
-  filelist_dir_path = get_filelist_dir(training_dir_path)
+  logger = Tacotron2Logger(logdir=get_log_dir(training_dir_path))
 
-  logger = prepare_directories_and_logger(output_directory, log_directory, rank)
   train_loader, valset, collate_fn = prepare_dataloaders(hparams, training_dir_path)
 
   if not len(train_loader):
@@ -270,13 +212,7 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
   epoch_offset = 0
 
   if continue_training:
-    checkpoint_dir = get_checkpoint_dir(training_dir_path)
-    last_checkpoint = get_last_checkpoint(checkpoint_dir)
-
-    if not last_checkpoint:
-      raise Exception("No checkpoint was found to continue training!")
-
-    full_checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), last_checkpoint)
+    full_checkpoint_path = get_continue_training_model_checkpoint(training_dir_path)
     log(training_dir_path, "Loading checkpoint '{}'".format(full_checkpoint_path))
     model, optimizer, _learning_rate, iteration = load_checkpoint(full_checkpoint_path, model, optimizer, training_dir_path)
     log(training_dir_path, "Loaded checkpoint '{}' from iteration {}" .format(full_checkpoint_path, iteration))
@@ -292,17 +228,17 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
       warm_start_model(pretrained_path, model, hparams.ignore_layers, training_dir_path)
     
     if use_weights:
-      weight_file = os.path.join(filelist_dir_path, filelist_weights_file_name)
-      init_weights(weight_file, model, training_dir_path)
+      init_weights(model, training_dir_path)
 
   log(training_dir_path, "Modelweights:")
   log(training_dir_path, str(model.state_dict()['embedding.weight']))
   log(training_dir_path, "Iterations per epoch: {}".format(len(train_loader)))
 
   model.train()
-  is_overflow = False
+  # is_overflow = False
   total_its = hparams.epochs * len(train_loader)
   # ================ MAIN TRAINING LOOP! ===================
+  train_start = time.perf_counter()
   for epoch in range(epoch_offset, hparams.epochs):
     log(training_dir_path, "Epoch: {}".format(epoch))
     
@@ -340,7 +276,7 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
 
       #if not is_overflow and rank == 0:
       duration = time.perf_counter() - start
-      log(training_dir_path, "Epoch: {}/{} | Iteration: {}/{} | Total iteration: {}/{} | Train loss: {:.6f} | Grad Norm: {:.6f} | Duration: {:.2f}s/it".format(
+      log(training_dir_path, "Epoch: {}/{} | Iteration: {}/{} | Total iteration: {}/{} | Train loss: {:.6f} | Grad Norm: {:.6f} | Duration: {:.2f}s/it | Total Duration: {:.2f}h".format(
         str(epoch).zfill(len(str(hparams.epochs))),
         hparams.epochs,
         str(i).zfill(len(str(len(train_loader) - 1))),
@@ -349,7 +285,8 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
         total_its,
         reduced_loss,
         grad_norm,
-        duration
+        duration,
+        (time.perf_counter() - train_start) / 60 / 60
       ))
       logger.log_training(reduced_loss, grad_norm, learning_rate, duration, iteration)
 
@@ -358,9 +295,8 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
       if save_iteration:
         valloss = validate(model, criterion, valset, iteration, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank, training_dir_path)
         #if rank == 0:
-        checkpoint_path = os.path.join(output_directory, str(iteration))
-        save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path, training_dir_path)
-        save_checkpoint_score(checkpoint_path, grad_norm, reduced_loss, valloss, epoch, i)
+        save_checkpoint(model, optimizer, learning_rate, iteration, training_dir_path)
+        save_checkpoint_score(training_dir_path, iteration, grad_norm, reduced_loss, valloss, epoch, i)
       iteration += 1
 
     checkpoint_was_already_created = save_iteration
@@ -368,26 +304,23 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
     if save_epoch:
       valloss = validate(model, criterion, valset, iteration - 1, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank, training_dir_path)
       #if rank == 0:
-      checkpoint_path = os.path.join(output_directory, str(iteration - 1))
-      save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
-      save_checkpoint_score(checkpoint_path, grad_norm, reduced_loss, valloss, epoch, i)
+      save_checkpoint(model, optimizer, learning_rate, iteration - 1, training_dir_path)
+      save_checkpoint_score(training_dir_path, iteration - 1, grad_norm, reduced_loss, valloss, epoch, i)
 
   checkpoint_was_already_created = save_iteration or save_epoch
   if not checkpoint_was_already_created:
     valloss = validate(model, criterion, valset, iteration - 1, hparams.batch_size, n_gpus, collate_fn, logger, hparams.distributed_run, rank, training_dir_path)
     #if rank == 0:
-    checkpoint_path = os.path.join(output_directory,  str(iteration - 1))
-    save_checkpoint(model, optimizer, learning_rate, iteration - 1, checkpoint_path, training_dir_path)
-    save_checkpoint_score(checkpoint_path, grad_norm, reduced_loss, valloss, epoch, i)
+    save_checkpoint(model, optimizer, learning_rate, iteration - 1, training_dir_path)
+    save_checkpoint_score(training_dir_path, iteration - 1, grad_norm, reduced_loss, valloss, epoch, i)
   return True
 
 def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool):
   start = time.time()
-  conv = load_from_file(get_symbols_path(training_dir_path))
+  conv = parse_all_symbols(training_dir_path)
   hparams.n_symbols = conv.get_symbol_ids_count()
 
-  speakers_file = os.path.join(get_filelist_dir(training_dir_path), filelist_speakers_name)
-  all_speakers = parse_json(speakers_file)
+  all_speakers = parse_all_speakers(training_dir_path)
   hparams.n_speakers = len(all_speakers)
   
   log(training_dir_path, 'Final parsed hparams:')
@@ -415,6 +348,8 @@ def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_pa
     duration_s = time.time() - start
     duration_m = duration_s / 60
     log(training_dir_path, 'Duration: {:.2f}min'.format(duration_m))
+  
+  return successfull
 # #   #hparams.batch_size=22 only when on all speakers simultanously thchs
 
 def init_train_parser(parser: ArgumentParser):
@@ -438,18 +373,10 @@ def __main(base_dir, training_dir, continue_training, warm_start, warm_start_mod
   training_dir_path = os.path.join(base_dir, training_dir)
 
   if not continue_training:
-    use_map = weight_map_mode == 'use_map'
-    map_path = os.path.join(training_dir_path, train_map_file)
-    if use_map:
-      log_train_map(training_dir_path, weight_map)
-    elif os.path.exists(map_path):
-      os.remove(map_path)
-
     reset_log(training_dir_path)
-    prepare(base_dir, training_dir_path, speakers=speakers, pretrained_model=weight_map_model, weight_map_mode=weight_map_mode, hparams=hparams, pretrained_model_symbols=weight_map_model_symbols, test_size=test_size, val_size=validation_size, seed=hparams.seed)
+    prepare(base_dir, training_dir_path, speakers=speakers, pretrained_model=weight_map_model, weight_map_mode=weight_map_mode, weight_map=weight_map, hparams=hparams, pretrained_model_symbols=weight_map_model_symbols, test_size=test_size, val_size=validation_size, seed=hparams.seed)
     
-  weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
-  use_weights_map = os.path.exists(weights_path)
+  use_weights_map = weights_map_exists(training_dir_path)
   successfull_training = start_train(training_dir_path, hparams=hparams, use_weights=use_weights_map, pretrained_path=warm_start_model, warm_start=warm_start, continue_training=continue_training)
   if successfull_training:
     analyse(training_dir_path)

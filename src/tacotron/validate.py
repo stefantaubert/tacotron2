@@ -19,25 +19,19 @@ from tqdm import tqdm
 import torch
 from src.common.audio.utils import float_to_wav, is_overamp, mel_to_numpy
 from src.common.train_log import reset_log
-from src.common.utils import (get_last_checkpoint,
-                              parse_ds_speaker, parse_ds_speakers, parse_json,
+from src.common.utils import (parse_ds_speaker, parse_ds_speakers, parse_json,
                               stack_images_vertically)
-from src.paths import (ds_preprocessed_file_name, filelist_speakers_name,
-                       filelist_test_file_name, filelist_validation_file_name,
-                       get_checkpoint_dir, get_filelist_dir, get_inference_dir,
-                       get_symbols_path, get_validation_dir,
-                       inference_input_file_name,
-                       inference_input_symbols_file_name, log_input_file,
-                       log_map_file)
 from src.pre.mel_parser import MelParser, plot_melspec
 from src.tacotron.hparams import create_hparams
 from src.tacotron.model import Tacotron2
 from src.tacotron.synthesizer import Synthesizer as TacoSynthesizer
 from src.tacotron.train import load_model
+from src.tacotron.train_io import get_checkpoint
 from src.text.symbol_converter import deserialize_symbol_ids, load_from_file
 from src.waveglow.inference import Synthesizer as WGSynthesizer
 from src.waveglow.synthesizer import Synthesizer as WGSynthesizer
 from src.tacotron.prepare_ds_ms_io import parse_all_speakers, parse_all_symbols, get_random_val_utterance, get_random_test_utterance, get_values_entry, PreparedData, PreparedDataList
+from src.tacotron.validate_io import get_validation_dir, write_input_file
 
 
 def init_validate_parser(parser):
@@ -60,7 +54,7 @@ def get_utterance(training_dir_path, utterance: str) -> PreparedData:
     elif "val" in utterance:
       dataset_values_entry = get_random_val_utterance(training_dir_path, custom_speaker)
   else:
-    dataset_values_entry = get_values_entry(int(utterance))
+    dataset_values_entry = get_values_entry(training_dir_path, int(utterance))
   return dataset_values_entry
 
 def validate(base_dir, training_dir, utterance: str, hparams, waveglow, custom_checkpoint, denoiser_strength, sigma):
@@ -68,19 +62,14 @@ def validate(base_dir, training_dir, utterance: str, hparams, waveglow, custom_c
 
   assert os.path.isfile(waveglow)
 
-  if custom_checkpoint:
-    checkpoint = custom_checkpoint
-  else:
-    checkpoint_dir = get_checkpoint_dir(training_dir_path)
-    checkpoint = get_last_checkpoint(checkpoint_dir)
 
   dataset_values_entry = get_utterance(training_dir_path, utterance)
   print("Selected utterance: {} ({})".format(dataset_values_entry.i, dataset_values_entry.basename))
   
   print("Speaker is: {} ({})".format(dataset_values_entry.speaker_name, dataset_values_entry.speaker_id))
 
+  checkpoint, checkpoint_path = get_checkpoint(training_dir_path, custom_checkpoint)
   infer_dir_path = get_validation_dir(training_dir_path, dataset_values_entry.i, dataset_values_entry.basename, checkpoint, dataset_values_entry.speaker_name)
-  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
 
   conv = parse_all_symbols(training_dir_path)
   print('Loaded {} symbols'.format(conv.get_symbol_ids_count()))
@@ -97,9 +86,8 @@ def validate(base_dir, training_dir, utterance: str, hparams, waveglow, custom_c
   symbol_ids = deserialize_symbol_ids(dataset_values_entry.serialized_updated_ids)
   orig_text = conv.ids_to_text(symbol_ids)
   
-  with open(os.path.join(infer_dir_path, inference_input_file_name), 'w', encoding='utf-8') as f:
-    f.writelines([orig_text])
-  
+  write_input_file(infer_dir_path, orig_text)
+
   print("Inferring {}...".format(dataset_values_entry.basename))
   print("{} ({})".format(orig_text, len(symbol_ids)))
   mel_outputs, mel_outputs_postnet, alignments = taco_synt.infer(

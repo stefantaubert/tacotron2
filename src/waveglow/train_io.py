@@ -1,6 +1,5 @@
 import torch
 import os
-from src.paths import get_checkpoint_dir
 from src.common.utils import get_last_checkpoint
 
 def load_checkpoint(checkpoint_path, model, optimizer):

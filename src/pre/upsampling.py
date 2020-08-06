@@ -3,8 +3,7 @@ import os
 from tqdm import tqdm
 
 from src.common.audio.utils import upsample
-from src.paths import get_wavs_dir
-from src.pre.wav_pre_io import parse_data, save_data, already_exists, WavData, WavDataList
+from src.pre.wav_pre_io import parse_data, save_data, already_exists, WavData, WavDataList, get_wavs_dir
 
 def __upsample_wavs(base_dir: str, source_name: str, destination_name: str, new_rate: int):
   if not already_exists(base_dir, destination_name):

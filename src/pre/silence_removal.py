@@ -6,9 +6,8 @@ from tqdm import tqdm
 
 from src.common.audio.utils import remove_silence_file, wav_to_float32
 from src.common.utils import stack_images_vertically
-from src.paths import get_wavs_dir
 from src.pre.mel_parser import MelParser, plot_melspec
-from src.pre.wav_pre_io import parse_data, save_data, already_exists, WavData, WavDataList
+from src.pre.wav_pre_io import parse_data, save_data, already_exists, WavData, WavDataList, get_wavs_dir
 from src.tacotron.hparams import create_hparams
 
 

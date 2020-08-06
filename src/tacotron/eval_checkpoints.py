@@ -21,7 +21,6 @@ from src.tacotron.hparams import create_hparams
 from src.common.utils import parse_ds_speakers
 
 from src.text.symbol_converter import load_from_file
-from src.paths import filelist_training_file_name, filelist_validation_file_name, get_symbols_path, get_filelist_dir, get_checkpoint_dir, get_log_dir, filelist_weights_file_name
 from src.common.train_log import log
 
 from src.tacotron.train import load_model, prepare_directories_and_logger, validate_core, prepare_dataloaders, load_checkpoint

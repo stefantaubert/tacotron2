@@ -3,8 +3,8 @@ from argparse import ArgumentParser
 from matplotlib import use as use_matplotlib_backend
 use_matplotlib_backend("Agg")
 
-from src.common.audio.remove_silence import init_remove_silence_plot_parser
-from src.paths import init_path_parser
+from src.pre.silence_removal import init_remove_silence_plot_parser
+from src.tacotron.train_io import init_path_parser
 from src.tacotron.create_map_template import init_create_map_parser
 from src.tacotron.eval_checkpoints import init_eval_checkpoints_parser
 from src.tacotron.inference import init_inference_parser as init_taco_inference_parser

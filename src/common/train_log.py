@@ -1,8 +1,13 @@
 import datetime
 import os
 
-from src.paths import get_log_dir, log_train_file_name
+from src.common.utils import get_subdir
 
+log_dir = 'logs'
+log_train_file_name = 'log.txt'
+
+def get_log_dir(training_dir_path: str, create: bool = True) -> str:
+  return get_subdir(training_dir_path, log_dir, create)
 
 def log(training_dir_path: str, msg: str):
   log_path = os.path.join(get_log_dir(training_dir_path), log_train_file_name)

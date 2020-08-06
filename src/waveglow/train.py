@@ -26,16 +26,16 @@
 # *****************************************************************************
 import os
 import time
+from tqdm import tqdm
 
 import torch
 from src.common.train_log import log, reset_log
 from src.common.utils import (args_to_str, get_last_checkpoint)
-from src.paths import get_checkpoint_dir, get_log_dir
 from src.waveglow.data_utils import MelLoader
 from src.waveglow.hparams import create_hparams
 from src.waveglow.model import WaveGlow, WaveGlowLoss
 from src.waveglow.prepare_ds import prepare
-from src.waveglow.prepare_ds_io import parse_traindata
+from src.waveglow.prepare_ds_io import parse_trainset, parse_validationset, get_total_duration
 from torch.utils.data import DataLoader
 from src.waveglow.train_io import load_checkpoint, save_checkpoint, get_last_checkpoint_path
 
@@ -49,6 +49,85 @@ def load_model(hparams):
   model = model.cuda()
 
   return model
+
+def prepare_dataloaders(hparams, training_dir_path: str):
+  traindata = parse_trainset(training_dir_path)
+  total_dur_min = get_total_duration(traindata) / 60
+  log(training_dir_path, "Duration trainset {:.2f}min / {:.2f}h".format(total_dur_min, total_dur_min / 60))
+  trainset = MelLoader(prepare_ds_data=traindata, hparams=hparams)
+
+  train_sampler = None
+  shuffle = False # maybe set to true bc taco is also true
+
+  # # =====START: ADDED FOR DISTRIBUTED======
+  # train_sampler = DistributedSampler(trainset) if n_gpus > 1 else None
+  # # =====END:   ADDED FOR DISTRIBUTED======
+  train_loader = DataLoader(
+    trainset,
+    num_workers=0,
+    shuffle=shuffle,
+    sampler=train_sampler,
+    batch_size=hparams.batch_size,
+    pin_memory=False,
+    drop_last=True
+  )
+
+  valdata = parse_validationset(training_dir_path)
+  total_dur_min = get_total_duration(valdata) / 60
+  log(training_dir_path, "Duration validationset {:.2f}min / {:.2f}h".format(total_dur_min, total_dur_min / 60))
+  valset = MelLoader(prepare_ds_data=valdata, hparams=hparams)
+
+  val_sampler = None
+
+  val_loader = DataLoader(
+    valset,
+    sampler=val_sampler,
+    num_workers=0,
+    shuffle=False,
+    batch_size=hparams.batch_size,
+    pin_memory=False
+  )
+
+  return train_loader, val_loader
+
+
+def validate_core(model, criterion, val_loader):
+  """Handles all the validation scoring and printing"""
+  model.eval()
+  with torch.no_grad():
+
+    # if distributed_run:
+    #   val_sampler = DistributedSampler(valset)
+
+    val_loss = 0.0
+    print("Validating...")
+    for i, batch in enumerate(tqdm(val_loader)):
+      x = model.parse_batch(batch)
+      y_pred = model(x)
+      loss = criterion(y_pred)
+      # if distributed_run:
+      #   reduced_val_loss = reduce_tensor(loss.data, n_gpus).item()
+      # else:
+      #  reduced_val_loss = loss.item()
+      reduced_val_loss = loss.item()
+      val_loss += reduced_val_loss
+    avg_val_loss = val_loss / len(val_loader)
+
+  model.train()
+  return avg_val_loss, model, y_pred
+
+def validate(model, criterion, val_loader, iteration, logger, training_dir_path):
+  val_loss, model, y_pred = validate_core(model, criterion, val_loader)
+
+  #if rank == 0:
+  #  log(training_dir_path, "Validation loss {}: {:9f}".format(iteration, val_loss))
+  #  logger.log_validation(val_loss, model, y, y_pred, iteration)
+
+  log(training_dir_path, "Validation loss {}: {:9f}".format(iteration, val_loss))
+  #logger.log_validation(val_loss, model, y_pred, iteration)
+
+  return val_loss
+
 
 def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
   torch.manual_seed(hparams.seed)
@@ -84,24 +163,7 @@ def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
     log(training_dir_path, "Loaded checkpoint '{}' from iteration {}" .format(full_checkpoint_path, iteration))
     iteration += 1  # next iteration is iteration + 1
   
-  #filelist_dir_path = get_filelist_dir(training_dir_path)
-  # trainset_path = os.path.join(filelist_dir_path, filelist_training_file_name)
-  # train_dur = get_total_duration_min_df(trainset_path, duration_column=duration_col)
-  # print("Duration trainset {:.2f}min / {:.2f}h".format(train_dur, train_dur / 60))
-  trainset = MelLoader(prepare_ds_data=parse_traindata(training_dir_path), hparams=hparams)
-  train_sampler = None
-  # # =====START: ADDED FOR DISTRIBUTED======
-  # train_sampler = DistributedSampler(trainset) if n_gpus > 1 else None
-  # # =====END:   ADDED FOR DISTRIBUTED======
-  train_loader = DataLoader(
-    trainset,
-    num_workers=1,
-    shuffle=False,
-    sampler=train_sampler,
-    batch_size=hparams.batch_size,
-    pin_memory=False,
-    drop_last=True
-  )
+  train_loader, val_loader = prepare_dataloaders(hparams, training_dir_path)
 
   # Get shared output_directory ready
   # if rank == 0:
@@ -115,19 +177,21 @@ def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
     logger = SummaryWriter(get_log_dir(training_dir_path))
 
   model.train()
+  total_its = hparams.epochs * len(train_loader)
+  train_start = time.perf_counter()
   epoch_offset = max(0, int(iteration / len(train_loader)))
   # ================ MAIN TRAINING LOOP! ===================
   for epoch in range(epoch_offset, hparams.epochs):
     print("Epoch: {}".format(epoch))
     for i, batch in enumerate(train_loader):
+      start = time.perf_counter()
+
       model.zero_grad()
 
-      mel, audio = batch
-      mel = torch.autograd.Variable(mel.cuda())
-      audio = torch.autograd.Variable(audio.cuda())
-      outputs = model((mel, audio))
+      x = model.parse_batch(batch)
+      y_pred = model(x)
 
-      loss = criterion(outputs)
+      loss = criterion(y_pred)
       # if n_gpus > 1:
       #   reduced_loss = reduce_tensor(loss.data, n_gpus).item()
       # else:
@@ -143,12 +207,24 @@ def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
 
       optimizer.step()
 
-      print("{}:\t{:.9f}".format(iteration, reduced_loss))
+      log(training_dir_path, "Epoch: {}/{} | Iteration: {}/{} | Total iteration: {}/{} | Train loss: {:.9f} | Duration: {:.2f}s/it | Total Duration: {:.2f}h".format(
+        str(epoch).zfill(len(str(hparams.epochs))),
+        hparams.epochs,
+        str(i).zfill(len(str(len(train_loader) - 1))),
+        len(train_loader) - 1,
+        str(iteration).zfill(len(str(total_its))),
+        total_its,
+        reduced_loss,
+        time.perf_counter() - start,
+        (time.perf_counter() - train_start) / 60 / 60
+      ))
+
       if hparams.with_tensorboard and rank == 0:
         logger.add_scalar('training_loss', reduced_loss, i + len(train_loader) * epoch)
-
+      
       if (iteration % hparams.iters_per_checkpoint == 0):
         if rank == 0:
+          valloss = validate(model, criterion, val_loader, iteration, logger, training_dir_path)
           checkpoint_dir = get_checkpoint_dir(training_dir_path)
           checkpoint_path = os.path.join(checkpoint_dir,  str(iteration))
           save_checkpoint(model, optimizer, hparams.learning_rate, iteration, checkpoint_path, hparams)
@@ -231,8 +307,8 @@ if __name__ == "__main__":
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'wg_debug',
     wav_ds_name = 'ljs_22050kHz',
-    test_size = 0.01,
-    validation_size = 0.9,
-    hparams = 'batch_size=4,iters_per_checkpoint=5,fp16_run=False,with_tensorboard=True',
+    test_size = 0.001,
+    validation_size = 0.001,
+    hparams = 'batch_size=4,iters_per_checkpoint=50,fp16_run=False,with_tensorboard=True,cache_wavs=False',
     continue_training = False,
   )

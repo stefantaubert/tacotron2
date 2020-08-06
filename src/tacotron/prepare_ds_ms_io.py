@@ -4,19 +4,15 @@ from collections import OrderedDict
 
 import numpy as np
 
+from src.common.utils import get_subdir
 from src.common.train_log import log
 from src.common.utils import (load_csv, parse_json,
                               save_csv, save_json)
-from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
-                       filelist_file_log_name, filelist_file_name,
-                       filelist_speakers_name, filelist_symbols_file_name,
-                       filelist_test_file_name, filelist_training_file_name,
-                       filelist_validation_file_name,
-                       filelist_weights_file_name, get_all_speakers_path,
-                       get_ds_dir, get_filelist_dir, train_map_file)
 from src.text.symbol_converter import load_from_file
 from dataclasses import dataclass
 from typing import List
+import torch
+from shutil import copyfile
 
 @dataclass()
 class PreparedData:
@@ -31,9 +27,51 @@ class PreparedData:
 
 PreparedDataList = List[PreparedData]
 
+filelist_dir = "filelist"
+filelist_training_file_name = 'audio_text_train_filelist.csv'
+filelist_test_file_name = 'audio_text_test_filelist.csv'
+filelist_validation_file_name = 'audio_text_val_filelist.csv'
+filelist_symbols_file_name = 'symbols.json'
+filelist_file_name = 'filelist.csv'
+filelist_file_log_name = 'filelist_log.csv'
+filelist_speakers_name = 'speakers.json'
+filelist_weights_file_name = 'weights.npy'
+
+weights_map_file = 'weights_map.json'
+
+def save_train_map(training_dir_path: str, map_path: str):
+  assert map_path
+  copyfile(map_path, os.path.join(training_dir_path, weights_map_file))
+
+def parse_weights_map(training_dir_path: str):
+  map_path = os.path.join(training_dir_path, weights_map_file)
+  ipa_mapping = parse_json(map_path)
+  return ipa_mapping
+
+def remove_train_map(training_dir_path: str):
+  map_file = os.path.join(training_dir_path, weights_map_file)
+  if os.path.exists(map_file):
+    os.remove(map_file)
+
+def load_weights(training_dir_path: str):
+  filelist_dir_path = get_filelist_dir(training_dir_path, create=False)
+  weights_path = os.path.join(filelist_dir_path, filelist_weights_file_name)
+  assert os.path.isfile(weights_path)
+  log(training_dir_path, "Init weights from '{}'".format(weights_path))
+  weights = np.load(weights_path)
+  weights = torch.from_numpy(weights)
+  return weights
+
+def weights_map_exists(training_dir_path: str) -> bool:
+  weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
+  return os.path.exists(weights_path)
+
 def get_symbols_path(training_dir_path: str) -> str:
   path = os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name)
   return path
+
+def get_filelist_dir(training_dir_path: str, create: bool = True) -> str:
+  return get_subdir(training_dir_path, filelist_dir, create)
 
 def save_all_symbols(training_dir_path: str, conv):
   # symbols.json
@@ -121,11 +159,6 @@ def remove_weights_file(training_dir_path: str):
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)
   if os.path.exists(weights_path):
     os.remove(weights_path)
-
-def parse_weights_map(training_dir_path: str):
-  map_path = os.path.join(training_dir_path, train_map_file)
-  ipa_mapping = parse_json(map_path)
-  return ipa_mapping
 
 def save_weights(training_dir_path: str, embedding):
   weights_path = os.path.join(get_filelist_dir(training_dir_path), filelist_weights_file_name)

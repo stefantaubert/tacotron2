@@ -41,28 +41,43 @@ class MelLoader(torch.utils.data.Dataset):
   spectrogram, audio pair.
   """
   def __init__(self, prepare_ds_data: PreparedDataList, hparams):
-    self.segment_length = hparams.segment_length
     self.mel_parser = MelParser(hparams)
+    self.segment_length: int = hparams.segment_length
+    self.sampling_rate: int = hparams.sampling_rate
+    self.cache_wavs: bool = hparams.cache_wavs
 
     data = prepare_ds_data
     random.seed(hparams.seed)
     random.shuffle(data)
 
-    print("Loading wavs into memory...")
-    self.cache = {}
+    wav_paths = {}
     values: PreparedData
-    for i, values in enumerate(tqdm(data)):
-      wav_tensor, sr = wav_to_float32_tensor(values.wav_path)
-      if sr != hparams.sampling_rate:
-        raise ValueError("{} {} SR doesn't match target {} SR".format(values.wav_path, sr, hparams.sampling_rate))
-      self.cache[i] = wav_tensor
-    print("Done")
+    for i, values in enumerate(data):
+      wav_paths[i] = values.wav_path
+    self.wav_paths = wav_paths
+
+    if hparams.cache_wavs:
+      print("Loading wavs into memory...")
+      cache = {}
+      for i, wav_path in tqdm(wav_paths.items()):
+        cache[i] = self.__load_wav_tensor(wav_path)
+      print("Done")
+      self.cache = cache
+
+  def __load_wav_tensor(self, wav_path: str):
+    wav_tensor, sr = wav_to_float32_tensor(wav_path)
+    if sr != self.sampling_rate:
+      raise ValueError("{} {} SR doesn't match target {} SR".format(wav_path, sr, self.sampling_rate))
+    return wav_tensor
 
   def __getitem__(self, index):
-    wav_tensor = self.cache[index].clone().detach()
+    if self.cache_wavs:
+      wav_tensor = self.cache[index].clone().detach()
+    else:
+      wav_tensor = self.__load_wav_tensor(self.wav_paths[index])
     wav_tensor = get_wav_tensor_segment(wav_tensor, self.segment_length)
     mel_tensor = self.mel_parser.get_mel_tensor(wav_tensor)
     return (mel_tensor, wav_tensor)
 
   def __len__(self):
-    return len(self.cache)
+    return len(self.wav_paths)

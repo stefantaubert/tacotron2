@@ -1,5 +1,4 @@
 import sys
-#sys.path.append('tacotron2')
 from src.common.stft import STFT
 import torch
 

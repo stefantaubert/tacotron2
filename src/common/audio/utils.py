@@ -16,12 +16,11 @@ int32_min_wav = np.iinfo(np.int32).min # -2147483648 = -(2**31)
 int32_max_wav = np.iinfo(np.int32).max # 2147483647 = 2**31 - 1
 
 def get_dBFS(wav, max_value) -> float:
-  new = np.sqrt(np.mean((wav / max_value)**2))
-  #new = np.mean(wav) / max_value
-  if new == 0:
+  value = np.sqrt(np.mean((wav / max_value)**2))
+  if value == 0:
     return -inf
   else:
-    result = 20 * log10(new)
+    result = 20 * log10(value)
     return result
 
 def detect_leading_silence(wav: np.array, silence_threshold: float, chunk_size: int, buffer: int):
@@ -30,7 +29,7 @@ def detect_leading_silence(wav: np.array, silence_threshold: float, chunk_size: 
       chunk_size = len(wav)
 
     trim = 0
-    max_value = -get_min_value(wav.dtype)
+    max_value = -1 * get_min_value(wav.dtype)
     while get_dBFS(wav[trim:trim + chunk_size], max_value) < silence_threshold and trim < len(wav):
       trim += chunk_size
 
@@ -118,7 +117,7 @@ def convert_wav(wav, to_dtype):
   if the wav is overamplified the result will also be overamplified.
   '''
   if wav.dtype != to_dtype:
-    wav = wav / -get_min_value(wav.dtype) * get_max_value(to_dtype)
+    wav = wav / -1 * get_min_value(wav.dtype) * get_max_value(to_dtype)
     if to_dtype == np.int16 or to_dtype == np.int32:
       # the default seems to be np.fix instead of np.round on wav.astype()
       wav = np.round(wav, 0)
@@ -251,7 +250,7 @@ if __name__ == "__main__":
   )
 
   wav, sr = wav_to_float32("/datasets/thchs_wav/wav/train/A22/A22_107.wav")
-  trim = detect_leading_silence(wav, silence_threshold=-25, chunk_size=5, buffer_ms=100)
+  trim = detect_leading_silence(wav, silence_threshold=-25, chunk_size=5, buffer=100)
   wav = wav[trim:]
   float_to_wav(wav, "/tmp/A22_107_nosil.wav", sample_rate=sr)
   #upsample("/datasets/Report/08/03/B4_322.wav", "/tmp/B4_322.wav", 22050)

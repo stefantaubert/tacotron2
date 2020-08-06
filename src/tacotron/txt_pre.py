@@ -8,8 +8,9 @@ from nltk import download
 from src.text.ipa2symb import extract_from_sentence
 from src.common.utils import parse_json
 from src.text.adjustments import normalize_text
-from src.text.symbol_converter import load_from_file, serialize_symbol_ids
-from src.paths import get_symbols_path, inference_input_normalized_sentences_file_name, inference_input_sentences_file_name, inference_input_sentences_mapped_file_name, inference_input_symbols_file_name, inference_input_file_name, inference_input_map_file_name
+from src.tacotron.prepare_ds_ms_io import parse_all_symbols
+from src.tacotron.inference_io import parse_input_file, write_input_normalized_sentences, write_input_sentences, parse_map, write_input_symbols, write_input_sentences_mapped, parse_map
+from src.text.symbol_converter import serialize_symbol_ids
 from src.text.chn_tools import chn_to_ipa
 
 def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, ignore_tones: bool, ignore_arcs: bool, subset_id: int, lang: str, use_map: bool):
@@ -19,13 +20,9 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
     elif lang == "ger":
       epi = epitran.Epitran('deu-Latn')
 
-  conv = load_from_file(get_symbols_path(training_dir_path))
+  conv = parse_all_symbols(training_dir_path)
   
-  lines = []
-
-  input_file = os.path.join(infer_dir_path, inference_input_file_name)
-  with open(input_file, 'r', encoding='utf-8') as f:
-    lines = f.readlines()
+  lines = parse_input_file(infer_dir_path)
   
   is_ipa = lang == "ipa"
   if not is_ipa:
@@ -69,8 +66,7 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
       cleaned_sent = normalize_text(s)
       cleaned_sents.append(cleaned_sent)
 
-    with open(os.path.join(infer_dir_path, inference_input_normalized_sentences_file_name), 'w', encoding='utf-8') as f:
-      f.writelines(['{}\n'.format(s) for s in cleaned_sents])
+    write_input_normalized_sentences(infer_dir_path, cleaned_sents)
    
     accented_sents = []
     for s in cleaned_sents:
@@ -81,12 +77,10 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
         accented_sentence = s
       accented_sents.append(accented_sentence)
 
-  with open(os.path.join(infer_dir_path, inference_input_sentences_file_name), 'w', encoding='utf-8') as f:
-    f.writelines(['{}\n'.format(s) for s in accented_sents])
-
+  write_input_sentences(infer_dir_path, accented_sents)
+ 
   if use_map:
-    map_path = os.path.join(infer_dir_path, inference_input_map_file_name)
-    ipa_mapping = parse_json(map_path)
+    ipa_mapping = parse_map(infer_dir_path)
     ipa_mapping = { k: extract_from_sentence(v, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs) for k, v in ipa_mapping.items() }
 
   #print('\n'.join(sentences))
@@ -122,13 +116,11 @@ def process_input_text(training_dir_path: str, infer_dir_path: str, ipa: bool, i
     serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
     seq_sents.append('{}\n'.format(serialized_symbol_ids))
 
-  with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'w', encoding='utf-8') as f:
-    f.writelines(seq_sents)
+  write_input_symbols(infer_dir_path, seq_sents)
   
   if use_map:
-    with open(os.path.join(infer_dir_path, inference_input_sentences_mapped_file_name), 'w', encoding='utf-8') as f:
-      f.writelines(['{}\n'.format(s) for s in seq_sents_text])
-
+    write_input_sentences_mapped(infer_dir_path, seq_sents_text)
+    
   if len(unknown_symbols) > 0:
     print('Unknown symbols:', unknown_symbols)
   else:

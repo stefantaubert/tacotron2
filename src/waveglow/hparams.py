@@ -13,6 +13,8 @@ def create_hparams(hparams_string=None, verbose=False):
     iters_per_checkpoint=2000,
     seed=1234,
     with_tensorboard=False,
+    # is not usefull
+    cache_wavs=False,
     
     # # dist_config
     # dist_backend="nccl",

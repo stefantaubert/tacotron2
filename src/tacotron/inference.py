@@ -22,13 +22,6 @@ from src.common.train_log import reset_log
 from src.common.utils import (get_last_checkpoint,
                               parse_ds_speaker, parse_ds_speakers, parse_json,
                               stack_images_vertically)
-from src.paths import (ds_preprocessed_file_name, filelist_speakers_name,
-                       filelist_test_file_name, filelist_validation_file_name,
-                       get_checkpoint_dir, get_filelist_dir, get_inference_dir,
-                       get_symbols_path, get_validation_dir,
-                       inference_input_file_name,
-                       inference_input_symbols_file_name, log_input_file,
-                       log_map_file)
 from src.pre.mel_parser import MelParser, plot_melspec
 from src.tacotron.hparams import create_hparams
 from src.tacotron.model import Tacotron2

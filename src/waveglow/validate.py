@@ -7,19 +7,13 @@ from shutil import copyfile
 import pandas as pd
 
 from src.common.train_log import reset_log
-from src.common.utils import parse_ds_speaker
-from src.paths import (ds_preprocessed_file_name,
-                              ds_preprocessed_symbols_name, filelist_file_name,
-                              filelist_symbols_file_name,
-                              filelist_validation_file_name, get_ds_dir,
-                              get_filelist_dir, get_inference_dir,
-                              get_validation_dir, inference_config_file,
-                              log_inference_config, log_input_file,
-                              log_map_file, log_train_config, log_train_map,
-                              train_config_file, get_checkpoint_dir)
-from src.waveglow.prepare_ds_io import get_random_test_utterance, get_random_val_utterance, get_values_entry, PreparedData, PreparedDataList
+from src.common.utils import get_last_checkpoint, parse_ds_speaker
 from src.waveglow.inference import infer
-from src.common.utils import get_last_checkpoint
+from src.waveglow.prepare_ds_io import (PreparedData, PreparedDataList,
+                                        get_random_test_utterance,
+                                        get_random_val_utterance,
+                                        get_values_entry)
+
 
 def init_validate_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -54,7 +48,7 @@ def __main(base_dir, training_dir, utterance, hparams, denoiser_strength, sigma,
 
   dataset_values_entry = get_utterance(training_dir_path, utterance)
 
-  infer_dir_path = get_validation_dir(training_dir_path, "todo", dataset_values_entry.basename, checkpoint, "{}_{}".format(sigma, denoiser_strength))
+  infer_dir_path = get_validation_dir(training_dir_path, dataset_values_entry.i, dataset_values_entry.basename, checkpoint, "{}_{}".format(sigma, denoiser_strength))
 
   infer(training_dir_path, infer_dir_path, hparams=hparams, checkpoint=checkpoint, infer_wav_path=dataset_values_entry.wav_path, denoiser_strength=denoiser_strength, sigma=sigma)
 

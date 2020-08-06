@@ -3,6 +3,7 @@ import os
 import tarfile
 from collections import OrderedDict
 from dataclasses import astuple
+from sklearn.model_selection import train_test_split
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,17 @@ import torch
 from src.text.ipa2symb import extract_from_sentence
 
 __csv_separator = '\t'
+
+def split_train_test_val(wholeset: list, test_size: float, validation_size: float, seed: int) -> (list, list, list):
+  trainset, testset, valset = wholeset, [], []
+
+  if test_size > 0:
+    trainset, testset = train_test_split(trainset, test_size=test_size, random_state=seed)
+
+  if validation_size > 0:
+    trainset, valset = train_test_split(trainset, test_size=validation_size, random_state=seed)
+  
+  return trainset, testset, valset
 
 def stack_images_vertically(list_im, out_path):
   images = [Image.open(i) for i in list_im]
@@ -67,6 +79,12 @@ def str_to_int(val: str) -> int:
   mapped = [(i + 1) * ord(x) for i, x in enumerate(val)]
   res = sum(mapped)
   return res
+
+def get_subdir(training_dir_path: str, subdir: str, create: bool = True) -> str:
+  result = os.path.join(training_dir_path, subdir)
+  if create:
+    os.makedirs(result, exist_ok=True)
+  return result
 
 def download_tar(download_url, dir_path, tarmode: str = "r:gz"):
   print("Starting download of {}...".format(download_url))
@@ -130,5 +148,5 @@ def to_gpu(x):
 
 if __name__ == "__main__":
   x = "/datasets/models/taco2pt_v2/debug/filelist/filelist.csv"
-  data = pd.read_csv(x, header=None, sep=csv_separator)
+  data = pd.read_csv(x, header=None, sep=__csv_separator)
   #get_speaker_count_csv(data)

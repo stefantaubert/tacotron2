@@ -39,18 +39,33 @@ from scipy.io.wavfile import write
 import torch
 from src.common.audio.utils import float_to_wav, is_overamp
 from src.common.utils import stack_images_vertically
-from src.paths import get_inference_dir
-from src.tacotron.layers import TacotronSTFT
 from src.pre.mel_parser import MelParser, plot_melspec, compare_mels
 from src.waveglow.denoiser import Denoiser
 from src.waveglow.hparams import create_hparams
-from src.waveglow.train import (get_checkpoint_dir,
-                                load_model)
+from src.waveglow.train import load_model
 from src.common.utils import get_last_checkpoint
 from src.waveglow.synthesizer import Synthesizer
+from src.tacotron.train_io import get_checkpoint
+from src.waveglow.inference_io import get_inference_dir
 
-def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str, infer_wav_path: str, denoiser_strength: float, sigma: float):
-  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), str(checkpoint))
+def init_inference_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--training_dir', type=str, required=True)
+  parser.add_argument('--wav', type=str, required=True)
+  parser.add_argument('--hparams', type=str)
+  parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias.')
+  parser.add_argument("--sigma", default=1.0, type=float)
+  parser.add_argument('--custom_checkpoint', type=int)
+  return infer
+
+def infer(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom_checkpoint):
+  training_dir_path = os.path.join(base_dir, training_dir)
+
+  checkpoint, checkpoint_path = get_checkpoint(training_dir_path, custom_checkpoint)
+
+  wav_name = os.path.basename(wav)[:-4]
+  infer_dir_path = get_inference_dir(training_dir_path, wav_name, checkpoint, "{}_{}".format(sigma, denoiser_strength))
+
   print("Using model:", checkpoint_path)
   synth = Synthesizer(checkpoint_path, hparams)
   
@@ -58,10 +73,10 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   #   from apex import amp
   #   waveglow, _ = amp.initialize(waveglow, [], opt_level="O3")
 
-  print("Inferring {}...".format(infer_wav_path))
+  print("Inferring {}...".format(wav))
 
   mel_parser = MelParser(synth.hparams)
-  mel = mel_parser.get_mel_tensor_from_file(infer_wav_path)
+  mel = mel_parser.get_mel_tensor_from_file(wav)
   mel = mel.cuda()
   mel = torch.autograd.Variable(mel)
   mel = mel.unsqueeze(0)
@@ -93,7 +108,7 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
   print("Plotting...")
 
   mel_inferred = mel_parser.get_mel_tensor_from_file(path_inferred_wav)
-  mel_orig = mel_parser.get_mel_tensor_from_file(infer_wav_path)
+  mel_orig = mel_parser.get_mel_tensor_from_file(wav)
 
   ax = plot_melspec(mel_inferred, title="Inferred")
   plt.savefig(path_inferred_plot, bbox_inches='tight')
@@ -123,46 +138,17 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, checkpoint: str,
 
   stack_images_vertically([path_original_plot, path_inferred_plot, path_diff_plot], path_compared_plot)
 
-  copyfile(infer_wav_path, path_original_wav)
+  copyfile(wav, path_original_wav)
   print("Finished.")
-
-def init_inference_parser(parser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
-  parser.add_argument('--training_dir', type=str, required=True)
-  parser.add_argument('--wav', type=str, required=True)
-  parser.add_argument('--hparams', type=str)
-  parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias.')
-  parser.add_argument("--sigma", default=1.0, type=float)
-  parser.add_argument('--custom_checkpoint', type=int)
-  return __main
-
-def __main(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom_checkpoint):
-  training_dir_path = os.path.join(base_dir, training_dir)
-
-  checkpoint_dir = get_checkpoint_dir(training_dir_path)
-  checkpoint = custom_checkpoint if str(custom_checkpoint) else get_last_checkpoint(checkpoint_dir)
-
-  wav_name = os.path.basename(wav)[:-4]
-  infer_dir = get_inference_dir(training_dir_path, wav_name, checkpoint, "{}_{}".format(sigma, denoiser_strength))
-
-  infer(
-    training_dir_path=training_dir_path,
-    infer_dir_path=infer_dir,
-    hparams=hparams,
-    checkpoint=checkpoint,
-    infer_wav_path=wav,
-    denoiser_strength=denoiser_strength,
-    sigma=sigma
-  )
 
 
 if __name__ == "__main__":
-  __main(
+  infer(
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'wg_debug',
     wav = "/datasets/LJSpeech-1.1-test/wavs/LJ001-0100.wav",
     hparams = None,
     denoiser_strength = 0,
     sigma = 0.666,
-    custom_checkpoint = '',
+    custom_checkpoint = ''
   )
