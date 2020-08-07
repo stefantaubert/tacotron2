@@ -7,15 +7,16 @@ from argparse import ArgumentParser
 from shutil import copyfile
 
 import numpy as np
-from numpy import finfo
-from tqdm import tqdm
 import torch
 #from distributed_tacotron import apply_gradient_allreduce
 import torch.distributed as dist
-from src.common.train_log import log, reset_log, get_log_dir
+from numpy import finfo
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+from src.common.train_log import get_log_dir, log, reset_log
 from src.common.utils import (args_to_str, get_last_checkpoint,
-                              parse_ds_speakers,
-                              parse_json)
+                              parse_ds_speakers, parse_json)
 from src.tacotron.data_utils import SymbolsMelCollate, SymbolsMelLoader
 from src.tacotron.hparams import create_hparams
 from src.tacotron.logger import Tacotron2Logger
@@ -24,11 +25,19 @@ from src.tacotron.model import Tacotron2
 from src.tacotron.plot_embeddings import analyse
 from src.tacotron.prepare_ds_ms import prepare
 #from torch.utils.data.distributed import DistributedSampler
-from src.tacotron.prepare_ds_ms_io import parse_traindata, parse_validationset, get_total_duration, get_filelist_dir, load_weights, weights_map_exists, parse_all_symbols, parse_all_speakers
-from src.tacotron.train_io import load_checkpoint, save_checkpoint, save_checkpoint_score, get_continue_training_model_checkpoint
+from src.tacotron.prepare_ds_ms_io import (get_filelist_dir,
+                                           get_total_duration, load_weights,
+                                           parse_all_speakers,
+                                           parse_all_symbols, parse_traindata,
+                                           parse_validationset,
+                                           weights_map_exists)
+from src.tacotron.train_io import (get_continue_training_model_checkpoint,
+                                   load_checkpoint)
+from src.tacotron.train_io import main as init_paths
+from src.tacotron.train_io import save_checkpoint, save_checkpoint_score
 from src.tacotron.txt_pre import process_input_text
 from src.text.symbol_converter import load_from_file
-from torch.utils.data import DataLoader
+
 
 def reduce_tensor(tensor, n_gpus):
   rt = tensor.clone()
@@ -315,6 +324,7 @@ def train(pretrained_path, use_weights: bool, warm_start, n_gpus,
     save_checkpoint_score(training_dir_path, iteration - 1, grad_norm, reduced_loss, valloss, epoch, i)
   return True
 
+
 def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_path: str, warm_start: bool, continue_training: bool):
   start = time.time()
   conv = parse_all_symbols(training_dir_path)
@@ -342,7 +352,7 @@ def start_train(training_dir_path: str, hparams, use_weights: str, pretrained_pa
   n_gpus = 1 # 'number of gpus'
   group_name = "group_name" # 'Distributed group name'
 
-  successfull = train(pretrained_path, use_weights, warm_start, n_gpus, rank, group_name, hparams, continue_training, training_dir_path)
+  successfull = train(pretrained_path, bool(use_weights), warm_start, n_gpus, rank, group_name, hparams, continue_training, training_dir_path)
   if successfull:
     log(training_dir_path, 'Finished training.')
     duration_s = time.time() - start
@@ -369,6 +379,7 @@ def init_train_parser(parser: ArgumentParser):
   return __main
 
 def __main(base_dir, training_dir, continue_training, warm_start, warm_start_model, speakers, test_size, validation_size, hparams, weight_map_model, weight_map_model_symbols, weight_map_mode, weight_map):
+  init_paths(base_dir, custom_training_name=training_dir)
   hparams = create_hparams(hparams)
   training_dir_path = os.path.join(base_dir, training_dir)
 

@@ -48,7 +48,7 @@ def init_validate_parser(parser):
 def get_utterance(training_dir_path, utterance: str) -> PreparedData:
   if "random" in utterance:
     tmp = utterance.split('-')
-    custom_speaker = tmp[2] if len(tmp) == 3 else None
+    custom_speaker = tmp[2] if len(tmp) == 3 else ''
     if "test" in utterance:
       dataset_values_entry = get_random_test_utterance(training_dir_path, custom_speaker)
     elif "val" in utterance:

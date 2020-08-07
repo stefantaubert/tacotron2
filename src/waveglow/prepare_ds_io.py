@@ -65,21 +65,16 @@ def parse_wholeset(training_dir_path: str) -> PreparedDataList:
   dest_path = os.path.join(get_filelist_dir(training_dir_path), filelist_file_name)
   return load_csv(dest_path, PreparedData)
 
-def get_random_val_utterance(training_dir_path: str, custom_speaker: str) -> PreparedData:
+def get_random_val_utterance(training_dir_path: str) -> PreparedData:
   dataset = parse_testset(training_dir_path)
-  return __get_random_utterance(dataset, custom_speaker)
+  return __get_random_utterance(dataset)
 
-def get_random_test_utterance(training_dir_path: str, custom_speaker: str) -> PreparedData:
+def get_random_test_utterance(training_dir_path: str) -> PreparedData:
   dataset = parse_testset(training_dir_path)
-  return __get_random_utterance(dataset, custom_speaker)
+  return __get_random_utterance(dataset)
 
-def __get_random_utterance(dataset: PreparedDataList, custom_speaker: str) -> PreparedData:
+def __get_random_utterance(dataset: PreparedDataList) -> PreparedData:
   random_value: PreparedData = random.choice(dataset)
-  if custom_speaker:
-    while True:
-      if random_value.speaker_name == custom_speaker:
-        break
-      random_value: PreparedData = random.choice(dataset)
   return random_value
 
 def get_values_entry(training_dir_path, dest_id: int) -> PreparedData:

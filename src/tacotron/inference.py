@@ -25,8 +25,10 @@ from src.common.utils import (get_last_checkpoint,
 from src.pre.mel_parser import MelParser, plot_melspec
 from src.tacotron.hparams import create_hparams
 from src.tacotron.model import Tacotron2
+from src.tacotron.inference_io import read_input_symbols, get_inference_dir, log_input_file, log_map_file, save_inferred_sentence_plot, save_alignments_sentence_plot, save_pre_postnet_sentence_plot, save_wav_sentence, save_wav
 from src.tacotron.synthesizer import Synthesizer as TacoSynthesizer
 from src.tacotron.train import load_model
+from src.tacotron.train_io import get_checkpoint
 from src.tacotron.txt_pre import process_input_text
 from src.text.symbol_converter import deserialize_symbol_ids, load_from_file
 from src.waveglow.inference import Synthesizer as WGSynthesizer
@@ -47,18 +49,14 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
   print("Using waveglow model:", waveglow)
   wg_synt = WGSynthesizer(checkpoint_path=waveglow, custom_hparams=None)
  
-  with open(os.path.join(infer_dir_path, inference_input_symbols_file_name), 'r', encoding='utf-8') as f:
-    serialized_symbol_ids_sentences = f.readlines()
-
+  serialized_symbol_ids_sentences = read_input_symbols(infer_dir_path)
   sentence_pause_samples_count = int(round(sampling_rate * sentence_pause_s, 0))
   sentence_pause_samples = np.zeros(shape=sentence_pause_samples_count)
 
   print("Inferring...")
 
   output = np.array([])
-
   final_speaker_id = get_speaker_id_from_name(training_dir_path, speaker)
-
   last_dir_name = Path(infer_dir_path).parts[-1]
 
   mel_plot_files = []
@@ -80,51 +78,26 @@ def infer(training_dir_path: str, infer_dir_path: str, hparams, waveglow: str, c
     )
 
     if analysis:
-      path_inferred_wav = os.path.join(infer_dir_path, "{}.wav".format(i))
-      path_inferred_plot = os.path.join(infer_dir_path, "{}.png".format(i))
-      path_pre_postnet_plot = os.path.join(infer_dir_path, "{}_pre_post.png".format(i))
-      path_alignments_plot = os.path.join(infer_dir_path, "{}_alignments.png".format(i))
-       
-      float_to_wav(
-        wav=synthesized_sentence,
-        path=path_inferred_wav,
-        dtype=np.int16,
-        normalize=True,
-        sample_rate=sampling_rate
-      )
-
+      save_wav_sentence(infer_dir_path, synthesized_sentence, normalize=False, sr=sampling_rate, i=i)
+      
       plot_melspec(mel_to_numpy(mel_outputs_postnet), title="{}: {}".format(last_dir_name, i))
-      plt.savefig(path_inferred_plot, bbox_inches='tight')
+      path_inferred_plot = save_inferred_sentence_plot(infer_dir_path, i)
+      mel_plot_files.append(path_inferred_plot)
 
       plot_melspec(mel_to_numpy(mel_outputs), title="{}: Pre-Postnet {}".format(last_dir_name, i))
-      plt.savefig(path_pre_postnet_plot, bbox_inches='tight')
+      path_pre_postnet_plot = save_pre_postnet_sentence_plot(infer_dir_path, i)
+      pre_post_plots.append(path_pre_postnet_plot)
       
       plot_melspec(mel_to_numpy(alignments).T, title="{}: Alignments {}".format(last_dir_name, i))
-      plt.savefig(path_alignments_plot, bbox_inches='tight')
-
-      mel_plot_files.append(path_inferred_plot)
-      pre_post_plots.append(path_pre_postnet_plot)
+      path_alignments_plot = save_alignments_sentence_plot(infer_dir_path, i)
       alignment_plots.append(path_alignments_plot)
 
     output = np.concatenate((output, synthesized_sentence, sentence_pause_samples), axis=0)
 
-  print("Saving...")
-  output_name = "{}.wav".format(last_dir_name)
-  out_path = os.path.join(infer_dir_path, output_name)
-
-  if is_overamp(output):
-    print("Overamplified output!.")
-  float_to_wav(
-    wav=output,
-    path=out_path,
-    dtype=np.int16,
-    normalize=True,
-    sample_rate=sampling_rate
-  )
-  print("Finished. Saved to:", out_path)
-
+  out_path = save_wav(infer_dir_path, output, sampling_rate)
   print("Plotting...")
 
+  # todo stack_horizontally instead
   mel_parser = MelParser(taco_synt.hparams)
   mel = mel_parser.get_mel_tensor_from_file(out_path)
   plot_melspec(mel, title=last_dir_name)
@@ -170,13 +143,8 @@ def __main(base_dir: str, training_dir: str, ipa: bool, text: str, lang: str, ig
   assert os.path.isfile(waveglow)
 
   print("Infering text from:", text)
+  checkpoint, checkpoint_path = get_checkpoint(training_dir_path, custom_checkpoint)
   input_name = os.path.splitext(os.path.basename(text))[0]
-  checkpoint_dir = get_checkpoint_dir(training_dir_path)
-  if custom_checkpoint:
-    checkpoint = custom_checkpoint
-  else:
-    checkpoint = get_last_checkpoint(checkpoint_dir)
-  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   
   speaker_name = parse_ds_speaker(speaker)[1]
   infer_dir_path = get_inference_dir(training_dir_path, input_name, checkpoint, speaker_name)

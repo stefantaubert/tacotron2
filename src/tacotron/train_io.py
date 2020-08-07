@@ -31,8 +31,8 @@ def log_train_config(training_dir_path: str, args):
   print(t)
 
 def main(base_dir: str, custom_training_name: str):
-  print(base_dir)
-  print(custom_training_name)
+  #print(base_dir)
+  #print(custom_training_name)
   if custom_training_name != None and custom_training_name != "":
     train_dir_path = os.path.join(base_dir, custom_training_name)
     os.makedirs(train_dir_path, exist_ok=True)
@@ -46,13 +46,13 @@ def main(base_dir: str, custom_training_name: str):
 
   print(train_dir_name)
 
-def get_checkpoint(training_dir_path: str, custom_checkpoint):
+def get_checkpoint(training_dir_path: str, custom_checkpoint: int):
   if custom_checkpoint:
     checkpoint = custom_checkpoint
   else:
     checkpoint_dir = get_checkpoint_dir(training_dir_path)
     checkpoint = get_last_checkpoint(checkpoint_dir)
-  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
+  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), str(checkpoint))
   return checkpoint, checkpoint_path
 
 def get_training_dir(base_dir: str, create: bool = True) -> str:

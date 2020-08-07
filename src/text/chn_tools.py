@@ -13,7 +13,7 @@ def chn_to_ipa(chn, add_period: bool = False):
     if is_question:
       chn_ipa += '?'
     res.append(chn_ipa)
-  res = ' '.join(res)
-  if res != '' and not str.endswith(res, '?') and add_period:
-    res += '.'
-  return res
+  res_str = ' '.join(res)
+  if res_str != '' and not str.endswith(res_str, '?') and add_period:
+    res_str += '.'
+  return res_str

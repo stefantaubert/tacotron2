@@ -14,7 +14,8 @@ from src.common.utils import get_subdir
 import torch
 from src.common.utils import get_last_checkpoint
 from src.text.symbol_converter import load_from_file
-
+from src.tacotron.prepare_ds_ms_io import parse_all_symbols
+from src.tacotron.train_io import get_checkpoint
 
 analysis_dir = 'analysis'
 analysis_sims_file_name = 'similarities.txt'
@@ -25,16 +26,11 @@ def get_analysis_dir(training_dir_path: str, create: bool = True) -> str:
   return get_subdir(training_dir_path, analysis_dir, create)
 
 def analyse(training_dir_path: str, custom_checkpoint: int = None):
-  conv = load_from_file(get_symbols_path(training_dir_path))
+  conv = parse_all_symbols(training_dir_path)
   symbols = conv.get_symbols(include_subset_id=False, include_id=False)
-
-  if custom_checkpoint:
-    checkpoint = custom_checkpoint
-  else:
-    checkpoint_dir = get_checkpoint_dir(training_dir_path)
-    checkpoint = get_last_checkpoint(checkpoint_dir)
+  checkpoint, checkpoint_path = get_checkpoint(training_dir_path, custom_checkpoint)
+  
   print("Analyzing checkpoint {}...".format(str(checkpoint)))
-  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
 
   #symbols = [(v,k) for k, v in id_to_symbol.items()]

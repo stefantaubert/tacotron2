@@ -178,7 +178,7 @@ def __get_random_utterance(dataset: PreparedDataList, custom_speaker: str) -> Pr
     while True:
       if random_value.speaker_name == custom_speaker:
         break
-      random_value: PreparedData = random.choice(dataset)
+      random_value = random.choice(dataset)
   return random_value
 
 def get_values_entry(training_dir_path, dest_id: int) -> PreparedData:

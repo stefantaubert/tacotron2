@@ -1,30 +1,30 @@
-import os
-import time
 import argparse
 import math
-from numpy import finfo
-from tqdm import tqdm
-import numpy as np
+import os
+import time
 
+import numpy as np
 import torch
 #from distributed_tacotron import apply_gradient_allreduce
 import torch.distributed as dist
-from torch.utils.data.distributed import DistributedSampler
-import argparse
+from numpy import finfo
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
+from tqdm import tqdm
 
-from src.tacotron.model import Tacotron2
-from src.tacotron.data_utils import SymbolsMelLoader, SymbolsMelCollate
-from src.tacotron.loss_function import Tacotron2Loss
-from src.tacotron.logger import Tacotron2Logger
-from src.tacotron.hparams import create_hparams
-from src.common.utils import parse_ds_speakers
-
-from src.text.symbol_converter import load_from_file
 from src.common.train_log import log
+from src.common.utils import get_last_checkpoint, parse_ds_speakers
+from src.tacotron.data_utils import SymbolsMelCollate, SymbolsMelLoader
+from src.tacotron.hparams import create_hparams
+from src.tacotron.logger import Tacotron2Logger
+from src.tacotron.loss_function import Tacotron2Loss
+from src.tacotron.model import Tacotron2
+from src.tacotron.prepare_ds_ms_io import parse_all_symbols, get_filelist_dir
+from src.tacotron.train import (load_checkpoint, load_model,
+                                prepare_dataloaders, validate_core)
+from src.tacotron.train_io import get_checkpoint_dir
+from src.text.symbol_converter import load_from_file
 
-from src.tacotron.train import load_model, prepare_directories_and_logger, validate_core, prepare_dataloaders, load_checkpoint
-from src.common.utils import get_last_checkpoint
 
 def init_eval_checkpoints_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -90,16 +90,16 @@ def __eval_chkpoints(hparams, training_dir_path, select: int, min_it: int, max_i
     print("Validation loss {}: {:9f}".format(cp, loss))
 
 def main(base_dir: str, training_dir: str, speakers: str, hparams: str, select: int, min_it: int, max_it: int):
-  hparams = create_hparams(hparams)
+  hp = create_hparams(hparams)
   training_dir_path = os.path.join(base_dir, training_dir)
 
-  conv = load_from_file(get_symbols_path(training_dir_path))
+  conv = parse_all_symbols(training_dir_path)
   
-  hparams.n_symbols = conv.get_symbol_ids_count()
+  hp.n_symbols = conv.get_symbol_ids_count()
   n_speakers = len(parse_ds_speakers(speakers))
-  hparams.n_speakers = n_speakers
+  hp.n_speakers = n_speakers
 
-  __eval_chkpoints(hparams, training_dir_path, select=select, min_it=min_it, max_it=max_it)
+  __eval_chkpoints(hp, training_dir_path, select=select, min_it=min_it, max_it=max_it)
 
 if __name__ == "__main__":
   main(
@@ -109,4 +109,5 @@ if __name__ == "__main__":
     hparams = 'batch_size=20',
     select = 500,
     min_it = 0,
+    max_it = 0,
   )

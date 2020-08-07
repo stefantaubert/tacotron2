@@ -1,6 +1,9 @@
 import torch
 import os
 from src.common.utils import get_last_checkpoint
+from src.common.utils import get_subdir
+
+checkpoint_dir = 'checkpoints'
 
 def load_checkpoint(checkpoint_path, model, optimizer):
   assert os.path.isfile(checkpoint_path)
@@ -16,8 +19,10 @@ def load_checkpoint(checkpoint_path, model, optimizer):
   print("Loaded checkpoint '{}' (iteration {})" .format(checkpoint_path, iteration))
   return model, optimizer, learning_rate, iteration
 
-def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, hparams):
-  print("Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
+def save_checkpoint(training_dir_path, model, optimizer, learning_rate, iteration, hparams):
+  checkpoint_dir = get_checkpoint_dir(training_dir_path)
+  checkpoint_path = os.path.join(checkpoint_dir,  str(iteration))
+  print("Saving model and optimizer state at iteration {} to {}".format(iteration, checkpoint_path))
   #model_for_saving = WaveGlow(hparams).cuda()
   #model_for_saving.load_state_dict(model.state_dict())
 
@@ -29,7 +34,19 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath, hparam
     'learning_rate': learning_rate
   }
 
-  torch.save(data, filepath)
+  torch.save(data, checkpoint_path)
+
+def get_checkpoint(training_dir_path: str, custom_checkpoint):
+  if custom_checkpoint:
+    checkpoint = custom_checkpoint
+  else:
+    checkpoint_dir = get_checkpoint_dir(training_dir_path)
+    checkpoint = get_last_checkpoint(checkpoint_dir)
+  checkpoint_path = os.path.join(get_checkpoint_dir(training_dir_path), checkpoint)
+  return checkpoint, checkpoint_path
+
+def get_checkpoint_dir(training_dir_path: str, create: bool = True) -> str:
+  return get_subdir(training_dir_path, checkpoint_dir, create)
 
 def get_last_checkpoint_path(training_dir_path: str):
   checkpoint_dir = get_checkpoint_dir(training_dir_path)

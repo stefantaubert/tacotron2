@@ -56,16 +56,16 @@ def init_inference_parser(parser):
   parser.add_argument("--denoiser_strength", default=0.0, type=float, help='Removes model bias.')
   parser.add_argument("--sigma", default=1.0, type=float)
   parser.add_argument('--custom_checkpoint', type=int)
-  return infer
+  return __main
 
-def infer(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom_checkpoint):
+def __main(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom_checkpoint):
   training_dir_path = os.path.join(base_dir, training_dir)
-
   checkpoint, checkpoint_path = get_checkpoint(training_dir_path, custom_checkpoint)
-
   wav_name = os.path.basename(wav)[:-4]
   infer_dir_path = get_inference_dir(training_dir_path, wav_name, checkpoint, "{}_{}".format(sigma, denoiser_strength))
+  infer(training_dir_path, infer_dir_path, wav, hparams, denoiser_strength, sigma, checkpoint_path)
 
+def infer(training_dir_path, infer_dir_path, wav, hparams, denoiser_strength, sigma, checkpoint_path):
   print("Using model:", checkpoint_path)
   synth = Synthesizer(checkpoint_path, hparams)
   
@@ -95,13 +95,13 @@ def infer(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom
   path_compared_plot = "{}_comparison.png".format(out_path_template)
    
   if is_overamp(audio):
-    print("Overamplified output!.")
+    print("Overamplified output!. Normalizing...")
 
   float_to_wav(
     wav=audio,
     path=path_inferred_wav,
     dtype=np.int16,
-    normalize=False,
+    normalize=True,
     sample_rate=synth.hparams.sampling_rate
   )
 
@@ -143,7 +143,7 @@ def infer(base_dir, training_dir, wav, hparams, denoiser_strength, sigma, custom
 
 
 if __name__ == "__main__":
-  infer(
+  __main(
     base_dir = '/datasets/models/taco2pt_v2',
     training_dir = 'wg_debug',
     wav = "/datasets/LJSpeech-1.1-test/wavs/LJ001-0100.wav",

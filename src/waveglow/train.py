@@ -26,18 +26,22 @@
 # *****************************************************************************
 import os
 import time
-from tqdm import tqdm
 
 import torch
-from src.common.train_log import log, reset_log
-from src.common.utils import (args_to_str, get_last_checkpoint)
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+from src.common.train_log import get_log_dir, log, reset_log
+from src.common.utils import args_to_str, get_last_checkpoint
+from src.tacotron.train_io import main as init_paths #todo move to other location
 from src.waveglow.data_utils import MelLoader
 from src.waveglow.hparams import create_hparams
 from src.waveglow.model import WaveGlow, WaveGlowLoss
 from src.waveglow.prepare_ds import prepare
-from src.waveglow.prepare_ds_io import parse_trainset, parse_validationset, get_total_duration
-from torch.utils.data import DataLoader
-from src.waveglow.train_io import load_checkpoint, save_checkpoint, get_last_checkpoint_path
+from src.waveglow.prepare_ds_io import (get_total_duration, parse_trainset,
+                                        parse_validationset)
+from src.waveglow.train_io import (get_last_checkpoint_path, load_checkpoint,
+                                   save_checkpoint)
 
 # #=====START: ADDED FOR DISTRIBUTED======
 # from distributed_waveglow import init_distributed, apply_gradient_allreduce, reduce_tensor
@@ -116,7 +120,7 @@ def validate_core(model, criterion, val_loader):
   model.train()
   return avg_val_loss, model, y_pred
 
-def validate(model, criterion, val_loader, iteration, logger, training_dir_path):
+def validate(model, criterion, val_loader, iteration, training_dir_path):
   val_loss, model, y_pred = validate_core(model, criterion, val_loader)
 
   #if rank == 0:
@@ -224,10 +228,8 @@ def train(training_dir_path, hparams, rank, n_gpus, continue_training: bool):
       
       if (iteration % hparams.iters_per_checkpoint == 0):
         if rank == 0:
-          valloss = validate(model, criterion, val_loader, iteration, logger, training_dir_path)
-          checkpoint_dir = get_checkpoint_dir(training_dir_path)
-          checkpoint_path = os.path.join(checkpoint_dir,  str(iteration))
-          save_checkpoint(model, optimizer, hparams.learning_rate, iteration, checkpoint_path, hparams)
+          valloss = validate(model, criterion, val_loader, iteration, training_dir_path)
+          save_checkpoint(training_dir_path, model, optimizer, hparams.learning_rate, iteration, hparams)
 
       iteration += 1
 
@@ -273,7 +275,7 @@ def start_train(training_dir_path: str, hparams, continue_training: bool):
 def init_train_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--training_dir', type=str, required=True)
-  parser.add_argument('--wav_ds_name', type=str, required=True)
+  parser.add_argument('--wav_ds_name', type=str)
   parser.add_argument('--test_size', type=float, default=0.001)
   parser.add_argument('--validation_size', type=float, default=0.01)
   parser.add_argument('--hparams', type=str)
@@ -281,6 +283,7 @@ def init_train_parser(parser):
   return __main
 
 def __main(base_dir, training_dir, continue_training, wav_ds_name, test_size, validation_size, hparams):
+  init_paths(base_dir, custom_training_name=training_dir)
   hparams = create_hparams(hparams)
   training_dir_path = os.path.join(base_dir, training_dir)
 
@@ -308,7 +311,7 @@ if __name__ == "__main__":
     training_dir = 'wg_debug',
     wav_ds_name = 'ljs_22050kHz',
     test_size = 0.001,
-    validation_size = 0.001,
-    hparams = 'batch_size=4,iters_per_checkpoint=50,fp16_run=False,with_tensorboard=True,cache_wavs=False',
+    validation_size = 0.01,
+    hparams = 'batch_size=4,iters_per_checkpoint=50,with_tensorboard=True,cache_wavs=False',
     continue_training = False,
   )

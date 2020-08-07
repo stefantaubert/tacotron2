@@ -45,8 +45,8 @@ def remove_silence(
     chunk_size: int,
     threshold_start: float,
     threshold_end: float,
-    buffer_start: float,
-    buffer_end: float
+    buffer_start: int,
+    buffer_end: int
   ):
 
   start_trim = detect_leading_silence(
@@ -78,8 +78,8 @@ def remove_silence_file(
     chunk_size: int,
     threshold_start: float,
     threshold_end: float,
-    buffer_start_ms: float,
-    buffer_end_ms: float
+    buffer_start_ms: int,
+    buffer_end_ms: int
   ):
 
   sampling_rate, wav = read(in_path)
@@ -117,7 +117,7 @@ def convert_wav(wav, to_dtype):
   if the wav is overamplified the result will also be overamplified.
   '''
   if wav.dtype != to_dtype:
-    wav = wav / -1 * get_min_value(wav.dtype) * get_max_value(to_dtype)
+    wav = wav / (-1 * get_min_value(wav.dtype)) * get_max_value(to_dtype)
     if to_dtype == np.int16 or to_dtype == np.int32:
       # the default seems to be np.fix instead of np.round on wav.astype()
       wav = np.round(wav, 0)

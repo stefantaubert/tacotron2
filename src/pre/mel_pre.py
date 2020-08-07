@@ -47,7 +47,7 @@ if __name__ == "__main__":
     base_dir="/datasets/models/taco2pt_v2",
     origin_name="thchs_22050kHz_normalized_nosil",
     destination_name="thchs",
-    custom_hparams=None,
+    custom_hparams='',
   )
 
   # __calc_mels(

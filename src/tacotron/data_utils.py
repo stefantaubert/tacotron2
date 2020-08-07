@@ -32,8 +32,9 @@ class SymbolsMelLoader(torch.utils.data.Dataset):
     if hparams.cache_mels:
       print("Loading mels into memory...")
       self.cache = {}
-      for i, values in tqdm(self.data.items()):
-        mel_tensor = torch.load(values[1], map_location='cpu')
+      vals: tuple
+      for i, vals in tqdm(self.data.items()):
+        mel_tensor = torch.load(vals[1], map_location='cpu')
         self.cache[i] = mel_tensor
     self.use_cache = hparams.cache_mels
 

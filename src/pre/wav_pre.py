@@ -26,13 +26,13 @@ def __read_wavs(base_dir: str, ds_name: str, data: PreDataList):
 def __read_wavs_ds(base_dir: str, name: str, path: str, parse):
   if not already_exists(base_dir, name):
     data = parse(path)
-    __read_wavs(base_dir, name, data[:10])
+    __read_wavs(base_dir, name, data)
   else:
     print("Nothing to do.")
 
 def init_thchs_parser(parser: ArgumentParser):
   parser.add_argument('--path', type=str, required=True, help='THCHS dataset directory')
-  parser.add_argument('--auto_dl', type=bool, action="store_true")
+  parser.add_argument('--auto_dl', action="store_true")
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--name', type=str, required=True, default='thchs_16000kHz')
   return __read_wavs_thchs
@@ -44,7 +44,7 @@ def __read_wavs_thchs(base_dir: str, name: str, path: str, auto_dl: bool):
   
 def init_thchs_kaldi_parser(parser: ArgumentParser):
   parser.add_argument('--path', type=str, required=True, help='THCHS dataset directory')
-  parser.add_argument('--auto_dl', type=bool, action="store_true")
+  parser.add_argument('--auto_dl', action="store_true")
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--name', type=str, required=True, default='thchs_kaldi_16000kHz')
   return __read_wavs_thchs_kaldi
@@ -56,7 +56,7 @@ def __read_wavs_thchs_kaldi(base_dir: str, name: str, path: str, auto_dl: bool):
 
 def init_ljs_parser(parser: ArgumentParser):
   parser.add_argument('--path', type=str, required=True, help='LJS dataset directory')
-  parser.add_argument('--auto_dl', type=bool, action="store_true")
+  parser.add_argument('--auto_dl', action="store_true")
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--name', type=str, required=True, default='ljs_22050kHz')
   return __read_wavs_ljs

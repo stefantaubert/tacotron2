@@ -2,6 +2,7 @@ from ipapy.ipastring import IPAString
 from ipapy.ipachar import IPAChar, IPADiacritic
 import re
 import string
+from typing import List
 
 rx = '[{}]'.format(re.escape(string.punctuation))
 
@@ -9,7 +10,7 @@ arc = '͡'
 
 def extract_from_sentence(ipa_sentence: str, ignore_tones: bool = False, ignore_arcs: bool = False):
   res = []
-  tmp = []
+  tmp: List[str] = []
 
   for c in ipa_sentence:
     if c in string.punctuation or c in string.whitespace:
@@ -33,8 +34,8 @@ def extract_from_sentence(ipa_sentence: str, ignore_tones: bool = False, ignore_
   return res
 
 
-def extract_symbols(ipa: IPAString, ignore_tones: bool, ignore_arcs: bool):
-  symbols = []
+def extract_symbols(ipa: IPAString, ignore_tones: bool, ignore_arcs: bool) -> List[str]:
+  symbols: List[str] = []
 
   for char in ipa.ipa_chars:
     if char.is_diacritic or char.is_tone:

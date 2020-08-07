@@ -2,6 +2,7 @@ import os
 from collections import Counter, OrderedDict
 
 from tqdm import tqdm
+from typing import Dict
 
 from src.text.adjustments import normalize_text
 from src.text.symbol_converter import init_from_symbols, serialize_symbol_ids
@@ -29,7 +30,7 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
     print("Data is already preprocessed for dataset: {}".format(ds_name))
     return
 
-  data = {}
+  data: Dict[str, list] = {}
 
   if convert_to_ipa:
     from src.text.ipa2symb import extract_from_sentence
@@ -106,7 +107,7 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
       serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
       symbols_str = ''.join(symbols)
       #result.append((bn, wav, py, ipa_txt, serialized_symbol_ids, symbols_str, duration))
-      text_data = TextData(i, basename, wav_path, mel_path, serialize_symbol_ids, duration, text, ipa, symbols_str)
+      text_data = TextData(i, basename, wav_path, mel_path, serialized_symbol_ids, duration, text, ipa, symbols_str)
       result.append(text_data)
 
     save_data(base_dir, ds_name, speaker, result)
