@@ -2,7 +2,7 @@
 code_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"/../..
 cd $code_dir
 export PYTHONPATH=$code_dir
-conda activate test2
+conda activate py37
 
 export base_dir="/home/stefan/taco2pt_v2"
 export waveglow="$base_dir/pretrained/waveglow_256channels_universal_v5.pt"
