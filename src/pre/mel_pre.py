@@ -27,7 +27,7 @@ def __calc_mels(base_dir: str, origin_name: str, destination_name: str, custom_h
     mel_parser = MelParser(haparms)
 
     data = parse_data(base_dir, origin_name)
-    dest_dir = get_mels_dir(base_dir, destination_name)
+    dest_dir = get_mels_dir(base_dir, destination_name, create=True)
     # with torch.no_grad():
     print("Calculating mels...")
     values: WavData

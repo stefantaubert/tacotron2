@@ -21,7 +21,11 @@ source /home/stefan_taubert/tacotron2/configs/envs/prod-gcp.sh
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/prod-phil.sh
-
+export custom_training_name="ljs_thchs_scratch"
+export ds_name_ljs="ljs_mel_ipa_v1"
+export ds_name_thchs="thchs_mel_ipa_norm_nosil"
+export speakers="$ds_name_ljs,all;$ds_name_thchs,all"
+export batch_size=17
 
 # Preprocessing
 python -m src.runner ljs-wavs \
