@@ -26,15 +26,10 @@ def __normalize(base_dir: str, source_name: str, destination_name: str):
 
     save_data(base_dir, destination_name, result)
 
-def init_remove_silence_parser(parser):
+def init_normalize_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--source_name', type=str, help='THCHS dataset directory', required=True)
   parser.add_argument('--destination_name', type=str, help='THCHS destination directory', required=True)
-  parser.add_argument('--chunk_size', type=int, required=True)
-  parser.add_argument('--threshold_start', type=float, required=True)
-  parser.add_argument('--threshold_end', type=float, required=True)
-  parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
-  parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
   return __normalize
 
 if __name__ == "__main__":

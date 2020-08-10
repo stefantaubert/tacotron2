@@ -18,6 +18,7 @@ from src.waveglow.validate import init_validate_parser as init_wg_validate_parse
 
 from src.pre.wav_pre import init_ljs_parser, init_thchs_kaldi_parser, init_thchs_parser
 from src.pre.upsampling import init_upsample_parser
+from src.pre.normalize import init_normalize_parser
 from src.pre.silence_removal import init_remove_silence_parser
 from src.pre.mel_pre import init_calc_mels_parser
 from src.pre.text_pre import init_thchs_text_parser, init_ljs_text_pre_parser
@@ -32,10 +33,9 @@ def __init_parser():
   main_parser = ArgumentParser()
   subparsers = main_parser.add_subparsers(help='sub-command help')
 
+  # only required when automatic name generation
   __add_parser_to(subparsers, "paths", init_path_parser)
-  __add_parser_to(subparsers, "upsample", init_upsample_parser)
-  __add_parser_to(subparsers, "remove-silence", init_remove_silence_parser)
-
+  
   __add_parser_to(subparsers, "ljs-wavs", init_ljs_parser)
   __add_parser_to(subparsers, "ljs-text", init_ljs_text_pre_parser)
 
@@ -46,21 +46,28 @@ def __init_parser():
   # theoretically not necessary but added to prevent confusion
   __add_parser_to(subparsers, "thchs-kaldi-text", init_thchs_text_parser)
 
+  __add_parser_to(subparsers, "normalize", init_normalize_parser)
+  __add_parser_to(subparsers, "upsample", init_upsample_parser)
+  __add_parser_to(subparsers, "remove-silence", init_remove_silence_parser)
   __add_parser_to(subparsers, "calc-mels", init_calc_mels_parser)
 
+  # Waveglow
+  __add_parser_to(subparsers, "waveglow-dl", init_wg_download_parser)
+  __add_parser_to(subparsers, "waveglow-train", init_wg_train_parser)
+  __add_parser_to(subparsers, "waveglow-validate", init_wg_validate_parser)
+  __add_parser_to(subparsers, "waveglow-infer", init_wg_inference_parser)
+
+  # Tacotron
+  __add_parser_to(subparsers, "tacotron-train", init_taco_train_parser)
+  __add_parser_to(subparsers, "tacotron-validate", init_taco_validate_parser)
+  __add_parser_to(subparsers, "tacotron-infer", init_taco_inference_parser)
+  
+  # Tools
   __add_parser_to(subparsers, "create-map", init_create_map_parser)
   __add_parser_to(subparsers, "eval-checkpoints", init_eval_checkpoints_parser)
   __add_parser_to(subparsers, "plot-embeddings", init_plot_emb_parser)
   __add_parser_to(subparsers, "remove-silence-plot", init_remove_silence_plot_parser)
 
-  __add_parser_to(subparsers, "tacotron-train", init_taco_train_parser)
-  __add_parser_to(subparsers, "tacotron-validate", init_taco_validate_parser)
-  __add_parser_to(subparsers, "tacotron-infer", init_taco_inference_parser)
-
-  __add_parser_to(subparsers, "waveglow-dl", init_wg_download_parser)
-  __add_parser_to(subparsers, "waveglow-train", init_wg_train_parser)
-  __add_parser_to(subparsers, "waveglow-validate", init_wg_validate_parser)
-  __add_parser_to(subparsers, "waveglow-infer", init_wg_inference_parser)
   return main_parser
 
 def __process_args(args):

@@ -26,7 +26,7 @@ export ds_name="ljs_22050kHz"
 export batch_size=3
 export iters_per_checkpoint=5000 # 17min per 1000
 export epochs=100000
-export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs=$epochs"
+export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs=$epochs,with_tensorboard=True"
 
 
 # Preprocessing
