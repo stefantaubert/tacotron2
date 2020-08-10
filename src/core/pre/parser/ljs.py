@@ -5,7 +5,8 @@ import tarfile
 import wget
 from tqdm import tqdm
 
-from src.pre.parser.pre_data import PreData, PreDataList
+from src.core.pre.language import Language
+from src.core.pre.parser.data import PreDataList, PreData
 
 def ensure_downloaded(dir_path: str):
   dir_exists = os.path.exists(dir_path)
@@ -70,7 +71,7 @@ def parse(path: str) -> PreDataList:
 
   # sort after basename
   result.sort(key=lambda tup: tup[0], reverse=False)
-  result = [PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3]) for i, x in enumerate(result)]
+  result = [PreData(x[0], x[1], x[2], x[3], Language.ENG) for i, x in enumerate(result)]
 
   return result
 

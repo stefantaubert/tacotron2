@@ -368,7 +368,7 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--continue_training', action='store_true')
   parser.add_argument('--warm_start', action='store_true')
   parser.add_argument('--warm_start_model', type=str)
-  parser.add_argument('--speakers', type=str, help="ds_name,speaker_id;... or ds_name,all;...", required=True)
+  parser.add_argument('--speakers', type=str, help="ds_name,speaker_id|all,text_version,mel_version;... e.g. ljs,all,ipa,22050kHz;thchs,all,ipa,22050kHz_normalized_nosil", required=True)
   parser.add_argument('--test_size', type=float, default=0.001)
   parser.add_argument('--validation_size', type=float, default=0.1)
   parser.add_argument('--hparams', type=str)

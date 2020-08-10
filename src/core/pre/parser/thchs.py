@@ -3,7 +3,8 @@ import os
 from tqdm import tqdm
 
 from src.common.utils import download_tar
-from src.pre.parser.pre_data import PreData, PreDataList
+from src.core.pre.parser.data import PreDataList, PreData
+from src.core.pre.language import Language
 
 def ensure_downloaded(dir_path: str):
   dir_exists = os.path.exists(dir_path)
@@ -56,7 +57,7 @@ def parse(dir_path: str) -> PreDataList:
 
   # sort after wav_path
   files.sort(key=lambda tup: (tup[4], tup[5], tup[6]), reverse=False)
-  pre_data_list: PreDataList = [PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3]) for x in files]
+  pre_data_list: PreDataList = [PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3], lang=Language.CHN) for x in files]
   return pre_data_list
 
 if __name__ == "__main__":

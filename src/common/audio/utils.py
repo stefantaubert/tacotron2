@@ -199,7 +199,7 @@ def resample_core(wav, sr, new_rate):
     wav = convert_wav(wav_float, origin_dtype)
   return wav
 
-def upsample(origin, dest, new_rate):
+def upsample_file(origin, dest, new_rate):
   sampling_rate, wav = read(origin)
   wav = resample_core(wav, sampling_rate, new_rate)
   write(filename=dest, rate=new_rate, data=wav)

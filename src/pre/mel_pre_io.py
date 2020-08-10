@@ -5,6 +5,7 @@ import os
 from dataclasses import dataclass
 from typing import List
 
+#region IO
 mels_dir = 'mels'
 mels_file_name = 'mels.csv'
 
@@ -35,3 +36,5 @@ def already_exists(base_dir: str, name: str):
   dest_dir = get_mels_dir(base_dir, name)
   exists = os.path.exists(dest_dir)
   return exists
+
+#endregion

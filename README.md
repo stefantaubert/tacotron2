@@ -174,67 +174,161 @@ duration: about 5 days on t4
 
 ```
 $base_dir
+
+├── pre
+│  ├── ljs
+│  │  ├── speakers.json
+│  │  ├── data.csv
+│  │  ├── text
+│  │  │  ├── en
+│  │  │  │  ├── data.csv
+│  │  │  │  ├── symbols.json
+│  │  │  ├── en_normalized
+│  │  │  │  ├── data.csv
+│  │  │  │  ├── symbols.json
+│  │  │  ├── ipa_normalized
+│  │  │  │  ├── data.csv
+│  │  │  │  ├── symbols.json
+│  │  ├── wav
+│  │  │  ├── 22050kHz
+│  │  │  │  ├── data.csv
+│  │  ├── mel
+│  │  │  ├── 22050kHz
+│  │  │  │  ├── data.csv
+│  │  │  │  ├── data
+│  │  │  │  │  ├── 0-LJ001-0001.pt
+│  │  │  │  │  ├── ...
+│  ├── thchs
+│  │  ├── data.csv
+│  │  ├── speakers.json
+│  │  ├── text
+│  │  │  ├── ipa
+│  │  │  │  ├── data.csv
+│  │  │  │  ├── symbols.json
+│  │  ├── wav
+│  │  │  ├── 16000kHz
+│  │  │  │  ├── data.csv
+│  │  │  ├── 16000kHz_normalized
+│  │  │  │  ├── data.csv
+│  │  │  │  ├── data
+│  │  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  │  ├── ...
+│  │  │  ├── 22050kHz_normalized
+│  │  │  │  ├── data.csv
+│  │  │  │  ├── data
+│  │  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  │  ├── ...
+│  │  │  ├── 22050kHz_normalized_nosil
+│  │  │  │  ├── data.csv
+│  │  │  │  ├── data
+│  │  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  │  ├── ...
+│  │  ├── mel
+│  │  │  ├── 22050kHz_normalized_nosil
+│  │  │  │  ├── data.csv
+│  │  │  │  ├── data
+│  │  │  │  │  ├── 0-LJ001-0001.pt
+│  │  │  │  │  ├── ...
+├── pre
+│  ├── ds
+│  │  ├── thchs
+│  │  │  ├── speakers.json
+│  │  │  ├── data.csv
+│  │  ├── ljs
+│  │  │  ├── speakers.json
+│  │  │  ├── data.csv
+│  ├── wav
+│  │  ├── ljs_22050kHz
+│  │  │  ├── data.csv
+│  │  ├── thchs_16000kHz
+│  │  │  ├── data.csv
+│  │  ├── thchs_16000kHz_normalized
+│  │  │  ├── data.csv
+│  │  │  ├── data
+│  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  ├── ...
+│  │  ├── thchs_22050kHz_normalized
+│  │  │  ├── data.csv
+│  │  │  ├── data
+│  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  ├── ...
+│  │  ├── thchs_22050kHz_normalized_nosil
+│  │  │  ├── data.csv
+│  │  │  ├── data
+│  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  ├── ...
+│  ├── text
+│  │  ├── ljs_en
+│  │  │  ├── data.csv
+│  │  │  ├── symbols.json
+│  │  ├── ljs_ipa
+│  │  │  ├── data.csv
+│  │  │  ├── symbols.json
+│  │  ├── thchs_ipa
+│  │  │  ├── data.csv
+│  │  │  ├── symbols.json
+│  ├── mel
+│  │  ├── ljs_22050kHz
+│  │  │  ├── data.csv
+│  │  │  ├── data
+│  │  │  │  ├── 0-LJ001-0001.pt
+│  │  │  │  ├── ...
+│  │  ├── thchs_22050kHz_normalized_nosil
+│  │  │  ├── data.csv
+│  │  │  ├── data
+│  │  │  │  ├── 0-LJ001-0001.pt
+│  │  │  │  ├── ...
+├── waveglow
+│  ├── training_2020-06-17_11-11-03
+│  ├── ...
+├── tacotron
+│  ├── training_2020-06-17_11-11-03
+│  │  ├── filelist
+│  │  │  ├── weights.npy (opt)
+│  │  │  ├── weights_map.json (opt)
+│  │  │  ├── symbols.json
+│  │  │  ├── speakers.json
+│  │  │  ├── data.csv
+│  │  │  ├── train.csv
+│  │  │  ├── test.csv
+│  │  │  └── val.csv
+│  │  ├── logs
+│  │  │  └── log.txt
+│  │  ├── inference
+│  │  │  ├── 2020-06-18_11-11-03_democritus_A11_500
+│  │  │  │  ├── config.log
+│  │  │  │  ├── input.txt
+│  │  │  │  ├── input_sentences.txt
+│  │  │  │  ├── input_sentences_mapped.txt
+│  │  │  │  ├── input_symbols.txt
+│  │  │  │  ├── input_map.json
+│  │  │  │  ├── 2020-06-17_18-11-03_democritus_A11_500.png
+│  │  │  │  └── 2020-06-17_18-11-03_democritus_A11_500.wav
+│  │  │  ├── ...
+│  │  ├── validation
+│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9
+│  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_orig.wav
+│  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_orig.png
+│  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_inferred.wav
+│  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_inferred.png
+│  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_comparison.png
+│  │  │  │  └── input.txt
+│  │  │  ├── ...
+│  │  ├── analysis
+│  │  │  ├── 500_sims.log
+│  │  │  ├── 500_3d.html
+│  │  │  ├── 500_2d.html
+│  │  │  ├── ...
+│  │  ├── checkpoints
+│  │  │  ├── 0.pt
+│  │  │  ├── 500.pt
+│  │  │  ├── 1000.pt
+│  │  │  └── ...
+│  │  ├── config.log
+│  │  └── description.txt
+│  │── training_...
 ├── pretrained
 │  ├── waveglow_256channels_universal_v5.pt
-├── datasets
-│  ├── LJSpeech-1.1
-│  ├── THCHS-30
-│  ├── THCHS-30-22050kHz
-│  ├── ...
-├── ds
-│  ├── ljs_ipa
-│  │  ├── 1
-│  │  │  ├── symbols.json
-│  │  │  └── filelist.csv
-│  ├── thchs_ipa
-│  │  ├── A11
-│  │  │  ├── symbols.json
-│  │  │  └── filelist.csv
-│  │  ├── ...
-│  ├── ...
-├── training_2020-06-17_11-11-03
-│  ├── logs
-│  │  └── log.txt
-│  ├── inference
-│  │  ├── 2020-06-18_11-11-03_democritus_A11_500
-│  │  │  ├── config.log
-│  │  │  ├── input.txt
-│  │  │  ├── input_sentences.txt
-│  │  │  ├── input_sentences_mapped.txt
-│  │  │  ├── input_symbols.txt
-│  │  │  ├── input_map.json
-│  │  │  ├── 2020-06-17_18-11-03_democritus_A11_500.png
-│  │  │  └── 2020-06-17_18-11-03_democritus_A11_500.wav
-│  │  ├── ...
-│  │  ├── validation_2020-07-14_11-43-47_D11_906_50_9
-│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_orig.wav
-│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_orig.png
-│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_inferred.wav
-│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_inferred.png
-│  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_comparison.png
-│  │  │  └── input.txt
-│  │  ├── ...
-│  ├── analysis
-│  │  ├── 500_sims.log
-│  │  ├── 500_3d.html
-│  │  ├── 500_2d.html
-│  │  ├── ...
-│  ├── filelist
-│  │  ├── weights.npy
-│  │  ├── symbols.json
-│  │  ├── filelist.csv
-│  │  ├── audio_text_train_filelist.csv
-│  │  ├── audio_text_test_filelist.csv
-│  │  └── audio_text_val_filelist.csv
-│  ├── checkpoints
-│  │  ├── 0
-│  │  ├── 500
-│  │  ├── 1000
-│  │  └── ...
-│  ├── config.log
-│  ├── weights_map.json
-│  └── description.txt
-│── training_...
 ```
 
 # Maps

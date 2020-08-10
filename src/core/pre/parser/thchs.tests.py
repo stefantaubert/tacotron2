@@ -25,11 +25,11 @@ class UnitTests(unittest.TestCase):
       res = parse(dest)
       self.assertEqual(len(res), 12495)
 
-  def test_contains_only_name_speaker_text_path(self):
+  def test_contains_only_name_speaker_text_path_lang(self):
       dest = '/datasets/thchs_wav'
       res = parse(dest)
       for x in res:
-        self.assertEqual(len(x), 4)
+        self.assertEqual(len(x), 5)
 
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)
