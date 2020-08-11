@@ -6,7 +6,7 @@ import tempfile
 from tqdm import tqdm
 
 from src.common.utils import create_parent_folder, download_tar
-from src.core.pre.parser.data import PreData, PreDataList
+from src.core.pre.parser import PreData, PreDataList
 from src.core.pre.language import Language
 
 def ensure_downloaded(dir_path: str):
@@ -58,7 +58,7 @@ def parse(dir_path: str) -> PreDataList:
   print("Done.")
   
   res.sort()
-  res = [PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3], lang=Language.CHN) for x in res]
+  res = PreDataList([PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3], lang=Language.CHN) for x in res])
 
   return res
 

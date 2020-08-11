@@ -182,22 +182,30 @@ $base_dir
 │  │  ├── text
 │  │  │  ├── en
 │  │  │  │  ├── data.csv
+│  │  │  │  ├── symbol_ids.json
 │  │  │  │  ├── symbols.json
 │  │  │  ├── en_normalized
 │  │  │  │  ├── data.csv
+│  │  │  │  ├── symbol_ids.json
 │  │  │  │  ├── symbols.json
 │  │  │  ├── ipa_normalized
 │  │  │  │  ├── data.csv
+│  │  │  │  ├── symbol_ids.json
 │  │  │  │  ├── symbols.json
 │  │  ├── wav
 │  │  │  ├── 22050kHz
 │  │  │  │  ├── data.csv
+│  │  │  │  ├── 0-499
+│  │  │  │  │  ├── 0.wav
+│  │  │  │  │  ├── ...
+│  │  │  │  ├── ...
 │  │  ├── mel
 │  │  │  ├── 22050kHz
 │  │  │  │  ├── data.csv
-│  │  │  │  ├── data
-│  │  │  │  │  ├── 0-LJ001-0001.pt
+│  │  │  │  ├── 0-499
+│  │  │  │  │  ├── 0.pt
 │  │  │  │  │  ├── ...
+│  │  │  │  ├── ...
 │  ├── thchs
 │  │  ├── data.csv
 │  │  ├── speakers.json

@@ -16,7 +16,11 @@ def extract_from_sentence(ipa_sentence: str, ignore_tones: bool = False, ignore_
     if c in string.punctuation or c in string.whitespace:
       if len(tmp) > 0:
         raw_word = ''.join(tmp)
-        s_ipa = IPAString(unicode_string=raw_word, ignore=False)
+        try:
+          s_ipa = IPAString(unicode_string=raw_word, ignore=False)
+        except:
+          print(f"{raw_word} conversion to IPA failed.")
+          raise Exception()
         raw_word_symbols = extract_symbols(s_ipa, ignore_tones, ignore_arcs)
         res.extend(raw_word_symbols)
         tmp.clear()
@@ -26,7 +30,11 @@ def extract_from_sentence(ipa_sentence: str, ignore_tones: bool = False, ignore_
 
   if len(tmp) > 0:
     raw_word = ''.join(tmp)
-    s_ipa = IPAString(unicode_string=raw_word, ignore=False)
+    try:
+      s_ipa = IPAString(unicode_string=raw_word, ignore=False)
+    except:
+      print(f"{raw_word} conversion to IPA failed.")
+      raise Exception()
     raw_word_symbols = extract_symbols(s_ipa, ignore_tones, ignore_arcs)
     res.extend(raw_word_symbols)
     tmp.clear()

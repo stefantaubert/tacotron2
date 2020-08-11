@@ -1,6 +1,6 @@
-from enum import Enum
+from enum import IntEnum
 
-class Language(Enum):
+class Language(IntEnum):
   IPA = 0,
   ENG = 1,
   CHN = 2,

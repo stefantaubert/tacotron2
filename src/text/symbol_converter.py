@@ -150,35 +150,38 @@ class SymbolConverter():
     text = ''.join(symbols)
     return text
 
-def load_from_file_v1(filepath: str) -> SymbolConverter:
-  old = _file_to_dict(filepath)
-  all_symbols = list(old.keys())
-  # take index as id is safe
-  new_dict = _get_id_symbol_dict(all_symbols)
-  return SymbolConverter(new_dict)
+  @classmethod
+  def load_from_file_v1(cls, filepath: str):
+    old = _file_to_dict(filepath)
+    all_symbols = list(old.keys())
+    # take index as id is safe
+    new_dict = _get_id_symbol_dict(all_symbols)
+    return cls(new_dict)
 
-def load_from_file_v2(filepath: str) -> SymbolConverter:
-  d = _file_to_dict(filepath)
-  d_int = OrderedDict([(int(k), v) for k, v in d.items()])
-  return SymbolConverter(d_int)
+  @classmethod
+  def load_from_file_v2(cls, filepath: str):
+    d = _file_to_dict(filepath)
+    d_int = OrderedDict([(int(k), v) for k, v in d.items()])
+    return cls(d_int)
 
-def load_from_file(filepath: str, convert_v1_to_v2: bool = True) -> SymbolConverter:
-  d = _file_to_dict(filepath)
-  values = list(d.values())
-  assert len(values) > 0
-  dtype_of_values_is_list = type(values[0]) is list
-  if dtype_of_values_is_list:
-    return load_from_file_v2(filepath)
-  else:
-    res = load_from_file_v1(filepath)
-    if convert_v1_to_v2:
-      # make backup of old version
-      file_name = os.path.splitext(os.path.basename(filepath))[0]
-      backup_path = os.path.join(os.path.dirname(filepath), "{}.v1.json".format(file_name))
-      copyfile(filepath, backup_path)
-      res.dump(filepath)
-    return res
-
-
-def init_from_symbols(symbols: set) -> SymbolConverter:
-  return SymbolConverter(_symbols_to_dict(symbols))
+  @classmethod
+  def load_from_file(cls, filepath: str, convert_v1_to_v2: bool = True):
+    d = _file_to_dict(filepath)
+    values = list(d.values())
+    assert len(values) > 0
+    dtype_of_values_is_list = type(values[0]) is list
+    if dtype_of_values_is_list:
+      return cls.load_from_file_v2(filepath)
+    else:
+      res = cls.load_from_file_v1(filepath)
+      if convert_v1_to_v2:
+        # make backup of old version
+        file_name = os.path.splitext(os.path.basename(filepath))[0]
+        backup_path = os.path.join(os.path.dirname(filepath), "{}.v1.json".format(file_name))
+        copyfile(filepath, backup_path)
+        res.dump(filepath)
+      return res
+  
+  @classmethod
+  def init_from_symbols(cls, symbols: set):
+    return cls(_symbols_to_dict(symbols))

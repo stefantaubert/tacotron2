@@ -3,7 +3,7 @@ import os
 from tqdm import tqdm
 
 from src.common.utils import download_tar
-from src.core.pre.parser.data import PreDataList, PreData
+from src.core.pre.parser import PreDataList, PreData
 from src.core.pre.language import Language
 
 def ensure_downloaded(dir_path: str):
@@ -47,6 +47,9 @@ def parse(dir_path: str) -> PreDataList:
       wav_path = os.path.join(wavs_dir, speaker_name, name + '.wav')
       exists = os.path.exists(wav_path)
       if not exists:
+        wav_path = os.path.join(wavs_dir, speaker_name, name + '.WAV')
+      exists = os.path.exists(wav_path)
+      if not exists:
         print("Not found wav file:", wav_path)
         continue
 
@@ -57,8 +60,8 @@ def parse(dir_path: str) -> PreDataList:
 
   # sort after wav_path
   files.sort(key=lambda tup: (tup[4], tup[5], tup[6]), reverse=False)
-  pre_data_list: PreDataList = [PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3], lang=Language.CHN) for x in files]
-  return pre_data_list
+  res = PreDataList([PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3], lang=Language.CHN) for x in files])
+  return res
 
 if __name__ == "__main__":
   dest = '/datasets/thchs_wav'

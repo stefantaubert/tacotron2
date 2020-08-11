@@ -1,5 +1,5 @@
 import unittest
-from src.core.pre.wav.data import WavData
+from src.core.pre.wav import WavData
 
 
 class UnitTests(unittest.TestCase):
