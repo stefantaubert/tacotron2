@@ -9,11 +9,11 @@ from typing import List
 import torch
 from tqdm import tqdm
 
-from src.common.utils import load_csv, save_csv
+from src.core.common.utils import load_csv, save_csv
 from src.core.pre.utils import get_chunk_name
 from src.core.pre.wav import WavData, WavDataList
 from src.core.utils.mel.taco_stft import TacotronSTFT
-from src.tacotron.hparams import create_hparams
+from src.core.tacotron.hparams import create_hparams
 
 
 @dataclass()

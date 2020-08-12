@@ -12,8 +12,8 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 
-from src.common.train_log import log
-from src.common.utils import get_last_checkpoint, parse_ds_speakers
+from src.core.common.train_log import log
+from src.core.common.utils import get_last_checkpoint, parse_ds_speakers
 from src.tacotron.data_utils import SymbolsMelCollate, SymbolsMelLoader
 from src.tacotron.hparams import create_hparams
 from src.tacotron.logger import Tacotron2Logger

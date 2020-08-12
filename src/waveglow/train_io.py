@@ -1,7 +1,7 @@
 import torch
 import os
-from src.common.utils import get_last_checkpoint
-from src.common.utils import get_subdir
+from src.core.common.utils import get_last_checkpoint
+from src.core.common.utils import get_subdir
 
 checkpoint_dir = 'checkpoints'
 

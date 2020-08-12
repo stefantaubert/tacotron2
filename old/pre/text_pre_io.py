@@ -1,11 +1,11 @@
 import os
 
-from src.common.utils import load_csv, save_csv, save_json, parse_json
+from src.core.common.utils import load_csv, save_csv, save_json, parse_json
 from collections import OrderedDict
-from src.common.utils import get_subdir
+from src.core.common.utils import get_subdir
 from src.text.symbol_converter import load_from_file, SymbolConverter
 from typing import List
-from src.common.utils import load_csv, save_csv
+from src.core.common.utils import load_csv, save_csv
 from dataclasses import dataclass
 
 @dataclass()

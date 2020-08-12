@@ -4,9 +4,9 @@ from collections import OrderedDict
 
 import numpy as np
 
-from src.common.utils import get_subdir
-from src.common.train_log import log
-from src.common.utils import (load_csv, parse_json,
+from src.core.common.utils import get_subdir
+from src.core.common.train_log import log
+from src.core.common.utils import (load_csv, parse_json,
                               save_csv, save_json)
 from src.text.symbol_converter import load_from_file
 from dataclasses import dataclass

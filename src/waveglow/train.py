@@ -31,8 +31,8 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.common.train_log import get_log_dir, log, reset_log
-from src.common.utils import args_to_str, get_last_checkpoint
+from src.core.common.train_log import get_log_dir, log, reset_log
+from src.core.common.utils import args_to_str, get_last_checkpoint
 from src.tacotron.train_io import main as init_paths #todo move to other location
 from src.waveglow.data_utils import MelLoader
 from src.waveglow.hparams import create_hparams

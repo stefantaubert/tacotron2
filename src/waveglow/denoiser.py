@@ -1,5 +1,5 @@
 import sys
-from src.common.stft import STFT
+from src.core.common.stft import STFT
 import torch
 
 

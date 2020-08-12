@@ -7,7 +7,7 @@ import os
 from tqdm import tqdm
 from argparse import ArgumentParser
 import torch
-from src.common.utils import load_csv, save_csv
+from src.core.common.utils import load_csv, save_csv
 from src.pre.mel_parser import MelParser
 from src.tacotron.hparams import create_hparams
 from src.pre.wav_pre_io import parse_data, WavData, WavDataList

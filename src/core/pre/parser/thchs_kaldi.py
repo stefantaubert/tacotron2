@@ -5,7 +5,7 @@ import tempfile
 
 from tqdm import tqdm
 
-from src.common.utils import create_parent_folder, download_tar
+from src.core.common.utils import create_parent_folder, download_tar
 from src.core.pre.parser.data import PreData, PreDataList
 from src.core.pre.language import Language
 

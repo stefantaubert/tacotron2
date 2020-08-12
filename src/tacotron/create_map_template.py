@@ -1,4 +1,4 @@
-from src.common.utils import save_json, parse_json
+from src.core.common.utils import save_json, parse_json
 from src.text.symbol_converter import load_from_file
 from collections import OrderedDict
 from src.text.ipa2symb import extract_from_sentence

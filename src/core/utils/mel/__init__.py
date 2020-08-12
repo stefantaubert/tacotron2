@@ -41,7 +41,7 @@ def plot_melspec(mel, mel_dim_x=16, mel_dim_y=5, factor=1, title=None):
 if __name__ == "__main__":
   pass
   # from src.tacotron.hparams import create_hparams
-  # from src.common.audio.utils import get_wav_tensor_segment
+  # from src.core.common.audio.utils import get_wav_tensor_segment
   # wav_path = "/datasets/thchs_16bit_22050kHz_nosil/wav/train/A32/A32_11.wav"
   # hparams = create_hparams()
   # mel_parser = MelParser(hparams)

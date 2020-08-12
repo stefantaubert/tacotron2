@@ -1,8 +1,8 @@
 import os
 from shutil import copyfile
-from src.common.utils import args_to_str, parse_json
+from src.core.common.utils import args_to_str, parse_json
 import datetime
-from src.common.utils import get_subdir
+from src.core.common.utils import get_subdir
 
 inference_dir = "inference"
 

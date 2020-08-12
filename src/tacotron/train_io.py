@@ -1,10 +1,10 @@
 import os
 import torch
-from src.common.train_log import log
-from src.common.utils import get_subdir
+from src.core.common.train_log import log
+from src.core.common.utils import get_subdir
 from shutil import copyfile
 import datetime
-from src.common.utils import args_to_str, get_last_checkpoint, parse_json
+from src.core.common.utils import args_to_str, get_last_checkpoint, parse_json
 
 checkpoint_dir = 'checkpoints'
 

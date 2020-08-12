@@ -2,7 +2,7 @@ import os
 
 from tqdm import tqdm
 
-from src.common.utils import download_tar
+from src.core.common.utils import download_tar
 from src.core.pre.parser.data import PreDataList, PreData
 from src.core.pre.language import Language
 

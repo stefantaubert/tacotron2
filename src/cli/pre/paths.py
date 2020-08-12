@@ -1,5 +1,5 @@
 import os
-from src.common.utils import get_subdir
+from src.core.common.utils import get_subdir
 
 _pre_dir = 'pre'
 _pre_data_file = 'data.csv'

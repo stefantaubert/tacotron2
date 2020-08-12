@@ -6,7 +6,7 @@ import os
 
 from tqdm import tqdm
 
-from src.common.audio.utils import get_duration_s_file
+from src.core.common.audio.utils import get_duration_s_file
 from argparse import ArgumentParser
 from src.pre.wav_pre_io import save_data, already_exists, WavData, WavDataList
 from src.pre.parser.pre_data import PreDataList, PreData

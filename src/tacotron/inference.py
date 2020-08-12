@@ -17,9 +17,9 @@ from scipy.io.wavfile import write
 from tqdm import tqdm
 
 import torch
-from src.common.audio.utils import float_to_wav, is_overamp, mel_to_numpy
-from src.common.train_log import reset_log
-from src.common.utils import (get_last_checkpoint,
+from src.core.common.audio.utils import float_to_wav, is_overamp, mel_to_numpy
+from src.core.common.train_log import reset_log
+from src.core.common.utils import (get_last_checkpoint,
                               parse_ds_speaker, parse_ds_speakers, parse_json,
                               stack_images_vertically)
 from src.pre.mel_parser import MelParser, plot_melspec

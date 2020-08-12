@@ -5,16 +5,6 @@ from shutil import copyfile
 from collections import OrderedDict 
 import os
 
-def deserialize_symbol_ids(searialized_str: str):
-  sentences_symbols = searialized_str.split(',')
-  sentences_symbols = list(map(int, sentences_symbols))
-  return sentences_symbols
-
-def serialize_symbol_ids(symbol_ids: list):
-  sentences_symbols = list(map(str, symbol_ids))
-  sentences_symbols = ','.join(sentences_symbols)
-  return sentences_symbols
-
 # padding
 _pad = '_'
 
@@ -64,6 +54,18 @@ class SymbolConverter():
     self._id_symbol_dict = id_symbol_dict
     self._symbol_id_dict = _get_symbol_id_dict(id_symbol_dict)
   
+  @staticmethod
+  def deserialize_symbol_ids(searialized_str: str):
+    sentences_symbols = searialized_str.split(',')
+    sentences_symbols = list(map(int, sentences_symbols))
+    return sentences_symbols
+
+  @staticmethod
+  def serialize_symbol_ids(symbol_ids: list):
+    sentences_symbols = list(map(str, symbol_ids))
+    sentences_symbols = ','.join(sentences_symbols)
+    return sentences_symbols
+
   def id_to_symbol(self, symbol_id: int):
     assert symbol_id in self._id_symbol_dict.keys()
     subset, symbol = self._id_symbol_dict[symbol_id]

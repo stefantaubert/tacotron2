@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 from scipy.io.wavfile import read, write
 
-from src.common.audio.utils import *
+from src.core.common.audio.utils import *
 
 class UnitTests(unittest.TestCase):
   

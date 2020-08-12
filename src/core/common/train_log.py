@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from src.common.utils import get_subdir
+from src.core.common.utils import get_subdir
 
 log_dir = 'logs'
 log_train_file_name = 'log.txt'

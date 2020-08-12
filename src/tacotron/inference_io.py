@@ -1,12 +1,12 @@
 import os
 from shutil import copyfile
-from src.common.utils import args_to_str, parse_json
+from src.core.common.utils import args_to_str, parse_json
 import datetime
-from src.common.utils import get_subdir
+from src.core.common.utils import get_subdir
 import matplotlib.pylab as plt
 from pathlib import Path
 import numpy as np
-from src.common.audio.utils import float_to_wav, is_overamp
+from src.core.common.audio.utils import float_to_wav, is_overamp
 
 inference_dir = 'inference'
 inference_input_file_name = 'input.txt'

@@ -18,16 +18,16 @@ from src.text.ipa2symb import extract_from_sentence
 
 __csv_separator = '\t'
 
-def split_train_test_val(wholeset: list, test_size: float, validation_size: float, seed: int) -> (list, list, list):
-  trainset, testset, valset = wholeset, [], []
+# def split_train_test_val(wholeset: list, test_size: float, validation_size: float, seed: int) -> (list, list, list):
+#   trainset, testset, valset = wholeset, [], []
 
-  if test_size > 0:
-    trainset, testset = train_test_split(trainset, test_size=test_size, random_state=seed)
+#   if test_size > 0:
+#     trainset, testset = train_test_split(trainset, test_size=test_size, random_state=seed)
 
-  if validation_size > 0:
-    trainset, valset = train_test_split(trainset, test_size=validation_size, random_state=seed)
+#   if validation_size > 0:
+#     trainset, valset = train_test_split(trainset, test_size=validation_size, random_state=seed)
   
-  return trainset, testset, valset
+#   return trainset, testset, valset
 
 def stack_images_vertically(list_im, out_path):
   images = [Image.open(i) for i in list_im]
@@ -69,6 +69,25 @@ def get_last_checkpoint(checkpoint_dir) -> str:
   else:
     return None
 
+# def serialize_ds_speaker(ds: str, speaker: str):
+#   return "{},{}".format(ds, speaker)
+
+# def parse_ds_speaker(ds_speaker: str):
+#   return ds_speaker.split(',')
+
+# def serialize_ds_speakers(ds_speakers: tuple):
+#   ds_speakers = [serialize_ds_speaker(ds, speaker) for ds, speaker in ds_speakers]
+#   res = ";".join(ds_speakers)
+#   return res
+
+# def parse_ds_speakers(ds_speakers: str) -> list:
+#   '''
+#   Example: [ ['thchs', 'C11', 0], ... ]
+#   '''
+#   speakers = ds_speakers.split(';')
+#   ds_speakers = [x.split(',') + [i] for i, x in enumerate(speakers)]
+#   return ds_speakers
+
 def create_parent_folder(file: str):
   path = Path(file)
   os.makedirs(path.parent, exist_ok=True)
@@ -98,25 +117,6 @@ def download_tar(download_url, dir_path, tarmode: str = "r:gz"):
   tar.close()
   os.remove(downloaded_file)
   print("Done.")
-
-def serialize_ds_speaker(ds: str, speaker: str):
-  return "{},{}".format(ds, speaker)
-
-def parse_ds_speaker(ds_speaker: str):
-  return ds_speaker.split(',')
-
-def serialize_ds_speakers(ds_speakers: tuple):
-  ds_speakers = [serialize_ds_speaker(ds, speaker) for ds, speaker in ds_speakers]
-  res = ";".join(ds_speakers)
-  return res
-
-def parse_ds_speakers(ds_speakers: str) -> list:
-  '''
-  Example: [ ['thchs', 'C11', 0], ... ]
-  '''
-  speakers = ds_speakers.split(';')
-  ds_speakers = [parse_ds_speaker(x) + [i] for i, x in enumerate(speakers)]
-  return ds_speakers
 
 def args_to_str(args):
   res = ""

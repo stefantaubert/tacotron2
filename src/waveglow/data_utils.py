@@ -29,7 +29,7 @@ import random
 from tqdm import tqdm
 
 import torch.utils.data
-from src.common.audio.utils import (get_wav_tensor_segment,
+from src.core.common.audio.utils import (get_wav_tensor_segment,
                                     wav_to_float32_tensor)
 from src.pre.mel_parser import MelParser
 from src.waveglow.prepare_ds_io import PreparedData, PreparedDataList

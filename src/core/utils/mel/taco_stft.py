@@ -5,7 +5,7 @@ from librosa.filters import mel as librosa_mel_fn
 from skimage.metrics import structural_similarity
 
 import torch
-from src.common.audio.utils import wav_to_float32_tensor
+from src.core.common.audio.utils import wav_to_float32_tensor
 from src.core.utils.mel.stft import STFT
 import tensorflow as tf
 

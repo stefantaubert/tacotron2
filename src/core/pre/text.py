@@ -7,13 +7,13 @@ from typing import Tuple
 import epitran
 from tqdm import tqdm
 
-from src.common.utils import load_csv, parse_json, save_csv, save_json
+from src.core.common.utils import load_csv, parse_json, save_csv, save_json
 from src.core.pre.ds import DsData, DsDataList
 from src.core.pre.language import Language
 from src.text.adjustments import normalize_text
 from src.text.chn_tools import chn_to_ipa
 from src.text.ipa2symb import extract_from_sentence
-from src.text.symbol_converter import SymbolConverter, serialize_symbol_ids
+from src.text.symbol_converter import SymbolConverter
 
 
 class SymbolsDict(OrderedDictType[str, int]):
@@ -70,7 +70,7 @@ def convert_to_ipa(data: TextDataList, ignore_tones: bool, ignore_arcs: bool) ->
 
   for i, symbols in enumerate(entry_symbols):
     symbol_ids = conv.symbols_to_ids(symbols, add_eos=True, replace_unknown_with_pad=True)
-    result[i].serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
+    result[i].serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)
 
   return result, conv, symbols_dict
 

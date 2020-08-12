@@ -9,10 +9,10 @@ from nltk.corpus import stopwords
 from scipy.spatial import distance
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import normalize
-from src.common.utils import get_subdir
+from src.core.common.utils import get_subdir
 
 import torch
-from src.common.utils import get_last_checkpoint
+from src.core.common.utils import get_last_checkpoint
 from src.text.symbol_converter import load_from_file
 from src.tacotron.prepare_ds_ms_io import parse_all_symbols
 from src.tacotron.train_io import get_checkpoint

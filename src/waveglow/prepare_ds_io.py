@@ -4,8 +4,8 @@ from src.tacotron.prepare_ds_ms_io import (filelist_file_log_name, filelist_file
                        filelist_validation_file_name,
                        filelist_weights_file_name, get_filelist_dir)
 import os
-from src.common.utils import load_csv, save_csv
-from src.common.train_log import log
+from src.core.common.utils import load_csv, save_csv
+from src.core.common.train_log import log
 import numpy as np
 from dataclasses import dataclass
 from typing import List

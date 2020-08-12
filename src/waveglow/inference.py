@@ -37,13 +37,13 @@ import numpy as np
 from scipy.io.wavfile import write
 
 import torch
-from src.common.audio.utils import float_to_wav, is_overamp
-from src.common.utils import stack_images_vertically
+from src.core.common.audio.utils import float_to_wav, is_overamp
+from src.core.common.utils import stack_images_vertically
 from src.pre.mel_parser import MelParser, plot_melspec, compare_mels
 from src.waveglow.denoiser import Denoiser
 from src.waveglow.hparams import create_hparams
 from src.waveglow.train import load_model
-from src.common.utils import get_last_checkpoint
+from src.core.common.utils import get_last_checkpoint
 from src.waveglow.synthesizer import Synthesizer
 from src.tacotron.train_io import get_checkpoint
 from src.waveglow.inference_io import get_inference_dir
