@@ -5,7 +5,7 @@ export PYTHONPATH=$code_dir
 conda activate py37
 
 datasets_dir="/datasets"
-export base_dir="$datasets_dir/models/taco2pt_v3"
+export base_dir="$datasets_dir/models/taco2pt_v2"
 export waveglow="$datasets_dir/models/pretrained/waveglow_256channels_universal_v5.pt"
 
 export ljs_data="$datasets_dir/LJSpeech-1.1"

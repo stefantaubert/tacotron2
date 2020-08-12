@@ -1,10 +1,14 @@
-from src.core.pre.parser import PreDataList, PreData
-from typing import List, OrderedDict, Tuple
+import os
 from collections import Counter
 from dataclasses import dataclass
+from typing import List, OrderedDict, Tuple
+
+from src.common.utils import load_csv, parse_json, save_csv, save_json
 from src.core.pre.language import Language
-from src.common.utils import load_csv, save_csv, save_json, parse_json
-from collections import Counter
+from src.core.pre.parser import (PreData, PreDataList, dl_kaldi, dl_ljs,
+                                 dl_thchs, parse_ljs, parse_thchs,
+                                 parse_thchs_kaldi)
+
 
 class SpeakersDict(OrderedDict[str, int]):
   def save(self, file_path: str):
@@ -47,21 +51,38 @@ class DsDataList(List[DsData]):
     data = load_csv(file_path, DsData)
     return cls(data)
 
-def get_all_speakers(l: PreDataList) -> Tuple[SpeakersDict, SpeakersLogDict]:
+def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList]:
+  if not os.path.isdir(dir_path) and auto_dl:
+    dl_func(dir_path)
+  data = parse_func(dir_path)
+  speakers, speakers_log = _get_all_speakers(data)
+  ds_data = _get_ds_data(data, speakers)
+  return speakers, speakers_log, ds_data
+
+def thchs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList]:
+  return _preprocess_core(dir_path, auto_dl, dl_thchs, parse_thchs)
+
+def ljs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList]:
+  return _preprocess_core(dir_path, auto_dl, dl_ljs, parse_ljs)
+
+def thchs_kaldi_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList]:
+  return _preprocess_core(dir_path, auto_dl, dl_kaldi, parse_thchs_kaldi)
+
+def _get_all_speakers(l: PreDataList) -> Tuple[SpeakersDict, SpeakersLogDict]:
+  x: PreData
   all_speakers: List[str] = [x.speaker_name for x in l]
   all_speakers_count = Counter(all_speakers)
   speakers_log = SpeakersLogDict.fromcounter(all_speakers_count)
-  all_speakers = __remove_duplicates(all_speakers)
-  x: PreData
+  all_speakers = _remove_duplicates(all_speakers)
   speakers_dict = SpeakersDict.fromlist(all_speakers)
   return speakers_dict, speakers_log
 
-def get_ds_data(l: PreDataList, speakers_dict: SpeakersDict) -> DsDataList:
+def _get_ds_data(l: PreDataList, speakers_dict: SpeakersDict) -> DsDataList:
   values: PreData
   result = [DsData(i, values.name, values.speaker_name, speakers_dict[values.speaker_name], values.text, values.wav_path, values.lang) for i, values in enumerate(l)]
   return DsDataList(result)
 
-def __remove_duplicates(l: List[str]) -> List[str]:
+def _remove_duplicates(l: List[str]) -> List[str]:
   result = []
   for x in l:
     if x not in result:

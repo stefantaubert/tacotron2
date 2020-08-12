@@ -39,6 +39,13 @@ export batch_size=26
 
 
 # Preprocessing
+
+python -m src.cli.runner parse-ljs \
+  --path="$ljs_data" \
+  --auto_dl \
+  --base_dir="$base_dir" \
+  --ds_name="ljs"
+
 python -m src.runner ljs-dl \
   --dir_path="$ljs_data"
   

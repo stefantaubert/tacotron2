@@ -1,13 +1,10 @@
 import os
 from argparse import ArgumentParser
-from src.core.pre.ds import DsDataList
-from src.core.pre.wav import WavDataList
-from src.core.pre.wav import normalize as normalize_core
-from src.core.pre.wav import preprocess as preprocess_core
-from src.core.pre.wav import upsample as upsample_core
-from src.core.pre.wav import remove_silence as remove_silence_core
-from src.cli.pre.paths import get_wav_subdir, get_wav_csv
+
 from src.cli.pre.ds import load_ds_csv
+from src.cli.pre.paths import get_wav_csv, get_wav_subdir
+from src.core.pre import (DsDataList, WavDataList, wavs_normalize,
+                          wavs_preprocess, wavs_remove_silence, wavs_upsample)
 
 #region IO
 
@@ -15,11 +12,11 @@ def load_wav_csv(base_dir: str, ds_name: str, sub_name: str) -> WavDataList:
   origin_wav_data_path = get_wav_csv(base_dir, ds_name, sub_name)
   return WavDataList.load(origin_wav_data_path)
   
-def save_wav_csv(base_dir: str, ds_name: str, sub_name: str, wav_data: WavDataList):
+def _save_wav_csv(base_dir: str, ds_name: str, sub_name: str, wav_data: WavDataList):
   wav_data_path = get_wav_csv(base_dir, ds_name, sub_name)
   wav_data.save(wav_data_path)
 
-def wav_subdir_exists(base_dir: str, ds_name: str, sub_name: str):
+def _wav_subdir_exists(base_dir: str, ds_name: str, sub_name: str):
   wav_data_dir = get_wav_subdir(base_dir, ds_name, sub_name, create=False)
   return os.path.exists(wav_data_dir)
 
@@ -34,13 +31,13 @@ def init_pre_parser(parser: ArgumentParser):
   return preprocess
 
 def preprocess(base_dir: str, ds_name: str, sub_name: str):
-  if wav_subdir_exists(base_dir, ds_name, sub_name):
+  if _wav_subdir_exists(base_dir, ds_name, sub_name):
     print("Already exists.")
   else:
     data = load_ds_csv(base_dir, ds_name)
     #wav_data_dir = get_pre_ds_wav_subname_dir(base_dir, ds_name, sub_name, create=False)
-    wav_data = preprocess_core(data)
-    save_wav_csv(base_dir, ds_name, sub_name, wav_data)
+    wav_data = wavs_preprocess(data)
+    _save_wav_csv(base_dir, ds_name, sub_name, wav_data)
 
 #endregion
 
@@ -51,16 +48,16 @@ def init_normalize_parser(parser: ArgumentParser):
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--origin_sub_name', type=str, required=True)
   parser.add_argument('--destination_sub_name', type=str, required=True)
-  return normalize
+  return _normalize
 
-def normalize(base_dir: str, ds_name: str, origin_sub_name: str, destination_sub_name: str):
-  if wav_subdir_exists(base_dir, ds_name, destination_sub_name):
+def _normalize(base_dir: str, ds_name: str, origin_sub_name: str, destination_sub_name: str):
+  if _wav_subdir_exists(base_dir, ds_name, destination_sub_name):
     print("Already exists.")
   else:
     data = load_wav_csv(base_dir, ds_name, origin_sub_name)
     wav_data_dir = get_wav_subdir(base_dir, ds_name, destination_sub_name, create=True)
-    wav_data = normalize_core(data, wav_data_dir)
-    save_wav_csv(base_dir, ds_name, destination_sub_name, wav_data)
+    wav_data = wavs_normalize(data, wav_data_dir)
+    _save_wav_csv(base_dir, ds_name, destination_sub_name, wav_data)
 
 #endregion
 
@@ -72,16 +69,16 @@ def init_upsample_parser(parser: ArgumentParser):
   parser.add_argument('--origin_sub_name', type=str, required=True)
   parser.add_argument('--destination_sub_name', type=str, required=True)
   parser.add_argument('--rate', type=int, required=True)
-  return upsample
+  return _upsample
 
-def upsample(base_dir: str, ds_name: str, origin_sub_name: str, destination_sub_name: str, rate: int):
-  if wav_subdir_exists(base_dir, ds_name, destination_sub_name):
+def _upsample(base_dir: str, ds_name: str, origin_sub_name: str, destination_sub_name: str, rate: int):
+  if _wav_subdir_exists(base_dir, ds_name, destination_sub_name):
     print("Already exists.")
   else:
     data = load_wav_csv(base_dir, ds_name, origin_sub_name)
     wav_data_dir = get_wav_subdir(base_dir, ds_name, destination_sub_name, create=True)
-    wav_data = upsample_core(data, wav_data_dir, rate)
-    save_wav_csv(base_dir, ds_name, destination_sub_name, wav_data)
+    wav_data = wavs_upsample(data, wav_data_dir, rate)
+    _save_wav_csv(base_dir, ds_name, destination_sub_name, wav_data)
 
 #endregion
 
@@ -97,16 +94,16 @@ def init_remove_silence_parser(parser: ArgumentParser):
   parser.add_argument('--threshold_end', type=float, required=True)
   parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
   parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
-  return remove_silence
+  return _remove_silence
 
-def remove_silence(base_dir: str, ds_name: str, origin_sub_name: str, destination_sub_name: str, chunk_size: int, threshold_start: float, threshold_end: float, buffer_start_ms: float, buffer_end_ms: float):
-  if wav_subdir_exists(base_dir, ds_name, destination_sub_name):
+def _remove_silence(base_dir: str, ds_name: str, origin_sub_name: str, destination_sub_name: str, chunk_size: int, threshold_start: float, threshold_end: float, buffer_start_ms: float, buffer_end_ms: float):
+  if _wav_subdir_exists(base_dir, ds_name, destination_sub_name):
     print("Already exists.")
   else:
     data = load_wav_csv(base_dir, ds_name, origin_sub_name)
     wav_data_dir = get_wav_subdir(base_dir, ds_name, destination_sub_name, create=True)
-    wav_data = remove_silence_core(data, wav_data_dir, chunk_size, threshold_start, threshold_end, buffer_start_ms, buffer_end_ms)
-    save_wav_csv(base_dir, ds_name, destination_sub_name, wav_data)
+    wav_data = wavs_remove_silence(data, wav_data_dir, chunk_size, threshold_start, threshold_end, buffer_start_ms, buffer_end_ms)
+    _save_wav_csv(base_dir, ds_name, destination_sub_name, wav_data)
 
 #endregion
 
@@ -117,14 +114,14 @@ if __name__ == "__main__":
     sub_name="16000kHz",
   )
 
-  normalize(
+  _normalize(
     base_dir="/datasets/models/taco2pt_v2",
     ds_name="thchs",
     origin_sub_name="16000kHz",
     destination_sub_name="16000kHz_normalized",
   )
 
-  upsample(
+  _upsample(
     base_dir="/datasets/models/taco2pt_v2",
     ds_name="thchs",
     origin_sub_name="16000kHz_normalized",
@@ -132,7 +129,7 @@ if __name__ == "__main__":
     rate=22050,
   )
 
-  remove_silence(
+  _remove_silence(
     base_dir="/datasets/models/taco2pt_v2",
     ds_name="thchs",
     origin_sub_name="22050kHz_normalized",

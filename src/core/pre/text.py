@@ -1,30 +1,20 @@
-from typing import List, Tuple
+from collections import Counter, OrderedDict
+from dataclasses import dataclass
+from typing import List
+from typing import OrderedDict as OrderedDictType
+from typing import Tuple
+
+import epitran
 from tqdm import tqdm
-from src.core.pre.ds import DsDataList, DsData
+
+from src.common.utils import load_csv, parse_json, save_csv, save_json
+from src.core.pre.ds import DsData, DsDataList
 from src.core.pre.language import Language
 from src.text.adjustments import normalize_text
-from src.text.symbol_converter import serialize_symbol_ids, SymbolConverter
-from collections import OrderedDict, Counter
-from typing import List, Tuple
-from tqdm import tqdm
-from src.core.pre.language import Language
-from src.text.adjustments import normalize_text
-from src.text.symbol_converter import serialize_symbol_ids, SymbolConverter
-from collections import OrderedDict, Counter
-from typing import List, Tuple
-from tqdm import tqdm
-from src.core.pre.language import Language
-from src.text.adjustments import normalize_text
-from src.text.symbol_converter import serialize_symbol_ids, SymbolConverter
-from collections import OrderedDict, Counter
 from src.text.chn_tools import chn_to_ipa
 from src.text.ipa2symb import extract_from_sentence
-import epitran
-from dataclasses import dataclass
-from typing import List, OrderedDict as OrderedDictType
-from collections import Counter
-from src.core.pre.language import Language
-from src.common.utils import load_csv, save_csv, save_json, parse_json
+from src.text.symbol_converter import SymbolConverter, serialize_symbol_ids
+
 
 class SymbolsDict(OrderedDictType[str, int]):
   def save(self, file_path: str):

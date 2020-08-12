@@ -41,7 +41,6 @@ def __init_parser():
 
   __add_parser_to(subparsers, "thchs-wavs", init_thchs_parser)
   __add_parser_to(subparsers, "thchs-text", init_thchs_text_parser)
-
   __add_parser_to(subparsers, "thchs-kaldi-wavs", init_thchs_kaldi_parser)
   # theoretically not necessary but added to prevent confusion
   __add_parser_to(subparsers, "thchs-kaldi-text", init_thchs_text_parser)

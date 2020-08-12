@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from src.pre.parser.thchs import parse
+from src.core.pre.parser.thchs import parse
 
 class UnitTests(unittest.TestCase):
   def test_ordered(self):

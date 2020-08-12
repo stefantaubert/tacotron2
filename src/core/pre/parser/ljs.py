@@ -6,32 +6,30 @@ import wget
 from tqdm import tqdm
 
 from src.core.pre.language import Language
-from src.core.pre.parser import PreDataList, PreData
+from src.core.pre.parser.data import PreDataList, PreData
 
-def ensure_downloaded(dir_path: str):
-  dir_exists = os.path.exists(dir_path)
-  if not dir_exists:
-    print("LJSpeech is not downloaded yet.")
-    print("Starting download...")
-    os.makedirs(dir_path, exist_ok=False)
-    download_url = "https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2"
-    dest = wget.download(download_url, dir_path)
-    downloaded_file = os.path.join(dir_path, dest)
-    print("\nFinished download to {}".format(downloaded_file))
-    print("Unpacking...")
-    tar = tarfile.open(downloaded_file, "r:bz2")  
-    tar.extractall(dir_path)
-    tar.close()
-    print("Done.")
-    print("Moving files...")
-    dir_name = "LJSpeech-1.1"
-    ljs_data_dir = os.path.join(dir_path, dir_name)
-    files = os.listdir(ljs_data_dir)
-    for f in tqdm(files):
-      shutil.move(os.path.join(ljs_data_dir, f), dir_path)
-    print("Done.")
-    os.remove(downloaded_file)
-    os.rmdir(ljs_data_dir)
+def download(dir_path: str):
+  print("LJSpeech is not downloaded yet.")
+  print("Starting download...")
+  os.makedirs(dir_path, exist_ok=False)
+  download_url = "https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2"
+  dest = wget.download(download_url, dir_path)
+  downloaded_file = os.path.join(dir_path, dest)
+  print("\nFinished download to {}".format(downloaded_file))
+  print("Unpacking...")
+  tar = tarfile.open(downloaded_file, "r:bz2")  
+  tar.extractall(dir_path)
+  tar.close()
+  print("Done.")
+  print("Moving files...")
+  dir_name = "LJSpeech-1.1"
+  ljs_data_dir = os.path.join(dir_path, dir_name)
+  files = os.listdir(ljs_data_dir)
+  for f in tqdm(files):
+    shutil.move(os.path.join(ljs_data_dir, f), dir_path)
+  print("Done.")
+  os.remove(downloaded_file)
+  os.rmdir(ljs_data_dir)
 
 def parse(path: str) -> PreDataList:
   if not os.path.exists(path):
@@ -76,7 +74,7 @@ def parse(path: str) -> PreDataList:
   return result
 
 if __name__ == "__main__":
-  ensure_downloaded(
+  download(
     dir_path = '/datasets/LJSpeech-1.1'
   )
 

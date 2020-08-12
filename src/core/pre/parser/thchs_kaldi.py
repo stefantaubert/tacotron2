@@ -6,22 +6,19 @@ import tempfile
 from tqdm import tqdm
 
 from src.common.utils import create_parent_folder, download_tar
-from src.core.pre.parser import PreData, PreDataList
+from src.core.pre.parser.data import PreData, PreDataList
 from src.core.pre.language import Language
 
-def ensure_downloaded(dir_path: str):
-  dir_exists = os.path.exists(dir_path)
-  if not dir_exists:
-    print("THCHS-30 is not downloaded yet.")
-    download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
-    tmp_dir = tempfile.mkdtemp()
-    download_tar(download_url_kaldi, tmp_dir)
-    subfolder_name = "data_thchs30"
-    content_dir = os.path.join(tmp_dir, subfolder_name)
-    parent = create_parent_folder(dir_path)
-    dest = os.path.join(parent, subfolder_name)
-    shutil.move(content_dir, dest)
-    os.rename(dest, dir_path)
+def download(dir_path: str):
+  download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
+  tmp_dir = tempfile.mkdtemp()
+  download_tar(download_url_kaldi, tmp_dir)
+  subfolder_name = "data_thchs30"
+  content_dir = os.path.join(tmp_dir, subfolder_name)
+  parent = create_parent_folder(dir_path)
+  dest = os.path.join(parent, subfolder_name)
+  shutil.move(content_dir, dest)
+  os.rename(dest, dir_path)
 
 def parse(dir_path: str) -> PreDataList:
   if not os.path.exists(dir_path):
@@ -63,7 +60,7 @@ def parse(dir_path: str) -> PreDataList:
   return res
 
 if __name__ == "__main__":
-  ensure_downloaded(
+  download(
     dir_path = '/datasets/THCHS-30'
   )
 

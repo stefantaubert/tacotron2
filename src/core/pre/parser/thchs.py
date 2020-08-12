@@ -3,15 +3,12 @@ import os
 from tqdm import tqdm
 
 from src.common.utils import download_tar
-from src.core.pre.parser import PreDataList, PreData
+from src.core.pre.parser.data import PreDataList, PreData
 from src.core.pre.language import Language
 
-def ensure_downloaded(dir_path: str):
-  dir_exists = os.path.exists(dir_path)
-  if not dir_exists:
-    print("THCHS-30 is not downloaded yet.")
-    download_tar("http://data.cslt.org/thchs30/zip/wav.tgz", dir_path)
-    download_tar("http://data.cslt.org/thchs30/zip/doc.tgz", dir_path)
+def download(dir_path: str):
+  download_tar("http://data.cslt.org/thchs30/zip/wav.tgz", dir_path)
+  download_tar("http://data.cslt.org/thchs30/zip/doc.tgz", dir_path)
 
 def parse(dir_path: str) -> PreDataList:
   if not os.path.exists(dir_path):
@@ -65,7 +62,7 @@ def parse(dir_path: str) -> PreDataList:
 
 if __name__ == "__main__":
   dest = '/datasets/thchs_wav'
-  ensure_downloaded(
+  download(
     dir_path = dest
   )
 

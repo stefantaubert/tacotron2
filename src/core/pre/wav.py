@@ -2,18 +2,20 @@
 calculate wav duration and sampling rate
 """
 
-from src.core.pre.utils import get_chunk_name
-from src.common.audio.utils import get_duration_s_file, get_duration_s
-from scipy.io.wavfile import read
-from src.core.pre.ds.data import DsDataList, DsData
+import os
 from dataclasses import dataclass
 from typing import List
-from src.common.utils import load_csv, save_csv
-from src.common.audio.utils import normalize_file
-from src.common.audio.utils import remove_silence_file
-import os
+
+from scipy.io.wavfile import read
 from tqdm import tqdm
-from src.common.audio.utils import upsample_file
+
+from src.common.audio.utils import (get_duration_s, get_duration_s_file,
+                                    normalize_file, remove_silence_file,
+                                    upsample_file)
+from src.common.utils import load_csv, save_csv
+from src.core.pre import DsData, DsDataList
+from src.core.pre.utils import get_chunk_name
+
 
 @dataclass()
 class WavData:

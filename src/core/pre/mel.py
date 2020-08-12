@@ -3,15 +3,18 @@ input: wav data
 output: mel data
 """
 import os
-import torch
-from tqdm import tqdm
-from src.core.pre.wav.data import WavData, WavDataList
-from src.core.utils.mel.taco_stft import TacotronSTFT
-from src.tacotron.hparams import create_hparams
-from src.core.pre.utils import get_chunk_name
 from dataclasses import dataclass
 from typing import List
+
+import torch
+from tqdm import tqdm
+
 from src.common.utils import load_csv, save_csv
+from src.core.pre.utils import get_chunk_name
+from src.core.pre.wav import WavData, WavDataList
+from src.core.utils.mel.taco_stft import TacotronSTFT
+from src.tacotron.hparams import create_hparams
+
 
 @dataclass()
 class MelData:
@@ -46,4 +49,3 @@ def process(data: WavDataList, dest_dir: str, custom_hparams: str) -> MelDataLis
     result.append(MelData(values.entry_id, dest_mel_path, values.duration, values.sr))
 
   return result
-

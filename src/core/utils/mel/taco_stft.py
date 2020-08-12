@@ -6,7 +6,7 @@ from skimage.metrics import structural_similarity
 
 import torch
 from src.common.audio.utils import wav_to_float32_tensor
-from src.common.stft import STFT
+from src.core.utils.mel.stft import STFT
 import tensorflow as tf
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):

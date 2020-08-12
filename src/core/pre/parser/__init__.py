@@ -1,19 +1,4 @@
-from dataclasses import dataclass
-from typing import List
-from src.core.pre.language import Language
-
-@dataclass()
-class PreData:
-  name: str
-  speaker_name: str
-  text: str
-  wav_path: str
-  lang: Language
-
-class PreDataList(List[PreData]):
-  pass
-
-if __name__ == "__main__":
-  x = PreDataList([PreData("", ",", "tarei", "atrien", Language.CHN)])
-  print(x)
-  print(type(x))
+from src.core.pre.parser.ljs import parse as parse_ljs, download as dl_ljs
+from src.core.pre.parser.thchs import parse as parse_thchs, download as dl_thchs
+from src.core.pre.parser.thchs_kaldi import parse as parse_thchs_kaldi, download as dl_kaldi
+from src.core.pre.parser.data import PreData, PreDataList
