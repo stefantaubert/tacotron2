@@ -27,6 +27,32 @@ def dynamic_range_decompression(x, C=1):
   return torch.exp(x) / C
 
 
+def create_hparams(hparams_string=None, verbose=False):
+  """Create model hyperparameters. Parse nondefault from given string."""
+
+  hparams = tf.contrib.training.HParams(
+    ################################
+    # Audio Parameters       #
+    ################################
+    n_mel_channels=80,
+    sampling_rate=22050,
+    filter_length=1024,
+    hop_length=256,
+    win_length=1024,
+    mel_fmin=0.0,
+    mel_fmax=8000.0,
+  )
+
+  if hparams_string:
+    tf.logging.info('Parsing command line hparams: %s', hparams_string)
+    hparams.parse(hparams_string)
+
+  if verbose:
+    tf.logging.info('Final parsed hparams: %s', hparams.values())
+
+  return hparams
+
+
 class TacotronSTFT(torch.nn.Module):
   def __init__(self, filter_length=1024, hop_length=256, win_length=1024,
          n_mel_channels=80, sampling_rate=22050, mel_fmin=0.0,

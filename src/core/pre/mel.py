@@ -12,8 +12,7 @@ from tqdm import tqdm
 from src.core.common.utils import load_csv, save_csv
 from src.core.pre.utils import get_chunk_name
 from src.core.pre.wav import WavData, WavDataList
-from src.core.utils.mel.taco_stft import TacotronSTFT
-from src.core.tacotron.hparams import create_hparams
+from src.core.utils.mel.taco_stft import TacotronSTFT, create_hparams
 
 
 @dataclass()
@@ -36,8 +35,8 @@ def process(data: WavDataList, dest_dir: str, custom_hparams: str) -> MelDataLis
   assert os.path.isdir(dest_dir)
 
   result = MelDataList()
-  hparms = create_hparams(custom_hparams)
-  mel_parser = TacotronSTFT.fromhparams(hparms)
+  hp = create_hparams(custom_hparams)
+  mel_parser = TacotronSTFT.fromhparams(hp)
 
   values: WavData
   for values in tqdm(data):

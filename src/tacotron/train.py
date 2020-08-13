@@ -39,11 +39,11 @@ from src.tacotron.txt_pre import process_input_text
 from src.text.symbol_converter import load_from_file
 
 
-def reduce_tensor(tensor, n_gpus):
-  rt = tensor.clone()
-  dist.all_reduce(rt, op=dist.reduce_op.SUM)
-  rt /= n_gpus
-  return rt
+# def reduce_tensor(tensor, n_gpus):
+#   rt = tensor.clone()
+#   dist.all_reduce(rt, op=dist.reduce_op.SUM)
+#   rt /= n_gpus
+#   return rt
 
 # def init_distributed(hparams, n_gpus, rank, group_name, training_dir_path):
 #   assert torch.cuda.is_available(), "Distributed mode requires CUDA."

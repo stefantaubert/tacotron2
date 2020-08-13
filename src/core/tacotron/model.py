@@ -1,10 +1,12 @@
 from math import sqrt
+
 import torch
-from torch.autograd import Variable
 from torch import nn
+from torch.autograd import Variable
 from torch.nn import functional as F
+
 from src.core.common.layers import ConvNorm, LinearNorm
-from src.core.common.utils import to_gpu, get_mask_from_lengths
+from src.core.common.utils import get_mask_from_lengths, to_gpu
 
 
 class LocationLayer(nn.Module):

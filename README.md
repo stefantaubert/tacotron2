@@ -175,6 +175,12 @@ duration: about 5 days on t4
 ```
 $base_dir
 
+├── filelist
+│  ├── ljs
+│  │  ├── symbols.json
+│  │  ├── speakers.json
+│  │  ├── data.csv
+
 ├── pre
 │  ├── ljs
 │  │  ├── speakers.json

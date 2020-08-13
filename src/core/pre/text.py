@@ -97,7 +97,7 @@ def normalize(data: TextDataList)-> Tuple[TextDataList, SymbolConverter, Symbols
 
   for i, symbols in enumerate(entry_symbols):
     symbol_ids = conv.symbols_to_ids(symbols, add_eos=True, replace_unknown_with_pad=True)
-    result[i].serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
+    result[i].serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)
 
   return result, conv, symbols_dict
 
@@ -119,6 +119,6 @@ def preprocess(data: DsDataList) -> Tuple[TextDataList, SymbolConverter, Symbols
 
   for i, symbols in enumerate(entry_symbols):
     symbol_ids = conv.symbols_to_ids(symbols, add_eos=True, replace_unknown_with_pad=True)
-    result[i].serialized_symbol_ids = serialize_symbol_ids(symbol_ids)
+    result[i].serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)
 
   return result, conv, symbols_dict

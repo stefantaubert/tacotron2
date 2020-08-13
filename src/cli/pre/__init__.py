@@ -14,3 +14,4 @@ from src.cli.pre.wav import \
     init_remove_silence_parser as init_wav_remove_silence_parser
 from src.cli.pre.wav import init_upsample_parser as init_wav_upsample_parser
 from src.cli.pre.wav import load_wav_csv
+from src.cli.pre.merge_ds import init_merge_ds_parser, load_filelist, load_filelist_speakers_json, load_filelist_symbol_converter

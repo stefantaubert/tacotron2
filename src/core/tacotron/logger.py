@@ -1,9 +1,10 @@
 import random
-import torch
-from torch.utils.tensorboard import SummaryWriter
+
 import matplotlib
 import matplotlib.pylab as plt
 import numpy as np
+import torch
+from torch.utils.tensorboard import SummaryWriter
 
 
 def __save_figure_to_numpy(fig):

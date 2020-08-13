@@ -6,10 +6,10 @@ use_matplotlib_backend("Agg")
 from src.cli.pre import (init_ljs_parser, init_mel_parser,
                          init_text_ipa_parser, init_text_normalize_parser,
                          init_text_parser, init_thchs_kaldi_parser,
-                         init_thchs_parser, init_wav_normalize_parser,
+                         init_thchs_parser, init_wav_normalize_parser, init_merge_ds_parser,
                          init_wav_parser, init_wav_remove_silence_parser,
                          init_wav_upsample_parser)
-
+from src.cli.tacotron import init_taco_continue_train_parser, init_taco_train_parser
 
 def _add_parser_to(subparsers, name: str, init_method):
   parser = subparsers.add_parser(name, help='{} help'.format(name))
@@ -38,22 +38,26 @@ def _init_parser():
 
   _add_parser_to(subparsers, "parse-mels", init_mel_parser)
 
-  # # Waveglow
-  # __add_parser_to(subparsers, "waveglow-dl", init_wg_download_parser)
-  # __add_parser_to(subparsers, "waveglow-train", init_wg_train_parser)
-  # __add_parser_to(subparsers, "waveglow-validate", init_wg_validate_parser)
-  # __add_parser_to(subparsers, "waveglow-infer", init_wg_inference_parser)
+  _add_parser_to(subparsers, "prepare-ds", init_merge_ds_parser)
 
-  # # Tacotron
-  # __add_parser_to(subparsers, "tacotron-train", init_taco_train_parser)
-  # __add_parser_to(subparsers, "tacotron-validate", init_taco_validate_parser)
-  # __add_parser_to(subparsers, "tacotron-infer", init_taco_inference_parser)
+
+  # # Waveglow
+  # _add_parser_to(subparsers, "waveglow-dl", init_wg_download_parser)
+  # _add_parser_to(subparsers, "waveglow-train", init_wg_train_parser)
+  # _add_parser_to(subparsers, "waveglow-validate", init_wg_validate_parser)
+  # _add_parser_to(subparsers, "waveglow-infer", init_wg_inference_parser)
+
+  # Tacotron
+  _add_parser_to(subparsers, "tacotron-train", init_taco_train_parser)
+  _add_parser_to(subparsers, "tacotron-continue-train", init_taco_continue_train_parser)
+  # _add_parser_to(subparsers, "tacotron-validate", init_taco_validate_parser)
+  # _add_parser_to(subparsers, "tacotron-infer", init_taco_inference_parser)
   
   # # Tools
-  # __add_parser_to(subparsers, "create-map", init_create_map_parser)
-  # __add_parser_to(subparsers, "eval-checkpoints", init_eval_checkpoints_parser)
-  # __add_parser_to(subparsers, "plot-embeddings", init_plot_emb_parser)
-  # __add_parser_to(subparsers, "remove-silence-plot", init_remove_silence_plot_parser)
+  # _add_parser_to(subparsers, "create-map", init_create_map_parser)
+  # _add_parser_to(subparsers, "eval-checkpoints", init_eval_checkpoints_parser)
+  # _add_parser_to(subparsers, "plot-embeddings", init_plot_emb_parser)
+  # _add_parser_to(subparsers, "remove-silence-plot", init_remove_silence_plot_parser)
 
   return main_parser
 

@@ -14,6 +14,9 @@ class SpeakersDict(OrderedDict[str, int]):
   def save(self, file_path: str):
     save_json(file_path, self)
   
+  def get_speakers(self):
+    return list(self.keys())
+
   @classmethod
   def load(cls, file_path: str):
     data = parse_json(file_path)
