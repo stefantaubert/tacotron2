@@ -7,7 +7,7 @@ from src.cli.pre.paths import (get_text_csv, get_text_subdir,
                                get_text_symbols_json)
 from src.core.pre import (DsData, DsDataList, SymbolsDict, TextDataList,
                           text_convert_to_ipa, text_normalize, text_preprocess)
-from src.text.symbol_converter import SymbolConverter
+from src.core.pre import SymbolConverter
 
 #region IO
 

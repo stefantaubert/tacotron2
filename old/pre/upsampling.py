@@ -2,7 +2,7 @@ import os
 
 from tqdm import tqdm
 
-from src.core.common.audio.utils import upsample
+from src.core.common import upsample
 from src.pre.wav_pre_io import parse_data, save_data, already_exists, WavData, WavDataList, get_wavs_dir
 
 def __upsample_wavs(base_dir: str, source_name: str, destination_name: str, new_rate: int):

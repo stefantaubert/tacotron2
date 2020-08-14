@@ -9,12 +9,12 @@ from typing import List
 from scipy.io.wavfile import read
 from tqdm import tqdm
 
-from src.core.common.audio.utils import (get_duration_s, get_duration_s_file,
+from src.core.common import (get_duration_s, get_duration_s_file,
                                     normalize_file, remove_silence_file,
                                     upsample_file)
-from src.core.common.utils import load_csv, save_csv
+from src.core.common import load_csv, save_csv
 from src.core.pre import DsData, DsDataList
-from src.core.pre.utils import get_chunk_name
+from src.core.common import get_chunk_name
 
 
 @dataclass()

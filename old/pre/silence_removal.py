@@ -4,8 +4,8 @@ from shutil import copyfile
 import matplotlib.pylab as plt
 from tqdm import tqdm
 
-from src.core.common.audio.utils import remove_silence_file, wav_to_float32
-from src.core.common.utils import stack_images_vertically
+from src.core.common import remove_silence_file, wav_to_float32
+from src.core.common import stack_images_vertically
 from src.pre.mel_parser import MelParser, plot_melspec
 from src.pre.wav_pre_io import parse_data, save_data, already_exists, WavData, WavDataList, get_wavs_dir
 from src.tacotron.hparams import create_hparams

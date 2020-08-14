@@ -11,7 +11,7 @@ from src.cli.pre.text import load_text_csv, load_text_symbol_converter
 from src.cli.pre.wav import load_wav_csv
 from src.core.pre import (PreparedData, PreparedDataList, SpeakersIdDict,
                           merge_ds)
-from src.text.symbol_converter import SymbolConverter
+from src.core.pre import SymbolConverter
 
 #region IO
 

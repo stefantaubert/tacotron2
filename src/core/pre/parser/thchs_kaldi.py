@@ -5,9 +5,9 @@ import tempfile
 
 from tqdm import tqdm
 
-from src.core.common.utils import create_parent_folder, download_tar
+from src.core.common import create_parent_folder, download_tar
 from src.core.pre.parser.data import PreData, PreDataList
-from src.core.pre.language import Language
+from src.core.common import Language
 
 def download(dir_path: str):
   download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"

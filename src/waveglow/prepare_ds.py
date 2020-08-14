@@ -1,11 +1,11 @@
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-from src.core.common.train_log import log
+from src.core.common import log
 from src.pre.wav_pre_io import parse_data, WavData, WavDataList
 from src.waveglow.prepare_ds_io import (save_testset, save_trainset,
                                         save_validationset, save_wholeset, PreparedData, PreparedDataList)
-from src.core.common.utils import split_train_test_val
+from src.core.common import split_train_test_val
 
 def prepare(base_dir: str, training_dir_path: str, wav_ds_name: str, test_size: float, validation_size: float, seed: int):
   wholeset: PreparedDataList = []

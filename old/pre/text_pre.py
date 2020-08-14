@@ -33,7 +33,7 @@ def preprocess(base_dir: str, mel_name: str, ds_name: str, ignore_tones: bool, i
   data: Dict[str, list] = {}
 
   if convert_to_ipa:
-    from src.text.ipa2symb import extract_from_sentence
+    from src.core.pre import extract_from_sentence
     if lang == 'eng':
       import epitran
       epi = epitran.Epitran('eng-Latn')

@@ -6,8 +6,8 @@ from shutil import copyfile
 
 import pandas as pd
 
-from src.core.common.train_log import reset_log
-from src.core.common.utils import get_last_checkpoint, parse_ds_speaker
+from src.core.common import reset_log
+from src.core.common import get_last_checkpoint, parse_ds_speaker
 from src.waveglow.inference import infer
 from src.waveglow.validate_io import get_validation_dir
 from src.waveglow.train_io import get_checkpoint

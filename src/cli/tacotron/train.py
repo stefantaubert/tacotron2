@@ -8,9 +8,9 @@ from src.cli.tacotron.paths import (get_checkpoints_dir, get_log_dir,
                                     get_symbols_conv, get_test_csv,
                                     get_train_csv, get_train_dir, get_val_csv)
 from src.core.pre import PreparedDataList, SpeakersIdDict, split_train_test_val
-from src.core.tacotron import continue_train, train
-from src.text.symbol_converter import SymbolConverter
-
+from src.core.tacotron import continue_train, train, Tacotron2Logger, get_train_logger
+from src.core.pre import SymbolConverter
+import logging
 #region IO
 
 def _save_trainset(base_dir: str, train_name: str, dataset: PreparedDataList):
@@ -55,6 +55,41 @@ def _save_symbol_converter(base_dir: str, train_name: str, data: SymbolConverter
 
 #endregion
 
+def _init_train_logger(base_dir: str, train_name: str):
+  # logging.basicConfig(
+  #   format='[%(asctime)s] (%(levelname)s) %(message)s',
+  #   datefmt='%Y/%m/%d %H:%M:%S',
+  #   level=logging.CRITICAL,
+  #   #stream=logging.StreamHandler(),
+  # )
+  #root = logging.getLogger()
+  #root.disabled = True
+  logger = get_train_logger()
+  logger.propagate = False
+  logger.setLevel(logging.DEBUG)
+  formatter = logging.Formatter(
+    '[%(asctime)s] (%(levelname)s) %(message)s',
+    datefmt='%Y/%m/%d %H:%M:%S'
+  )
+
+  console_handler = logging.StreamHandler()
+  console_handler.setLevel(logging.DEBUG)
+  console_handler.setFormatter(formatter)
+  logger.addHandler(console_handler)
+  logger.info("init console logger")
+
+  path = get_log_file(base_dir, train_name)
+  fh = logging.FileHandler(path)
+  fh.setLevel(logging.DEBUG)
+  fh.setFormatter(formatter)
+  logger.addHandler(fh)
+  logger.info("init fh logger")
+
+def _reset_log(base_dir: str, train_name: str):
+  log_file = get_log_file(base_dir, train_name)
+  if os.path.isfile(log_file):
+    os.remove(log_file)
+
 def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--training_dir', type=str, required=True)
@@ -83,12 +118,17 @@ def _train(base_dir: str, train_name: str, fl_name: str, warm_start_model: str =
   speakers = load_filelist_speakers_json(base_dir, fl_name)
   _save_speakers_json(base_dir, train_name, speakers)
 
+  #train_logger = init_train_logger(logging.getLogger("taco-train"))
+  #add_file_log_train(train_logger, get_log_file(base_dir, train_name))
+  _reset_log(base_dir, train_name)
+  _init_train_logger(base_dir, train_name)
+  # todo delete log file
+
   train(
     warm_start_model_path=warm_start_model,
     weights_path=weight_map,
     hparams=hparams,
-    log_file=get_log_file(base_dir, train_name),
-    log_dir=get_log_dir(base_dir, train_name),
+    logdir=get_log_dir(base_dir, train_name),
     n_symbols=symbols_conv.get_symbol_ids_count(),
     n_speakers=len(speakers),
     trainset=trainset,
@@ -108,11 +148,11 @@ def _continue_train(base_dir: str, train_name: str, hparams):
 
   symbols_conv = load_symbol_converter(base_dir, train_name)
   speakers = load_speakers_json(base_dir, train_name)
+  _init_train_logger(base_dir, train_name)
 
   continue_train(
     hparams=hparams,
-    log_file=get_log_file(base_dir, train_name),
-    log_dir=get_log_dir(base_dir, train_name),
+    logdir=get_log_dir(base_dir, train_name),
     n_symbols=symbols_conv.get_symbol_ids_count(),
     n_speakers=len(speakers),
     trainset=load_trainset(base_dir, train_name),
@@ -122,12 +162,12 @@ def _continue_train(base_dir: str, train_name: str, hparams):
   )
   
 if __name__ == "__main__":
-  # _train(
-  #   base_dir="/datasets/models/taco2pt_v2",
-  #   train_name="debug_new",
-  #   fl_name="thchs",
-  #   hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,cache_mels=False"
-  # )
+  _train(
+    base_dir="/datasets/models/taco2pt_v2",
+    train_name="debug_new",
+    fl_name="thchs",
+    hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,cache_mels=False"
+  )
 
   _continue_train(
     base_dir="/datasets/models/taco2pt_v2",

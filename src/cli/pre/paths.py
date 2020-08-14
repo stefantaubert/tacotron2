@@ -1,5 +1,5 @@
 import os
-from src.core.common.utils import get_subdir
+from src.core.common import get_subdir
 
 _filelist_dir = 'filelist'
 _filelist_csv = "data.csv"

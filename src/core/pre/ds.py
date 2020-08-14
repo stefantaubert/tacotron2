@@ -3,8 +3,8 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import List, OrderedDict, Tuple
 
-from src.core.common.utils import load_csv, parse_json, save_csv, save_json
-from src.core.pre.language import Language
+from src.core.common import load_csv, parse_json, save_csv, save_json
+from src.core.common import Language
 from src.core.pre.parser import (PreData, PreDataList, dl_kaldi, dl_ljs,
                                  dl_thchs, parse_ljs, parse_thchs,
                                  parse_thchs_kaldi)

@@ -5,8 +5,8 @@ import epitran
 from nltk.tokenize import sent_tokenize
 from nltk import download
 
-from src.text.ipa2symb import extract_from_sentence
-from src.core.common.utils import parse_json
+from src.core.pre import extract_from_sentence
+from src.core.common import parse_json
 from src.text.adjustments import normalize_text
 from src.tacotron.prepare_ds_ms_io import parse_all_symbols
 from src.tacotron.inference_io import parse_input_file, write_input_normalized_sentences, write_input_sentences, parse_map, write_input_symbols, write_input_sentences_mapped, parse_map

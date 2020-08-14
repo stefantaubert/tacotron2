@@ -14,20 +14,20 @@ from pathlib import Path
 from PIL import Image
 
 import torch
-from src.text.ipa2symb import extract_from_sentence
 
 __csv_separator = '\t'
 
-# def split_train_test_val(wholeset: list, test_size: float, validation_size: float, seed: int) -> (list, list, list):
-#   trainset, testset, valset = wholeset, [], []
-
-#   if test_size > 0:
-#     trainset, testset = train_test_split(trainset, test_size=test_size, random_state=seed)
-
-#   if validation_size > 0:
-#     trainset, valset = train_test_split(trainset, test_size=validation_size, random_state=seed)
-  
-#   return trainset, testset, valset
+def get_chunk_name(i, chunksize, maximum):
+  assert i >= 0
+  assert chunksize > 0
+  assert maximum >= 0
+  start = i // chunksize
+  start *= chunksize
+  end = start + chunksize - 1
+  if end > maximum:
+    end = maximum
+  res = f"{start}-{end}"
+  return res
 
 def stack_images_vertically(list_im, out_path):
   images = [Image.open(i) for i in list_im]
@@ -57,17 +57,6 @@ def load_csv(path: str, dc_type) -> list:
   data = pd.read_csv(path, header=None, sep=__csv_separator)
   data_loaded = [dc_type(*xi) for xi in data.values]
   return data_loaded
-
-def get_last_checkpoint(checkpoint_dir) -> str:
-  #checkpoint_dir = get_checkpoint_dir(training_dir_path)
-  _, _, filenames = next(os.walk(checkpoint_dir))
-  filenames = [x for x in filenames if ".log" not in x]
-  at_least_one_checkpoint_exists = len(filenames) > 0
-  if at_least_one_checkpoint_exists:
-    last_checkpoint = str(max(list(map(int, filenames))))
-    return last_checkpoint
-  else:
-    return None
 
 # def serialize_ds_speaker(ds: str, speaker: str):
 #   return "{},{}".format(ds, speaker)

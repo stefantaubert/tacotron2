@@ -14,8 +14,8 @@ from numpy import finfo
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.core.common.train_log import get_log_dir, log, reset_log
-from src.core.common.utils import (args_to_str, get_last_checkpoint,
+from src.core.common import get_log_dir, log, reset_log
+from src.core.common import (args_to_str, get_last_checkpoint,
                               parse_ds_speakers, parse_json)
 from src.tacotron.data_utils import SymbolsMelCollate, SymbolsMelLoader
 from src.tacotron.hparams import create_hparams

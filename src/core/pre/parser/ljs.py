@@ -5,7 +5,7 @@ import tarfile
 import wget
 from tqdm import tqdm
 
-from src.core.pre.language import Language
+from src.core.common import Language
 from src.core.pre.parser.data import PreDataList, PreData
 
 def download(dir_path: str):

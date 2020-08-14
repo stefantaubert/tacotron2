@@ -5,9 +5,9 @@ from src.core.pre.wav import WavDataList, WavData
 from src.core.pre.mel import MelDataList, MelData
 from src.core.pre.merge_ds import expand_speakers, get_speakers, get_prepared_data, PreparedData, PreparedDataList, map_to_prepared_data, merge_prepared_data, split_prepared_data_train_test_val, split_train_test_val, preprocess
 from src.core.pre.ds import SpeakersDict
-from src.core.pre.language import Language
+from src.core.common import Language
 from typing import List, Tuple, OrderedDict
-from src.text.symbol_converter import SymbolConverter
+from src.core.pre.text import SymbolConverter
 
 
 class UnitTests(unittest.TestCase):

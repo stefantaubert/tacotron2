@@ -4,13 +4,13 @@ from typing import List, OrderedDict, Tuple
 
 from sklearn.model_selection import train_test_split
 
-from src.core.common.utils import load_csv, parse_json, save_csv, save_json
+from src.core.common import load_csv, parse_json, save_csv, save_json
 from src.core.pre.ds import DsData, DsDataList, SpeakersDict
-from src.core.pre.language import Language
+from src.core.common import Language
 from src.core.pre.mel import MelData, MelDataList
 from src.core.pre.text import TextData, TextDataList
 from src.core.pre.wav import WavData, WavDataList
-from src.text.symbol_converter import SymbolConverter
+from src.core.pre.text import SymbolConverter
 
 
 class SpeakersIdDict(OrderedDict[int, str]):
@@ -186,43 +186,6 @@ def assert_fraction_is_big_enough(fraction: float, size: int):
     print(f"Warn: Split-fraction {fraction} is to small, it should be >= {min_frac}.")
     return False
   return True
-# def split_train_test(wholeset: list, train_size: float, random_state: int, shuffle: bool):
-#   assert random_state >= 0
-#   assert 0 <= train_size <= 1
-
-#   trainset, testset = wholeset, []
-#   if train_size:
-#     if train_size < 1:
-#       min_ratio = min(train_size, 1 - train_size)
-#       if min_ratio < 1 / len(trainset):
-#         if min_ratio == train_size:
-#           testset, trainset = split_train_one_test(wholeset, random_state=random_state, shuffle=shuffle)
-#         else:
-#           trainset, testset = split_train_one_test(wholeset, random_state=random_state, shuffle=shuffle)
-#       else:
-#         trainset, testset = train_test_split(trainset, train_size=train_size, random_state=random_state, shuffle=shuffle)
-#     else:
-#       trainset = wholeset
-#       testset = []
-#   else:
-#     trainset = []
-#     testset = wholeset
-
-#   return trainset, testset
-
-# def split_train_one_test(wholeset: list, random_state: int, shuffle: bool):
-#   assert len(wholeset) > 1
-#   assert random_state >= 0
-
-#   if shuffle:
-#     random.seed(random_state)
-#     test_index = random.choice(list(range(len(wholeset))))
-#     testset = [wholeset[test_index]]
-#     trainset = [x for i, x in enumerate(wholeset) if i != test_index]
-#   else:
-#     trainset = wholeset[:-1]
-#     testset = [wholeset[-1]]
-#   return trainset, testset
 
 
 def get_speakers(ds_speakers: Tuple[str, str]) -> Tuple[OrderedDict[str, List[Tuple[str, int]]], SpeakersIdDict]:

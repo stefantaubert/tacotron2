@@ -8,8 +8,8 @@ import numpy as np
 from tqdm import tqdm
 
 import torch
-from src.core.common.train_log import log
-from src.core.common.utils import (parse_ds_speakers, parse_json, str_to_int,
+from src.core.common import log
+from src.core.common import (parse_ds_speakers, parse_json, str_to_int,
                               serialize_ds_speaker, serialize_ds_speakers)
 from src.pre.text_pre_io import TextData, TextDataList, parse_data, parse_symbols, expand_speakers
 from src.tacotron.prepare_ds_ms_io import (remove_weights_file,
@@ -21,7 +21,7 @@ from src.text.symbol_converter import (deserialize_symbol_ids,
                                        init_from_symbols, load_from_file,
                                        serialize_symbol_ids)
 from torch import nn
-from src.core.common.utils import split_train_test_val
+from src.core.common import split_train_test_val
 
 def expand_speakers_core(base_dir, speakers):
   # expand all

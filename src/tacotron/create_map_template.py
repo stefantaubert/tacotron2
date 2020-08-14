@@ -1,7 +1,7 @@
-from src.core.common.utils import save_json, parse_json
+from src.core.common import save_json, parse_json
 from src.text.symbol_converter import load_from_file
 from collections import OrderedDict
-from src.text.ipa2symb import extract_from_sentence
+from src.core.pre import extract_from_sentence
 
 def save(path: str, symbols: set) -> set:
   with open(path, 'w', encoding='utf-8') as f:

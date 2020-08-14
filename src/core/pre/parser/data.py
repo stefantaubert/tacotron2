@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
-from src.core.pre.language import Language
+from src.core.common import Language
+
 
 @dataclass()
 class PreData:

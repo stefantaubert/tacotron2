@@ -2,9 +2,10 @@ import os
 
 from tqdm import tqdm
 
-from src.core.common.utils import download_tar
+from src.core.common import download_tar
 from src.core.pre.parser.data import PreDataList, PreData
-from src.core.pre.language import Language
+from src.core.common import Language
+
 
 def download(dir_path: str):
   download_tar("http://data.cslt.org/thchs30/zip/wav.tgz", dir_path)

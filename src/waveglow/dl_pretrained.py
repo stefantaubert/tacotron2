@@ -4,7 +4,7 @@ import gdown
 import shutil
 from pathlib import Path
 from src.waveglow.converter.convert import convert
-from src.core.common.utils import create_parent_folder
+from src.core.common import create_parent_folder
 
 def init_download_parser(parser: ArgumentParser):
   parser.add_argument('--destination', type=str, required=True)
