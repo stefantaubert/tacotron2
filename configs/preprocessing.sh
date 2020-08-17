@@ -19,7 +19,7 @@ source /home/stefan/tacotron2/configs/envs/prod-phil.sh
 
 # Preprocessing
 
-python -m src.cli.runner parse-ljs \
+python -m src.cli.runner preprocess-ljs \
   --path="$ljs_data" \
   --auto_dl \
   --base_dir="$base_dir" \

@@ -7,7 +7,7 @@ src/playground.sh
 __pycache__/
 *.py[cod]
 *$py.class
-
+.mypy
 # C extensions
 *.so
 

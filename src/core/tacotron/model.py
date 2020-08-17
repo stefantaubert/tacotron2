@@ -7,7 +7,7 @@ from torch.nn import functional as F
 
 from src.core.common import ConvNorm, LinearNorm
 from src.core.common import get_mask_from_lengths, to_gpu
-
+from typing import Tuple, List
 
 class LocationLayer(nn.Module):
   def __init__(self, hparams):
@@ -519,7 +519,7 @@ class Tacotron2(nn.Module):
 
     return ((text_padded, input_lengths, mel_padded, max_len, output_lengths, speaker_ids), (mel_padded, gate_padded))
 
-  def parse_output(self, outputs, output_lengths=None):
+  def parse_output(self, outputs, output_lengths=None) -> List[torch.Tensor]:
     if self.mask_padding and output_lengths is not None:
       mask = ~get_mask_from_lengths(output_lengths)
       mask = mask.expand(self.n_mel_channels, mask.size(0), mask.size(1))
@@ -572,7 +572,7 @@ class Tacotron2(nn.Module):
 
     return self.parse_output([mel_outputs, mel_outputs_postnet, gate_outputs, alignments], output_lengths)
 
-  def inference(self, inputs, speaker_id):
+  def inference(self, inputs, speaker_id) -> List[torch.Tensor]:
     embedded_inputs = self.embedding(inputs).transpose(1, 2)
     encoder_outputs = self.encoder.inference(embedded_inputs)
 

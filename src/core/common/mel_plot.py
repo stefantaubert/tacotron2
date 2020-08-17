@@ -3,10 +3,37 @@ import matplotlib.pylab as plt
 import numpy as np
 from librosa.filters import mel as librosa_mel_fn
 from skimage.metrics import structural_similarity
+import torch
+from src.core.common.audio import get_sample_count
+from typing import List
+
+def concatenate_mels(audios: List[torch.Tensor], sentence_pause_s: float, sampling_rate: int) -> torch.Tensor:
+  sentence_pause_samples_count = get_sample_count(sampling_rate, sentence_pause_s)
+  return concatenate_mels_core(audios, sentence_pause_samples_count)
+
+def concatenate_mels_core(audios: List[torch.Tensor], sentence_pause_samples_count: int = 0) -> torch.Tensor:
+  if len(audios) == 1:
+    return audios[0]
+  else:
+    dt = audios[0].dtype
+    dev = audios[0].device
+    size = audios[0].size()
+    sentence_pause_samples = torch.zeros([sentence_pause_samples_count, size[1], size[2]], dtype=dt, device=dev)
+    output = torch.tensor([], dtype=dt, device=dev)
+    conc = []
+    for audio in audios[:-1]:
+      conc.append(audio)
+      conc.append(sentence_pause_samples)
+    conc.append(audios[-1])
+    output = torch.cat(tuple(conc), dim=0)
+    return output
 
 def compare_mels(path_a, path_b):
   img_a = imageio.imread(path_a)
   img_b = imageio.imread(path_b)
+  return compare_mels_core(img_a, img_b)
+
+def compare_mels_core(img_a, img_b):
   #img_b = imageio.imread(path_original_plot)
   assert img_a.shape[0] == img_b.shape[0]
   img_a_width = img_a.shape[1]

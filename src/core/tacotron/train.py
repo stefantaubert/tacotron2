@@ -3,13 +3,13 @@ import os
 import time
 from functools import partial
 
-import numpy as np
 import torch
 from numpy import finfo
+import numpy as np
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-from src.core.common import log, reset_log, get_last_checkpoint
+from src.core.common import get_last_checkpoint, get_pytorch_filename
 from src.core.pre import PreparedData, PreparedDataList, SpeakersIdDict
 from torch import nn
 from src.core.tacotron.hparams import create_hparams
@@ -253,8 +253,9 @@ def validate(model, criterion, valset, iteration, batch_size, collate_fn, logger
   
   return val_loss
 
-def train_core(hparams, logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, save_checkpoint_log_dir: str, iteration: int, model, optimizer, learning_rate):
+def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, save_checkpoint_log_dir: str, iteration: int, model, optimizer, learning_rate):
   complete_start = time.time()
+  logger = Tacotron2Logger(logdir)
 
   debug_logger.info('Final parsed hparams:')
   x = '\n'.join(str(hparams.values()).split(','))
@@ -368,29 +369,26 @@ def train_core(hparams, logger: Tacotron2Logger, trainset: PreparedDataList, val
   debug_logger.info('Duration: {:.2f}min'.format(duration_m))
 
 
-def continue_train(hparams: str, n_symbols: int, n_speakers: int, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, save_checkpoint_log_dir: str):
-  hp = create_hparams(hparams)
+def continue_train(custom_hparams: str, n_symbols: int, n_speakers: int, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, save_checkpoint_log_dir: str):
+  hp = create_hparams(custom_hparams)
 
   hp.n_symbols = n_symbols
   hp.n_speakers = n_speakers
-  last_checkpoint = get_last_checkpoint(save_checkpoint_dir)
-  assert last_checkpoint
-  last_checkpoint_path = os.path.join(save_checkpoint_dir, last_checkpoint)
+
+  last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
 
   model, optimizer, learning_rate, iteration = _train("", "", last_checkpoint_path, hp)
-  logger = Tacotron2Logger(logdir)
-  train_core(hp, logger, trainset, valset, save_checkpoint_dir, save_checkpoint_log_dir, iteration, model, optimizer, learning_rate)
+  train_core(hp, logdir, trainset, valset, save_checkpoint_dir, save_checkpoint_log_dir, iteration, model, optimizer, learning_rate)
 
 
-def train(warm_start_model_path: str, weights_path: str, hparams: str, logdir: str, n_symbols: int, n_speakers: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, save_checkpoint_log_dir: str):
-  hp = create_hparams(hparams)
+def train(warm_start_model_path: str, weights_path: str, custom_hparams: str, logdir: str, n_symbols: int, n_speakers: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, save_checkpoint_log_dir: str):
+  hp = create_hparams(custom_hparams)
 
   hp.n_symbols = n_symbols
   hp.n_speakers = n_speakers
 
   model, optimizer, learning_rate, iteration = _train(warm_start_model_path, weights_path, "", hp)
-  logger = Tacotron2Logger(logdir)
-  train_core(hp, logger, trainset, valset, save_checkpoint_dir, save_checkpoint_log_dir, iteration, model, optimizer, learning_rate)
+  train_core(hp, logdir, trainset, valset, save_checkpoint_dir, save_checkpoint_log_dir, iteration, model, optimizer, learning_rate)
 
 
 def _train(warm_start_model_path: str, weights_path: str, checkpoint_path: str, hparams):
@@ -463,7 +461,7 @@ def load_checkpoint(checkpoint_path, model, optimizer):
 
 
 def save_checkpoint(model, optimizer, learning_rate, iteration, parent_dir):
-  filepath = os.path.join(parent_dir, f"{iteration}.pt")
+  filepath = os.path.join(parent_dir, get_pytorch_filename(iteration))
   debug_logger.info("Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
   torch.save(
     {

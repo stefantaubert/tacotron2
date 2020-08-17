@@ -106,6 +106,41 @@ class UnitTests(unittest.TestCase):
 
     self.assertEqual(1, len(result))
 
+  def test_concatenate_two_dim(self):
+    a = np.zeros((71, 2))
+    b = np.zeros((29, 2))
+    x = concatenate_audios_core([a, b])
+
+    self.assertEqual((100, 2), x.shape)
+
+  def test_concatenate_no_pause(self):
+    a = np.zeros(71)
+    b = np.zeros(29)
+    x = concatenate_audios_core([a, b])
+
+    self.assertEqual(100, len(x))
+
+  def test_concatenate_one_pause(self):
+    a = np.zeros(71)
+    b = np.zeros(29)
+    x = concatenate_audios_core([a, b], sentence_pause_samples_count=50)
+
+    self.assertEqual(100 + 50, len(x))
+
+  def test_concatenate_two_pause(self):
+    a = np.zeros(71)
+    b = np.zeros(29)
+    c = np.zeros(30)
+    x = concatenate_audios_core([a, b, c], sentence_pause_samples_count=50)
+
+    self.assertEqual(130 + 100, len(x))
+
+  def test_concatenate_one_element(self):
+    a = np.zeros(100)
+    x = concatenate_audios_core([a], sentence_pause_samples_count=50)
+
+    self.assertEqual(100, len(x))
+
   def test_ms_to_samples_500ms_22050sr(self):
     sr = 22050
     duration_ms = 500

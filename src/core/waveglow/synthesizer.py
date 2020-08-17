@@ -32,6 +32,7 @@ from src.core.waveglow.hparams import create_hparams
 from src.core.waveglow.train import load_model
 from src.core.common import is_overamp
 import logging
+import numpy as np
 
 class Synthesizer():
   def __init__(self, checkpoint_path: str, custom_hparams: str = None, logger: logging.Logger = logging.getLogger()):
@@ -58,7 +59,7 @@ class Synthesizer():
     self.model = model
     self.denoiser = denoiser
 
-  def infer_mel(self, mel, sigma: float, denoiser_strength: float):
+  def infer_mel(self, mel, sigma: float, denoiser_strength: float) -> np.ndarray:
     with torch.no_grad():
       audio = self.model.infer(mel, sigma=sigma)
       if denoiser_strength > 0:
@@ -66,9 +67,9 @@ class Synthesizer():
         audio = self.denoiser.forward(audio, strength=denoiser_strength)
     audio = audio.squeeze()
     audio = audio.cpu()
-    audio = audio.numpy()
+    audio_np: np.ndarray = audio.numpy()
 
-    if is_overamp(audio):
+    if is_overamp(audio_np):
       self._logger.warn("Waveglow output is overamplified.")
 
-    return audio
+    return audio_np

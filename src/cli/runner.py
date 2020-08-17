@@ -3,13 +3,24 @@ from argparse import ArgumentParser
 from matplotlib import use as use_matplotlib_backend
 use_matplotlib_backend("Agg")
 
-from src.cli.pre import (init_ljs_parser, init_mel_parser,
-                         init_text_ipa_parser, init_text_normalize_parser,
-                         init_text_parser, init_thchs_kaldi_parser,
-                         init_thchs_parser, init_wav_normalize_parser, init_merge_ds_parser,
-                         init_wav_parser, init_wav_remove_silence_parser,
-                         init_wav_upsample_parser)
-from src.cli.tacotron import init_taco_continue_train_parser, init_taco_train_parser
+from src.cli.pre import (init_prepare_ds_parser, init_preprocess_ljs_parser,
+                         init_preprocess_mels_parser,
+                         init_preprocess_text_parser,
+                         init_preprocess_thchs_kaldi_parser,
+                         init_preprocess_thchs_parser,
+                         init_preprocess_wavs_parser,
+                         init_text_convert_to_ipa_parser,
+                         init_text_normalize_parser,
+                         init_wavs_normalize_parser,
+                         init_wavs_remove_silence_parser,
+                         init_wavs_upsample_parser)
+from src.cli.tacotron import \
+    init_continue_train_parser as init_taco_continue_train_parser
+from src.cli.tacotron import init_inference_parser as init_taco_infer_parser
+from src.cli.tacotron import init_train_parser as init_taco_train_parser
+from src.cli.tacotron import init_validate_parser as init_taco_val_parser
+
+
 
 def _add_parser_to(subparsers, name: str, init_method):
   parser = subparsers.add_parser(name, help='{} help'.format(name))
@@ -23,23 +34,22 @@ def _init_parser():
 
   # only required when automatic name generation
   #__add_parser_to(subparsers, "paths", init_path_parser)
-  _add_parser_to(subparsers, "parse-ljs", init_ljs_parser)
-  _add_parser_to(subparsers, "parse-thchs", init_thchs_parser)
-  _add_parser_to(subparsers, "parse-thchs-kaldi", init_thchs_kaldi_parser)
+  _add_parser_to(subparsers, "preprocess-ljs", init_preprocess_ljs_parser)
+  _add_parser_to(subparsers, "preprocess-thchs", init_preprocess_thchs_parser)
+  _add_parser_to(subparsers, "preprocess-thchs-kaldi", init_preprocess_thchs_kaldi_parser)
   
-  _add_parser_to(subparsers, "parse-wavs", init_wav_parser)
-  _add_parser_to(subparsers, "wavs-normalize", init_wav_normalize_parser)
-  _add_parser_to(subparsers, "wavs-upsample", init_wav_upsample_parser)
-  _add_parser_to(subparsers, "wavs-remove-silence", init_wav_remove_silence_parser)
+  _add_parser_to(subparsers, "preprocess-wavs", init_preprocess_wavs_parser)
+  _add_parser_to(subparsers, "wavs-normalize", init_wavs_normalize_parser)
+  _add_parser_to(subparsers, "wavs-upsample", init_wavs_upsample_parser)
+  _add_parser_to(subparsers, "wavs-remove-silence", init_wavs_remove_silence_parser)
 
-  _add_parser_to(subparsers, "parse-text", init_text_parser)
+  _add_parser_to(subparsers, "preprocess-text", init_preprocess_text_parser)
   _add_parser_to(subparsers, "text-normalize", init_text_normalize_parser)
-  _add_parser_to(subparsers, "text-ipa", init_text_ipa_parser)
+  _add_parser_to(subparsers, "text-ipa", init_text_convert_to_ipa_parser)
 
-  _add_parser_to(subparsers, "parse-mels", init_mel_parser)
+  _add_parser_to(subparsers, "preprocess-mels", init_preprocess_mels_parser)
 
-  _add_parser_to(subparsers, "prepare-ds", init_merge_ds_parser)
-
+  _add_parser_to(subparsers, "prepare-ds", init_prepare_ds_parser)
 
   # # Waveglow
   # _add_parser_to(subparsers, "waveglow-dl", init_wg_download_parser)
@@ -50,8 +60,8 @@ def _init_parser():
   # Tacotron
   _add_parser_to(subparsers, "tacotron-train", init_taco_train_parser)
   _add_parser_to(subparsers, "tacotron-continue-train", init_taco_continue_train_parser)
-  # _add_parser_to(subparsers, "tacotron-validate", init_taco_validate_parser)
-  # _add_parser_to(subparsers, "tacotron-infer", init_taco_inference_parser)
+  _add_parser_to(subparsers, "tacotron-validate", init_taco_val_parser)
+  _add_parser_to(subparsers, "tacotron-infer", init_taco_infer_parser)
   
   # # Tools
   # _add_parser_to(subparsers, "create-map", init_create_map_parser)

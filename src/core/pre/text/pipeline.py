@@ -3,40 +3,39 @@ import epitran
 from src.core.common import Language
 from nltk import download
 from nltk.tokenize import sent_tokenize
-from src.core.pre import SymbolConverter
+from src.core.pre.text.symbol_converter import SymbolConverter
 from src.core.pre.text.chn_tools import chn_to_ipa
 from src.core.pre.text.adjustments import normalize_text
 from typing import List, Tuple
 import logging
 
-def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_arcs: bool, subset_id: int, lang: Language, symbols_map: dict, conv: SymbolConverter, logger: logging.Logger) -> List[List[int]]:
+def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_arcs: bool, subset_id: int, lang: Language, symbols_map: dict, conv: SymbolConverter, debug_logger: logging.Logger) -> List[List[int]]:
   if ipa:
     if lang == Language.ENG:
       epi = epitran.Epitran('eng-Latn')
     elif lang == Language.GER:
       epi = epitran.Epitran('deu-Latn')
   
-  is_ipa = lang == "ipa"
-  if not is_ipa:
+  if lang == Language.ENG or lang == Language.GER:
     download('punkt', quiet=True)
 
   sentences = []
   for line in lines:
-    if lang == "chn" or lang == "ipa":
+    if lang == Language.CHN or lang == Language.IPA:
       sents = line.split('.')
       sents = [x.strip() for x in sents]
       sents = [x + '.' for x in sents if x != '']
-    elif lang == "en":
+    elif lang == Language.ENG:
       sents = sent_tokenize(line, language="english")
-    elif lang == "ger":
+    elif lang == Language.GER:
       sents = sent_tokenize(line, language="german")
     else:
       raise Exception("Unknown input language!")
     sentences.extend(sents)
 
-  if is_ipa:
+  if lang == Language.IPA:
     accented_sents = sentences
-  elif lang == "chn":
+  elif lang == Language.CHN:
     accented_sents = sentences
     if ipa:
       tmp = []
@@ -44,15 +43,15 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
         chn_ipa = chn_to_ipa(s, add_period=False)
         tmp.append(chn_ipa)
       accented_sents = tmp
-  elif lang == "ger":
+  elif lang == Language.GER:
     accented_sents = sentences
     if ipa:
       tmp = []
       for s in sentences:
-        chn_ipa = epi.transliterate(s)
-        tmp.append(chn_ipa)
+        ger_ipa = epi.transliterate(s)
+        tmp.append(ger_ipa)
       accented_sents = tmp
-  elif lang == "en":
+  elif lang == Language.ENG:
     cleaned_sents = []
     for s in sentences:
       cleaned_sent = normalize_text(s)
@@ -69,7 +68,6 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
       else:
         accented_sentence = s
       accented_sents.append(accented_sentence)
-
 
   debug_logger.debug("Accented sents")
   debug_logger.debug(accented_sents)
@@ -89,7 +87,7 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
       symbols = list(s)
 
     mapped_symbols = []
-    if ipa_mapping:
+    if symbols_map:
       for sy in symbols:
         sy_is_mapped = sy in ipa_mapping.keys()
         if sy_is_mapped:

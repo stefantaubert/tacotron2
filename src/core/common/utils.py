@@ -3,19 +3,26 @@ import os
 import tarfile
 from collections import OrderedDict
 from dataclasses import astuple
-from sklearn.model_selection import train_test_split
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import torch
 import wget
+from PIL import Image
 from scipy.io.wavfile import read
 from skimage.metrics import structural_similarity
-from pathlib import Path
-from PIL import Image
-
-import torch
+from sklearn.model_selection import train_test_split
 
 __csv_separator = '\t'
+
+def get_basename(filepath: str):
+  bn, _ = os.path.splitext(os.path.basename(filepath))
+  return bn
+
+def get_parent_dirname(filepath: str):
+  last_dir_name = Path(filepath).parts[-1]
+  return last_dir_name
 
 def get_chunk_name(i, chunksize, maximum):
   assert i >= 0

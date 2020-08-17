@@ -11,7 +11,7 @@ class Synthesizer():
     super().__init__()
     assert os.path.isfile(checkpoint_path)
     self._logger = logger
-    self._logger.info(f"Loding tacotron model from: {checkpoint_path}")
+    self._logger.info(f"Loading tacotron model from: {checkpoint_path}")
     self._logger.info(f'Loaded {n_symbols} symbols')
     self._logger.info(f'Loaded {n_speakers} speaker(s)')
 

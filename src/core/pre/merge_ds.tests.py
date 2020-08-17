@@ -11,7 +11,25 @@ from src.core.pre.text import SymbolConverter
 
 
 class UnitTests(unittest.TestCase):
-  
+  def test_sort_prep_data_list(self):
+    l = PreparedDataList([
+      PreparedData(
+        0, 2, "", "", "", "", 0, 0, "", 0
+      ),
+      PreparedData(
+        0, 1, "", "", "", "", 0, 0, "", 0
+      ),
+      PreparedData(
+        0, 3, "", "", "", "", 0, 0, "", 0
+      )
+    ])
+
+    l.sort(key=PreparedDataList.get_key_for_sorting_after_entry_id, reverse=False)
+
+    self.assertEqual(1, l[0].entry_id)
+    self.assertEqual(2, l[1].entry_id)
+    self.assertEqual(3, l[2].entry_id)
+
   def test_expand_speakers(self):
     speakers = {
       "thchs": ["a1", "a2"],

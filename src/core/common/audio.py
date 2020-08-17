@@ -1,6 +1,7 @@
 import random
 from math import inf, log10
 
+from typing import List, Tuple
 import numpy as np
 from resampy import resample as resamply_resample
 from scipy.io.wavfile import read, write
@@ -144,16 +145,27 @@ def get_min_value(dtype):
   elif dtype==np.float32 or dtype == np.float64: return float32_64_min_wav
   else: assert False
 
-def concatenate_audios(audios: list, sentence_pause_s: float, sampling_rate: int) -> np.array:
-  sentence_pause_samples_count = int(round(sampling_rate * sentence_pause_s, 0))
+def get_sample_count(sampling_rate: int, duration_s: float):
+  return int(round(sampling_rate * duration_s, 0))
+
+def concatenate_audios(audios: List[np.ndarray], sentence_pause_s: float, sampling_rate: int) -> np.array:
+  sentence_pause_samples_count = get_sample_count(sampling_rate, sentence_pause_s)
   return concatenate_audios_core(audios, sentence_pause_samples_count)
 
-def concatenate_audios_core(audios: list, sentence_pause_samples_count: int) -> np.array:
-  sentence_pause_samples = np.zeros(shape=sentence_pause_samples_count)
-  output = np.array([])
-  for audio in audios:
-    output = np.concatenate((output, audio, sentence_pause_samples), axis=0)
-  return output
+def concatenate_audios_core(audios: List[np.ndarray], sentence_pause_samples_count: int = 0) -> np.ndarray:
+  if len(audios) == 1:
+    return audios[0]
+  else:
+    pause_shape = list(audios[0].shape)
+    pause_shape[0] = sentence_pause_samples_count
+    sentence_pause_samples = np.zeros(tuple(pause_shape))
+    conc = []
+    for audio in audios[:-1]:
+      conc.append(audio)
+      conc.append(sentence_pause_samples)
+    conc.append(audios[-1])
+    output = np.concatenate(tuple(conc), axis=0)
+    return output
 
 def normalize_file(in_path, out_path):
   sampling_rate, wav = read(in_path)
@@ -192,7 +204,7 @@ def wav_to_float32(path: str) -> (np.float32, int):
   wav = convert_wav(wav, np.float32)
   return wav, sampling_rate
 
-def is_overamp(wav):
+def is_overamp(wav: np.ndarray) -> bool:
   lowest_value = get_min_value(wav.dtype)
   highest_value = get_max_value(wav.dtype)
   wav_min = np.min(wav)
@@ -223,13 +235,13 @@ def get_duration_s_file(wav_path) -> float:
   sampling_rate, wav = read(wav_path)
   return get_duration_s(wav, sampling_rate)
 
-def mel_to_numpy(mel):
+def mel_to_numpy(mel: torch.Tensor) -> np.ndarray:
   mel = mel.squeeze(0)
   mel = mel.cpu()
-  mel = mel.numpy()
-  return mel
+  mel_np: np.ndarray = mel.numpy()
+  return mel_np
 
-def wav_to_float32_tensor(path: str) -> (torch.float32, int):
+def wav_to_float32_tensor(path: str) -> Tuple[torch.Tensor, int]:
   wav, sampling_rate = wav_to_float32(path)
   wav_tensor = torch.FloatTensor(wav)
 

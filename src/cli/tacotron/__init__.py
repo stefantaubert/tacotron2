@@ -1,1 +1,1 @@
-from src.cli.tacotron.train import init_continue_train_parser as init_taco_continue_train_parser, init_train_parser as init_taco_train_parser
+from src.cli.tacotron.parser import init_continue_train_parser, init_train_parser, init_validate_parser, init_inference_parser

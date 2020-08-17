@@ -1,16 +1,19 @@
+import logging
+import os
 import random
 import time
-from tqdm import tqdm
-import os
-from src.core.common import (get_wav_tensor_segment,
-                                    wav_to_float32_tensor)
-from src.core.common import TacotronSTFT, get_last_checkpoint
-from src.core.pre import PreparedData, PreparedDataList
-from src.core.waveglow.model import WaveGlow, WaveGlowLoss
-from src.core.waveglow.logger import WaveglowLogger
+
 from torch.utils.data import DataLoader, Dataset
-import logging
+from tqdm import tqdm
+
+from src.core.common import (TacotronSTFT, get_pytorch_filename,
+                             get_last_checkpoint, get_wav_tensor_segment,
+                             wav_to_float32_tensor)
+from src.core.pre import PreparedData, PreparedDataList
 from src.core.waveglow.hparams import create_hparams
+from src.core.waveglow.logger import WaveglowLogger
+from src.core.waveglow.model import WaveGlow, WaveGlowLoss
+
 
 def get_train_logger():
   return logging.getLogger("wg-train")
@@ -145,8 +148,9 @@ def validate(model, criterion, val_loader, iteration, logger: WaveglowLogger):
   return val_loss
 
 
-def train_core(hparams, logger: WaveglowLogger, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, iteration: int, model, optimizer, learning_rate):
+def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, iteration: int, model, optimizer, learning_rate):
   complete_start = time.time()
+  logger = WaveglowLogger(logdir)
 
   debug_logger.info('Final parsed hparams:')
   debug_logger.info('\n'.join(str(hparams.values()).split(',')))
@@ -264,21 +268,17 @@ def train_core(hparams, logger: WaveglowLogger, trainset: PreparedDataList, vals
 def continue_train(hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str):
   hp = create_hparams(hparams)
 
-  last_checkpoint = get_last_checkpoint(save_checkpoint_dir)
-  assert last_checkpoint
-  last_checkpoint_path = os.path.join(save_checkpoint_dir, last_checkpoint)
+  last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
 
   model, optimizer, learning_rate, iteration = _train(last_checkpoint_path, hp)
-  logger = WaveglowLogger(logdir)
-  train_core(hp, logger, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
+  train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
 
 
 def train(hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str):
   hp = create_hparams(hparams)
 
   model, optimizer, learning_rate, iteration = _train("", hp)
-  logger = WaveglowLogger(logdir)
-  train_core(hp, logger, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
+  train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
 
 def _train(checkpoint_path: str, hparams):
   """Training and validation logging results to tensorboard and stdout
@@ -350,7 +350,7 @@ def load_checkpoint(checkpoint_path, model, optimizer):
   return model, optimizer, learning_rate, iteration
 
 def save_checkpoint(model, optimizer, learning_rate, iteration, parent_dir):
-  filepath = os.path.join(parent_dir, f"{iteration}.pt")
+  filepath = os.path.join(parent_dir, get_pytorch_filename(iteration))
   debug_logger.info("Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
   torch.save(
     {

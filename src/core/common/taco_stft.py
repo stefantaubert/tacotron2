@@ -5,8 +5,8 @@ from librosa.filters import mel as librosa_mel_fn
 from skimage.metrics import structural_similarity
 
 import torch
-from src.core.common import wav_to_float32_tensor
-from src.core.pre.mel.stft import STFT
+from src.core.common.audio import wav_to_float32_tensor
+from src.core.common.stft import STFT
 import tensorflow as tf
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):

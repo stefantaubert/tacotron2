@@ -9,7 +9,7 @@ from typing import List
 import torch
 from tqdm import tqdm
 
-from src.core.common import load_csv, save_csv
+from src.core.common import load_csv, save_csv, get_pytorch_filename
 from src.core.common import get_chunk_name
 from src.core.pre.wav import WavData, WavDataList
 from src.core.common import TacotronSTFT, create_hparams
@@ -42,7 +42,7 @@ def process(data: WavDataList, dest_dir: str, custom_hparams: str) -> MelDataLis
   for values in tqdm(data):
     chunk_dir = os.path.join(dest_dir, get_chunk_name(values.entry_id, chunksize=500, maximum=len(data) - 1))
     os.makedirs(chunk_dir, exist_ok=True)
-    dest_mel_path = os.path.join(chunk_dir, f"{values!r}.pt")
+    dest_mel_path = os.path.join(chunk_dir, get_pytorch_filename(repr(values)))
     mel_tensor = mel_parser.get_mel_tensor_from_file(values.wav)
     torch.save(mel_tensor, dest_mel_path)
     result.append(MelData(values.entry_id, dest_mel_path, values.duration, values.sr))

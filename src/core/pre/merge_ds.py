@@ -19,7 +19,7 @@ class SpeakersIdDict(OrderedDict[int, str]):
   
   def get_speakers(self):
     return list(self.values())
-
+    
   @classmethod
   def load(cls, file_path: str):
     data = parse_json(file_path)
@@ -38,6 +38,7 @@ class PreparedData:
   speaker_name: str
   lang: Language
 
+
 class PreparedDataList(List[PreparedData]):
   def save(self, file_path: str):
     save_csv(self, file_path)
@@ -47,6 +48,16 @@ class PreparedDataList(List[PreparedData]):
     durations = [x.duration for x in self]
     total_duration = sum(durations)
     return total_duration
+
+  def get_entry(self, i: int) -> PreparedData:
+    for entry in self:
+      if entry.i == i:
+        return entry
+    raise Exception(f"Entry {i} not found.")
+
+  @staticmethod
+  def get_key_for_sorting_after_entry_id(elem: PreparedData):
+    return elem.entry_id
 
   @classmethod
   def load(cls, file_path: str):
@@ -103,6 +114,8 @@ def get_prepared_data(ds_data: DsDataList, speaker_names: List[Tuple[str, int]],
 
         res.append(prep_data)
         counter += 1
+
+  res.sort(key=PreparedDataList.get_key_for_sorting_after_entry_id, reverse=False)
   return res
 
 def merge_prepared_data(prep_list: List[Tuple[PreparedDataList, SymbolConverter]]) -> Tuple[PreparedDataList, SymbolConverter]:
