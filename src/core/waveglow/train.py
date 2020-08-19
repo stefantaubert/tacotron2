@@ -253,8 +253,8 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
       
       if (iteration % hparams.iters_per_checkpoint == 0):
         #if rank == 0:
-        validate(model, criterion, val_loader, iteration, logger)
         save_checkpoint(model, optimizer, hparams.learning_rate, iteration, save_checkpoint_dir)
+        validate(model, criterion, val_loader, iteration, logger)
 
       iteration += 1
 

@@ -175,74 +175,76 @@ duration: about 5 days on t4
 ```
 $base_dir
 
-├── filelist
-│  ├── ljs
-│  │  ├── symbols.json
-│  │  ├── speakers.json
-│  │  ├── data.csv
-
 ├── pre
-│  ├── ljs
-│  │  ├── speakers.json
-│  │  ├── data.csv
-│  │  ├── text
-│  │  │  ├── en
-│  │  │  │  ├── data.csv
-│  │  │  │  ├── symbol_ids.json
-│  │  │  │  ├── symbols.json
-│  │  │  ├── en_normalized
-│  │  │  │  ├── data.csv
-│  │  │  │  ├── symbol_ids.json
-│  │  │  │  ├── symbols.json
-│  │  │  ├── ipa_normalized
-│  │  │  │  ├── data.csv
-│  │  │  │  ├── symbol_ids.json
-│  │  │  │  ├── symbols.json
-│  │  ├── wav
-│  │  │  ├── 22050kHz
-│  │  │  │  ├── data.csv
-│  │  │  │  ├── 0-499
-│  │  │  │  │  ├── 0.wav
+│  ├── ds
+│  │  ├── ljs
+│  │  │  ├── speakers.json
+│  │  │  ├── data.csv
+│  │  │  ├── text
+│  │  │  │  ├── en
+│  │  │  │  │  ├── data.csv
+│  │  │  │  │  ├── symbol_ids.json
+│  │  │  │  │  ├── symbols.json
+│  │  │  │  ├── en_normalized
+│  │  │  │  │  ├── data.csv
+│  │  │  │  │  ├── symbol_ids.json
+│  │  │  │  │  ├── symbols.json
+│  │  │  │  ├── ipa_normalized
+│  │  │  │  │  ├── data.csv
+│  │  │  │  │  ├── symbol_ids.json
+│  │  │  │  │  ├── symbols.json
+│  │  │  ├── wav
+│  │  │  │  ├── 22050kHz
+│  │  │  │  │  ├── data.csv
+│  │  │  │  │  ├── 0-499
+│  │  │  │  │  │  ├── 0.wav
+│  │  │  │  │  │  ├── ...
 │  │  │  │  │  ├── ...
-│  │  │  │  ├── ...
-│  │  ├── mel
-│  │  │  ├── 22050kHz
-│  │  │  │  ├── data.csv
-│  │  │  │  ├── 0-499
-│  │  │  │  │  ├── 0.pt
+│  │  │  ├── mel
+│  │  │  │  ├── 22050kHz
+│  │  │  │  │  ├── data.csv
+│  │  │  │  │  ├── 0-499
+│  │  │  │  │  │  ├── 0.pt
+│  │  │  │  │  │  ├── ...
 │  │  │  │  │  ├── ...
-│  │  │  │  ├── ...
-│  ├── thchs
-│  │  ├── data.csv
-│  │  ├── speakers.json
-│  │  ├── text
-│  │  │  ├── ipa
-│  │  │  │  ├── data.csv
-│  │  │  │  ├── symbols.json
-│  │  ├── wav
-│  │  │  ├── 16000kHz
-│  │  │  │  ├── data.csv
-│  │  │  ├── 16000kHz_normalized
-│  │  │  │  ├── data.csv
-│  │  │  │  ├── data
-│  │  │  │  │  ├── 0-LJ001-0001.wav
-│  │  │  │  │  ├── ...
-│  │  │  ├── 22050kHz_normalized
-│  │  │  │  ├── data.csv
-│  │  │  │  ├── data
-│  │  │  │  │  ├── 0-LJ001-0001.wav
-│  │  │  │  │  ├── ...
-│  │  │  ├── 22050kHz_normalized_nosil
-│  │  │  │  ├── data.csv
-│  │  │  │  ├── data
-│  │  │  │  │  ├── 0-LJ001-0001.wav
-│  │  │  │  │  ├── ...
-│  │  ├── mel
-│  │  │  ├── 22050kHz_normalized_nosil
-│  │  │  │  ├── data.csv
-│  │  │  │  ├── data
-│  │  │  │  │  ├── 0-LJ001-0001.pt
-│  │  │  │  │  ├── ...
+│  │  ├── thchs
+│  │  │  ├── data.csv
+│  │  │  ├── speakers.json
+│  │  │  ├── text
+│  │  │  │  ├── ipa
+│  │  │  │  │  ├── data.csv
+│  │  │  │  │  ├── symbols.json
+│  │  │  ├── wav
+│  │  │  │  ├── 16000kHz
+│  │  │  │  │  ├── data.csv
+│  │  │  │  ├── 16000kHz_normalized
+│  │  │  │  │  ├── data.csv
+│  │  │  │  │  ├── data
+│  │  │  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  │  │  ├── ...
+│  │  │  │  ├── 22050kHz_normalized
+│  │  │  │  │  ├── data.csv
+│  │  │  │  │  ├── data
+│  │  │  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  │  │  ├── ...
+│  │  │  │  ├── 22050kHz_normalized_nosil
+│  │  │  │  │  ├── data.csv
+│  │  │  │  │  ├── data
+│  │  │  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  │  │  ├── ...
+│  │  │  ├── mel
+│  │  │  │  ├── 22050kHz_normalized_nosil
+│  │  │  │  │  ├── data.csv
+│  │  │  │  │  ├── data
+│  │  │  │  │  │  ├── 0-LJ001-0001.pt
+│  │  │  │  │  │  ├── ...
+│  ├── prepared
+│  │  ├── thchs
+│  │  │  ├── speakers.json
+│  │  │  ├── symbols.json
+│  │  │  ├── data.csv
+│  │  ├── ljs
+│  │  ├── ljs_thchs
 ├── pre
 │  ├── ds
 │  │  ├── thchs

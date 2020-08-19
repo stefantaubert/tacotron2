@@ -126,8 +126,6 @@ class SymbolsMelCollate():
 
 # import torch.distributed as dist
 
-
-
 # def reduce_tensor(tensor, n_gpus):
 #   rt = tensor.clone()
 #   dist.all_reduce(rt, op=dist.reduce_op.SUM)
@@ -342,25 +340,25 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
       #if not is_overflow and (iteration % hparams.iters_per_checkpoint == 0):
       save_iteration = (hparams.iters_per_checkpoint > 0 and (iteration % hparams.iters_per_checkpoint == 0)) or iteration == 0
       if save_iteration:
+        save_checkpoint(model, optimizer, learning_rate, iteration, save_checkpoint_dir)
         valloss = validate(model, criterion, valset, iteration, hparams.batch_size, collate_fn, logger)
         #if rank == 0:
-        save_checkpoint(model, optimizer, learning_rate, iteration, save_checkpoint_dir)
         save_checkpoint_score(save_checkpoint_log_dir, iteration, grad_norm, reduced_loss, valloss, epoch, i)
       iteration += 1
 
     checkpoint_was_already_created = save_iteration
     save_epoch = not checkpoint_was_already_created and hparams.epochs_per_checkpoint > 0 and (epoch % hparams.epochs_per_checkpoint == 0)
     if save_epoch:
+      save_checkpoint(model, optimizer, learning_rate, iteration - 1, save_checkpoint_dir)
       valloss = validate(model, criterion, valset, iteration - 1, hparams.batch_size, collate_fn, logger)
       #if rank == 0:
-      save_checkpoint(model, optimizer, learning_rate, iteration - 1, save_checkpoint_dir)
       save_checkpoint_score(save_checkpoint_log_dir, iteration - 1, grad_norm, reduced_loss, valloss, epoch, i)
 
   checkpoint_was_already_created = save_iteration or save_epoch
   if not checkpoint_was_already_created:
+    save_checkpoint(model, optimizer, learning_rate, iteration - 1, save_checkpoint_dir)
     valloss = validate(model, criterion, valset, iteration - 1, hparams.batch_size, collate_fn, logger)
     #if rank == 0:
-    save_checkpoint(model, optimizer, learning_rate, iteration - 1, save_checkpoint_dir)
     save_checkpoint_score(save_checkpoint_log_dir, iteration - 1, grad_norm, reduced_loss, valloss, epoch, i)
 
   debug_logger.info('Finished training.')

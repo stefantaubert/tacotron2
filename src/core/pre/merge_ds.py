@@ -32,6 +32,7 @@ class PreparedData:
   basename: str
   wav_path: str
   mel_path: str
+  n_mel_channels: int
   serialized_updated_ids: str
   duration: float
   speaker_id: int
@@ -87,6 +88,7 @@ def map_to_prepared_data(ds_data: DsData, text_data: TextData, wav_data: WavData
     basename=ds_data.basename,
     wav_path=wav_data.wav,
     mel_path=mel_data.mel_path,
+    n_mel_channels=mel_data.n_mel_channels,
     serialized_updated_ids=text_data.serialized_symbol_ids,
     lang=text_data.lang,
     duration=wav_data.duration,

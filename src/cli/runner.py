@@ -23,7 +23,7 @@ from src.cli.waveglow import \
     init_continue_train_parser as init_wg_continue_train_parser
 from src.cli.waveglow import init_inference_parser as init_wg_infer_parser
 from src.cli.waveglow import init_train_parser as init_wg_train_parser
-from src.cli.waveglow import init_validate_parser as init_wg_val_parser
+from src.cli.waveglow import init_validate_parser as init_wg_val_parser, init_download_parser as init_wg_dl_parser
 
 
 def _add_parser_to(subparsers, name: str, init_method):
@@ -55,8 +55,8 @@ def _init_parser():
 
   _add_parser_to(subparsers, "prepare-ds", init_prepare_ds_parser)
 
-  # # Waveglow
-  # _add_parser_to(subparsers, "waveglow-dl", init_wg_download_parser)
+  # Waveglow
+  _add_parser_to(subparsers, "waveglow-dl", init_wg_dl_parser)
   _add_parser_to(subparsers, "waveglow-train", init_wg_train_parser)
   _add_parser_to(subparsers, "waveglow-continue-train", init_wg_continue_train_parser)
   _add_parser_to(subparsers, "waveglow-validate", init_wg_val_parser)

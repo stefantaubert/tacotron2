@@ -13,8 +13,37 @@ from PIL import Image
 from scipy.io.wavfile import read
 from skimage.metrics import structural_similarity
 from sklearn.model_selection import train_test_split
-
+from typing import Tuple
+from scipy.spatial.distance import cdist, cosine
 __csv_separator = '\t'
+
+def cosine_dist_mels(a: np.ndarray, b: np.ndarray) -> float:
+  a, b = make_same_dim(a, b)
+  scores = []
+  for channel_nr in range(a.shape[0]):
+    channel_a = a[channel_nr]
+    channel_b = b[channel_nr]
+    score = cosine(channel_a, channel_b)
+    if np.isnan(score):
+      score = 1
+    scores.append(score)
+  score = np.mean(scores)
+  #scores = cdist(pred_np, orig_np, 'cosine')
+  final_score = 1 - score
+  return final_score
+
+def make_same_dim(a: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+  dim_a = a.shape[1]
+  dim_b = b.shape[1]
+  diff = abs(dim_a - dim_b)
+  if diff > 0:
+    adding_array = np.zeros(shape=(a.shape[0], diff))
+    if dim_a < dim_b:
+      a = np.concatenate((a, adding_array), axis=1)
+    else:
+      b = np.concatenate((b, adding_array), axis=1)
+  assert a.shape == b.shape
+  return a, b
 
 def get_basename(filepath: str):
   bn, _ = os.path.splitext(os.path.basename(filepath))

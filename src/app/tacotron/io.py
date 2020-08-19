@@ -1,0 +1,5 @@
+from src.core.common import get_subdir
+from src.app.io import get_train_root_dir
+
+def get_train_dir(base_dir: str, train_name: str, create: bool):
+  return get_subdir(get_train_root_dir(base_dir, "tacotron", create), train_name, create)

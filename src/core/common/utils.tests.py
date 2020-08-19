@@ -1,8 +1,54 @@
 import unittest
-from src.core.common.utils import get_chunk_name
+from src.core.common.utils import get_chunk_name, make_same_dim, cosine_dist_mels
+import numpy as np
 
 class UnitTests(unittest.TestCase):
   
+  def test_cosine_dist_mels_1_minus1(self):
+    a = np.ones(shape=(80, 1))
+    b = np.ones(shape=(80, 1))
+    score = cosine_dist_mels(a, -b)
+    self.assertEqual(-1, score)
+
+  def test_cosine_dist_mels_1_0(self):
+    a = np.ones(shape=(80, 1))
+    b = np.ones(shape=(80, 0))
+    score = cosine_dist_mels(a, b)
+    self.assertEqual(0, score)
+
+  def test_cosine_dist_mels_1_1(self):
+    a = np.ones(shape=(80, 1))
+    b = np.ones(shape=(80, 1))
+    score = cosine_dist_mels(a, b)
+    self.assertEqual(1, score)
+
+  def test_make_same_dim_1_0(self):
+    a = np.ones(shape=(80, 1))
+    b = np.ones(shape=(80, 0))
+    a_res, b_res = make_same_dim(a, b)
+    self.assertEqual((80, 1), a_res.shape)
+    self.assertEqual((80, 1), b_res.shape)
+    self.assertEqual(1, a_res[0])
+    self.assertEqual(0, b_res[0])
+
+  def test_make_same_dim_1_1(self):
+    a = np.ones(shape=(80, 1))
+    b = np.ones(shape=(80, 1))
+    a_res, b_res = make_same_dim(a, b)
+    self.assertEqual((80, 1), a_res.shape)
+    self.assertEqual((80, 1), b_res.shape)
+    self.assertEqual(1, a_res[0])
+    self.assertEqual(1, b_res[0])
+
+  def test_make_same_dim_0_1(self):
+    a = np.ones(shape=(80, 0))
+    b = np.ones(shape=(80, 1))
+    a_res, b_res = make_same_dim(a, b)
+    self.assertEqual((80, 1), a_res.shape)
+    self.assertEqual((80, 1), b_res.shape)
+    self.assertEqual(0, a_res[0])
+    self.assertEqual(1, b_res[0])
+
   def test_0_500_0_is_0_0(self):
     x = get_chunk_name(0, 500, 0)
     self.assertEqual("0-0", x)

@@ -13,61 +13,53 @@ from src.core.common import (Language, float_to_wav, get_basename,
                              stack_images_vertically)
 from src.core.pre import PreparedDataList, SpeakersIdDict, SymbolConverter
 
-def get_train_root_dir(base_dir: str, train_name: str, create: bool):
-  return get_subdir(base_dir, os.path.join("train", train_name), create)
-
 #region Training
 
-def _get_train_csv(base_dir: str, train_name: str):
-  return os.path.join(get_train_root_dir(base_dir, train_name, create=True), "train.csv")
+_train_csv = "train.csv"
+_test_csv = "test.csv"
+_val_csv = "validation.csv"
 
-def _get_test_csv(base_dir: str, train_name: str):
-  return os.path.join(get_train_root_dir(base_dir, train_name, create=True), "test.csv")
+def get_train_root_dir(base_dir: str, model_name: str, create: bool):
+  return get_subdir(base_dir, model_name, create)
 
-def _get_val_csv(base_dir: str, train_name: str):
-  return os.path.join(get_train_root_dir(base_dir, train_name, create=True), "validation.csv")
-
-def get_train_log_dir(base_dir: str, train_name: str):
-  train_dir = get_train_root_dir(base_dir, train_name, create=True)
+def get_train_logs_dir(train_dir: str):
   return get_subdir(train_dir, "logs", create=True)
 
-def get_train_log_file(base_dir: str, train_name: str):
-  return os.path.join(get_train_log_dir(base_dir, train_name), "log.txt")
+def get_train_log_file(logs_dir: str):
+  return os.path.join(logs_dir, "log.txt")
 
-def get_checkpoints_dir(base_dir: str, train_name: str):
-  train_dir = get_train_root_dir(base_dir, train_name, create=True)
+def get_checkpoints_dir(train_dir: str):
   return get_subdir(train_dir, "checkpoints", create=True)
 
-def save_trainset(base_dir: str, train_name: str, dataset: PreparedDataList):
-  path = _get_train_csv(base_dir, train_name)
+def save_trainset(train_dir: str, dataset: PreparedDataList):
+  path = os.path.join(train_dir, _train_csv)
   dataset.save(path)
 
-def load_trainset(base_dir: str, train_name: str) -> PreparedDataList:
-  path = _get_train_csv(base_dir, train_name)
+def load_trainset(train_dir: str) -> PreparedDataList:
+  path = os.path.join(train_dir, _train_csv)
   return PreparedDataList.load(path)
 
-def save_testset(base_dir: str, train_name: str, dataset: PreparedDataList):
-  path = _get_test_csv(base_dir, train_name)
+def save_testset(train_dir: str, dataset: PreparedDataList):
+  path = os.path.join(train_dir, _test_csv)
   dataset.save(path)
 
-def load_testset(base_dir: str, train_name: str) -> PreparedDataList:
-  path = _get_test_csv(base_dir, train_name)
+def load_testset(train_dir: str) -> PreparedDataList:
+  path = os.path.join(train_dir, _test_csv)
   return PreparedDataList.load(path)
   
-def save_valset(base_dir: str, train_name: str, dataset: PreparedDataList):
-  path = _get_val_csv(base_dir, train_name)
+def save_valset(train_dir: str, dataset: PreparedDataList):
+  path = os.path.join(train_dir, _val_csv)
   dataset.save(path)
 
-def load_valset(base_dir: str, train_name: str) -> PreparedDataList:
-  path = _get_val_csv(base_dir, train_name)
+def load_valset(train_dir: str) -> PreparedDataList:
+  path = os.path.join(train_dir, _val_csv)
   return PreparedDataList.load(path)
   
 #endregion
 
 #region Inference
 
-def get_inference_root_dir(base_dir: str, train_name: str):
-  train_dir = get_train_root_dir(base_dir, train_name, create=True)
+def get_inference_root_dir(train_dir: str):
   return get_subdir(train_dir, "inference", create=True)
 
 def get_infer_log(infer_dir: str):
@@ -87,13 +79,13 @@ def save_infer_plot(infer_dir: str, mel: np.ndarray):
 
 #region Validation
 
-def _get_validation_root_dir(base_dir: str, train_name: str):
-  train_dir = get_train_root_dir(base_dir, train_name, create=True)
+def _get_validation_root_dir(train_dir: str):
+  train_dir = train_dir
   return get_subdir(train_dir, "validation", create=True)
 
-def get_val_dir(base_dir: str, train_name: str, entry_id: int, iteration: int):
+def get_val_dir(train_dir: str, entry_id: int, iteration: int):
   subdir_name = "{}_id-{}_it-{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), entry_id, iteration)
-  return get_subdir(_get_validation_root_dir(base_dir, train_name), subdir_name, create=True)
+  return get_subdir(_get_validation_root_dir(train_dir), subdir_name, create=True)
 
 def save_val_plot(val_dir: str, mel):
   parent_dir = get_parent_dirname(val_dir)
@@ -109,8 +101,8 @@ def save_val_orig_plot(val_dir: str, mel):
 
 def save_val_comparison(val_dir: str):
   parent_dir = get_parent_dirname(val_dir)
-  path1 = os.path.join(val_dir, f"{parent_dir}.png")
-  path2 = os.path.join(val_dir, f"{parent_dir}_orig.png")
+  path1 = os.path.join(val_dir, f"{parent_dir}_orig.png")
+  path2 = os.path.join(val_dir, f"{parent_dir}.png")
   assert os.path.exists(path1)
   assert os.path.exists(path2)
   path = os.path.join(val_dir, f"{parent_dir}_comp.png")

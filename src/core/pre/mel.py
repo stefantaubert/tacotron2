@@ -19,8 +19,7 @@ from src.core.common import TacotronSTFT, create_hparams
 class MelData:
   entry_id: int
   mel_path: str
-  duration: float
-  sr: int
+  n_mel_channels: int
 
 class MelDataList(List[MelData]):
   def save(self, file_path: str):
@@ -45,6 +44,6 @@ def process(data: WavDataList, dest_dir: str, custom_hparams: str) -> MelDataLis
     dest_mel_path = os.path.join(chunk_dir, get_pytorch_filename(repr(values)))
     mel_tensor = mel_parser.get_mel_tensor_from_file(values.wav)
     torch.save(mel_tensor, dest_mel_path)
-    result.append(MelData(values.entry_id, dest_mel_path, values.duration, values.sr))
+    result.append(MelData(values.entry_id, dest_mel_path, hp.n_mel_channels))
 
   return result

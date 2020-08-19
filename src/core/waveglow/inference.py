@@ -1,9 +1,9 @@
 from src.core.waveglow.synthesizer import Synthesizer
 import torch
-from src.core.common import TacotronSTFT, compare_mels, normalize_wav
+from src.core.common import TacotronSTFT, compare_mels, normalize_wav, cosine_dist_mels
 import logging
 from src.core.pre import PreparedData
-from scipy.spatial.distance import cosine
+import numpy as np
 
 def get_logger():
   return logging.getLogger("infer")
@@ -29,8 +29,8 @@ def infer_core(wav_path: str, custom_hparams: str, denoiser_strength: float, sig
   taco_stft = TacotronSTFT.fromhparams(synth.hparams)
 
   mel = taco_stft.get_mel_tensor_from_file(wav_path)
-  mel = mel.cuda()
   mel_var = torch.autograd.Variable(mel)
+  mel_var = mel_var.cuda()
   mel_var = mel_var.unsqueeze(0)
 
   #mel = mel.half() if is_fp16 else mel
@@ -39,10 +39,11 @@ def infer_core(wav_path: str, custom_hparams: str, denoiser_strength: float, sig
   audio = normalize_wav(audio)
   audio_tensor = torch.FloatTensor(audio)
   mel_pred = taco_stft.get_mel_tensor(audio_tensor)
-
-  pred_np = mel.cpu().numpy()
-  orig_np = mel_pred.numpy()
-  score = cosine(pred_np, orig_np)
+  
+  orig_np = mel.cpu().numpy()
+  pred_np = mel_pred.numpy()
+  
+  score = cosine_dist_mels(orig_np, pred_np)
   _logger.info(f"Cosine similarity is: {score*100}%")
 
   #score, diff_img = compare_mels(a, b)
