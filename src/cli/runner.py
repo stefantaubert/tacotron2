@@ -19,7 +19,11 @@ from src.cli.tacotron import \
 from src.cli.tacotron import init_inference_parser as init_taco_infer_parser
 from src.cli.tacotron import init_train_parser as init_taco_train_parser
 from src.cli.tacotron import init_validate_parser as init_taco_val_parser
-
+from src.cli.waveglow import \
+    init_continue_train_parser as init_wg_continue_train_parser
+from src.cli.waveglow import init_inference_parser as init_wg_infer_parser
+from src.cli.waveglow import init_train_parser as init_wg_train_parser
+from src.cli.waveglow import init_validate_parser as init_wg_val_parser
 
 
 def _add_parser_to(subparsers, name: str, init_method):
@@ -53,9 +57,10 @@ def _init_parser():
 
   # # Waveglow
   # _add_parser_to(subparsers, "waveglow-dl", init_wg_download_parser)
-  # _add_parser_to(subparsers, "waveglow-train", init_wg_train_parser)
-  # _add_parser_to(subparsers, "waveglow-validate", init_wg_validate_parser)
-  # _add_parser_to(subparsers, "waveglow-infer", init_wg_inference_parser)
+  _add_parser_to(subparsers, "waveglow-train", init_wg_train_parser)
+  _add_parser_to(subparsers, "waveglow-continue-train", init_wg_continue_train_parser)
+  _add_parser_to(subparsers, "waveglow-validate", init_wg_val_parser)
+  _add_parser_to(subparsers, "waveglow-infer", init_wg_infer_parser)
 
   # Tacotron
   _add_parser_to(subparsers, "tacotron-train", init_taco_train_parser)

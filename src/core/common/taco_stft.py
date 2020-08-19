@@ -104,7 +104,7 @@ class TacotronSTFT(torch.nn.Module):
     mel_output = self.spectral_normalize(mel_output)
     return mel_output
 
-  def get_mel_tensor_from_file(self, wav_path: str) -> torch.float32:
+  def get_mel_tensor_from_file(self, wav_path: str) -> torch.Tensor:
     wav_tensor, sr = wav_to_float32_tensor(wav_path)
     
     if sr != self.sampling_rate :
@@ -112,7 +112,7 @@ class TacotronSTFT(torch.nn.Module):
     
     return self.get_mel_tensor(wav_tensor)
 
-  def get_mel_tensor(self, wav_tensor: torch.float32) -> torch.float32:
+  def get_mel_tensor(self, wav_tensor: torch.Tensor) -> torch.Tensor:
     wav_tensor = wav_tensor.unsqueeze(0)
     wav_tensor = torch.autograd.Variable(wav_tensor, requires_grad=False)
     melspec = self.mel_spectrogram(wav_tensor)

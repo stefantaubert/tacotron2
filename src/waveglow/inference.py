@@ -95,7 +95,7 @@ def infer(training_dir_path, infer_dir_path, wav, hparams, denoiser_strength, si
   path_compared_plot = "{}_comparison.png".format(out_path_template)
    
   if is_overamp(audio):
-    print("Overamplified output!. Normalizing...")
+    print("Overamplified output! Normalizing...")
 
   float_to_wav(
     wav=audio,

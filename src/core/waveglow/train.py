@@ -13,15 +13,15 @@ from src.core.pre import PreparedData, PreparedDataList
 from src.core.waveglow.hparams import create_hparams
 from src.core.waveglow.logger import WaveglowLogger
 from src.core.waveglow.model import WaveGlow, WaveGlowLoss
+import torch
 
-
-def get_train_logger():
+def get_logger():
   return logging.getLogger("wg-train")
 
 # def get_checkpoints_eval_logger():
 #   return logging.getLogger("taco-train-checkpoints")
 
-debug_logger = get_train_logger()
+debug_logger = get_logger()
 
 class MelLoader(Dataset):
   """
@@ -249,8 +249,7 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
       logger.log_training(reduced_loss, learning_rate, duration, iteration)
 
       #if hparams.with_tensorboard and rank == 0:
-      if hparams.with_tensorboard:
-        logger.add_scalar('training_loss', reduced_loss, i + len(train_loader) * epoch)
+      logger.add_scalar('training_loss', reduced_loss, i + len(train_loader) * epoch)
       
       if (iteration % hparams.iters_per_checkpoint == 0):
         #if rank == 0:
@@ -265,19 +264,14 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   debug_logger.info('Duration: {:.2f}min'.format(duration_m))
 
 
-def continue_train(hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str):
-  hp = create_hparams(hparams)
+def train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, continue_train: bool):
+  hp = create_hparams(custom_hparams)
 
-  last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
+  last_checkpoint_path = ""
+  if continue_train:
+    last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
 
   model, optimizer, learning_rate, iteration = _train(last_checkpoint_path, hp)
-  train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
-
-
-def train(hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str):
-  hp = create_hparams(hparams)
-
-  model, optimizer, learning_rate, iteration = _train("", hp)
   train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
 
 def _train(checkpoint_path: str, hparams):
