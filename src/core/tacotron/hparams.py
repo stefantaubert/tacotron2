@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def create_hparams(hparams_string=None, verbose=False):
+def create_hparams(n_speakers: int, n_symbols: int, hparams_string=None, verbose=False):
   """Create model hyperparameters. Parse nondefault from given string."""
 
   hparams = tf.contrib.training.HParams(
@@ -11,7 +11,6 @@ def create_hparams(hparams_string=None, verbose=False):
     epochs=500,
     iters_per_checkpoint=1000, # 0 if no saving, 1 for each and so on...
     epochs_per_checkpoint=1, # 0 if no saving, 1 for each and so on...
-    cache_mels=False,
     seed=1234,
     dynamic_loss_scaling=True,
     fp16_run=False,
@@ -26,6 +25,8 @@ def create_hparams(hparams_string=None, verbose=False):
     # Data Parameters       #
     ################################
     load_mel_from_disk=False,
+    cache_mels=False,
+    use_saved_mels=True,
 
     ################################
     # Audio Parameters       #
@@ -33,18 +34,18 @@ def create_hparams(hparams_string=None, verbose=False):
     n_mel_channels=80,
     sampling_rate=22050,
     ## only in mel calculation
-    # filter_length=1024,
-    # hop_length=256,
-    # win_length=1024,
-    # mel_fmin=0.0,
-    # mel_fmax=8000.0,
+    filter_length=1024,
+    hop_length=256,
+    win_length=1024,
+    mel_fmin=0.0,
+    mel_fmax=8000.0,
 
     ################################
     # Model Parameters       #
     ################################
-    n_symbols=0,
+    n_symbols=n_symbols,
     symbols_embedding_dim=512,
-    n_speakers=0,
+    n_speakers=n_speakers,
     speakers_embedding_dim=16,
 
     # Encoder parameters
@@ -88,7 +89,7 @@ def create_hparams(hparams_string=None, verbose=False):
   if hparams_string:
     tf.logging.info('Parsing command line hparams: %s', hparams_string)
     hparams.parse(hparams_string)
-
+  
   if verbose:
     tf.logging.info('Final parsed hparams: %s', hparams.values())
 

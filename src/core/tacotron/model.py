@@ -1,4 +1,5 @@
 from math import sqrt
+from logging import Logger, getLogger
 
 import torch
 from torch import nn
@@ -260,8 +261,9 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-  def __init__(self, hparams):
+  def __init__(self, hparams, logger: Logger = getLogger()):
     super(Decoder, self).__init__()
+    self.logger = logger
     self.n_mel_channels = hparams.n_mel_channels
     self.n_frames_per_step = hparams.n_frames_per_step
     self.encoder_embedding_dim = hparams.encoder_embedding_dim
@@ -481,7 +483,7 @@ class Decoder(nn.Module):
       if torch.sigmoid(gate_output.data) > self.gate_threshold:
         break
       elif len(mel_outputs) == self.max_decoder_steps:
-        print("Warning! Reached max decoder steps.")
+        self.logger.warn("Reached max decoder steps.")
         break
 
       decoder_input = mel_output
@@ -490,8 +492,9 @@ class Decoder(nn.Module):
 
 
 class Tacotron2(nn.Module):
-  def __init__(self, hparams):
+  def __init__(self, hparams, logger: Logger = getLogger()):
     super(Tacotron2, self).__init__()
+    self.logger = logger
     self.mask_padding = hparams.mask_padding
     self.n_mel_channels = hparams.n_mel_channels
     # TODO rename to symbol_embeddings but it will destroy all previous trained models
@@ -504,7 +507,7 @@ class Tacotron2(nn.Module):
     torch.nn.init.xavier_uniform_(self.speakers_embedding.weight)
 
     self.encoder = Encoder(hparams)
-    self.decoder = Decoder(hparams)
+    self.decoder = Decoder(hparams, logger)
     self.postnet = Postnet(hparams)
 
   def parse_batch(self, batch):

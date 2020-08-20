@@ -5,7 +5,7 @@ from shutil import copyfile
 import matplotlib.pylab as plt
 import numpy as np
 
-from src.app.utils import add_console_and_file_out_to_logger
+from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
 from src.app.io import (get_checkpoints_dir,
                      get_infer_log, get_inference_root_dir, save_infer_plot,
                      save_infer_wav)
@@ -34,11 +34,12 @@ def infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: int 
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
   
-  logger = get_infer_logger()
+  init_logger(get_infer_logger())
   input_name = get_basename(wav_path)
   checkpoint_path, iteration = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
   infer_dir = get_infer_dir(train_dir, input_name, iteration)
-  add_console_and_file_out_to_logger(logger, get_infer_log(infer_dir))
+  add_console_out_to_logger(get_infer_logger())
+  add_file_out_to_logger(get_infer_logger(), get_infer_log(infer_dir))
   
   wav, wav_mel, orig_mel = infer_core(
     wav_path=wav_path,
@@ -55,8 +56,8 @@ def infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: int 
   score = save_diff_plot(infer_dir)
   save_v(infer_dir)
 
-  logger.info(f"Imagescore: {score*100}%")
-  logger.info(f"Saved output to: {infer_dir}")
+  get_infer_logger().info(f"Imagescore: {score*100}%")
+  get_infer_logger().info(f"Saved output to: {infer_dir}")
 
 if __name__ == "__main__":
   infer(

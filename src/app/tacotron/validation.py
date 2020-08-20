@@ -1,8 +1,10 @@
 import os
 
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pylab as plt
 
-from src.app.utils import add_console_and_file_out_to_logger
+from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
 from src.app.io import (get_checkpoints_dir,
                      get_val_dir, get_val_log, load_valset, save_infer_wav,
                      save_val_comparison, save_val_orig_plot,
@@ -34,9 +36,12 @@ def validate(base_dir: str, train_name: str, entry_id: int, waveglow: str, custo
   assert os.path.isdir(train_dir)
 
   logger = get_logger()
+  init_logger(logger)
+  add_console_out_to_logger(logger)
+  
   checkpoint_path, iteration = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
   val_dir = get_val_dir(train_dir, entry_id, iteration)
-  add_console_and_file_out_to_logger(logger, get_val_log(val_dir))
+  add_file_out_to_logger(logger, get_val_log(val_dir))
   val = load_valset(train_dir)
   entry = val.get_entry(entry_id)
 

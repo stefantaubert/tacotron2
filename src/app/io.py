@@ -28,6 +28,9 @@ def get_train_logs_dir(train_dir: str):
 def get_train_log_file(logs_dir: str):
   return os.path.join(logs_dir, "log.txt")
 
+def get_train_checkpoints_log_file(logs_dir: str):
+  return os.path.join(logs_dir, "log_checkpoints.txt")
+
 def get_checkpoints_dir(train_dir: str):
   return get_subdir(train_dir, "checkpoints", create=True)
 

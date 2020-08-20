@@ -3,7 +3,7 @@ import os
 
 import torch
 from src.core.tacotron.hparams import create_hparams
-from src.core.tacotron.train import load_model
+from src.core.tacotron.training import load_model
 import logging
 
 class Synthesizer():
@@ -19,11 +19,9 @@ class Synthesizer():
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
     model_state_dict = checkpoint_dict['state_dict']
 
-    hparams = create_hparams(custom_hparams)
-    hparams.n_symbols = n_symbols
-    hparams.n_speakers = n_speakers
+    hparams = create_hparams(n_speakers, n_symbols, custom_hparams)
 
-    model = load_model(hparams)
+    model = load_model(hparams, logger)
     model.load_state_dict(model_state_dict)
 
     model = model.cuda()

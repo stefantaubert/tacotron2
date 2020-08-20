@@ -58,7 +58,7 @@ def convert_to_ipa(data: TextDataList, ignore_tones: bool, ignore_arcs: bool) ->
     elif values.lang == Language.ENG:
       ipa = epi.transliterate(values.text)
     else: assert False
-    symbols: List[str] = extract_from_sentence(ipa, ignore_tones, ignore_arcs)
+    symbols: List[str] = extract_from_sentence(ipa, ignore_tones, ignore_arcs, replace_unknown_ipa_by=SymbolConverter.get_padding_symbol())
     entry_symbols.append(symbols)
     all_symbols.extend(symbols)
     ipa_symbols = ''.join(symbols)

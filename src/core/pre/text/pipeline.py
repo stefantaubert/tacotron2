@@ -73,7 +73,7 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
   debug_logger.debug(accented_sents)
  
   if symbols_map:
-    ipa_mapping = { k: extract_from_sentence(v, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs) for k, v in symbols_map.items() }
+    ipa_mapping = { k: extract_from_sentence(v, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs, replace_unknown_ipa_by=SymbolConverter.get_padding_symbol()) for k, v in symbols_map.items() }
 
   #print('\n'.join(sentences))
   seq_sents = []

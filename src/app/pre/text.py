@@ -51,9 +51,9 @@ def preprocess_text(base_dir: str, ds_name: str, text_name: str):
   if os.path.isdir(text_dir):
     print("Already exists.")
   else:
-    os.makedirs(text_dir)
     data = load_ds_csv(ds_dir)
     text_data, conv, all_symbols = text_preprocess_core(data)
+    os.makedirs(text_dir)
     save_text_csv(text_dir, text_data)
     save_text_symbol_converter(text_dir, conv)
     save_text_symbols_json(text_dir, all_symbols)
@@ -66,10 +66,10 @@ def _text_op(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: s
   if os.path.isdir(dest_text_dir):
     print("Already exists.")
   else:
-    os.makedirs(dest_text_dir)
     print("Reading data...")
     data = load_text_csv(orig_text_dir)
     text_data, conv, all_symbols = op(data)
+    os.makedirs(dest_text_dir)
     save_text_csv(dest_text_dir, text_data)
     save_text_symbol_converter(dest_text_dir, conv)
     save_text_symbols_json(dest_text_dir, all_symbols)

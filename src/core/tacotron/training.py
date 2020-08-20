@@ -2,12 +2,13 @@ import math
 import os
 import time
 from functools import partial
-
+from math import sqrt
 import torch
 from numpy import finfo
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
+from typing import Tuple
 
 from src.core.common import get_last_checkpoint, get_pytorch_filename
 from src.core.pre import PreparedData, PreparedDataList, SpeakersIdDict
@@ -17,16 +18,19 @@ from src.core.tacotron.logger import Tacotron2Logger
 from src.core.tacotron.model import Tacotron2
 import random
 import logging
-
+from src.core.common import TacotronSTFT
+from typing import List
 from src.core.pre import SymbolConverter
 
 def get_train_logger():
   return logging.getLogger("taco-train")
 
-# def get_checkpoints_eval_logger():
-#   return logging.getLogger("taco-train-checkpoints")
+def get_checkpoints_eval_logger():
+  return logging.getLogger("taco-train-checkpoints")
 
 debug_logger = get_train_logger()
+
+checkpoint_logger = get_checkpoints_eval_logger()
 
 class SymbolsMelLoader(Dataset):
   """
@@ -39,16 +43,22 @@ class SymbolsMelLoader(Dataset):
 
     random.seed(hparams.seed)
     random.shuffle(data)
+    self.use_saved_mels = hparams.use_saved_mels
+    if not hparams.use_saved_mels:
+      self.mel_parser = TacotronSTFT.fromhparams(hparams)
     
-    debug_logger.info("Reading mels...")
+    debug_logger.info("Reading files...")
     self.data = {}
     values: PreparedData
     for i, values in enumerate(tqdm(data)):
       symbol_ids = SymbolConverter.deserialize_symbol_ids(values.serialized_updated_ids)
       symbols_tensor = torch.IntTensor(symbol_ids)
-      self.data[i] = (symbols_tensor, values.mel_path, values.speaker_id)
+      if hparams.use_saved_mels:
+        self.data[i] = (symbols_tensor, values.mel_path, values.speaker_id)
+      else:
+        self.data[i] = (symbols_tensor, values.wav_path, values.speaker_id)
     
-    if hparams.cache_mels:
+    if hparams.use_saved_mels and hparams.cache_mels:
       debug_logger.info("Loading mels into memory...")
       self.cache = {}
       vals: tuple
@@ -59,12 +69,19 @@ class SymbolsMelLoader(Dataset):
 
   def __getitem__(self, index):
     #return self.cache[index]
-    symbols_tensor, mel_path, speaker_id = self.data[index]
-    if self.use_cache:
-      mel_tensor = self.cache[index].clone().detach()
+    #debug_logger.debug(f"getitem called {index}")
+    symbols_tensor, path, speaker_id = self.data[index]
+    if self.use_saved_mels:
+      if self.use_cache:
+        mel_tensor = self.cache[index].clone().detach()
+      else:
+        mel_tensor = torch.load(path, map_location='cpu')
     else:
-      mel_tensor = torch.load(mel_path, map_location='cpu')
-    return symbols_tensor.clone().detach(), mel_tensor, speaker_id
+      mel_tensor = self.mel_parser.get_mel_tensor_from_file(path)
+    
+    symbols_tensor_cloned = symbols_tensor.clone().detach()
+    #debug_logger.debug(f"getitem finished {index}")
+    return symbols_tensor_cloned, mel_tensor, speaker_id
 
   def __len__(self):
     return len(self.data)
@@ -163,11 +180,11 @@ class Tacotron2Loss(nn.Module):
     gate_loss = nn.BCEWithLogitsLoss()(gate_out, gate_target)
     return mel_loss + gate_loss
 
+
 def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDataList):
   # Get data, data loaders and collate function ready
   trainset = SymbolsMelLoader(trainset, hparams)
   valset = SymbolsMelLoader(valset, hparams)
-
   collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
 
   train_sampler = None
@@ -187,11 +204,26 @@ def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDat
     drop_last=True,
     collate_fn=collate_fn
   )
-  
-  return train_loader, valset, collate_fn
 
-def load_model(hparams):
-  model = Tacotron2(hparams).cuda()
+  val_sampler = None
+
+  # if distributed_run:
+  #   val_sampler = DistributedSampler(valset)
+
+  val_loader = DataLoader(
+    valset,
+    sampler=val_sampler, 
+    num_workers=1,
+    shuffle=False,
+    batch_size=hparams.batch_size,
+    pin_memory=False,
+    collate_fn=collate_fn
+  )
+
+  return train_loader, val_loader
+
+def load_model(hparams, logger: logging.Logger):
+  model = Tacotron2(hparams, logger).cuda()
   # if hparams.fp16_run:
   #   model.decoder.attention_layer.score_mask_value = finfo('float16').min
 
@@ -199,7 +231,6 @@ def load_model(hparams):
   #   model = apply_gradient_allreduce(model)
 
   return model
-
 
 def warm_start_model(checkpoint_path, model, ignore_layers):
   assert os.path.isfile(checkpoint_path)
@@ -212,21 +243,12 @@ def warm_start_model(checkpoint_path, model, ignore_layers):
     model_dict = dummy_dict
   model.load_state_dict(model_dict)
 
-def validate_core(model, criterion, valset, batch_size, collate_fn):
+def validate(model: Tacotron2, criterion: nn.Module, val_loader: DataLoader, iteration: int, logger: Tacotron2Logger):
   """Handles all the validation scoring and printing"""
+  debug_logger.debug("Validating...")
   model.eval()
   with torch.no_grad():
-    val_sampler = None
-
-    # if distributed_run:
-    #   val_sampler = DistributedSampler(valset)
-
-    val_loader = DataLoader(valset, sampler=val_sampler, num_workers=1,
-                shuffle=False, batch_size=batch_size,
-                pin_memory=False, collate_fn=collate_fn)
-
     val_loss = 0.0
-    debug_logger.debug("Validating...")
     for i, batch in enumerate(tqdm(val_loader)):
       x, y = model.parse_batch(batch)
       y_pred = model(x)
@@ -238,46 +260,30 @@ def validate_core(model, criterion, valset, batch_size, collate_fn):
       reduced_val_loss = loss.item()
       val_loss += reduced_val_loss
     val_loss = val_loss / (i + 1)
-
   model.train()
-  return val_loss, model, y, y_pred
-
-def validate(model, criterion, valset, iteration, batch_size, collate_fn, logger: Tacotron2Logger):
-  val_loss, model, y, y_pred = validate_core(model, criterion, valset, batch_size, collate_fn)
-
-  #if rank == 0:
-  debug_logger.info("Validation loss {}: {:9f}".format(iteration, val_loss))
+  
+  debug_logger.info(f"Validation loss {iteration}: {val_loss:9f}")
   logger.log_validation(val_loss, model, y, y_pred, iteration)
   
   return val_loss
 
-def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, save_checkpoint_log_dir: str, iteration: int, model, optimizer, learning_rate):
+def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, iteration: int, model, optimizer, learning_rate):
   complete_start = time.time()
   logger = Tacotron2Logger(logdir)
 
   debug_logger.info('Final parsed hparams:')
-  x = '\n'.join(str(hparams.values()).split(','))
-  debug_logger.info(x)
-
-  debug_logger.info("Epochs: {}".format(hparams.epochs))
-  debug_logger.info("Batchsize: {}".format(hparams.batch_size))
-  debug_logger.info("FP16 Run: {}".format(hparams.fp16_run))
-  debug_logger.info("Dynamic Loss Scaling: {}".format(hparams.dynamic_loss_scaling))
-  debug_logger.info("Distributed Run: {}".format(hparams.distributed_run))
-  debug_logger.info("cuDNN Enabled: {}".format(hparams.cudnn_enabled))
-  debug_logger.info("cuDNN Benchmark: {}".format(hparams.cudnn_benchmark))
-
-  criterion = Tacotron2Loss()
-
-  train_loader, valset, collate_fn = prepare_dataloaders(hparams, trainset, valset)
+  debug_logger.info('\n'.join(str(hparams.values()).split(',')))
+  
+  train_loader, val_loader = prepare_dataloaders(hparams, trainset, valset)
 
   if not len(train_loader):
     debug_logger.error("Not enough trainingdata.")
     return False
 
-  debug_logger.info("Modelweights:")
-  debug_logger.info(str(model.state_dict()['embedding.weight']))
-  debug_logger.info("Iterations per epoch: {}".format(len(train_loader)))
+  criterion = Tacotron2Loss()
+
+  debug_logger.debug("Modelweights:")
+  debug_logger.debug(str(model.state_dict()['embedding.weight']))
 
   model.train()
   # is_overflow = False
@@ -285,11 +291,11 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   # ================ MAIN TRAINING LOOP! ===================
   train_start = time.perf_counter()
   epoch_offset = max(0, int(iteration / len(train_loader)))
+  batch_durations: List[float] = []
   for epoch in range(epoch_offset, hparams.epochs):
-    debug_logger.info("Epoch: {}".format(epoch))
-    
+    debug_logger.info(f"Epoch: {epoch}")
+    start = time.perf_counter()
     for i, batch in enumerate(train_loader):
-      start = time.perf_counter()
       for param_group in optimizer.param_groups:
         param_group['lr'] = learning_rate
 
@@ -323,73 +329,73 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
 
       #if not is_overflow and rank == 0:
       duration = time.perf_counter() - start
-      debug_logger.info("Epoch: {}/{} | Iteration: {}/{} | Total iteration: {}/{} | Train loss: {:.6f} | Grad Norm: {:.6f} | Duration: {:.2f}s/it | Total Duration: {:.2f}h".format(
-        str(epoch).zfill(len(str(hparams.epochs))),
-        hparams.epochs,
-        str(i).zfill(len(str(len(train_loader) - 1))),
-        len(train_loader) - 1,
-        str(iteration).zfill(len(str(total_its))),
-        total_its,
-        reduced_loss,
-        grad_norm,
-        duration,
-        (time.perf_counter() - train_start) / 60 / 60
-      ))
+      batch_durations.append(duration)
+      debug_logger.info(" | ".join([
+        f"Epoch: {str(epoch).zfill(len(str(hparams.epochs)))}/{hparams.epochs}",
+        f"Iteration: {str(i).zfill(len(str(len(train_loader) - 1)))}/{len(train_loader) - 1}",
+        f"Total iteration: {str(iteration).zfill(len(str(total_its)))}/{total_its}",
+        f"Train loss: {reduced_loss:.6f}",
+        f"Grad Norm: {grad_norm:.6f}",
+        f"Duration: {duration:.2f}s/it",
+        f"Avg. duration: {np.mean(batch_durations):.2f}s/it",
+        f"Total Duration: {(time.perf_counter() - train_start) / 60 / 60:.2f}h"
+      ]))
       logger.log_training(reduced_loss, grad_norm, learning_rate, duration, iteration)
 
+      # is_last_it = i + 1 == len(train_loader)
+      # is_last_epoch = epoch + 1 == hparams.epochs
+      # save_epoch = is_last_it and is_last_epoch and 
+      # is_first_iteration = iteration == 0
+      # is_checkpoint_iteration = (hparams.iters_per_checkpoint > 0 and (iteration % hparams.iters_per_checkpoint == 0)) or iteration == 0
+
+      #save_iteration = is_checkpoint_iteration or is_last_it or is_last_epoch
       #if not is_overflow and (iteration % hparams.iters_per_checkpoint == 0):
       save_iteration = (hparams.iters_per_checkpoint > 0 and (iteration % hparams.iters_per_checkpoint == 0)) or iteration == 0
       if save_iteration:
         save_checkpoint(model, optimizer, learning_rate, iteration, save_checkpoint_dir)
-        valloss = validate(model, criterion, valset, iteration, hparams.batch_size, collate_fn, logger)
+        valloss = validate(model, criterion, val_loader, iteration, logger)
         #if rank == 0:
-        save_checkpoint_score(save_checkpoint_log_dir, iteration, grad_norm, reduced_loss, valloss, epoch, i)
+        log_checkpoint_score(iteration, grad_norm, reduced_loss, valloss, epoch, i)
+
       iteration += 1
+      start = time.perf_counter()
 
     checkpoint_was_already_created = save_iteration
     save_epoch = not checkpoint_was_already_created and hparams.epochs_per_checkpoint > 0 and (epoch % hparams.epochs_per_checkpoint == 0)
     if save_epoch:
       save_checkpoint(model, optimizer, learning_rate, iteration - 1, save_checkpoint_dir)
-      valloss = validate(model, criterion, valset, iteration - 1, hparams.batch_size, collate_fn, logger)
+      valloss = validate(model, criterion, val_loader, iteration - 1, logger)
       #if rank == 0:
-      save_checkpoint_score(save_checkpoint_log_dir, iteration - 1, grad_norm, reduced_loss, valloss, epoch, i)
+      log_checkpoint_score(iteration - 1, grad_norm, reduced_loss, valloss, epoch, i)
+
 
   checkpoint_was_already_created = save_iteration or save_epoch
   if not checkpoint_was_already_created:
     save_checkpoint(model, optimizer, learning_rate, iteration - 1, save_checkpoint_dir)
-    valloss = validate(model, criterion, valset, iteration - 1, hparams.batch_size, collate_fn, logger)
+    valloss = validate(model, criterion, val_loader, iteration - 1, logger)
     #if rank == 0:
-    save_checkpoint_score(save_checkpoint_log_dir, iteration - 1, grad_norm, reduced_loss, valloss, epoch, i)
+    log_checkpoint_score(iteration - 1, grad_norm, reduced_loss, valloss, epoch, i)
 
-  debug_logger.info('Finished training.')
   duration_s = time.time() - complete_start
-  duration_m = duration_s / 60
-  debug_logger.info('Duration: {:.2f}min'.format(duration_m))
+  debug_logger.info(f'Finished training. Total duration: {duration_s / 60:.2f}min')
 
-
-def continue_train(custom_hparams: str, n_symbols: int, n_speakers: int, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, save_checkpoint_log_dir: str):
-  hp = create_hparams(custom_hparams)
-
-  hp.n_symbols = n_symbols
-  hp.n_speakers = n_speakers
+def continue_train(custom_hparams: str, n_symbols: int, n_speakers: int, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str):
+  hp = create_hparams(n_speakers, n_symbols, custom_hparams)
 
   last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
 
   model, optimizer, learning_rate, iteration = _train("", "", last_checkpoint_path, hp)
-  train_core(hp, logdir, trainset, valset, save_checkpoint_dir, save_checkpoint_log_dir, iteration, model, optimizer, learning_rate)
+  train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
 
 
-def train(warm_start_model_path: str, weights_path: str, custom_hparams: str, logdir: str, n_symbols: int, n_speakers: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, save_checkpoint_log_dir: str):
-  hp = create_hparams(custom_hparams)
+def train(warm_start_model_path: str, mapped_emb_weights: torch.Tensor, custom_hparams: str, logdir: str, n_symbols: int, n_speakers: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str):
+  hp = create_hparams(n_speakers, n_symbols, custom_hparams)
 
-  hp.n_symbols = n_symbols
-  hp.n_speakers = n_speakers
-
-  model, optimizer, learning_rate, iteration = _train(warm_start_model_path, weights_path, "", hp)
-  train_core(hp, logdir, trainset, valset, save_checkpoint_dir, save_checkpoint_log_dir, iteration, model, optimizer, learning_rate)
+  model, optimizer, learning_rate, iteration = _train(warm_start_model_path, mapped_emb_weights, "", hp)
+  train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
 
 
-def _train(warm_start_model_path: str, weights_path: str, checkpoint_path: str, hparams):
+def _train(warm_start_model_path: str, mapped_emb_weights: torch.Tensor, checkpoint_path: str, hparams):
   """Training and validation logging results to tensorboard and stdout
 
   Params
@@ -413,7 +419,7 @@ def _train(warm_start_model_path: str, weights_path: str, checkpoint_path: str, 
   torch.manual_seed(hparams.seed)
   torch.cuda.manual_seed(hparams.seed)
 
-  model = load_model(hparams)
+  model = load_model(hparams, debug_logger)
   learning_rate = hparams.learning_rate
   optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=hparams.weight_decay)
 
@@ -439,54 +445,72 @@ def _train(warm_start_model_path: str, weights_path: str, checkpoint_path: str, 
       warm_start_model(warm_start_model_path, model, hparams.ignore_layers)
     else:
       debug_logger.info("Starting new model...")
-    if weights_path:
-      debug_logger.info("Init weights from '{}'".format(weights_path))
-      weights = load_weights(weights_path)
-      init_weights(model, weights)
+
+    if mapped_emb_weights != None:
+      debug_logger.info(f"Loading pretrained, mapped embeddings...")
+      #weights = load_weights(weights_path)
+      init_symbol_embedding_weights(model, mapped_emb_weights)
 
   return model, optimizer, learning_rate, iteration
 
-def load_checkpoint(checkpoint_path, model, optimizer):
-  assert os.path.isfile(checkpoint_path)
-  debug_logger.info("Loading checkpoint '{}'".format(checkpoint_path))
-  checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-  model.load_state_dict(checkpoint_dict['state_dict'])
-  optimizer.load_state_dict(checkpoint_dict['optimizer'])
-  learning_rate = checkpoint_dict['learning_rate']
-  iteration = checkpoint_dict['iteration']
-  debug_logger.info("Loaded checkpoint '{}' from iteration {}".format(checkpoint_path, iteration))
-  return model, optimizer, learning_rate, iteration
-
-
-def save_checkpoint(model, optimizer, learning_rate, iteration, parent_dir):
+def save_checkpoint(model: Tacotron2, optimizer: torch.optim.Optimizer, learning_rate: float, iteration: int, parent_dir: str):
   filepath = os.path.join(parent_dir, get_pytorch_filename(iteration))
-  debug_logger.info("Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
-  torch.save(
-    {
-      'iteration': iteration,
-      'state_dict': model.state_dict(),
-      'optimizer': optimizer.state_dict(),
-      'learning_rate': learning_rate
-    },
-    filepath
+  debug_logger.info(f"Saving model and optimizer state at iteration {iteration} to {filepath}")
+  save_checkpoint_dict(filepath, model.state_dict(), optimizer.state_dict(), learning_rate, iteration)
+
+def load_checkpoint(checkpoint_path, model: Tacotron2, optimizer: torch.optim.Optimizer) -> Tuple[Tacotron2, torch.optim.Optimizer, float, int]:
+  debug_logger.info(f"Loading checkpoint '{checkpoint_path}'")
+  model_dict, opt_dict, lr, it = load_checkpoint_dict(checkpoint_path)
+  model.load_state_dict(model_dict)
+  optimizer.load_state_dict(opt_dict)
+  debug_logger.info(f"Loaded checkpoint '{checkpoint_path}' from iteration {it}")
+  return model, optimizer, lr, it
+
+def save_checkpoint_dict(checkpoint_path: str, model_state_dict: dict, optimizer_state_dict: dict, learning_rate: float, iteration: int):
+  checkpoint_dict = {
+    'state_dict': model_state_dict,
+    'optimizer': optimizer_state_dict,
+    'learning_rate': learning_rate,
+    'iteration': iteration
+  }
+  torch.save(checkpoint_dict, checkpoint_path)
+
+def load_checkpoint_dict(checkpoint_path: str) -> Tuple[dict, dict, float, int]:
+  assert os.path.isfile(checkpoint_path)
+  checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
+  return (
+    checkpoint_dict['state_dict'],
+    checkpoint_dict['optimizer'],
+    checkpoint_dict['learning_rate'],
+    checkpoint_dict['iteration']
   )
 
-def save_checkpoint_score(parent_dir, iteration, gradloss, trainloss, valloss, epoch, i):
-  filepath = os.path.join(parent_dir, str(iteration))
+def log_checkpoint_score(iteration: int, gradloss: float, trainloss: float, valloss: float, epoch: int, i: int):
   loss_avg = (trainloss + valloss) / 2
-  name = "{}_epoch-{}_it-{}_grad-{:.6f}_train-{:.6f}_val-{:.6f}_avg-{:.6f}.log".format(filepath, epoch, i, gradloss, trainloss, valloss, loss_avg)
-  with open(name, mode='w', encoding='utf-8') as f:
-    f.write("Training Grad Norm: {:.6f}\nTraining Loss: {:.6f}\nValidation Loss: {:.6f}".format(gradloss, trainloss, valloss))
+  msg = f"{iteration}_epoch-{epoch}\tit-{i}\tgradloss-{gradloss:.6f}\ttrainloss-{trainloss:.6f}\tvalidationloss-{valloss:.6f}\tavg-train-val-{loss_avg:.6f}"
+  checkpoint_logger.info(msg)
 
-def load_weights(weights_path: str):
-  assert os.path.isfile(weights_path)
-  weights = np.load(weights_path)
-  weights = torch.from_numpy(weights)
-  return weights
+def get_uniform_weights(n_symbols: int, emb_dim: int) -> torch.Tensor:
+  weight = torch.zeros(size=(n_symbols, emb_dim))
+  std = sqrt(2.0 / (n_symbols + emb_dim))
+  val = sqrt(3.0) * std  # uniform bounds for std
+  nn.init.uniform_(weight, -val, val)
+  return weight
 
-def init_weights(model, weights):
+def load_symbol_embedding_weights_from(model_path: str) -> torch.Tensor:
+  model_state_dict = load_checkpoint_dict(model_path)[0]
+  pretrained_weights = model_state_dict['embedding.weight']
+  return pretrained_weights
+
+# def load_weights(weights_path: str):
+#   assert os.path.isfile(weights_path)
+#   weights = np.load(weights_path)
+#   weights = torch.from_numpy(weights)
+#   return weights
+
+def init_symbol_embedding_weights(model: Tacotron2, emb_weights: torch.Tensor):
   dummy_dict = model.state_dict()
-  update = { 'embedding.weight': weights }
+  update = { 'embedding.weight': emb_weights }
   dummy_dict.update(update)
   model_dict = dummy_dict
   model.load_state_dict(model_dict)

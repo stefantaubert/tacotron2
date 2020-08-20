@@ -2,11 +2,13 @@ import datetime
 import os
 from typing import List
 
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pylab as plt
 import numpy as np
 from tqdm import tqdm
 
-from src.app.utils import add_console_and_file_out_to_logger, reset_log
+from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
 from src.app.io import (get_checkpoints_dir, get_infer_log, save_infer_plot, save_infer_wav, get_inference_root_dir)
 from src.app.pre import (load_filelist, load_filelist_speakers_json,
                          load_filelist_symbol_converter)
@@ -78,10 +80,13 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, speaker_id:
   assert os.path.isdir(train_dir)
 
   logger = get_logger()
+  init_logger(logger)
+  add_console_out_to_logger(logger)
+
   input_name = get_basename(text)
   checkpoint_path, iteration = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
   infer_dir = get_infer_dir(train_dir, input_name, iteration, speaker_id)
-  add_console_and_file_out_to_logger(logger, get_infer_log(infer_dir))
+  add_file_out_to_logger(logger, get_infer_log(infer_dir))
   
   train_dir_wg = get_wg_train_dir(base_dir, waveglow, create=False)
   assert os.path.isdir(train_dir_wg)

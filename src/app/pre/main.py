@@ -141,7 +141,7 @@ def prepare_ljs():
 
 if __name__ == "__main__":
   run_all = False
-  mode = 1
+  mode = 3
   
   if run_all or mode == 1:
     prepare_thchs()

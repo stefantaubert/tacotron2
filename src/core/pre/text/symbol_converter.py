@@ -3,9 +3,10 @@ import json
 import numpy as np
 from shutil import copyfile
 from collections import OrderedDict 
+from typing import List
 import os
 
-# padding
+# padding, used for unknown symbols
 _pad = '_'
 
 # end of string
@@ -28,14 +29,14 @@ def _get_symbol_id_dict(id_symbol_dict: OrderedDict) -> OrderedDict:
     tmp[symbol][subset] = s_id
   return tmp
 
-def _get_all_symbols(symbols: set) -> list:
+def _get_all_symbols(symbols: set) -> List[str]:
   has_no_double_symbols = len(set(symbols)) == len(symbols)
   assert has_no_double_symbols
   if _pad in symbols:
     symbols.remove(_pad)
   if _eos in symbols:
     symbols.remove(_eos)
-  all_symbols = list(_pad) + list(_eos) + list(sorted(set(symbols)))
+  all_symbols: List[str] = list(_pad) + list(_eos) + list(sorted(set(symbols)))
   return all_symbols
 
 def _symbols_to_dict(symbols: set) -> OrderedDict:
@@ -54,6 +55,10 @@ class SymbolConverter():
     self._id_symbol_dict = id_symbol_dict
     self._symbol_id_dict = _get_symbol_id_dict(id_symbol_dict)
   
+  @staticmethod
+  def get_padding_symbol() -> str:
+    return _pad
+
   @staticmethod
   def deserialize_symbol_ids(searialized_str: str):
     sentences_symbols = searialized_str.split(',')

@@ -1,27 +1,42 @@
 import logging
 import os
 
-def add_console_and_file_out_to_logger(logger: logging.Logger, log_file_path: str = ""):
-  logger.propagate = False
-  logger.setLevel(logging.DEBUG)
-  formatter = logging.Formatter(
-    '[%(asctime)s] (%(levelname)s) %(message)s',
-    datefmt='%Y/%m/%d %H:%M:%S'
-  )
+formatter = logging.Formatter(
+  '[%(asctime)s.%(msecs)03d] (%(levelname)s) %(message)s',
+  datefmt='%Y/%m/%d %H:%M:%S'
+)
 
+def init_logger(logger: logging.Logger):
+  root_logger = logging.getLogger()
+  root_logger.setLevel(logging.DEBUG)
+  # disable is required (don't know why) because otherwise DEBUG messages would be ignored!
+  logger.manager.disable = logging.NOTSET
+
+  # to disable double logging
+  logger.propagate = False
+
+  # take it from the above logger (root)
+  logger.setLevel(logging.DEBUG)
+
+def add_console_out_to_logger(logger: logging.Logger):
   console_handler = logging.StreamHandler()
-  console_handler.setLevel(logging.DEBUG)
+  console_handler.setLevel(logging.NOTSET)
   console_handler.setFormatter(formatter)
   logger.addHandler(console_handler)
-  logger.info("init console logger")
+  logger.debug("init console logger")
   
-  if log_file_path:
-    fh = logging.FileHandler(log_file_path)
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-    logger.info("init fh logger")
+def add_file_out_to_logger(logger: logging.Logger, log_file_path: str):
+  fh = logging.FileHandler(log_file_path)
+  fh.setLevel(logging.INFO)
+  fh.setFormatter(formatter)
+  logger.addHandler(fh)
+  logger.debug(f"init fh logger to {log_file_path}")
 
-def reset_log(log_file_path: str):
+def reset_file_log(log_file_path: str):
   if os.path.isfile(log_file_path):
     os.remove(log_file_path)
+
+if __name__ == "__main__":
+  test_logger = logging.getLogger("test")
+
+  add_console_out_to_logger(test_logger)

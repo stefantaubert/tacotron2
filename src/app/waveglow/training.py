@@ -1,6 +1,6 @@
 import os
 
-from src.app.utils import add_console_and_file_out_to_logger, reset_log
+from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
 from src.app.io import (get_checkpoints_dir,
                      get_train_log_file, get_train_logs_dir, load_trainset,
                      load_valset, save_testset, save_trainset,
@@ -21,10 +21,12 @@ def train(base_dir: str, train_name: str, fl_name: str, test_size: float = 0.01,
   save_testset(train_dir, testset)
   save_valset(train_dir, valset)
 
+  init_logger(get_train_logger())
+  add_console_out_to_logger(get_train_logger())
   logs_dir = get_train_logs_dir(train_dir)
   log_file = get_train_log_file(logs_dir)
-  reset_log(log_file)
-  add_console_and_file_out_to_logger(get_train_logger(), log_file)
+  reset_file_log(log_file)
+  add_file_out_to_logger(get_train_logger(), log_file)
   # todo log map & args
 
   train_core(
@@ -40,9 +42,11 @@ def continue_train(base_dir: str, train_name: str, hparams):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
+  init_logger(get_train_logger())
+  add_console_out_to_logger(get_train_logger())
   logs_dir = get_train_logs_dir(train_dir)
   log_file = get_train_log_file(logs_dir)
-  add_console_and_file_out_to_logger(get_train_logger(), log_file)
+  add_file_out_to_logger(get_train_logger(), log_file)
 
   train_core(
     custom_hparams=hparams,
