@@ -4,7 +4,7 @@ from src.app import (preprocess_mels, prepare_ds, preprocess_ljs,
                               preprocess_thchs, preprocess_thchs_kaldi,
                               text_convert_to_ipa, text_normalize,
                               preprocess_text, wavs_normalize, preprocess_wavs,
-                              wavs_remove_silence, wavs_upsample)
+                              wavs_remove_silence, wavs_upsample, create_weights_map)
 
 
 def init_preprocess_thchs_parser(parser: ArgumentParser):
@@ -96,3 +96,10 @@ def init_wavs_remove_silence_parser(parser: ArgumentParser):
   parser.add_argument('--buffer_start_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
   parser.add_argument('--buffer_end_ms', type=float, help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
   return wavs_remove_silence
+
+def init_create_weights_map_parser(parser: ArgumentParser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--orig_prep_name', type=str, required=True)
+  parser.add_argument('--dest_prep_name', type=str, required=True)
+  parser.add_argument('--dest_dir', type=str, default="maps/weights")
+  return create_weights_map

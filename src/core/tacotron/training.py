@@ -9,6 +9,7 @@ import numpy as np
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from typing import Tuple
+from typing import Optional
 
 from src.core.common import get_last_checkpoint, get_pytorch_filename
 from src.core.pre import PreparedData, PreparedDataList, SpeakersIdDict
@@ -21,6 +22,7 @@ import logging
 from src.core.common import TacotronSTFT
 from typing import List
 from src.core.pre import SymbolConverter
+from src.core.pre import SymbolsMap, get_symbols_id_mapping
 
 def get_train_logger():
   return logging.getLogger("taco-train")
@@ -388,8 +390,18 @@ def continue_train(custom_hparams: str, n_symbols: int, n_speakers: int, logdir:
   train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
 
 
-def train(warm_start_model_path: str, mapped_emb_weights: torch.Tensor, custom_hparams: str, logdir: str, n_symbols: int, n_speakers: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str):
+def train(warm_start_model_path: str, custom_hparams: str, logdir: str, symbols_conv: SymbolConverter, n_speakers: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, trained_weights: Optional[torch.Tensor], symbols_map: Optional[SymbolsMap], trained_symbols_conv: Optional[SymbolConverter]):
+  n_symbols = symbols_conv.get_symbol_ids_count()
   hp = create_hparams(n_speakers, n_symbols, custom_hparams)
+  
+  mapped_emb_weights = None
+  if trained_weights != None:
+    mapped_emb_weights = get_mapped_embedding_weights(
+      model_symbols=symbols_conv,
+      trained_weights=trained_weights,
+      trained_symbols=trained_symbols_conv,
+      symbols_mapping=symbols_map,
+    )
 
   model, optimizer, learning_rate, iteration = _train(warm_start_model_path, mapped_emb_weights, "", hp)
   train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
@@ -487,7 +499,7 @@ def load_checkpoint_dict(checkpoint_path: str) -> Tuple[dict, dict, float, int]:
 
 def log_checkpoint_score(iteration: int, gradloss: float, trainloss: float, valloss: float, epoch: int, i: int):
   loss_avg = (trainloss + valloss) / 2
-  msg = f"{iteration}_epoch-{epoch}\tit-{i}\tgradloss-{gradloss:.6f}\ttrainloss-{trainloss:.6f}\tvalidationloss-{valloss:.6f}\tavg-train-val-{loss_avg:.6f}"
+  msg = f"{iteration}\tepoch-{epoch}\tit-{i}\tgradloss-{gradloss:.6f}\ttrainloss-{trainloss:.6f}\tvalidationloss-{valloss:.6f}\tavg-train-val-{loss_avg:.6f}"
   checkpoint_logger.info(msg)
 
 def get_uniform_weights(n_symbols: int, emb_dim: int) -> torch.Tensor:
@@ -514,3 +526,24 @@ def init_symbol_embedding_weights(model: Tacotron2, emb_weights: torch.Tensor):
   dummy_dict.update(update)
   model_dict = dummy_dict
   model.load_state_dict(model_dict)
+
+def get_mapped_embedding_weights(model_symbols: SymbolConverter, trained_weights: torch.Tensor, trained_symbols: SymbolConverter, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
+  model_weights = get_uniform_weights(model_symbols.get_symbol_ids_count(), trained_weights.shape[1])
+  return get_mapped_embedding_weights_core(model_weights, model_symbols, trained_weights, trained_symbols, symbols_mapping)
+
+def get_mapped_embedding_weights_core(model_weights: torch.Tensor, model_symbols: SymbolConverter, trained_weights: torch.Tensor, trained_symbols: SymbolConverter, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
+  assert model_weights.shape[0] == model_symbols.get_symbol_ids_count()
+
+  symbols_match_not_model = trained_weights.shape[0] != trained_symbols.get_symbol_ids_count()
+  if symbols_match_not_model:
+    debug_logger.exception(f"Weights mapping: symbol space from pretrained model ({trained_weights.shape[0]}) did not match amount of symbols ({trained_symbols.get_symbol_ids_count()}).")
+    raise Exception()
+  
+  mapping = get_symbols_id_mapping(model_symbols, trained_symbols, symbols_mapping, debug_logger)
+  for map_to_symbol_id, map_from_symbol_id in mapping.items():
+    assert 0 <= map_to_symbol_id < model_weights.shape[0]
+    assert 0 <= map_from_symbol_id < trained_weights.shape[0]
+    
+    model_weights[map_to_symbol_id] = trained_weights[map_from_symbol_id]
+     
+  return model_weights

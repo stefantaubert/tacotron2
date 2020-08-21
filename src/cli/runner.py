@@ -10,7 +10,7 @@ from src.cli.pre import (init_prepare_ds_parser, init_preprocess_ljs_parser,
                          init_preprocess_thchs_parser,
                          init_preprocess_wavs_parser,
                          init_text_convert_to_ipa_parser,
-                         init_text_normalize_parser,
+                         init_text_normalize_parser,init_create_weights_map_parser,
                          init_wavs_normalize_parser,
                          init_wavs_remove_silence_parser,
                          init_wavs_upsample_parser)
@@ -54,6 +54,7 @@ def _init_parser():
   _add_parser_to(subparsers, "preprocess-mels", init_preprocess_mels_parser)
 
   _add_parser_to(subparsers, "prepare-ds", init_prepare_ds_parser)
+  _add_parser_to(subparsers, "create-weights-map", init_create_weights_map_parser)
 
   # Waveglow
   _add_parser_to(subparsers, "waveglow-dl", init_wg_dl_parser)
@@ -69,7 +70,6 @@ def _init_parser():
   _add_parser_to(subparsers, "tacotron-infer", init_taco_infer_parser)
   
   # # Tools
-  # _add_parser_to(subparsers, "create-map", init_create_map_parser)
   # _add_parser_to(subparsers, "eval-checkpoints", init_eval_checkpoints_parser)
   # _add_parser_to(subparsers, "plot-embeddings", init_plot_emb_parser)
   # _add_parser_to(subparsers, "remove-silence-plot", init_remove_silence_plot_parser)

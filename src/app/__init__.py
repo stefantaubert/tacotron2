@@ -1,4 +1,4 @@
-from src.app.pre import preprocess_ljs, preprocess_thchs, preprocess_thchs_kaldi, preprocess_mels, prepare_ds, preprocess_text, text_normalize, text_convert_to_ipa, preprocess_wavs, wavs_normalize, wavs_remove_silence, wavs_upsample
+from src.app.pre import preprocess_ljs, preprocess_thchs, preprocess_thchs_kaldi, preprocess_mels, prepare_ds, preprocess_text, text_normalize, text_convert_to_ipa, preprocess_wavs, wavs_normalize, wavs_remove_silence, wavs_upsample, create_weights_map
 
 from src.app.tacotron import train as taco_train, continue_train as taco_continue_train, infer as taco_infer, validate as taco_validate
 

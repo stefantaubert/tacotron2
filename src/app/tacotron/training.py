@@ -1,6 +1,7 @@
 import os
 import matplotlib
 matplotlib.use('Agg')
+from typing import Optional
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
 from src.app.io import (get_checkpoints_dir,get_train_checkpoints_log_file,
@@ -14,7 +15,10 @@ from src.app.tacotron.io import get_train_dir
 from src.core.pre import SpeakersIdDict, SymbolConverter, split_train_test_val
 from src.core.tacotron import continue_train as continue_train_core
 from src.core.tacotron import get_train_logger, get_checkpoints_eval_logger
-from src.core.tacotron import train as train_core, load_symbol_embedding_weights_from, load_symbol_embedding_weights_from, get_uniform_weights, get_mapped_embedding_weights, SymbolsMap
+from src.core.tacotron import train as train_core, load_symbol_embedding_weights_from, load_symbol_embedding_weights_from
+from src.core.pre.text import SymbolsMap
+from src.app.pre import load_weights_map
+import torch
 
 _speakers_json = "speakers.json"
 _symbols_json = "symbols.json"
@@ -35,7 +39,15 @@ def save_speakers_json(train_dir: str, speakers: SpeakersIdDict):
   speakers_path = os.path.join(train_dir, _speakers_json)
   speakers.save(speakers_path)
 
-def train(base_dir: str, train_name: str, fl_name: str, warm_start_model: str = "", test_size: float = 0.01, validation_size: float = 0.05, hparams = "", split_seed: int = 1234, emb_map_model: str = "", emb_map_model_symbols: str = "", symbols_map_path: str = ""):
+def _load_pretrained_weights(emb_map_model: str) -> Optional[torch.Tensor]:
+  trained_weights = load_symbol_embedding_weights_from(emb_map_model) if emb_map_model else None
+  return trained_weights
+
+def _load_pretrained_symbol_conv(emb_map_model_symbols: str) -> Optional[SymbolConverter]:
+  trained_symbols = SymbolConverter.load_from_file(emb_map_model_symbols) if emb_map_model_symbols else None
+  return trained_symbols
+
+def train(base_dir: str, train_name: str, fl_name: str, warm_start_model: Optional[str] = None, test_size: float = 0.01, validation_size: float = 0.05, hparams: Optional[str] = None, split_seed: int = 1234, emb_map_model: Optional[str] = None, emb_map_model_symbols: Optional[str] = None, symbols_map_path: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, fl_name)
   wholeset = load_filelist(prep_dir)
   trainset, testset, valset = split_train_test_val(wholeset, test_size=test_size, val_size=validation_size, seed=split_seed, shuffle=True)
@@ -62,36 +74,21 @@ def train(base_dir: str, train_name: str, fl_name: str, warm_start_model: str = 
   add_file_out_to_logger(get_train_logger(), log_file)
   add_file_out_to_logger(get_checkpoints_eval_logger(), checkpoints_log_file)
   
-  # todo log map
-  mapped_emb_weights = None
-  if emb_map_model:
-    trained_weights = load_symbol_embedding_weights_from(emb_map_model)
-    trained_symbols = SymbolConverter.load_from_file(emb_map_model_symbols)
-    symbols_map = None
-    if symbols_map_path:
-      symbols_map = SymbolsMap.load(symbols_map_path)
-    model_weights = get_uniform_weights(symbols_conv.get_symbol_ids_count(), trained_weights.shape[1])
-    mapped_emb_weights = get_mapped_embedding_weights(
-      model_weights=model_weights,
-      model_symbols=symbols_conv,
-      trained_weights=trained_weights,
-      trained_symbols=trained_symbols,
-      symbols_map=symbols_map,
-    )
-
   train_core(
     warm_start_model_path=warm_start_model,
-    mapped_emb_weights=mapped_emb_weights,
     custom_hparams=hparams,
     logdir=logs_dir,
-    n_symbols=symbols_conv.get_symbol_ids_count(),
+    symbols_conv=symbols_conv,
     n_speakers=len(speakers),
     trainset=trainset,
     valset=valset,
-    save_checkpoint_dir=get_checkpoints_dir(train_dir)
+    save_checkpoint_dir=get_checkpoints_dir(train_dir),
+    trained_weights=_load_pretrained_weights(emb_map_model),
+    symbols_map=load_weights_map(symbols_map_path),
+    trained_symbols_conv=_load_pretrained_symbol_conv(emb_map_model_symbols)
   )
 
-def continue_train(base_dir: str, train_name: str, hparams):
+def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -137,8 +134,7 @@ if __name__ == "__main__":
       fl_name="thchs",
       hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,cache_mels=False",
       emb_map_model=model_path,
-      emb_map_model_symbols=model_conv,
-      symbols_map_path="maps/weights/chn_en_v1.json"
+      emb_map_model_symbols=model_conv
     )
   elif mode == 3:
     model_path = "/datasets/models/taco2pt_v2/ljs_ipa_ms_from_scratch/checkpoints/113500"
@@ -147,10 +143,13 @@ if __name__ == "__main__":
       base_dir="/datasets/models/taco2pt_v3",
       train_name="debug",
       fl_name="thchs",
-      hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,cache_mels=False",
       emb_map_model=model_path,
-      emb_map_model_symbols=model_conv
+      emb_map_model_symbols=model_conv,
+      symbols_map_path="maps/weights/chn_en_tones.json",
+      warm_start_model=model_path,
+      hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight,speakers_embedding.weight],cache_mels=False"
     )
+   
   elif mode == 4:
     continue_train(
       base_dir="/datasets/models/taco2pt_v3",
