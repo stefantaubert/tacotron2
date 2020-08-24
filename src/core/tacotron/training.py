@@ -10,8 +10,8 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from typing import Tuple
 from typing import Optional
-
-from src.core.common import get_last_checkpoint, get_pytorch_filename
+from src.core.common import get_custom_checkpoint
+from src.core.common import get_last_checkpoint, get_all_checkpoint_iterations
 from src.core.pre import PreparedData, PreparedDataList, SpeakersIdDict
 from torch import nn
 from src.core.tacotron.hparams import create_hparams
@@ -182,22 +182,42 @@ class Tacotron2Loss(nn.Module):
     gate_loss = nn.BCEWithLogitsLoss()(gate_out, gate_target)
     return mel_loss + gate_loss
 
+def prepare_valloader(hparams, collate_fn: SymbolsMelCollate, valset: PreparedDataList):
+  debug_logger.info(f"Duration valset {valset.get_total_duration_s() / 60:.2f}min / {valset.get_total_duration_s() / 60 / 60:.2f}h")
 
-def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDataList):
+  val = SymbolsMelLoader(valset, hparams)
+  val_sampler = None
+
+  # if distributed_run:
+  #   val_sampler = DistributedSampler(val)
+
+  val_loader = DataLoader(
+    dataset=val,
+    sampler=val_sampler, 
+    num_workers=1,
+    shuffle=False,
+    batch_size=hparams.batch_size,
+    pin_memory=False,
+    collate_fn=collate_fn
+  )
+
+  return val_loader
+
+def prepare_trainloader(hparams, collate_fn: SymbolsMelCollate, trainset: PreparedDataList):
   # Get data, data loaders and collate function ready
-  trainset = SymbolsMelLoader(trainset, hparams)
-  valset = SymbolsMelLoader(valset, hparams)
-  collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
+  debug_logger.info(f"Duration trainset {trainset.get_total_duration_s() / 60:.2f}min / {trainset.get_total_duration_s() / 60 / 60:.2f}h")
+ 
+  trn = SymbolsMelLoader(trainset, hparams)
 
   train_sampler = None
   shuffle = True
 
   # if hparams.distributed_run:
-  #   train_sampler = DistributedSampler(trainset)
+  #   train_sampler = DistributedSampler(trn)
   #   shuffle = False
 
   train_loader = DataLoader(
-    trainset,
+    dataset=trn,
     num_workers=1,
     shuffle=shuffle,
     sampler=train_sampler,
@@ -207,22 +227,7 @@ def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDat
     collate_fn=collate_fn
   )
 
-  val_sampler = None
-
-  # if distributed_run:
-  #   val_sampler = DistributedSampler(valset)
-
-  val_loader = DataLoader(
-    valset,
-    sampler=val_sampler, 
-    num_workers=1,
-    shuffle=False,
-    batch_size=hparams.batch_size,
-    pin_memory=False,
-    collate_fn=collate_fn
-  )
-
-  return train_loader, val_loader
+  return train_loader
 
 def load_model(hparams, logger: logging.Logger):
   model = Tacotron2(hparams, logger).cuda()
@@ -245,7 +250,7 @@ def warm_start_model(checkpoint_path, model, ignore_layers):
     model_dict = dummy_dict
   model.load_state_dict(model_dict)
 
-def validate(model: Tacotron2, criterion: nn.Module, val_loader: DataLoader, iteration: int, logger: Tacotron2Logger):
+def validate(model: Tacotron2, criterion: nn.Module, val_loader: DataLoader, iteration: int, logger: Optional[Tacotron2Logger] = None):
   """Handles all the validation scoring and printing"""
   debug_logger.debug("Validating...")
   model.eval()
@@ -265,7 +270,8 @@ def validate(model: Tacotron2, criterion: nn.Module, val_loader: DataLoader, ite
   model.train()
   
   debug_logger.info(f"Validation loss {iteration}: {val_loss:9f}")
-  logger.log_validation(val_loss, model, y, y_pred, iteration)
+  if logger:
+    logger.log_validation(val_loss, model, y, y_pred, iteration)
   
   return val_loss
 
@@ -276,7 +282,9 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   debug_logger.info('Final parsed hparams:')
   debug_logger.info('\n'.join(str(hparams.values()).split(',')))
   
-  train_loader, val_loader = prepare_dataloaders(hparams, trainset, valset)
+  collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
+  val_loader = prepare_valloader(hparams, collate_fn, valset)
+  train_loader = prepare_trainloader(hparams, collate_fn, trainset)
 
   if not len(train_loader):
     debug_logger.error("Not enough trainingdata.")
@@ -547,3 +555,60 @@ def get_mapped_embedding_weights_core(model_weights: torch.Tensor, model_symbols
     model_weights[map_to_symbol_id] = trained_weights[map_from_symbol_id]
      
   return model_weights
+
+def _filter_checkpoints(iterations: List[int], select: int, min_it: int, max_it: int):
+  if not select:
+    select = 0
+  if not min_it:
+    min_it = 0
+  if not max_it:
+    max_it = max(iterations)
+  process_checkpoints = [checkpoint for checkpoint in iterations if checkpoint % select == 0 and checkpoint >= min_it and checkpoint <= max_it]
+  
+  return process_checkpoints
+
+def eval_checkpoints(custom_hparams: str, checkpoint_dir: str, select: int, min_it: int, max_it: int, n_symbols: int, n_speakers: int, valset: PreparedDataList):
+  its = get_all_checkpoint_iterations(checkpoint_dir)
+  debug_logger.info(f"Available iterations {its}")
+  filtered_its = _filter_checkpoints(its, select, min_it, max_it)
+  if len(filtered_its):
+    debug_logger.info(f"Selected iterations: {filtered_its}")
+  else:
+    debug_logger.info("None selected. Exiting.")
+    return
+
+  hparams = create_hparams(n_speakers, n_symbols, custom_hparams)
+
+  collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
+  val_loader = prepare_valloader(hparams, collate_fn, valset)
+
+  result = []
+  for checkpoint in tqdm(filtered_its):
+    criterion = Tacotron2Loss()
+    torch.manual_seed(hparams.seed)
+    torch.cuda.manual_seed(hparams.seed)
+    model = load_model(hparams, debug_logger)
+    learning_rate = hparams.learning_rate
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=hparams.weight_decay)
+
+    full_checkpoint_path, _ = get_custom_checkpoint(checkpoint_dir, checkpoint)
+
+    model, _, _, _ = load_checkpoint(full_checkpoint_path, model, optimizer)
+    val_loss = validate(model, criterion, val_loader, checkpoint)
+    result.append((checkpoint, val_loss))
+    debug_logger.info(f"Validation loss {checkpoint}: {val_loss:9f}")
+
+  debug_logger.info("Result...")
+  debug_logger.info("Sorted after checkpoints:")
+
+  result.sort()
+  for cp, loss in result:
+    debug_logger.info(f"Validation loss {cp}: {loss:9f}")
+
+  result = [(b, a) for a, b in result]
+  result.sort()
+
+  debug_logger.info("Sorted after scores:")
+  for loss, cp in result:
+    debug_logger.info(f"Validation loss {cp}: {loss:9f}")
+

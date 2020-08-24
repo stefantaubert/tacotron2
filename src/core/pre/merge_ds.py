@@ -38,7 +38,10 @@ class PreparedData:
   speaker_id: int
   speaker_name: str
   lang: Language
+  ds_name: str
 
+  def get_speaker_name(self):
+    return str(self.speaker_name)
 
 class PreparedDataList(List[PreparedData]):
   def save(self, file_path: str):
@@ -55,6 +58,17 @@ class PreparedDataList(List[PreparedData]):
       if entry.i == i:
         return entry
     raise Exception(f"Entry {i} not found.")
+  
+  def get_random_entry(self) -> PreparedData:
+    idx = random.choice(range(len(self)))
+    return self[idx]
+
+  def get_random_entry_ds_speaker(self, ds_name: str, speaker_name: str) -> PreparedData:
+    x: PreparedData
+    relevant_entries = [x for x in self if x.ds_name == ds_name and x.get_speaker_name() == speaker_name]
+    assert len(relevant_entries)
+    idx = random.choice(range(relevant_entries))
+    return relevant_entries[idx]
 
   @staticmethod
   def get_key_for_sorting_after_entry_id(elem: PreparedData):
@@ -75,13 +89,13 @@ def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDat
   for ds_name, dataset in datasets.items():
     ds_data, text_data, wav_data, mel_data, _, conv = dataset
     speaker_names = ds_speakers_list[ds_name]
-    prep = get_prepared_data(ds_data, speaker_names, text_data, wav_data, mel_data)
+    prep = get_prepared_data(ds_name, ds_data, speaker_names, text_data, wav_data, mel_data)
     ds_prepared_data.append((prep, conv))
   
   whole, conv = merge_prepared_data(ds_prepared_data)
   return whole, conv, speakers_id_dict
 
-def map_to_prepared_data(ds_data: DsData, text_data: TextData, wav_data: WavData, mel_data: MelData) -> PreparedData:
+def map_to_prepared_data(ds_name: str, ds_data: DsData, text_data: TextData, wav_data: WavData, mel_data: MelData) -> PreparedData:
   prep_data = PreparedData(
     i=0,
     entry_id=ds_data.entry_id,
@@ -93,18 +107,20 @@ def map_to_prepared_data(ds_data: DsData, text_data: TextData, wav_data: WavData
     lang=text_data.lang,
     duration=wav_data.duration,
     speaker_id=ds_data.speaker_id,
-    speaker_name=ds_data.speaker_name
+    speaker_name=ds_data.get_speaker_name(),
+    ds_name=ds_name
   )
   return prep_data
 
-def get_prepared_data(ds_data: DsDataList, speaker_names: List[Tuple[str, int]], text_list: TextDataList, wav_list: WavDataList, mel_list: MelDataList) -> PreparedDataList:
+def get_prepared_data(ds_name: str, ds_data: DsDataList, speaker_names: List[Tuple[str, int]], text_list: TextDataList, wav_list: WavDataList, mel_list: MelDataList) -> PreparedDataList:
   res = PreparedDataList()
   counter = 0
   for speaker_name, new_speaker_id in speaker_names:
     ds_entry: DsData
     for ds_entry in ds_data:
-      if ds_entry.speaker_name == speaker_name:
+      if ds_entry.get_speaker_name() == speaker_name:
         prep_data = map_to_prepared_data(
+          ds_name=ds_name,
           ds_data=ds_entry,
           text_data=text_list[ds_entry.entry_id],
           wav_data=wav_list[ds_entry.entry_id],

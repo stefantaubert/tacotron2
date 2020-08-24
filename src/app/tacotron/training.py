@@ -117,7 +117,7 @@ def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None
 
 
 if __name__ == "__main__":
-  mode = 3
+  mode = 2
   if mode == 1:
     train(
       base_dir="/datasets/models/taco2pt_v3",

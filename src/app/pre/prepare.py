@@ -49,24 +49,13 @@ def save_filelist_symbol_converter(prep_dir: str, data: SymbolConverter):
   path = os.path.join(prep_dir, _prepared_symbols_json)
   data.dump(path)
 
-def _parse_tuple_list(tuple_list: str) -> List[Tuple]:
-  """ tuple_list: "a,b;c,d;... """
-  step1: List[str] = tuple_list.split(';')
-  result: List[Tuple] = [tuple(x.split(',')) for x in step1]
-  result = list(sorted(set(result)))
-  return result
-
-def prepare_ds(base_dir: str, fl_name: str, ds_speakers: str, ds_text_audio: str):
+def prepare_ds(base_dir: str, fl_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]]):
   prep_dir = get_prepared_dir(base_dir, fl_name)
   if os.path.isdir(prep_dir):
     print("Already created.")
   else:
-    os.makedirs(prep_dir)
-    ds_speakers_tuple = _parse_tuple_list(ds_speakers)
-    ds_text_audio_tuple = _parse_tuple_list(ds_text_audio)
-
     datasets = {}
-    for ds_name, text_name, audio_name in ds_text_audio_tuple:
+    for ds_name, text_name, audio_name in ds_text_audio:
       # multiple uses of one ds are not valid
       assert ds_name not in datasets
       
@@ -84,24 +73,31 @@ def prepare_ds(base_dir: str, fl_name: str, ds_speakers: str, ds_text_audio: str
         load_text_symbol_converter(text_dir)
       )
     
-    data, conv, speakers_id_dict = merge_ds_core(datasets, ds_speakers_tuple)
+    data, conv, speakers_id_dict = merge_ds_core(datasets, ds_speakers)
 
+    os.makedirs(prep_dir)
     save_filelist(prep_dir, data)
     save_filelist_symbol_converter(prep_dir, conv)
     save_filelist_speakers_json(prep_dir, speakers_id_dict)
 
 if __name__ == "__main__":
-  
+  prepare_ds(
+    base_dir="/datasets/models/taco2pt_v3",
+    fl_name="ljs_thchs",
+    ds_speakers=[("ljs", "all"), ("thchs", "all")],
+    ds_text_audio=[("ljs", "en_norm", "22050kHz"), ("thchs", "ipa", "22050kHz_normalized_nosil")]
+  )
+
   prepare_ds(
     base_dir="/datasets/models/taco2pt_v3",
     fl_name="ljs",
-    ds_speakers="ljs,all",
-    ds_text_audio="ljs,ipa_norm,22050kHz"
+    ds_speakers=[("ljs", "all")],
+    ds_text_audio=[("ljs", "en_norm", "22050kHz")]
   )
 
   prepare_ds(
     base_dir="/datasets/models/taco2pt_v3",
     fl_name="thchs",
-    ds_speakers="thchs,all",
-    ds_text_audio="thchs,ipa,22050kHz_normalized_nosil"
+    ds_speakers=[("thchs", "all")],
+    ds_text_audio=[("thchs", "ipa", "22050kHz_normalized_nosil")]
   )

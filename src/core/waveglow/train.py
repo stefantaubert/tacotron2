@@ -18,9 +18,6 @@ import torch
 def get_logger():
   return logging.getLogger("wg-train")
 
-# def get_checkpoints_eval_logger():
-#   return logging.getLogger("taco-train-checkpoints")
-
 debug_logger = get_logger()
 
 class MelLoader(Dataset):
@@ -48,11 +45,11 @@ class MelLoader(Dataset):
       debug_logger.info("Loading wavs into memory...")
       cache = {}
       for i, wav_path in tqdm(wav_paths.items()):
-        cache[i] = self.__load_wav_tensor(wav_path)
+        cache[i] = self._load_wav_tensor(wav_path)
       debug_logger.info("Done")
       self.cache = cache
 
-  def __load_wav_tensor(self, wav_path: str):
+  def _load_wav_tensor(self, wav_path: str):
     wav_tensor, sr = wav_to_float32_tensor(wav_path)
     if sr != self.sampling_rate:
       raise ValueError("{} {} SR doesn't match target {} SR".format(wav_path, sr, self.sampling_rate))
@@ -62,7 +59,7 @@ class MelLoader(Dataset):
     if self.cache_wavs:
       wav_tensor = self.cache[index].clone().detach()
     else:
-      wav_tensor = self.__load_wav_tensor(self.wav_paths[index])
+      wav_tensor = self._load_wav_tensor(self.wav_paths[index])
     wav_tensor = get_wav_tensor_segment(wav_tensor, self.segment_length)
     mel_tensor = self.taco_stft.get_mel_tensor(wav_tensor)
     return (mel_tensor, wav_tensor)
@@ -82,17 +79,19 @@ def load_model(hparams):
   return model
 
 def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDataList):
-  trainset = MelLoader(trainset, hparams)
-  valset = MelLoader(valset, hparams)
+  debug_logger.info(f"Duration trainset {trainset.get_total_duration_s() / 60:.2f}min / {trainset.get_total_duration_s() / 60 / 60:.2f}h")
+  debug_logger.info(f"Duration valset {valset.get_total_duration_s() / 60:.2f}min / {valset.get_total_duration_s() / 60 / 60:.2f}h")
+
+  trn = MelLoader(trainset, hparams)
 
   train_sampler = None
   shuffle = False # maybe set to true bc taco is also true
 
   # # =====START: ADDED FOR DISTRIBUTED======
-  # train_sampler = DistributedSampler(trainset) if n_gpus > 1 else None
+  # train_sampler = DistributedSampler(trn) if n_gpus > 1 else None
   # # =====END:   ADDED FOR DISTRIBUTED======
   train_loader = DataLoader(
-    trainset,
+    dataset=trn,
     num_workers=0,
     shuffle=shuffle,
     sampler=train_sampler,
@@ -101,10 +100,11 @@ def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDat
     drop_last=True
   )
 
+  val = MelLoader(valset, hparams)
   val_sampler = None
 
   val_loader = DataLoader(
-    valset,
+    dataset=val,
     sampler=val_sampler,
     num_workers=0,
     shuffle=False,
@@ -125,7 +125,7 @@ def validate_core(model, criterion, val_loader: DataLoader):
 
     val_loss = 0.0
     debug_logger.info("Validating...")
-    for i, batch in enumerate(tqdm(val_loader)):
+    for batch in tqdm(val_loader):
       x = model.parse_batch(batch)
       y_pred = model(x)
       loss = criterion(y_pred)
@@ -155,10 +155,6 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   debug_logger.info('Final parsed hparams:')
   debug_logger.info('\n'.join(str(hparams.values()).split(',')))
 
-  debug_logger.info("Epochs: {}".format(hparams.epochs))
-  debug_logger.info("Batchsize: {}".format(hparams.batch_size))
-  debug_logger.info("FP16 Run: {}".format(hparams.fp16_run))
-  #debug_logger.info("Dynamic Loss Scaling: {}".format(hparams.dynamic_loss_scaling))
   debug_logger.info("Distributed Run: {}".format(False))
   debug_logger.info("cuDNN Enabled: {}".format(torch.backends.cudnn.enabled))
   debug_logger.info("cuDNN Benchmark: {}".format(torch.backends.cudnn.benchmark))

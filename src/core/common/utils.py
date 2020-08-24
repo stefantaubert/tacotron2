@@ -84,34 +84,18 @@ def stack_images_vertically(list_im, out_path):
     y_offset += im.size[1]
   new_im.save(out_path)
 
+def save_df(df: pd.DataFrame, path: str):
+  df.to_csv(path, header=None, index=None, sep=__csv_separator)
+
 def save_csv(data: list, path: str):
   data = [astuple(xi) for xi in data]
   df = pd.DataFrame(data)
-  df.to_csv(path, header=None, index=None, sep=__csv_separator)
+  save_df(df, path)
 
 def load_csv(path: str, dc_type) -> list:
   data = pd.read_csv(path, header=None, sep=__csv_separator)
   data_loaded = [dc_type(*xi) for xi in data.values]
   return data_loaded
-
-# def serialize_ds_speaker(ds: str, speaker: str):
-#   return "{},{}".format(ds, speaker)
-
-# def parse_ds_speaker(ds_speaker: str):
-#   return ds_speaker.split(',')
-
-# def serialize_ds_speakers(ds_speakers: tuple):
-#   ds_speakers = [serialize_ds_speaker(ds, speaker) for ds, speaker in ds_speakers]
-#   res = ";".join(ds_speakers)
-#   return res
-
-# def parse_ds_speakers(ds_speakers: str) -> list:
-#   '''
-#   Example: [ ['thchs', 'C11', 0], ... ]
-#   '''
-#   speakers = ds_speakers.split(';')
-#   ds_speakers = [x.split(',') + [i] for i, x in enumerate(speakers)]
-#   return ds_speakers
 
 def create_parent_folder(file: str):
   path = Path(file)

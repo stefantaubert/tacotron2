@@ -13,15 +13,9 @@ from src.core.pre.text import SymbolConverter
 class UnitTests(unittest.TestCase):
   def test_sort_prep_data_list(self):
     l = PreparedDataList([
-      PreparedData(
-        0, 2, "", "", "", "", 0, 0, "", 0
-      ),
-      PreparedData(
-        0, 1, "", "", "", "", 0, 0, "", 0
-      ),
-      PreparedData(
-        0, 3, "", "", "", "", 0, 0, "", 0
-      )
+      self.get_dummy_prep_data(entry_id=2),
+      self.get_dummy_prep_data(entry_id=1),
+      self.get_dummy_prep_data(entry_id=3)
     ])
 
     l.sort(key=PreparedDataList.get_key_for_sorting_after_entry_id, reverse=False)
@@ -55,12 +49,12 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(["12", "23", "ab"], speakers_id_dict.get_speakers())
 
   def test_map_to_prepared_data(self):
-    ds = DsData(1, "basename0", "speaker0", 0, "text0", "wavpath0", Language.ENG)
+    ds = DsData(1, "basename0", 11233, 0, "text0", "wavpath0", Language.ENG)
     text = TextData(1, "text_pre0", "12,45,65", Language.CHN)
     wav = WavData(1, "wavpath_pre0", 7.89, 22050)
-    mel = MelData(1, "melpath_pre0", 7.89, 22050)
+    mel = MelData(1, "melpath_pre0", 80)
 
-    res = map_to_prepared_data(ds, text, wav, mel)
+    res = map_to_prepared_data("ds1", ds, text, wav, mel)
 
     self.assertEqual(0, res.i)
     self.assertEqual(1, res.entry_id)
@@ -70,8 +64,9 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("12,45,65", res.serialized_updated_ids)
     self.assertEqual(7.89, res.duration)
     self.assertEqual(0, res.speaker_id)
-    self.assertEqual("speaker0", res.speaker_name)
+    self.assertEqual("11233", res.speaker_name)
     self.assertEqual(Language.CHN, res.lang)
+    self.assertEqual("ds1", res.ds_name)
 
   def test_preprocess(self):
     datasets = {
@@ -92,9 +87,9 @@ class UnitTests(unittest.TestCase):
           WavData(2, "wavpath_pre0", 7.89, 22050),
         ]),
         MelDataList([
-          MelData(0, "melpath_pre0", 7.89, 22050),
-          MelData(1, "melpath_pre0", 7.89, 22050),
-          MelData(2, "melpath_pre0", 7.89, 22050),
+          MelData(0, "melpath_pre0", 80),
+          MelData(1, "melpath_pre0", 80),
+          MelData(2, "melpath_pre0", 80),
         ]),
         ["speaker0", "speaker1"],
         SymbolConverter.init_from_symbols({"a", "b"})
@@ -116,9 +111,9 @@ class UnitTests(unittest.TestCase):
           WavData(2, "wavpath_pre0", 7.89, 22050),
         ]),
         MelDataList([
-          MelData(0, "melpath_pre0", 7.89, 22050),
-          MelData(1, "melpath_pre0", 7.89, 22050),
-          MelData(2, "melpath_pre0", 7.89, 22050),
+          MelData(0, "melpath_pre0", 80),
+          MelData(1, "melpath_pre0", 80),
+          MelData(2, "melpath_pre0", 80),
         ]),
         ["speaker0", "speaker1"],
         SymbolConverter.init_from_symbols({"b", "c"})
@@ -139,6 +134,26 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("1,3,4", whole[3].serialized_updated_ids)
     self.assertEqual(["speaker0", "speaker1"], speakers_id_dict.get_speakers())
 
+  def test_get_prepared_data_speaker_name_is_int(self):
+    speaker_names: List[Tuple[str, int]] = [("1123", 15)]
+    ds_data = DsDataList([
+      DsData(0, "", 1123, 0, "", "", 0),
+    ])
+    text_list = TextDataList([
+      TextData(0, "", "", 0),
+    ])
+    wav_list = WavDataList([
+      WavData(0, "", 0, 0),
+    ])
+    mel_list = MelDataList([
+      MelData(0, "", 0),
+    ])
+
+    res: PreparedDataList = get_prepared_data("", ds_data, speaker_names, text_list, wav_list, mel_list)
+
+    self.assertEqual(1, len(res))
+    self.assertEqual("1123", res[0].speaker_name)
+
   def test_get_prepared_data(self):
     speaker_names: List[Tuple[str, int]] = [("speaker1", 15)]
     ds_data = DsDataList([
@@ -157,12 +172,12 @@ class UnitTests(unittest.TestCase):
       WavData(2, "wavpath_pre2", 9.98, 22050),
     ])
     mel_list = MelDataList([
-      MelData(0, "melpath_pre0", 7.89, 22050),
-      MelData(1, "melpath_pre1", 8.98, 22050),
-      MelData(2, "melpath_pre2", 9.98, 22050),
+      MelData(0, "melpath_pre0", 80),
+      MelData(1, "melpath_pre1", 80),
+      MelData(2, "melpath_pre2", 80),
     ])
 
-    res: PreparedDataList = get_prepared_data(ds_data, speaker_names, text_list, wav_list, mel_list)
+    res: PreparedDataList = get_prepared_data("ds1", ds_data, speaker_names, text_list, wav_list, mel_list)
 
     self.assertEqual(2, len(res))
 
@@ -173,6 +188,7 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("65,78,16", res[0].serialized_updated_ids)
     self.assertEqual("wavpath_pre1", res[0].wav_path)
     self.assertEqual("melpath_pre1", res[0].mel_path)
+    self.assertEqual("ds1", res[0].ds_name)
 
     self.assertEqual(1, res[1].i)
     self.assertEqual(2, res[1].entry_id)
@@ -181,11 +197,12 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("66,78,16", res[1].serialized_updated_ids)
     self.assertEqual("wavpath_pre2", res[1].wav_path)
     self.assertEqual("melpath_pre2", res[1].mel_path)
+    self.assertEqual("ds1", res[1].ds_name)
 
   def test_merge_prepared_data(self):
     prep_list = [
       (PreparedDataList([
-        PreparedData(0, 1, "basename1", "wav1", "mel1", "0,1,2", 4.5, 15, "speaker1", Language.ENG),
+        PreparedData(0, 1, "", "", "", 0, "0,1,2", 0, 0, "", 0, ""),
       ]),
       SymbolConverter({
         0: (0, "a"),
@@ -193,7 +210,7 @@ class UnitTests(unittest.TestCase):
         2: (0, "c"),
       })),
       (PreparedDataList([
-        PreparedData(0, 2, "basename2", "wav2", "mel2", "0,1,2", 5.5, 16, "speaker2", Language.CHN),
+        PreparedData(0, 2, "", "", "", 0, "0,1,2", 0, 0, "", 0, ""),
       ]),
       SymbolConverter({
         0: (0, "b"),
@@ -295,18 +312,18 @@ class UnitTests(unittest.TestCase):
 
   def test_split_prepared_data(self):
     data = PreparedDataList([
-      PreparedData(0, 0, "", "", "", "", 0, 1, "", Language.ENG),
-      PreparedData(1, 0, "", "", "", "", 0, 1, "", Language.ENG),
-      PreparedData(2, 0, "", "", "", "", 0, 1, "", Language.ENG),
-      PreparedData(3, 0, "", "", "", "", 0, 1, "", Language.ENG),
-      PreparedData(4, 0, "", "", "", "", 0, 1, "", Language.ENG),
-      PreparedData(5, 0, "", "", "", "", 0, 1, "", Language.ENG),
-      PreparedData(6, 0, "", "", "", "", 0, 2, "", Language.ENG),
-      PreparedData(7, 0, "", "", "", "", 0, 2, "", Language.ENG),
-      PreparedData(8, 0, "", "", "", "", 0, 2, "", Language.ENG),
-      PreparedData(9, 0, "", "", "", "", 0, 2, "", Language.ENG),
-      PreparedData(10, 0, "", "", "", "", 0, 2, "", Language.ENG),
-      PreparedData(11, 0, "", "", "", "", 0, 2, "", Language.ENG),
+      self.get_dummy_prep_data(i=0),
+      self.get_dummy_prep_data(i=1),
+      self.get_dummy_prep_data(i=2),
+      self.get_dummy_prep_data(i=3),
+      self.get_dummy_prep_data(i=4),
+      self.get_dummy_prep_data(i=5),
+      self.get_dummy_prep_data(i=6),
+      self.get_dummy_prep_data(i=7),
+      self.get_dummy_prep_data(i=8),
+      self.get_dummy_prep_data(i=9),
+      self.get_dummy_prep_data(i=10),
+      self.get_dummy_prep_data(i=11),
     ])
 
     train, test, val = split_prepared_data_train_test_val(data, test_size=1/6, val_size=2/6, seed=0, shuffle=False)
@@ -314,6 +331,10 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(2, len(test))
     self.assertEqual(4, len(val))
     self.assertEqual(6, len(train))
+  
+  @staticmethod
+  def get_dummy_prep_data(i: int=0, entry_id: int=0):
+    return PreparedData(i, entry_id, "", "", "", 0, "", 0, 1, "", Language.ENG, "")
 
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)

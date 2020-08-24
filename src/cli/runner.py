@@ -5,13 +5,13 @@ use_matplotlib_backend("Agg")
 
 from src.cli.pre import (init_prepare_ds_parser, init_preprocess_ljs_parser,
                          init_preprocess_mels_parser,
-                         init_preprocess_text_parser,
+                         init_preprocess_text_parser,init_wavs_remove_silence_plot_parser,
                          init_preprocess_thchs_kaldi_parser,
                          init_preprocess_thchs_parser,
                          init_preprocess_wavs_parser,
                          init_text_convert_to_ipa_parser,
                          init_text_normalize_parser,init_create_weights_map_parser,
-                         init_wavs_normalize_parser,
+                         init_wavs_normalize_parser, init_create_inference_map_parser,
                          init_wavs_remove_silence_parser,
                          init_wavs_upsample_parser)
 from src.cli.tacotron import \
@@ -19,6 +19,8 @@ from src.cli.tacotron import \
 from src.cli.tacotron import init_inference_parser as init_taco_infer_parser
 from src.cli.tacotron import init_train_parser as init_taco_train_parser
 from src.cli.tacotron import init_validate_parser as init_taco_val_parser
+from src.cli.tacotron import init_eval_checkpoints_parser as init_taco_eval_checkpoints_parser
+from src.cli.tacotron import init_plot_emb_parser as init_taco_plot_emb_parser
 from src.cli.waveglow import \
     init_continue_train_parser as init_wg_continue_train_parser
 from src.cli.waveglow import init_inference_parser as init_wg_infer_parser
@@ -27,7 +29,7 @@ from src.cli.waveglow import init_validate_parser as init_wg_val_parser, init_do
 
 
 def _add_parser_to(subparsers, name: str, init_method):
-  parser = subparsers.add_parser(name, help='{} help'.format(name))
+  parser = subparsers.add_parser(name, help=f"{name} help")
   invoke_method = init_method(parser)
   parser.set_defaults(invoke_handler=invoke_method)
   return parser
@@ -36,8 +38,6 @@ def _init_parser():
   main_parser = ArgumentParser()
   subparsers = main_parser.add_subparsers(help='sub-command help')
 
-  # only required when automatic name generation
-  #__add_parser_to(subparsers, "paths", init_path_parser)
   _add_parser_to(subparsers, "preprocess-ljs", init_preprocess_ljs_parser)
   _add_parser_to(subparsers, "preprocess-thchs", init_preprocess_thchs_parser)
   _add_parser_to(subparsers, "preprocess-thchs-kaldi", init_preprocess_thchs_kaldi_parser)
@@ -46,6 +46,7 @@ def _init_parser():
   _add_parser_to(subparsers, "wavs-normalize", init_wavs_normalize_parser)
   _add_parser_to(subparsers, "wavs-upsample", init_wavs_upsample_parser)
   _add_parser_to(subparsers, "wavs-remove-silence", init_wavs_remove_silence_parser)
+  _add_parser_to(subparsers, "wavs-remove-silence-plot", init_wavs_remove_silence_plot_parser)
 
   _add_parser_to(subparsers, "preprocess-text", init_preprocess_text_parser)
   _add_parser_to(subparsers, "text-normalize", init_text_normalize_parser)
@@ -55,24 +56,20 @@ def _init_parser():
 
   _add_parser_to(subparsers, "prepare-ds", init_prepare_ds_parser)
   _add_parser_to(subparsers, "create-weights-map", init_create_weights_map_parser)
+  _add_parser_to(subparsers, "create-inference-map", init_create_inference_map_parser)
 
-  # Waveglow
   _add_parser_to(subparsers, "waveglow-dl", init_wg_dl_parser)
   _add_parser_to(subparsers, "waveglow-train", init_wg_train_parser)
   _add_parser_to(subparsers, "waveglow-continue-train", init_wg_continue_train_parser)
   _add_parser_to(subparsers, "waveglow-validate", init_wg_val_parser)
   _add_parser_to(subparsers, "waveglow-infer", init_wg_infer_parser)
 
-  # Tacotron
   _add_parser_to(subparsers, "tacotron-train", init_taco_train_parser)
   _add_parser_to(subparsers, "tacotron-continue-train", init_taco_continue_train_parser)
   _add_parser_to(subparsers, "tacotron-validate", init_taco_val_parser)
   _add_parser_to(subparsers, "tacotron-infer", init_taco_infer_parser)
-  
-  # # Tools
-  # _add_parser_to(subparsers, "eval-checkpoints", init_eval_checkpoints_parser)
-  # _add_parser_to(subparsers, "plot-embeddings", init_plot_emb_parser)
-  # _add_parser_to(subparsers, "remove-silence-plot", init_remove_silence_plot_parser)
+  _add_parser_to(subparsers, "tacotron-eval-checkpoints", init_taco_eval_checkpoints_parser)
+  _add_parser_to(subparsers, "tacotron-plot-embeddings", init_taco_plot_emb_parser)
 
   return main_parser
 

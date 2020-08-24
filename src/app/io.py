@@ -11,7 +11,7 @@ from src.core.common import (Language, float_to_wav, get_basename,
                              get_custom_or_last_checkpoint, get_parent_dirname,
                              get_subdir, parse_json, plot_melspec,
                              stack_images_vertically)
-from src.core.pre import PreparedDataList, SpeakersIdDict, SymbolConverter
+from src.core.pre import PreparedDataList, SpeakersIdDict, SymbolConverter, PreparedData
 
 #region Training
 
@@ -86,8 +86,8 @@ def _get_validation_root_dir(train_dir: str):
   train_dir = train_dir
   return get_subdir(train_dir, "validation", create=True)
 
-def get_val_dir(train_dir: str, entry_id: int, iteration: int):
-  subdir_name = "{}_id-{}_it-{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), entry_id, iteration)
+def get_val_dir(train_dir: str, entry: PreparedData, iteration: int):
+  subdir_name = f"{datetime.datetime.now():%Y-%m-%d,%H-%M-%S},id={entry.entry_id},ds={entry.ds_name},speaker={entry.get_speaker_name()},it={iteration}"
   return get_subdir(_get_validation_root_dir(train_dir), subdir_name, create=True)
 
 def save_val_plot(val_dir: str, mel):

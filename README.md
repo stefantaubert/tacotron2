@@ -219,25 +219,27 @@ $base_dir
 │  │  │  │  │  ├── data.csv
 │  │  │  │  ├── 16000kHz_normalized
 │  │  │  │  │  ├── data.csv
-│  │  │  │  │  ├── data
-│  │  │  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  │  ├── 0-499
+│  │  │  │  │  │  ├── 0.wav
 │  │  │  │  │  │  ├── ...
 │  │  │  │  ├── 22050kHz_normalized
 │  │  │  │  │  ├── data.csv
-│  │  │  │  │  ├── data
-│  │  │  │  │  │  ├── 0-LJ001-0001.wav
+│  │  │  │  │  ├── 0-499
+│  │  │  │  │  │  ├── 0.wav
 │  │  │  │  │  │  ├── ...
+│  │  │  │  │  ├── trim
+│  │  │  │  │  │  ├── 499
+│  │  │  │  │  │  │  ├── original.wav
+│  │  │  │  │  │  │  ├── original.png
+│  │  │  │  │  │  │  ├── cs=5,ts=-20dBFS,bs=100ms,te=-30dBFS,be=150ms.wav
+│  │  │  │  │  │  │  ├── cs=5,ts=-20dBFS,bs=100ms,te=-30dBFS,be=150ms.png
 │  │  │  │  ├── 22050kHz_normalized_nosil
 │  │  │  │  │  ├── data.csv
-│  │  │  │  │  ├── data
-│  │  │  │  │  │  ├── 0-LJ001-0001.wav
-│  │  │  │  │  │  ├── ...
+│  │  │  │  │  ├── 0-499
 │  │  │  ├── mel
 │  │  │  │  ├── 22050kHz_normalized_nosil
 │  │  │  │  │  ├── data.csv
-│  │  │  │  │  ├── data
-│  │  │  │  │  │  ├── 0-LJ001-0001.pt
-│  │  │  │  │  │  ├── ...
+│  │  │  │  │  ├── 0-499
 │  ├── prepared
 │  │  ├── thchs
 │  │  │  ├── speakers.json

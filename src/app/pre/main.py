@@ -77,8 +77,8 @@ def prepare_thchs():
   prepare_ds(
     base_dir="/datasets/models/taco2pt_v3",
     fl_name="thchs",
-    ds_speakers="thchs,all",
-    ds_text_audio="thchs,ipa,22050kHz_normalized_nosil"
+    ds_speakers=[("thchs", "all")],
+    ds_text_audio=[("thchs", "ipa", "22050kHz_normalized_nosil")]
   )
 
 def prepare_thchs_kaldi():
@@ -135,8 +135,8 @@ def prepare_ljs():
   prepare_ds(
     base_dir="/datasets/models/taco2pt_v3",
     fl_name="ljs",
-    ds_speakers="ljs,all",
-    ds_text_audio="ljs,ipa_norm,22050kHz"
+    ds_speakers=[("ljs", "all")],
+    ds_text_audio=[("ljs", "ipa_norm", "22050kHz")]
   )
 
 if __name__ == "__main__":

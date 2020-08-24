@@ -107,7 +107,7 @@ class TacotronSTFT(torch.nn.Module):
   def get_mel_tensor_from_file(self, wav_path: str) -> torch.Tensor:
     wav_tensor, sr = wav_to_float32_tensor(wav_path)
     
-    if sr != self.sampling_rate :
+    if sr != self.sampling_rate:
       raise ValueError("{} {} SR doesn't match target {} SR".format(wav_path, sr, self.sampling_rate))
     
     return self.get_mel_tensor(wav_tensor)

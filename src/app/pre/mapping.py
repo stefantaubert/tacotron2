@@ -32,8 +32,8 @@ def _read_corpora(path: str) -> str:
 
 def create_weights_map(base_dir: str, dest_prep_name: str, orig_prep_name: str, dest_dir: str = "maps/weights"):
   dest_prep_dir = get_prepared_dir(base_dir, dest_prep_name)
-  orig_prep_dir = get_prepared_dir(base_dir, orig_prep_name)
   assert os.path.isdir(dest_prep_dir)
+  orig_prep_dir = get_prepared_dir(base_dir, orig_prep_name)
   assert os.path.isdir(orig_prep_dir)
   dest_conv = load_filelist_symbol_converter(dest_prep_dir)
   orig_conv = load_filelist_symbol_converter(orig_prep_dir)

@@ -25,7 +25,7 @@ from src.core.inference import infer as infer_core
 
 
 def get_infer_dir(train_dir: str, input_name: str, iteration: int, speaker_id: int):
-  subdir_name = "{}_text-{}_speaker-{}_it-{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), input_name, speaker_id, iteration)
+  subdir_name = f"{datetime.datetime.now():%Y-%m-%d,%H-%M-%S},text={input_name},speaker={speaker_id},it={iteration}"
   return get_subdir(get_inference_root_dir(train_dir), subdir_name, create=True)
 
 def load_infer_text(file_name: str) -> List[str]:

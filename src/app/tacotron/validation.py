@@ -7,7 +7,7 @@ import matplotlib.pylab as plt
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
 from src.app.io import (get_checkpoints_dir,
                      get_val_dir, get_val_log, load_valset, save_infer_wav,
-                     save_val_comparison, save_val_orig_plot,
+                     save_val_comparison, save_val_orig_plot, load_testset,
                      save_val_orig_wav, save_val_plot, save_val_wav)
 from src.app.tacotron.io import get_train_dir
 from src.app.tacotron.training import load_speakers_json, load_symbol_converter
@@ -17,7 +17,7 @@ from src.core.common import (get_custom_or_last_checkpoint,
                              plot_melspec)
 from src.core.inference import get_logger
 from src.core.inference import validate as validate_core
-
+from typing import Optional, Tuple
 
 def save_val_pre_postnet_plot(val_dir: str, mel):
   parent_dir = get_parent_dirname(val_dir)
@@ -31,7 +31,8 @@ def save_val_alignments_sentence_plot(val_dir: str, mel):
   path = os.path.join(val_dir, f"{parent_dir}_alignments.png")
   plt.savefig(path, bbox_inches='tight')
 
-def validate(base_dir: str, train_name: str, entry_id: int, waveglow: str, custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
+
+def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[int] = None, ds_speaker: Optional[Tuple[str, str]] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -39,11 +40,24 @@ def validate(base_dir: str, train_name: str, entry_id: int, waveglow: str, custo
   init_logger(logger)
   add_console_out_to_logger(logger)
   
+  assert ds != ""
+  if ds == "val":
+    data = load_valset(train_dir)
+  elif ds == "test":
+    data = load_testset(train_dir)
+  else:
+    assert False
+
+  if entry_id:
+    entry = data.get_entry(entry_id)
+  elif ds_speaker:
+    entry = data.get_random_entry_ds_speaker(ds_speaker[0], ds_speaker[1])
+  else:
+    entry = data.get_random_entry()
+  
   checkpoint_path, iteration = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
-  val_dir = get_val_dir(train_dir, entry_id, iteration)
+  val_dir = get_val_dir(train_dir, entry, iteration)
   add_file_out_to_logger(logger, get_val_log(val_dir))
-  val = load_valset(train_dir)
-  entry = val.get_entry(entry_id)
 
   train_dir_wg = get_wg_train_dir(base_dir, waveglow, create=False)
   assert os.path.isdir(train_dir_wg)
@@ -67,9 +81,15 @@ def validate(base_dir: str, train_name: str, entry_id: int, waveglow: str, custo
   save_val_alignments_sentence_plot(val_dir, alignments)
   save_val_comparison(val_dir)
 
-  logger.info(f"Saved output to {val_dir}")
+  logger.info(f"Saved output to: {val_dir}")
 
 if __name__ == "__main__":
+  validate(
+    base_dir="/datasets/models/taco2pt_v3",
+    train_name="debug",
+    waveglow="pretrained",
+  )
+
   validate(
     base_dir="/datasets/models/taco2pt_v3",
     train_name="debug",

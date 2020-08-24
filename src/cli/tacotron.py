@@ -1,6 +1,20 @@
 from argparse import ArgumentParser
-from src.app import taco_train, taco_continue_train, taco_infer, taco_validate
+from src.app import taco_train, taco_continue_train, taco_infer, taco_validate, taco_eval_checkpoints, taco_plot_embeddings
 
+def init_plot_emb_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--train_name', type=str, required=True)
+  parser.add_argument('--custom_checkpoint', type=int, default=0)
+  return taco_plot_embeddings
+
+def init_eval_checkpoints_parser(parser):
+  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+  parser.add_argument('--train_name', type=str, required=True)
+  parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--select', type=int)
+  parser.add_argument('--min_it', type=int)
+  parser.add_argument('--max_it', type=int)
+  return taco_eval_checkpoints
 
 def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)

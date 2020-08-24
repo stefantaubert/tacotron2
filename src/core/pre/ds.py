@@ -45,6 +45,9 @@ class DsData:
   wav_path: str
   lang: Language
 
+  def get_speaker_name(self):
+    return str(self.speaker_name)
+
 class DsDataList(List[DsData]):
   def save(self, file_path: str):
     save_csv(self, file_path)

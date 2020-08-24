@@ -17,6 +17,9 @@ def init_logger(logger: logging.Logger):
 
   # take it from the above logger (root)
   logger.setLevel(logging.DEBUG)
+  
+  for h in logger.handlers:
+    logger.removeHandler(h)
 
 def add_console_out_to_logger(logger: logging.Logger):
   console_handler = logging.StreamHandler()

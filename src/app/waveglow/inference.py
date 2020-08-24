@@ -17,7 +17,7 @@ from src.core.waveglow import infer as infer_core
 
 
 def get_infer_dir(train_dir: str, input_name: str, iteration: int):
-  subdir_name = "{}_wav-{}_it-{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), input_name, iteration)
+  subdir_name = f"{datetime.datetime.now():%Y-%m-%d,%H-%M-%S},wav={input_name},it={iteration}"
   return get_subdir(get_inference_root_dir(train_dir), subdir_name, create=True)
 
 def save_infer_orig_plot(infer_dir: str, mel: np.ndarray):

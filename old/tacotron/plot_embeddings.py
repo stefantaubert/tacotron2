@@ -93,7 +93,7 @@ def analyse(training_dir_path: str, custom_checkpoint: int = None):
 
   layout = go.Layout(title='Embeddings')
   fig = go.Figure(data=plot, layout=layout)
-  plt.plot(fig, filename=os.path.join(get_analysis_dir(training_dir_path), "{}_{}".format(str(checkpoint), analysis_2d_file_name)))
+  plt.plot(fig, filename=os.path.join(get_analysis_dir(training_dir_path), "{}_{}".format(str(checkpoint), analysis_2d_file_name)), auto_open=False)
 
 def init_plot_emb_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
