@@ -13,18 +13,6 @@ from src.core.pre.wav import WavData, WavDataList
 from src.core.pre.text import SymbolConverter
 
 
-class SpeakersIdDict(OrderedDict[int, str]):
-  def save(self, file_path: str):
-    save_json(file_path, self)
-  
-  def get_speakers(self):
-    return list(self.values())
-    
-  @classmethod
-  def load(cls, file_path: str):
-    data = parse_json(file_path)
-    return cls(data)
-
 @dataclass()
 class PreparedData:
   i: int
@@ -63,9 +51,9 @@ class PreparedDataList(List[PreparedData]):
     idx = random.choice(range(len(self)))
     return self[idx]
 
-  def get_random_entry_ds_speaker(self, ds_name: str, speaker_name: str) -> PreparedData:
+  def get_random_entry_ds_speaker(self, speaker_id: int) -> PreparedData:
     x: PreparedData
-    relevant_entries = [x for x in self if x.ds_name == ds_name and x.get_speaker_name() == speaker_name]
+    relevant_entries = [x for x in self if x.speaker_id == speaker_id]
     assert len(relevant_entries)
     idx = random.choice(range(relevant_entries))
     return relevant_entries[idx]
@@ -80,7 +68,7 @@ class PreparedDataList(List[PreparedData]):
     return cls(data)
 
 
-def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDataList, MelDataList, List[str], SymbolConverter]], ds_speakers: List[Tuple[str, str]]) -> Tuple[PreparedDataList, SymbolConverter, SpeakersIdDict]:
+def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDataList, MelDataList, List[str], SymbolConverter]], ds_speakers: List[Tuple[str, str]]) -> Tuple[PreparedDataList, SymbolConverter, SpeakersDict]:
   speakers_dict = {k: v[4] for k, v in datasets.items()}
   expanded_ds_speakers = expand_speakers(speakers_dict, ds_speakers)
   ds_speakers_list, speakers_id_dict = get_speakers(expanded_ds_speakers)
@@ -218,8 +206,7 @@ def assert_fraction_is_big_enough(fraction: float, size: int):
     return False
   return True
 
-
-def get_speakers(ds_speakers: Tuple[str, str]) -> Tuple[OrderedDict[str, List[Tuple[str, int]]], SpeakersIdDict]:
+def get_speakers(ds_speakers: Tuple[str, str]) -> Tuple[OrderedDict[str, List[Tuple[str, int]]], SpeakersDict]:
   """ Example:
   res = {
     "ljs": [("A12", 0), ("A13", 1)],
@@ -228,13 +215,13 @@ def get_speakers(ds_speakers: Tuple[str, str]) -> Tuple[OrderedDict[str, List[Tu
   """
   res = OrderedDict()
   counter = 0
-  speakers_dict = SpeakersIdDict()
+  speakers_dict = SpeakersDict()
   ds_speakers.sort()
   for ds_name, speaker_name in ds_speakers:
     if ds_name not in res:
       res[ds_name] = []
     res[ds_name].append((speaker_name, counter))
-    speakers_dict[counter] = speaker_name
+    speakers_dict[f"{ds_name},{speaker_name}"] = counter
     counter += 1
 
   return res, speakers_dict

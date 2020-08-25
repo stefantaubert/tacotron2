@@ -9,7 +9,7 @@ from src.app.pre.text import (get_text_dir, load_text_csv,
 from src.app.pre.wav import get_wav_dir, load_wav_csv
 from src.core.common import get_subdir
 from src.core.pre import (DsData, DsDataList, MelDataList, PreparedData,
-                          PreparedDataList, SpeakersDict, SpeakersIdDict,
+                          PreparedDataList, SpeakersDict,
                           SpeakersLogDict, SymbolConverter, SymbolsDict,
                           TextDataList, WavDataList)
 from src.core.pre import merge_ds as merge_ds_core
@@ -22,8 +22,8 @@ _prepared_data_csv = "data.csv"
 _prepared_speakers_json = "speakers.json"
 _prepared_symbols_json = "symbols.json"
 
-def get_prepared_dir(base_dir: str, fl_name: str, create: bool = False):
-  return get_subdir(_get_prepared_root_dir(base_dir, create), fl_name, create)
+def get_prepared_dir(base_dir: str, prep_name: str, create: bool = False):
+  return get_subdir(_get_prepared_root_dir(base_dir, create), prep_name, create)
 
 def load_filelist(prep_dir: str) -> PreparedDataList:
   path = os.path.join(prep_dir, _prepared_data_csv)
@@ -33,11 +33,11 @@ def save_filelist(prep_dir: str, result: PreparedDataList):
   path = os.path.join(prep_dir, _prepared_data_csv)
   result.save(path)
 
-def load_filelist_speakers_json(prep_dir: str) -> SpeakersIdDict:
+def load_filelist_speakers_json(prep_dir: str) -> SpeakersDict:
   path = os.path.join(prep_dir, _prepared_speakers_json)
-  return SpeakersIdDict.load(path)
+  return SpeakersDict.load(path)
   
-def save_filelist_speakers_json(prep_dir: str, speakers: SpeakersIdDict):
+def save_filelist_speakers_json(prep_dir: str, speakers: SpeakersDict):
   path = os.path.join(prep_dir, _prepared_speakers_json)
   speakers.save(path)
 
@@ -49,8 +49,8 @@ def save_filelist_symbol_converter(prep_dir: str, data: SymbolConverter):
   path = os.path.join(prep_dir, _prepared_symbols_json)
   data.dump(path)
 
-def prepare_ds(base_dir: str, fl_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]]):
-  prep_dir = get_prepared_dir(base_dir, fl_name)
+def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]]):
+  prep_dir = get_prepared_dir(base_dir, prep_name)
   if os.path.isdir(prep_dir):
     print("Already created.")
   else:
@@ -82,22 +82,22 @@ def prepare_ds(base_dir: str, fl_name: str, ds_speakers: List[Tuple[str, str]], 
 
 if __name__ == "__main__":
   prepare_ds(
-    base_dir="/datasets/models/taco2pt_v3",
-    fl_name="ljs_thchs",
+    base_dir="/datasets/models/taco2pt_v4",
+    prep_name="ljs_thchs",
     ds_speakers=[("ljs", "all"), ("thchs", "all")],
     ds_text_audio=[("ljs", "en_norm", "22050kHz"), ("thchs", "ipa", "22050kHz_normalized_nosil")]
   )
 
   prepare_ds(
-    base_dir="/datasets/models/taco2pt_v3",
-    fl_name="ljs",
+    base_dir="/datasets/models/taco2pt_v4",
+    prep_name="ljs",
     ds_speakers=[("ljs", "all")],
     ds_text_audio=[("ljs", "en_norm", "22050kHz")]
   )
 
   prepare_ds(
-    base_dir="/datasets/models/taco2pt_v3",
-    fl_name="thchs",
+    base_dir="/datasets/models/taco2pt_v4",
+    prep_name="thchs",
     ds_speakers=[("thchs", "all")],
     ds_text_audio=[("thchs", "ipa", "22050kHz_normalized_nosil")]
   )

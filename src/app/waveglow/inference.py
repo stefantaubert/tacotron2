@@ -61,7 +61,7 @@ def infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: int 
 
 if __name__ == "__main__":
   infer(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     train_name="debug",
     wav_path="/datasets/LJSpeech-1.1-lite/wavs/LJ003-0347.wav"
   )

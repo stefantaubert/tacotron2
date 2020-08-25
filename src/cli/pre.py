@@ -5,8 +5,7 @@ from src.app import (preprocess_mels, prepare_ds, preprocess_ljs,
                               text_convert_to_ipa, text_normalize,
                               preprocess_text, wavs_normalize, preprocess_wavs, wavs_remove_silence_plot,
                               wavs_remove_silence, wavs_upsample, create_weights_map, create_inference_map)
-
-from typing import List, Tuple
+from src.cli.utils import parse_tuple_list
 
 def init_preprocess_thchs_parser(parser: ArgumentParser):
   parser.add_argument('--path', type=str, required=True, help='THCHS dataset directory')
@@ -38,20 +37,13 @@ def init_preprocess_mels_parser(parser: ArgumentParser):
 
 def init_prepare_ds_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
-  parser.add_argument('--fl_name', type=str, required=True)
+  parser.add_argument('--prep_name', type=str, required=True)
   parser.add_argument('--ds_speakers', type=str, required=True)
   parser.add_argument('--ds_text_audio', type=str, required=True)
   return _prepare_ds_cli
 
-def _prepare_ds_cli(base_dir: str, fl_name: str, ds_speakers: str, ds_text_audio: str):
-  prepare_ds(base_dir=base_dir, fl_name=fl_name, ds_speakers=_parse_tuple_list(ds_speakers), ds_text_audio=_parse_tuple_list(ds_text_audio))
-
-def _parse_tuple_list(tuple_list: str) -> List[Tuple]:
-  """ tuple_list: "a,b;c,d;... """
-  step1: List[str] = tuple_list.split(';')
-  result: List[Tuple] = [tuple(x.split(',')) for x in step1]
-  result = list(sorted(set(result)))
-  return result
+def _prepare_ds_cli(base_dir: str, prep_name: str, ds_speakers: str, ds_text_audio: str):
+  prepare_ds(base_dir=base_dir, prep_name=prep_name, ds_speakers=parse_tuple_list(ds_speakers), ds_text_audio=parse_tuple_list(ds_text_audio))
 
 def init_preprocess_text_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)

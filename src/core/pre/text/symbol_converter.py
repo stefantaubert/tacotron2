@@ -60,8 +60,12 @@ class SymbolConverter():
     return _pad
 
   @staticmethod
-  def deserialize_symbol_ids(searialized_str: str):
-    sentences_symbols = searialized_str.split(',')
+  def symbols_to_str(symbols: List[str]) -> str:
+    return ''.join(symbols)
+  
+  @staticmethod
+  def deserialize_symbol_ids(serialized_str: str):
+    sentences_symbols = serialized_str.split(',')
     sentences_symbols = list(map(int, sentences_symbols))
     return sentences_symbols
 
@@ -152,10 +156,13 @@ class SymbolConverter():
     symbols = [self.id_to_symbol(s_id) for s_id in symbol_ids]
     return symbols
 
+  def serialized_symbol_ids_to_text(self, serialized_symbol_ids: str):
+    symbol_ids = SymbolConverter.deserialize_symbol_ids(serialized_symbol_ids)
+    return self.ids_to_text(symbol_ids)
+    
   def ids_to_text(self, symbol_ids: list) -> str:
     symbols = self.ids_to_symbols(symbol_ids)
-    text = ''.join(symbols)
-    return text
+    return SymbolConverter.symbols_to_str(symbols)
 
   @classmethod
   def load_from_file_v1(cls, filepath: str):

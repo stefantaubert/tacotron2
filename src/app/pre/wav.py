@@ -3,10 +3,7 @@ from functools import partial
 
 from src.app.pre.ds import get_ds_dir, load_ds_csv
 from src.core.common import get_subdir
-from src.core.pre import (DsData, DsDataList, MelDataList, PreparedData,
-                          PreparedDataList, SpeakersDict, SpeakersIdDict,
-                          SpeakersLogDict, SymbolConverter, SymbolsDict,
-                          TextDataList, WavDataList)
+from src.core.pre import WavDataList
 from src.core.pre import wavs_normalize as wavs_normalize_core
 from src.core.pre import wavs_preprocess as wavs_preprocess_core
 from src.core.pre import wavs_remove_silence as wavs_remove_silence_core
@@ -66,26 +63,26 @@ def wavs_remove_silence(base_dir: str, ds_name: str, orig_wav_name: str, dest_wa
 
 if __name__ == "__main__":
   preprocess_wavs(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="ljs",
     wav_name="22050kHz",
   )
 
   preprocess_wavs(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
     wav_name="16000kHz",
   )
 
   wavs_normalize(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
     orig_wav_name="16000kHz",
     dest_wav_name="16000kHz_normalized",
   )
 
   wavs_remove_silence(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
     orig_wav_name="16000kHz_normalized",
     dest_wav_name="16000kHz_normalized_nosil",
@@ -97,7 +94,7 @@ if __name__ == "__main__":
   )
 
   wavs_upsample(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
     orig_wav_name="16000kHz_normalized_nosil",
     dest_wav_name="22050kHz_normalized_nosil",

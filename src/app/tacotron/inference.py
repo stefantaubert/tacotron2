@@ -1,6 +1,6 @@
 import datetime
 import os
-from typing import List
+from typing import List, Optional, Tuple
 
 import matplotlib
 matplotlib.use('Agg')
@@ -9,11 +9,11 @@ import numpy as np
 from tqdm import tqdm
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
-from src.app.io import (get_checkpoints_dir, get_infer_log, save_infer_plot, save_infer_wav, get_inference_root_dir)
+from src.app.io import (get_checkpoints_dir, get_infer_log, save_infer_plot, load_speakers_json, save_infer_wav, get_inference_root_dir)
 from src.app.pre import (load_filelist, load_filelist_speakers_json,
                          load_filelist_symbol_converter)
 from src.app.tacotron.io import get_train_dir
-from src.app.tacotron.training import load_speakers_json, load_symbol_converter
+from src.app.tacotron.training import load_symbol_converter
 from src.app.waveglow import get_train_dir as get_wg_train_dir
 from src.core.common import (Language, float_to_wav, get_basename,
                              get_custom_or_last_checkpoint,
@@ -75,7 +75,7 @@ def save_infer_v_plot(infer_dir: str, sentence_ids: List[int]):
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}_v.png")
   stack_images_vertically(paths, path)
 
-def infer(base_dir: str, train_name: str, text: str, lang: Language, speaker_id: int, waveglow: str, ignore_tones: bool = False, ignore_arcs: bool = True, symbols_map: str = "", hparams: str = "", custom_checkpoint: int = 0, sentence_pause_s: float = 0.5, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050, analysis: bool = True, ipa: bool = True):
+def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker: str, waveglow: str = "pretrained", ignore_tones: bool = False, ignore_arcs: bool = True, symbols_map: Optional[str] = None, hparams: Optional[str] = None, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = 0.5, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050, analysis: bool = True, ipa: bool = True):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -85,6 +85,9 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, speaker_id:
 
   input_name = get_basename(text)
   checkpoint_path, iteration = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
+  
+  speakers = load_speakers_json(train_dir)
+  speaker_id = speakers[ds_speaker]
   infer_dir = get_infer_dir(train_dir, input_name, iteration, speaker_id)
   add_file_out_to_logger(logger, get_infer_log(infer_dir))
   
@@ -97,7 +100,7 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, speaker_id:
     waveglow_path=wg_checkpoint_path,
     conv=load_symbol_converter(train_dir),
     lines=load_infer_text(text),
-    n_speakers=len(load_speakers_json(train_dir)),
+    n_speakers=len(speakers),
     speaker_id=speaker_id,
     sentence_pause_s=sentence_pause_s,
     sigma=sigma,
@@ -133,10 +136,9 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, speaker_id:
 
 if __name__ == "__main__":
   infer(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     train_name="debug",
     text="examples/chn/north.txt",
     lang=Language.CHN,
-    speaker_id=0,
-    waveglow="pretrained",
+    ds_speaker="thchs,D31"
   )

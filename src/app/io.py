@@ -6,18 +6,19 @@ from typing import List
 import matplotlib.pylab as plt
 import numpy as np
 from tqdm import tqdm
-
+from src.core.pre import SpeakersDict
 from src.core.common import (Language, float_to_wav, get_basename,
                              get_custom_or_last_checkpoint, get_parent_dirname,
                              get_subdir, parse_json, plot_melspec,
                              stack_images_vertically)
-from src.core.pre import PreparedDataList, SpeakersIdDict, SymbolConverter, PreparedData
+from src.core.pre import PreparedDataList, PreparedData
 
 #region Training
 
 _train_csv = "train.csv"
 _test_csv = "test.csv"
 _val_csv = "validation.csv"
+_speakers_json = "speakers.json"
 
 def get_train_root_dir(base_dir: str, model_name: str, create: bool):
   return get_subdir(base_dir, model_name, create)
@@ -58,6 +59,14 @@ def load_valset(train_dir: str) -> PreparedDataList:
   path = os.path.join(train_dir, _val_csv)
   return PreparedDataList.load(path)
   
+def load_speakers_json(train_dir: str) -> SpeakersDict:
+  speakers_path = os.path.join(train_dir, _speakers_json)
+  return SpeakersDict.load(speakers_path)
+  
+def save_speakers_json(train_dir: str, speakers: SpeakersDict):
+  speakers_path = os.path.join(train_dir, _speakers_json)
+  speakers.save(speakers_path)
+
 #endregion
 
 #region Inference

@@ -3,10 +3,9 @@ from functools import partial
 
 from src.app.pre.ds import get_ds_dir, load_ds_csv
 from src.core.common import get_subdir
-from src.core.pre import (DsData, DsDataList, MelDataList, PreparedData,
-                          PreparedDataList, SpeakersDict, SpeakersIdDict,
-                          SpeakersLogDict, SymbolConverter, SymbolsDict,
-                          TextDataList, WavDataList)
+from src.core.pre import (PreparedDataList,
+                          SymbolConverter, SymbolsDict,
+                          TextDataList)
 from src.core.pre import text_convert_to_ipa as text_convert_to_ipa_core
 from src.core.pre import text_normalize as text_normalize_core
 from src.core.pre import text_preprocess as text_preprocess_core
@@ -68,7 +67,8 @@ def _text_op(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: s
   else:
     print("Reading data...")
     data = load_text_csv(orig_text_dir)
-    text_data, conv, all_symbols = op(data)
+    orig_conv = load_text_symbol_converter(orig_text_dir)
+    text_data, conv, all_symbols = op(data, orig_conv)
     os.makedirs(dest_text_dir)
     save_text_csv(dest_text_dir, text_data)
     save_text_symbol_converter(dest_text_dir, conv)
@@ -86,38 +86,38 @@ def text_convert_to_ipa(base_dir: str, ds_name: str, orig_text_name: str, dest_t
 if __name__ == "__main__":
   
   preprocess_text(
-    base_dir="/datasets/models/taco2pt_v3",
-    ds_name="thchs",
-    text_name="chn",
-  )
-
-  text_convert_to_ipa(
-    base_dir="/datasets/models/taco2pt_v3",
-    ds_name="thchs",
-    orig_text_name="chn",
-    dest_text_name="ipa",
-    ignore_tones=False,
-    ignore_arcs=True,
-  )
-
-  preprocess_text(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="ljs",
     text_name="en",
   )
 
   text_normalize(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="ljs",
     orig_text_name="en",
     dest_text_name="en_norm",
   )
 
   text_convert_to_ipa(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="ljs",
     orig_text_name="en_norm",
     dest_text_name="ipa_norm",
     ignore_tones=True,
+    ignore_arcs=True,
+  )
+
+  preprocess_text(
+    base_dir="/datasets/models/taco2pt_v4",
+    ds_name="thchs",
+    text_name="chn",
+  )
+
+  text_convert_to_ipa(
+    base_dir="/datasets/models/taco2pt_v4",
+    ds_name="thchs",
+    orig_text_name="chn",
+    dest_text_name="ipa",
+    ignore_tones=False,
     ignore_arcs=True,
   )

@@ -4,7 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
-from src.app.io import (get_checkpoints_dir,
+from src.app.io import (get_checkpoints_dir, load_speakers_json,
                      get_val_dir, get_val_log, load_valset, load_testset,
                      save_val_comparison, save_val_orig_plot,
                      save_val_orig_wav, save_val_plot, save_val_wav)
@@ -15,7 +15,7 @@ from src.core.waveglow import validate as validate_core
 from typing import Optional, Tuple
 
 
-def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[Tuple[str, str]] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
+def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -31,10 +31,13 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
   else:
     assert False
 
+  speakers = load_speakers_json(train_dir)
+
   if entry_id:
     entry = data.get_entry(entry_id)
   elif ds_speaker:
-    entry = data.get_random_entry_ds_speaker(ds_speaker[0], ds_speaker[1])
+    speaker_id = speakers[ds_speaker]
+    entry = data.get_random_entry_ds_speaker(speaker_id)
   else:
     entry = data.get_random_entry()
   
@@ -62,12 +65,12 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
 
 if __name__ == "__main__":
   validate(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     train_name="debug",
   )
 
   validate(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     train_name="debug",
     entry_id=31
   )

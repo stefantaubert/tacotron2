@@ -28,7 +28,6 @@ def extract_from_sentence(ipa_sentence: str, ignore_tones: bool = False, ignore_
     tmp.clear()
   return res
 
-
 def _extract_symbols(input_symbols: List[str], ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str) -> List[str]:
   symbols: List[str] = []
   input_word = ''.join(input_symbols)
@@ -68,8 +67,8 @@ if __name__ == "__main__":
   y = u"p͡f"
   import epitran
   epi = epitran.Epitran('eng-Latn')
-  y = epi.transliterate("grateful")
-  y += " ɡɹât͡ʃi"
+  y = epi.transliterate("At Müller's execution there was great competition for front seats,")
+  #y += " ɡɹât͡ʃi"
   res = extract_from_sentence(y, ignore_tones=True, ignore_arcs=True)
   print(res)
 

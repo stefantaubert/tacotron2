@@ -1,12 +1,9 @@
 import os
 
-from src.app.pre.ds import get_ds_dir, load_ds_csv
+from src.app.pre.ds import get_ds_dir
 from src.app.pre.wav import get_wav_dir, load_wav_csv
 from src.core.common import get_subdir
-from src.core.pre import (DsData, DsDataList, MelDataList, PreparedData,
-                          PreparedDataList, SpeakersDict, SpeakersIdDict,
-                          SpeakersLogDict, SymbolConverter, SymbolsDict,
-                          TextDataList, WavDataList, mels_preprocess)
+from src.core.pre import (MelDataList, mels_preprocess)
 
 _mel_data_csv = "data.csv"
 
@@ -40,14 +37,14 @@ def preprocess_mels(base_dir: str, ds_name: str, wav_name: str, custom_hparams: 
 if __name__ == "__main__":
   
   preprocess_mels(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
     wav_name="22050kHz_normalized_nosil",
     custom_hparams="",
   )
 
   preprocess_mels(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="ljs",
     wav_name="22050kHz",
     custom_hparams="",

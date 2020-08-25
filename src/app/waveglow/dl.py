@@ -18,5 +18,5 @@ def dl_pretrained(base_dir: str, train_name: str = "pretrained"):
 
 if __name__ == "__main__":
   dl_pretrained(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
   )

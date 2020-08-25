@@ -32,7 +32,7 @@ def eval_checkpoints(base_dir: str, train_name: str, custom_hparams: str, select
 
 if __name__ == "__main__":
   eval_checkpoints(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     train_name="debug",
     custom_hparams="batch_size=17",
     select = 1,

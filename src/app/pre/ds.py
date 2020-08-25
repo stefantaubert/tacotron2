@@ -2,10 +2,10 @@ import os
 
 from src.app.pre.io import get_pre_dir
 from src.core.common import get_subdir
-from src.core.pre import (DsData, DsDataList, MelDataList, PreparedData,
-                          PreparedDataList, SpeakersDict, SpeakersIdDict,
-                          SpeakersLogDict, SymbolConverter, SymbolsDict,
-                          TextDataList, WavDataList, ljs_preprocess,
+from src.core.pre import (DsData, DsDataList,
+                          PreparedDataList, SpeakersDict,
+                          SpeakersLogDict,
+                          ljs_preprocess,
                           thchs_kaldi_preprocess, thchs_preprocess)
 
 _ds_data_csv = "data.csv"
@@ -61,7 +61,7 @@ def _preprocess_ds(base_dir: str, ds_name: str, path: str, auto_dl: bool, prepro
 
 if __name__ == "__main__":
   preprocess_ljs(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     path="/datasets/LJSpeech-1.1",
     ds_name="ljs",
     auto_dl=True,
@@ -69,13 +69,13 @@ if __name__ == "__main__":
 
   preprocess_thchs(
     path="/datasets/thchs_wav",
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
     auto_dl=True,
   )
 
   preprocess_thchs_kaldi(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     path="/datasets/THCHS-30",
     ds_name="thchs_kaldi",
     auto_dl=True,

@@ -4,7 +4,6 @@ from src.core.pre.text import TextDataList, TextData
 from src.core.pre.wav import WavDataList, WavData
 from src.core.pre.mel import MelDataList, MelData
 from src.core.pre.merge_ds import expand_speakers, get_speakers, get_prepared_data, PreparedData, PreparedDataList, map_to_prepared_data, merge_prepared_data, split_prepared_data_train_test_val, split_train_test_val, preprocess
-from src.core.pre.ds import SpeakersDict
 from src.core.common import Language
 from typing import List, Tuple, OrderedDict
 from src.core.pre.text import SymbolConverter
@@ -39,14 +38,16 @@ class UnitTests(unittest.TestCase):
 
   def test_get_speakers(self):
     x = [("thchs","ab"), ("ljs", "23"), ("ljs", "12")]
+
     res, speakers_id_dict = get_speakers(x)
+
     self.assertEqual(2, len(res))
     self.assertTrue("ljs" in res.keys())
     self.assertTrue("thchs" in res.keys())
     self.assertEqual(("12", 0), res["ljs"][0])
     self.assertEqual(("23", 1), res["ljs"][1])
     self.assertEqual(("ab", 2), res["thchs"][0])
-    self.assertEqual(["12", "23", "ab"], speakers_id_dict.get_speakers())
+    self.assertEqual(["ljs,12", "ljs,23", "thchs,ab"], speakers_id_dict.get_speakers())
 
   def test_map_to_prepared_data(self):
     ds = DsData(1, "basename0", 11233, 0, "text0", "wavpath0", Language.ENG)
@@ -132,7 +133,7 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("1,2,3", whole[1].serialized_updated_ids)
     self.assertEqual("1,3,4", whole[2].serialized_updated_ids)
     self.assertEqual("1,3,4", whole[3].serialized_updated_ids)
-    self.assertEqual(["speaker0", "speaker1"], speakers_id_dict.get_speakers())
+    self.assertEqual(["ljs,speaker0", "thchs,speaker1"], speakers_id_dict.get_speakers())
 
   def test_get_prepared_data_speaker_name_is_int(self):
     speaker_names: List[Tuple[str, int]] = [("1123", 15)]

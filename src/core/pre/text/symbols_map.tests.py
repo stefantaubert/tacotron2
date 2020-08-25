@@ -24,10 +24,12 @@ class UnitTests(unittest.TestCase):
       ("b", ""),
     ])
 
-    update_map(old_map, new_map)
+    res = update_map(old_map, new_map)
+
     self.assertEqual(2, len(new_map))
     self.assertEqual("a", new_map["a"])
     self.assertEqual("", new_map["b"])
+    self.assertTrue(res)
 
   def test_update_map_non_existing_symbols_are_ignored(self):
     old_map = SymbolsMap([
@@ -38,9 +40,11 @@ class UnitTests(unittest.TestCase):
       ("b", "b"),
     ])
 
-    update_map(old_map, new_map)
+    res = update_map(old_map, new_map)
+    
     self.assertEqual(1, len(new_map))
     self.assertEqual("b", new_map["b"])
+    self.assertTrue(res)
 
   def test_update_map_new_symbols_are_taken(self):
     old_map = SymbolsMap([
@@ -51,9 +55,11 @@ class UnitTests(unittest.TestCase):
       ("a", "b"),
     ])
 
-    update_map(old_map, new_map)
+    res = update_map(old_map, new_map)
+
     self.assertEqual(1, len(new_map))
     self.assertEqual("b", new_map["a"])
+    self.assertFalse(res)
 
   def test_update_map_new_symbols_are_added(self):
     old_map = SymbolsMap([
@@ -65,10 +71,12 @@ class UnitTests(unittest.TestCase):
       ("b", "b"),
     ])
 
-    update_map(old_map, new_map)
+    res = update_map(old_map, new_map)
+
     self.assertEqual(2, len(new_map))
     self.assertEqual("a", new_map["a"])
     self.assertEqual("b", new_map["b"])
+    self.assertTrue(res)
 
   def test_update_map(self):
     old_map = SymbolsMap([
@@ -86,12 +94,14 @@ class UnitTests(unittest.TestCase):
       ("g", ""),
     ])
 
-    update_map(old_map, new_map)
+    res = update_map(old_map, new_map)
+
     self.assertEqual("c", new_map["a"])
     self.assertEqual("a", new_map["b"])
     self.assertEqual("x", new_map["d"])
     self.assertEqual("f", new_map["e"])
     self.assertEqual("h", new_map["g"])
+    self.assertTrue(res)
 
   def test_save_load_symbols_map(self):
     path = tempfile.mktemp()

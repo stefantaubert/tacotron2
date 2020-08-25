@@ -5,12 +5,12 @@ matplotlib.use('Agg')
 import matplotlib.pylab as plt
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
-from src.app.io import (get_checkpoints_dir,
+from src.app.io import (get_checkpoints_dir, load_speakers_json,
                      get_val_dir, get_val_log, load_valset, save_infer_wav,
                      save_val_comparison, save_val_orig_plot, load_testset,
                      save_val_orig_wav, save_val_plot, save_val_wav)
 from src.app.tacotron.io import get_train_dir
-from src.app.tacotron.training import load_speakers_json, load_symbol_converter
+from src.app.tacotron.training import load_symbol_converter
 from src.app.waveglow import get_train_dir as get_wg_train_dir
 from src.core.common import (get_custom_or_last_checkpoint,
                              get_last_checkpoint, get_parent_dirname,
@@ -32,7 +32,7 @@ def save_val_alignments_sentence_plot(val_dir: str, mel):
   plt.savefig(path, bbox_inches='tight')
 
 
-def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[int] = None, ds_speaker: Optional[Tuple[str, str]] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
+def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -48,10 +48,13 @@ def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[i
   else:
     assert False
 
+  speakers = load_speakers_json(train_dir)
+
   if entry_id:
     entry = data.get_entry(entry_id)
   elif ds_speaker:
-    entry = data.get_random_entry_ds_speaker(ds_speaker[0], ds_speaker[1])
+    speaker_id = speakers[ds_speaker]
+    entry = data.get_random_entry_ds_speaker(speaker_id)
   else:
     entry = data.get_random_entry()
   
@@ -70,7 +73,7 @@ def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[i
     denoiser_strength=denoiser_strength,
     sigma=sigma,
     conv=load_symbol_converter(train_dir),
-    n_speakers=len(load_speakers_json(train_dir))
+    n_speakers=len(speakers)
   )
 
   save_val_wav(val_dir, sampling_rate, wav)
@@ -85,13 +88,13 @@ def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[i
 
 if __name__ == "__main__":
   validate(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     train_name="debug",
     waveglow="pretrained",
   )
 
   validate(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     train_name="debug",
     entry_id=6,
     waveglow="pretrained",

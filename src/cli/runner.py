@@ -44,7 +44,7 @@ def _init_parser():
   
   _add_parser_to(subparsers, "preprocess-wavs", init_preprocess_wavs_parser)
   _add_parser_to(subparsers, "wavs-normalize", init_wavs_normalize_parser)
-  _add_parser_to(subparsers, "wavs-upsample", init_wavs_upsample_parser)
+  _add_parser_to(subparsers, "wavs-resample", init_wavs_upsample_parser)
   _add_parser_to(subparsers, "wavs-remove-silence", init_wavs_remove_silence_parser)
   _add_parser_to(subparsers, "wavs-remove-silence-plot", init_wavs_remove_silence_plot_parser)
 

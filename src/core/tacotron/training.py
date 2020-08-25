@@ -10,9 +10,9 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from typing import Tuple
 from typing import Optional
-from src.core.common import get_custom_checkpoint
+from src.core.common import get_custom_checkpoint, get_pytorch_filename
 from src.core.common import get_last_checkpoint, get_all_checkpoint_iterations
-from src.core.pre import PreparedData, PreparedDataList, SpeakersIdDict
+from src.core.pre import PreparedData, PreparedDataList
 from torch import nn
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger

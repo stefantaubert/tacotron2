@@ -56,13 +56,13 @@ if __name__ == "__main__":
   mode = 2
   if mode == 1:
     create_weights_map(
-      base_dir="/datasets/models/taco2pt_v3",
+      base_dir="/datasets/models/taco2pt_v4",
       dest_prep_name="thchs",
       orig_prep_name="thchs",
     )
   elif mode == 2:
     create_inference_map(
-      base_dir="/datasets/models/taco2pt_v3",
+      base_dir="/datasets/models/taco2pt_v4",
       prep_name="thchs",
       corpora="examples/ipa/corpora.txt",
       existing_map="maps/inference/chn_v1.json",

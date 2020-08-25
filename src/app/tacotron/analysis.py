@@ -51,6 +51,6 @@ def plot_embeddings(base_dir: str, train_name: str, custom_checkpoint: Optional[
 
 if __name__ == "__main__":
   plot_embeddings(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     train_name="debug"
   )

@@ -45,80 +45,71 @@ class TextDataList(List[TextData]):
     data = load_csv(file_path, TextData)
     return cls(data)
 
-def convert_to_ipa(data: TextDataList, ignore_tones: bool, ignore_arcs: bool) -> Tuple[TextDataList, SymbolConverter, SymbolsDict]:
-  result = TextDataList()
-  entry_symbols = []
-  all_symbols = []
+def convert_to_ipa(data: TextDataList, symbol_converter: SymbolConverter, ignore_tones: bool, ignore_arcs: bool) -> Tuple[TextDataList, SymbolConverter, SymbolsDict]:
+  processed_data: List[Tuple[int, List[str], Language]] = []
   epi = epitran.Epitran('eng-Latn')
   
   values: TextData
   for values in tqdm(data):
+    orig_text = symbol_converter.serialized_symbol_ids_to_text(values.serialized_symbol_ids)
+
     if values.lang == Language.CHN:
-      ipa = chn_to_ipa(values.text, add_period=True)
+      ipa = chn_to_ipa(orig_text, add_period=True)
     elif values.lang == Language.ENG:
-      ipa = epi.transliterate(values.text)
-    else: assert False
+      ipa = epi.transliterate(orig_text)
+    else:
+      assert False
+
     symbols: List[str] = extract_from_sentence(ipa, ignore_tones, ignore_arcs, replace_unknown_ipa_by=SymbolConverter.get_padding_symbol())
-    entry_symbols.append(symbols)
-    all_symbols.extend(symbols)
-    ipa_symbols = ''.join(symbols)
-    result.append(TextData(values.entry_id, ipa_symbols, "", Language.IPA))
+    processed_data.append((values.entry_id, symbols, Language.IPA))
 
-  symbol_counter = Counter(all_symbols)
-  symbols_dict = SymbolsDict.fromcounter(symbol_counter)
-  conv = SymbolConverter.init_from_symbols(set(symbols_dict.keys()))
+  return _prepare_data(processed_data)
 
-  for i, symbols in enumerate(entry_symbols):
-    symbol_ids = conv.symbols_to_ids(symbols, add_eos=True, replace_unknown_with_pad=True)
-    result[i].serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)
+def normalize(data: TextDataList, symbol_converter: SymbolConverter)-> Tuple[TextDataList, SymbolConverter, SymbolsDict]:
+  processed_data: List[Tuple[int, List[str], Language]] = []
 
-  return result, conv, symbols_dict
-
-def normalize(data: TextDataList)-> Tuple[TextDataList, SymbolConverter, SymbolsDict]:
-  result = TextDataList()
-  entry_symbols = []
-  all_symbols = []
-  
   values: TextData
   for values in tqdm(data):
+    orig_text = symbol_converter.serialized_symbol_ids_to_text(values.serialized_symbol_ids)
+
     if values.lang == Language.ENG:
-      text = normalize_text(values.text)
+      text = normalize_text(orig_text)
     elif values.lang == Language.CHN:
-      text = values.text
-    else: assert False
+      text = orig_text
+    else:
+      assert False
+
     symbols: List[str] = list(text)
-    entry_symbols.append(symbols)
-    all_symbols.extend(symbols)
-    result.append(TextData(values.entry_id, values.text, "", values.lang))
+    processed_data.append((values.entry_id, symbols, values.lang))
 
-  symbol_counter = Counter(all_symbols)
-  symbols_dict = SymbolsDict.fromcounter(symbol_counter)
-  conv = SymbolConverter.init_from_symbols(set(symbols_dict.keys()))
-
-  for i, symbols in enumerate(entry_symbols):
-    symbol_ids = conv.symbols_to_ids(symbols, add_eos=True, replace_unknown_with_pad=True)
-    result[i].serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)
-
-  return result, conv, symbols_dict
+  return _prepare_data(processed_data)
 
 def preprocess(data: DsDataList) -> Tuple[TextDataList, SymbolConverter, SymbolsDict]:
-  result = TextDataList()
-  entry_symbols = []
-  all_symbols = []
+  processed_data: List[Tuple[int, List[str], Language]] = []
   
   values: DsData
   for values in tqdm(data):
     symbols: List[str] = list(values.text)
-    entry_symbols.append(symbols)
+    processed_data.append((values.entry_id, symbols, values.lang))
+
+  return _prepare_data(processed_data)
+
+def _prepare_data(processed_data: List[Tuple[int, List[str], Language]]):
+  all_symbols = []
+  result = TextDataList()
+
+  for _, symbols, _ in processed_data:
     all_symbols.extend(symbols)
-    result.append(TextData(values.entry_id, values.text, "", values.lang))
 
   symbol_counter = Counter(all_symbols)
   symbols_dict = SymbolsDict.fromcounter(symbol_counter)
   conv = SymbolConverter.init_from_symbols(set(symbols_dict.keys()))
 
-  for i, symbols in enumerate(entry_symbols):
-    symbol_ids = conv.symbols_to_ids(symbols, add_eos=True, replace_unknown_with_pad=True)
-    result[i].serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)
+  for entry_id, symbols, lang in processed_data:
+    symbol_ids = conv.symbols_to_ids(symbols, add_eos=False, replace_unknown_with_pad=True)
+    text = SymbolConverter.symbols_to_str(symbols)
+    serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)
+    data = TextData(entry_id, text, serialized_symbol_ids, lang)
+    result.append(data)
 
   return result, conv, symbols_dict

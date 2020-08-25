@@ -80,7 +80,7 @@ def remove_silence_plot(base_dir: str, ds_name: str, wav_name: str, chunk_size: 
 
 if __name__ == "__main__":
   remove_silence_plot(
-    base_dir="/datasets/models/taco2pt_v3",
+    base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
     wav_name="16000kHz_normalized",
     threshold_start = -20,

@@ -5,22 +5,21 @@ from typing import Optional
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
 from src.app.io import (get_checkpoints_dir,get_train_checkpoints_log_file,
-                     get_train_log_file, get_train_logs_dir, load_trainset,
-                     load_valset, save_testset, save_trainset,
-                     save_valset)
+                      get_train_log_file, get_train_logs_dir, load_trainset,
+                      load_valset, save_testset, save_trainset, save_speakers_json, load_speakers_json,
+                      save_valset)
 from src.app.pre import (get_prepared_dir, load_filelist,
                          load_filelist_speakers_json,
                          load_filelist_symbol_converter)
 from src.app.tacotron.io import get_train_dir
-from src.core.pre import SpeakersIdDict, SymbolConverter, split_train_test_val
+from src.core.pre import SpeakersDict, SymbolConverter, split_train_test_val
+from src.app.pre import load_weights_map
 from src.core.tacotron import continue_train as continue_train_core
 from src.core.tacotron import get_train_logger, get_checkpoints_eval_logger
 from src.core.tacotron import train as train_core, load_symbol_embedding_weights_from, load_symbol_embedding_weights_from
 from src.core.pre.text import SymbolsMap
-from src.app.pre import load_weights_map
 import torch
 
-_speakers_json = "speakers.json"
 _symbols_json = "symbols.json"
 
 def load_symbol_converter(train_dir: str) -> SymbolConverter:
@@ -31,14 +30,6 @@ def save_symbol_converter(train_dir: str, data: SymbolConverter):
   data_path = os.path.join(train_dir, _symbols_json)
   data.dump(data_path)
 
-def load_speakers_json(train_dir: str) -> SpeakersIdDict:
-  speakers_path = os.path.join(train_dir, _speakers_json)
-  return SpeakersIdDict.load(speakers_path)
-  
-def save_speakers_json(train_dir: str, speakers: SpeakersIdDict):
-  speakers_path = os.path.join(train_dir, _speakers_json)
-  speakers.save(speakers_path)
-
 def _load_pretrained_weights(emb_map_model: str) -> Optional[torch.Tensor]:
   trained_weights = load_symbol_embedding_weights_from(emb_map_model) if emb_map_model else None
   return trained_weights
@@ -47,8 +38,8 @@ def _load_pretrained_symbol_conv(emb_map_model_symbols: str) -> Optional[SymbolC
   trained_symbols = SymbolConverter.load_from_file(emb_map_model_symbols) if emb_map_model_symbols else None
   return trained_symbols
 
-def train(base_dir: str, train_name: str, fl_name: str, warm_start_model: Optional[str] = None, test_size: float = 0.01, validation_size: float = 0.05, hparams: Optional[str] = None, split_seed: int = 1234, emb_map_model: Optional[str] = None, emb_map_model_symbols: Optional[str] = None, symbols_map_path: Optional[str] = None):
-  prep_dir = get_prepared_dir(base_dir, fl_name)
+def train(base_dir: str, train_name: str, prep_name: str, warm_start_model: Optional[str] = None, test_size: float = 0.01, validation_size: float = 0.05, hparams: Optional[str] = None, split_seed: int = 1234, emb_map_model: Optional[str] = None, emb_map_model_symbols: Optional[str] = None, symbols_map_path: Optional[str] = None):
+  prep_dir = get_prepared_dir(base_dir, prep_name)
   wholeset = load_filelist(prep_dir)
   trainset, testset, valset = split_train_test_val(wholeset, test_size=test_size, val_size=validation_size, seed=split_seed, shuffle=True)
   train_dir = get_train_dir(base_dir, train_name, create=True)
@@ -120,18 +111,18 @@ if __name__ == "__main__":
   mode = 2
   if mode == 1:
     train(
-      base_dir="/datasets/models/taco2pt_v3",
+      base_dir="/datasets/models/taco2pt_v4",
       train_name="debug",
-      fl_name="thchs",
+      prep_name="thchs",
       hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,cache_mels=False"
     )
   elif mode == 2:
     model_path = "/datasets/models/taco2pt_v2/ljs_ipa_ms_from_scratch/checkpoints/113500"
     model_conv = "/datasets/models/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
     train(
-      base_dir="/datasets/models/taco2pt_v3",
+      base_dir="/datasets/models/taco2pt_v4",
       train_name="debug",
-      fl_name="thchs",
+      prep_name="thchs",
       hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,cache_mels=False",
       emb_map_model=model_path,
       emb_map_model_symbols=model_conv
@@ -140,9 +131,9 @@ if __name__ == "__main__":
     model_path = "/datasets/models/taco2pt_v2/ljs_ipa_ms_from_scratch/checkpoints/113500"
     model_conv = "/datasets/models/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
     train(
-      base_dir="/datasets/models/taco2pt_v3",
+      base_dir="/datasets/models/taco2pt_v4",
       train_name="debug",
-      fl_name="thchs",
+      prep_name="thchs",
       emb_map_model=model_path,
       emb_map_model_symbols=model_conv,
       symbols_map_path="maps/weights/chn_en_tones.json",
@@ -152,7 +143,7 @@ if __name__ == "__main__":
    
   elif mode == 4:
     continue_train(
-      base_dir="/datasets/models/taco2pt_v3",
+      base_dir="/datasets/models/taco2pt_v4",
       train_name="debug",
       hparams="batch_size=17,iters_per_checkpoint=100,epochs_per_checkpoint=1,cache_mels=True,use_saved_mels=True"
     )
