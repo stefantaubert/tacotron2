@@ -19,7 +19,7 @@ export epochs=1000
 source /home/stefan/tacotron2/configs/envs/phil.sh
 export train_name="ljs_ipa_scratch"
 export prep_name="ljs_ipa"
-export batch_size=3
+export batch_size=26
 export iters_per_checkpoint=500
 export epochs=1000
 
