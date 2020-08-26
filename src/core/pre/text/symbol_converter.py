@@ -80,6 +80,12 @@ class SymbolConverter():
     subset, symbol = self._id_symbol_dict[symbol_id]
     return symbol
 
+  def get_all_subset_ids(self) -> List[int]:
+    subset_ids = [x[0] for x in self._id_symbol_dict.values()]
+    unique_subset_ids = set(subset_ids)
+    result = list(sorted(unique_subset_ids))
+    return result
+
   def symbol_exists(self, symbol: str):
     return symbol in self._symbol_id_dict.keys()
 

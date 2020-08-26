@@ -117,6 +117,14 @@ python -m src.cli.runner prepare-ds \
   --ds_speakers="thchs,all" \
   --ds_text_audio="thchs,ipa,22050Hz_norm_wo_sil"
 
+# accented
+python -m src.cli.runner prepare-ds \
+  --base_dir="$base_dir" \
+  --prep_name="thchs_ipa_acc" \
+  --ds_speakers="thchs,all" \
+  --ds_text_audio="thchs,ipa,22050Hz_norm_wo_sil" \
+  --speakers_as_accents
+
 ## Tool for finding out silence removal parameter config
 python -m src.cli.runner wavs-remove-silence-plot \
   --base_dir="$base_dir" \
@@ -135,3 +143,4 @@ python -m src.cli.runner prepare-ds \
   --prep_name="thchs_ljs_ipa" \
   --ds_speakers="thchs,all;ljs,all" \
   --ds_text_audio="thchs,ipa,22050Hz_norm_wo_sil;ljs,ipa_norm,22050Hz"
+

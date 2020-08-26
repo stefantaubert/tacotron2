@@ -40,10 +40,11 @@ def init_prepare_ds_parser(parser: ArgumentParser):
   parser.add_argument('--prep_name', type=str, required=True)
   parser.add_argument('--ds_speakers', type=str, required=True)
   parser.add_argument('--ds_text_audio', type=str, required=True)
+  parser.add_argument('--speakers_as_accents', action="store_true")
   return _prepare_ds_cli
 
-def _prepare_ds_cli(base_dir: str, prep_name: str, ds_speakers: str, ds_text_audio: str):
-  prepare_ds(base_dir=base_dir, prep_name=prep_name, ds_speakers=parse_tuple_list(ds_speakers), ds_text_audio=parse_tuple_list(ds_text_audio))
+def _prepare_ds_cli(base_dir: str, prep_name: str, ds_speakers: str, ds_text_audio: str, speakers_as_accents: bool):
+  prepare_ds(base_dir=base_dir, prep_name=prep_name, ds_speakers=parse_tuple_list(ds_speakers), ds_text_audio=parse_tuple_list(ds_text_audio), speakers_as_accents=speakers_as_accents)
 
 def init_preprocess_text_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)

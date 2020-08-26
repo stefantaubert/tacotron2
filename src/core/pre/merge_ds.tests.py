@@ -125,7 +125,7 @@ class UnitTests(unittest.TestCase):
       ("thchs", "speaker1"),
     }
     
-    whole, conv, speakers_id_dict = preprocess(datasets, ds_speakers)
+    whole, conv, speakers_id_dict = preprocess(datasets, ds_speakers, speakers_as_accents=False)
 
     self.assertEqual(4, len(whole))
     self.assertEqual(set({"_", "~", "a", "b", "c"}) ,set(conv.get_symbols()))

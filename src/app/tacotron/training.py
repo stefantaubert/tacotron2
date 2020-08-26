@@ -118,7 +118,7 @@ def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None
 
 
 if __name__ == "__main__":
-  mode = 3
+  mode = 5
   if mode == 1:
     train(
       base_dir="/datasets/models/taco2pt_v4",
@@ -150,4 +150,14 @@ if __name__ == "__main__":
       base_dir="/datasets/models/taco2pt_v4",
       train_name="debug",
       hparams="batch_size=17,iters_per_checkpoint=100,epochs_per_checkpoint=1,cache_mels=True,use_saved_mels=True"
+    )
+  elif mode == 5:
+    train(
+      base_dir="/datasets/models/taco2pt_v4",
+      train_name="debug",
+      prep_name="thchs_ipa_acc",
+      warm_start_train_name="ljs_ipa_scratch",
+      weights_train_name="ljs_ipa_scratch",
+      weights_map="maps/weights/thchs_ipa_acc_ljs_ipa.json",
+      hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
     )

@@ -1,6 +1,6 @@
 import random
 from dataclasses import dataclass
-from typing import List, OrderedDict, Tuple
+from typing import List, OrderedDict, Tuple, Set
 
 from sklearn.model_selection import train_test_split
 
@@ -68,7 +68,7 @@ class PreparedDataList(List[PreparedData]):
     return cls(data)
 
 
-def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDataList, MelDataList, List[str], SymbolConverter]], ds_speakers: List[Tuple[str, str]]) -> Tuple[PreparedDataList, SymbolConverter, SpeakersDict]:
+def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDataList, MelDataList, List[str], SymbolConverter]], ds_speakers: List[Tuple[str, str]], speakers_as_accents: bool) -> Tuple[PreparedDataList, SymbolConverter, SpeakersDict]:
   speakers_dict = {k: v[4] for k, v in datasets.items()}
   expanded_ds_speakers = expand_speakers(speakers_dict, ds_speakers)
   ds_speakers_list, speakers_id_dict = get_speakers(expanded_ds_speakers)
@@ -80,7 +80,10 @@ def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDat
     prep = get_prepared_data(ds_name, ds_data, speaker_names, text_data, wav_data, mel_data)
     ds_prepared_data.append((prep, conv))
   
-  whole, conv = merge_prepared_data(ds_prepared_data)
+  all_convs = [x[1] for x in ds_prepared_data]
+  all_symbols = get_all_symbols(all_convs)
+  final_conv = get_final_converter(all_symbols, list(speakers_id_dict.values()), merge=not speakers_as_accents)
+  whole, conv = merge_prepared_data(ds_prepared_data, final_conv, use_subset_ids=speakers_as_accents)
   return whole, conv, speakers_id_dict
 
 def map_to_prepared_data(ds_name: str, ds_data: DsData, text_data: TextData, wav_data: WavData, mel_data: MelData) -> PreparedData:
@@ -124,23 +127,33 @@ def get_prepared_data(ds_name: str, ds_data: DsDataList, speaker_names: List[Tup
   res.sort(key=PreparedDataList.get_key_for_sorting_after_entry_id, reverse=False)
   return res
 
-def merge_prepared_data(prep_list: List[Tuple[PreparedDataList, SymbolConverter]]) -> Tuple[PreparedDataList, SymbolConverter]:
-  res = PreparedDataList()
-  all_symbols = []
-  prep_data_list: PreparedDataList
-  
+def get_all_symbols(converters: List[SymbolConverter]) -> Set[str]:
   all_symbols = set()
-  for _, conv in prep_list:
+  for conv in converters:
     all_symbols = all_symbols.union(set(conv.get_symbols(include_id=False, include_subset_id=False)))
+  return all_symbols
+
+def get_final_converter(symbols: Set[str], speaker_ids: List[int], merge: bool) -> SymbolConverter:
+  if merge:
+    new_conv = SymbolConverter.init_from_symbols(symbols)
+  else:
+    new_conv = SymbolConverter.init_from_symbols({})
+    for speaker_id in speaker_ids:
+      new_conv.add_symbols(symbols, ignore_existing=False, subset_id=speaker_id)
+  return new_conv
+
+def merge_prepared_data(prep_list: List[Tuple[PreparedDataList, SymbolConverter]], new_conv: SymbolConverter, use_subset_ids: bool) -> Tuple[PreparedDataList, SymbolConverter]:
+  res = PreparedDataList()
   
-  new_conv = SymbolConverter.init_from_symbols(all_symbols)
   counter = 0
+  prep_data_list: PreparedDataList
   for prep_data_list, conv in prep_list:
     entry: PreparedData
     for entry in prep_data_list:
       original_symbol_ids = SymbolConverter.deserialize_symbol_ids(entry.serialized_updated_ids)
       original_symbols = conv.ids_to_symbols(original_symbol_ids)
-      updated_symbol_ids = new_conv.symbols_to_ids(original_symbols, subset_id_if_multiple=0, add_eos=False, replace_unknown_with_pad=True)
+      subset_id = entry.speaker_id if use_subset_ids else 0
+      updated_symbol_ids = new_conv.symbols_to_ids(original_symbols, subset_id_if_multiple=subset_id, add_eos=False, replace_unknown_with_pad=True)
       serialized_updated_symbol_ids = SymbolConverter.serialize_symbol_ids(updated_symbol_ids)
       entry.serialized_updated_ids = serialized_updated_symbol_ids
       entry.i = counter

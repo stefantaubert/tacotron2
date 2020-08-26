@@ -129,9 +129,11 @@ def get_symbols_id_mapping(dest_symbols: SymbolConverter, orig_symbols: SymbolCo
     assert dest_symbols.symbol_exists(map_to_symbol)
     assert orig_symbols.symbol_exists(map_from_symbol)
     map_from_symbol_id = orig_symbols.symbol_to_id(map_from_symbol, subset_id_if_multiple=0)
-    map_to_symbol_id = dest_symbols.symbol_to_id(map_to_symbol, subset_id_if_multiple=1)
-    result[map_to_symbol_id] = map_from_symbol_id
-    logger.info(f"Mapped symbol '{map_from_symbol}' ({map_from_symbol_id}) to symbol '{map_to_symbol}' ({map_to_symbol_id})")
+    all_subset_ids = dest_symbols.get_all_subset_ids()
+    for subset_id in all_subset_ids:
+      map_to_symbol_id = dest_symbols.symbol_to_id(map_to_symbol, subset_id_if_multiple=subset_id)
+      result[map_to_symbol_id] = map_from_symbol_id
+      logger.info(f"Mapped symbol '{map_from_symbol}' ({map_from_symbol_id}) to symbol '{map_to_symbol}' ({map_to_symbol_id})")
 
   return result
 
