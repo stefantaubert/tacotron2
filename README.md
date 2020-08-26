@@ -297,56 +297,43 @@ $base_dir
 │  │  │  │  ├── 0-LJ001-0001.pt
 │  │  │  │  ├── ...
 ├── waveglow
-│  ├── training_2020-06-17_11-11-03
+│  ├── training1
 │  ├── ...
 ├── tacotron
-│  ├── training_2020-06-17_11-11-03
-│  │  ├── filelist
-│  │  │  ├── weights.npy (opt)
-│  │  │  ├── weights_map.json (opt)
-│  │  │  ├── symbols.json
-│  │  │  ├── speakers.json
-│  │  │  ├── data.csv
-│  │  │  ├── train.csv
-│  │  │  ├── test.csv
-│  │  │  └── val.csv
+│  ├── training1
+│  │  ├── symbols.json
+│  │  ├── speakers.json
+│  │  ├── train.csv
+│  │  ├── test.csv
+│  │  └── validation.csv
 │  │  ├── logs
 │  │  │  └── log.txt
 │  │  ├── inference
 │  │  │  ├── 2020-06-18_11-11-03_democritus_A11_500
-│  │  │  │  ├── config.log
-│  │  │  │  ├── input.txt
-│  │  │  │  ├── input_sentences.txt
-│  │  │  │  ├── input_sentences_mapped.txt
-│  │  │  │  ├── input_symbols.txt
-│  │  │  │  ├── input_map.json
+│  │  │  │  ├── 2020-06-17_18-11-03_democritus_A11_500.txt
 │  │  │  │  ├── 2020-06-17_18-11-03_democritus_A11_500.png
 │  │  │  │  └── 2020-06-17_18-11-03_democritus_A11_500.wav
 │  │  │  ├── ...
 │  │  ├── validation
 │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9
+│  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9.txt
 │  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_orig.wav
 │  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_orig.png
 │  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_inferred.wav
 │  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_inferred.png
 │  │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9_comparison.png
-│  │  │  │  └── input.txt
 │  │  │  ├── ...
 │  │  ├── analysis
-│  │  │  ├── 500_sims.log
-│  │  │  ├── 500_3d.html
+│  │  │  ├── 500.txt
 │  │  │  ├── 500_2d.html
+│  │  │  ├── 500_3d.html
 │  │  │  ├── ...
 │  │  ├── checkpoints
 │  │  │  ├── 0.pt
 │  │  │  ├── 500.pt
 │  │  │  ├── 1000.pt
 │  │  │  └── ...
-│  │  ├── config.log
-│  │  └── description.txt
-│  │── training_...
-├── pretrained
-│  ├── waveglow_256channels_universal_v5.pt
+│  │── ...
 ```
 
 # Maps
@@ -369,7 +356,6 @@ These maps are used to translate unknown symbols in the text which should be inf
 - `gdown` only required for downloading pretrained waveglow-model
 - `wget` only required for automatically downloading datasets
 - `scikit-image` only for comparing mels for waveglow evaluation
-- `pydub` only for removing silence in thchs audio files
 
 ## Configs
 

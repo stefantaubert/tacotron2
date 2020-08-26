@@ -3,7 +3,7 @@ from src.app.pre.prepare import get_prepared_dir, load_filelist_symbol_converter
 from src.core.pre import create_weights_map as create_weights_map_core, SymbolsMap, create_inference_map as create_inference_map_core
 from typing import List, Optional
 
-def load_weights_map(symbols_map_path: str) -> Optional[SymbolsMap]:
+def try_load_symbols_map(symbols_map_path: str) -> Optional[SymbolsMap]:
   symbols_map = SymbolsMap.load(symbols_map_path) if symbols_map_path else None
   return symbols_map
 
@@ -30,14 +30,15 @@ def _read_corpora(path: str) -> str:
     content = ''.join(f.readlines())
   return content
 
-def create_weights_map(base_dir: str, dest_prep_name: str, orig_prep_name: str, dest_dir: str = "maps/weights"):
+def create_weights_map(base_dir: str, dest_prep_name: str, orig_prep_name: str, existing_map: Optional[str] = None, dest_dir: str = "maps/weights"):
   dest_prep_dir = get_prepared_dir(base_dir, dest_prep_name)
   assert os.path.isdir(dest_prep_dir)
   orig_prep_dir = get_prepared_dir(base_dir, orig_prep_name)
   assert os.path.isdir(orig_prep_dir)
   dest_conv = load_filelist_symbol_converter(dest_prep_dir)
   orig_conv = load_filelist_symbol_converter(orig_prep_dir)
-  weights_map, symbols = create_weights_map_core(orig_conv, dest_conv)
+  existing_map = try_load_symbols_map(existing_map)
+  weights_map, symbols = create_weights_map_core(orig_conv, dest_conv, existing_map=existing_map)
   _save_weights_map(dest_dir, dest_prep_name, orig_prep_name, weights_map)
   _save_weights_symbols(dest_dir, dest_prep_name, orig_prep_name, symbols)
 
@@ -47,7 +48,7 @@ def create_inference_map(base_dir: str, prep_name: str, corpora: str, is_ipa: bo
   assert os.path.isdir(prep_dir)
   model_conv = load_filelist_symbol_converter(prep_dir)
   corpora_content = _read_corpora(corpora)
-  existing_map = load_weights_map(existing_map)
+  existing_map = try_load_symbols_map(existing_map)
   infer_map, symbols = create_inference_map_core(model_conv, corpora_content, is_ipa, ignore_tones, ignore_arcs, existing_map=existing_map)
   _save_infer_map(dest_dir, prep_name, infer_map)
   _save_infer_symbols(dest_dir, prep_name, symbols)

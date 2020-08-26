@@ -40,13 +40,24 @@ class SymbolsMap(OrderedDictType[str, str]):
         return True
     return False
 
-def create_weights_map(orig_conv: SymbolConverter, dest_conv: SymbolConverter, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
+def sort_map_after_map_from_symbol(symb_map: SymbolsMap):
+  new_map = SymbolsMap(sorted(symb_map.items(), key = lambda x: x[1], reverse=False))
+  return new_map
+
+def create_weights_map(orig_conv: SymbolConverter, dest_conv: SymbolConverter, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
   orig = set(orig_conv.get_symbols())
   dest = set(dest_conv.get_symbols())
-  return SymbolsMap.from_two_sets(orig, dest), get_sorted_set(orig)
+  weights_map = SymbolsMap.from_two_sets(orig, dest)
+  if existing_map:
+    # The usecase is, when thchs map without tones exist and I want to create a map for thchs with tones.
+    new_keys = update_map(old_map=existing_map, new_map=weights_map)
+    if not new_keys:
+      logger.info("There were no new symbols in the destination symbol set.")
+  weights_map = sort_map_after_map_from_symbol(weights_map)
+  return weights_map, get_sorted_set(orig)
 
 def update_map(old_map: SymbolsMap, new_map: SymbolsMap) -> bool:
-  """returns True, if a new key was added/"""
+  """returns True, if a new key was added"""
   for to_symbol, from_symbol in new_map.items():
     if from_symbol == "" and to_symbol in old_map and old_map[to_symbol] != "":
       new_map[to_symbol] = old_map[to_symbol]
@@ -54,10 +65,6 @@ def update_map(old_map: SymbolsMap, new_map: SymbolsMap) -> bool:
     if new_key not in old_map.keys():
       return True
   return False
-
-def sort_map(symb_map: SymbolsMap):
-  new_map = SymbolsMap(sorted(symb_map.items(), key = lambda x: x[1], reverse=False))
-  return new_map
 
 def create_inference_map(model_symb_conv: SymbolConverter, corpora: str, is_ipa: str = False, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
   model_symbs = set(model_symb_conv.get_symbols())
@@ -67,10 +74,10 @@ def create_inference_map_core(model_symbols: set, corpora: str, is_ipa: str = Fa
   dest_symbols = set(extract_symbols(corpora, is_ipa, ignore_tones, ignore_arcs))
   infer_map = SymbolsMap.from_two_sets(model_symbols, dest_symbols)
   if existing_map:
-    new_keys = update_map(existing_map, infer_map)
+    new_keys = update_map(old_map=existing_map, new_map=infer_map)
     if not new_keys:
       logger.info("There were no new symbols in the corpora.")
-  infer_map = sort_map(infer_map)
+  infer_map = sort_map_after_map_from_symbol(infer_map)
   return infer_map, get_sorted_set(model_symbols)
 
 def get_sorted_set(s: Set[str]) -> List[str]:

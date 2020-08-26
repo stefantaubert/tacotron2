@@ -116,6 +116,7 @@ def init_create_weights_map_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--orig_prep_name', type=str, required=True)
   parser.add_argument('--dest_prep_name', type=str, required=True)
+  parser.add_argument('--existing_map', type=str)
   parser.add_argument('--dest_dir', type=str, default="maps/weights")
   return create_weights_map
 
@@ -128,4 +129,4 @@ def init_create_inference_map_parser(parser: ArgumentParser):
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--existing_map', type=str)
   parser.add_argument('--dest_dir', type=str, default="maps/inference")
-  return create_weights_map
+  return create_inference_map

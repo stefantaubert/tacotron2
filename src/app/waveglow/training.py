@@ -65,7 +65,7 @@ if __name__ == "__main__":
     train(
       base_dir="/datasets/models/taco2pt_v4",
       train_name="debug",
-      prep_name="thchs",
+      prep_name="thchs_ipa",
       hparams="batch_size=4,iters_per_checkpoint=50,cache_wavs=False"
     )
   elif mode == 2:

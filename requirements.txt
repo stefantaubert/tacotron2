@@ -16,8 +16,6 @@ wget==3.2
 numpy==1.16.0
 gdown==3.11.1
 scikit_learn==0.23.1
-tensorboardX==2.1
 numba==0.48
 Pillow==7.1.2
-pydub==0.24.1
 scipy==1.5.2

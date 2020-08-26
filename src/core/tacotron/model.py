@@ -10,6 +10,9 @@ from src.core.common import ConvNorm, LinearNorm
 from src.core.common import get_mask_from_lengths, to_gpu
 from typing import Tuple, List
 
+symbol_embeddings_layer_name = "embedding.weight"
+speaker_embeddings_layer_name = "speakers_embedding.weight"
+
 class LocationLayer(nn.Module):
   def __init__(self, hparams):
     super(LocationLayer, self).__init__()

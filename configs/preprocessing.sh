@@ -88,17 +88,6 @@ python -m src.cli.runner wavs-normalize \
   --orig_wav_name="16000Hz" \
   --dest_wav_name="16000Hz_norm"
 
-## Tool for finding out silence removal parameter config
-python -m src.cli.runner wavs-remove-silence-plot \
-  --base_dir="$base_dir" \
-  --ds_name="thchs" \
-  --wav_name="16000Hz_norm" \
-  --chunk_size=5 \
-  --threshold_start=-20 \
-  --threshold_end=-30 \
-  --buffer_start_ms=100 \
-  --buffer_end_ms=150
-
 python -m src.cli.runner wavs-remove-silence \
   --base_dir="$base_dir" \
   --ds_name="thchs" \
@@ -127,6 +116,17 @@ python -m src.cli.runner prepare-ds \
   --prep_name="thchs_ipa" \
   --ds_speakers="thchs,all" \
   --ds_text_audio="thchs,ipa,22050Hz_norm_wo_sil"
+
+## Tool for finding out silence removal parameter config
+python -m src.cli.runner wavs-remove-silence-plot \
+  --base_dir="$base_dir" \
+  --ds_name="thchs" \
+  --wav_name="16000Hz_norm" \
+  --chunk_size=5 \
+  --threshold_start=-20 \
+  --threshold_end=-30 \
+  --buffer_start_ms=100 \
+  --buffer_end_ms=150
 
 # LJS+THCHS IPA merge
 

@@ -107,11 +107,11 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(1, len(result))
 
   def test_concatenate_two_dim(self):
-    a = np.zeros((71, 2))
-    b = np.zeros((29, 2))
+    a = np.zeros((80, 34))
+    b = np.zeros((80, 66))
     x = concatenate_audios_core([a, b])
 
-    self.assertEqual((100, 2), x.shape)
+    self.assertEqual((80, 100), x.shape)
 
   def test_concatenate_no_pause(self):
     a = np.zeros(71)

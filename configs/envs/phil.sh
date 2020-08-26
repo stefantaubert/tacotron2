@@ -4,7 +4,7 @@ cd $code_dir
 export PYTHONPATH=$code_dir
 conda activate py37
 
-export base_dir="/home/stefan/taco2pt_v2"
+export base_dir="/home/stefan/taco2pt_v4"
 
 datasets_dir="/home/stefan/datasets"
 export ljs_data="$datasets_dir/LJSpeech-1.1"

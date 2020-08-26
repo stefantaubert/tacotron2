@@ -16,7 +16,7 @@ from src.core.pre import PreparedData, PreparedDataList
 from torch import nn
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger
-from src.core.tacotron.model import Tacotron2
+from src.core.tacotron.model import Tacotron2, symbol_embeddings_layer_name, speaker_embeddings_layer_name
 import random
 import logging
 from src.core.common import TacotronSTFT
@@ -239,17 +239,6 @@ def load_model(hparams, logger: logging.Logger):
 
   return model
 
-def warm_start_model(checkpoint_path, model, ignore_layers):
-  assert os.path.isfile(checkpoint_path)
-  checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-  model_dict = checkpoint_dict['state_dict']
-  if len(ignore_layers) > 0:
-    model_dict = {k: v for k, v in model_dict.items() if k not in ignore_layers}
-    dummy_dict = model.state_dict()
-    dummy_dict.update(model_dict)
-    model_dict = dummy_dict
-  model.load_state_dict(model_dict)
-
 def validate(model: Tacotron2, criterion: nn.Module, val_loader: DataLoader, iteration: int, logger: Optional[Tacotron2Logger] = None):
   """Handles all the validation scoring and printing"""
   debug_logger.debug("Validating...")
@@ -293,7 +282,7 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   criterion = Tacotron2Loss()
 
   debug_logger.debug("Modelweights:")
-  debug_logger.debug(str(model.state_dict()['embedding.weight']))
+  debug_logger.debug(str(model.state_dict()[symbol_embeddings_layer_name]))
 
   model.train()
   # is_overflow = False
@@ -390,13 +379,13 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   debug_logger.info(f'Finished training. Total duration: {duration_s / 60:.2f}min')
 
 def continue_train(custom_hparams: str, n_symbols: int, n_speakers: int, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str):
+  debug_logger.info("Continuing training...")
   hp = create_hparams(n_speakers, n_symbols, custom_hparams)
 
   last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
 
   model, optimizer, learning_rate, iteration = _train("", "", last_checkpoint_path, hp)
   train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
-
 
 def train(warm_start_model_path: str, custom_hparams: str, logdir: str, symbols_conv: SymbolConverter, n_speakers: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, trained_weights: Optional[torch.Tensor], symbols_map: Optional[SymbolsMap], trained_symbols_conv: Optional[SymbolConverter]):
   n_symbols = symbols_conv.get_symbol_ids_count()
@@ -468,7 +457,6 @@ def _train(warm_start_model_path: str, mapped_emb_weights: torch.Tensor, checkpo
 
     if mapped_emb_weights != None:
       debug_logger.info(f"Loading pretrained, mapped embeddings...")
-      #weights = load_weights(weights_path)
       init_symbol_embedding_weights(model, mapped_emb_weights)
 
   return model, optimizer, learning_rate, iteration
@@ -505,6 +493,27 @@ def load_checkpoint_dict(checkpoint_path: str) -> Tuple[dict, dict, float, int]:
     checkpoint_dict['iteration']
   )
 
+def warm_start_model(checkpoint_path: str, model: str, ignore_layers: List[str]):
+  model_state_dict = load_checkpoint_dict(checkpoint_path)[0]
+  # The default value from HParams is [""], an empty list was not working.
+  ignore_layers.extend([
+    symbol_embeddings_layer_name,
+    speaker_embeddings_layer_name
+  ])
+  model_dict = {k: v for k, v in model_state_dict.items() if k not in ignore_layers}
+  _update_model_state_dict(model, model_dict)
+
+def init_symbol_embedding_weights(model: Tacotron2, emb_weights: torch.Tensor):
+  update = { 
+    symbol_embeddings_layer_name: emb_weights
+  }
+  _update_model_state_dict(model, update)
+
+def _update_model_state_dict(model: Tacotron2, updates: dict):
+  dummy_dict = model.state_dict()
+  dummy_dict.update(updates)
+  model.load_state_dict(dummy_dict)
+
 def log_checkpoint_score(iteration: int, gradloss: float, trainloss: float, valloss: float, epoch: int, i: int):
   loss_avg = (trainloss + valloss) / 2
   msg = f"{iteration}\tepoch-{epoch}\tit-{i}\tgradloss-{gradloss:.6f}\ttrainloss-{trainloss:.6f}\tvalidationloss-{valloss:.6f}\tavg-train-val-{loss_avg:.6f}"
@@ -519,7 +528,7 @@ def get_uniform_weights(n_symbols: int, emb_dim: int) -> torch.Tensor:
 
 def load_symbol_embedding_weights_from(model_path: str) -> torch.Tensor:
   model_state_dict = load_checkpoint_dict(model_path)[0]
-  pretrained_weights = model_state_dict['embedding.weight']
+  pretrained_weights = model_state_dict[symbol_embeddings_layer_name]
   return pretrained_weights
 
 # def load_weights(weights_path: str):
@@ -527,13 +536,6 @@ def load_symbol_embedding_weights_from(model_path: str) -> torch.Tensor:
 #   weights = np.load(weights_path)
 #   weights = torch.from_numpy(weights)
 #   return weights
-
-def init_symbol_embedding_weights(model: Tacotron2, emb_weights: torch.Tensor):
-  dummy_dict = model.state_dict()
-  update = { 'embedding.weight': emb_weights }
-  dummy_dict.update(update)
-  model_dict = dummy_dict
-  model.load_state_dict(model_dict)
 
 def get_mapped_embedding_weights(model_symbols: SymbolConverter, trained_weights: torch.Tensor, trained_symbols: SymbolConverter, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
   model_weights = get_uniform_weights(model_symbols.get_symbol_ids_count(), trained_weights.shape[1])

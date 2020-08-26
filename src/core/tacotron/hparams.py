@@ -19,7 +19,7 @@ def create_hparams(n_speakers: int, n_symbols: int, hparams_string=None, verbose
     dist_url="tcp://localhost:54321",
     cudnn_enabled=True,
     cudnn_benchmark=False,
-    ignore_layers=['embedding.weight'],
+    ignore_layers=[""], # is list
 
     ################################
     # Data Parameters       #

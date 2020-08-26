@@ -19,7 +19,7 @@ from src.core.common import (Language, float_to_wav, get_basename,
                              get_custom_or_last_checkpoint,
                              get_last_checkpoint, get_parent_dirname,
                              get_subdir, parse_json, plot_melspec,
-                             stack_images_vertically)
+                             stack_images_vertically, stack_images_horizontally)
 from src.core.inference import get_logger
 from src.core.inference import infer as infer_core
 
@@ -75,6 +75,13 @@ def save_infer_v_plot(infer_dir: str, sentence_ids: List[int]):
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}_v.png")
   stack_images_vertically(paths, path)
 
+def save_infer_h_plot(infer_dir: str, sentence_ids: List[int]):
+  paths = []
+  for x in sentence_ids:
+    paths.append(os.path.join(infer_dir, f"{x}.png"))
+  path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}_h.png")
+  stack_images_horizontally(paths, path)
+
 def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker: str, waveglow: str = "pretrained", ignore_tones: bool = False, ignore_arcs: bool = True, symbols_map: Optional[str] = None, hparams: Optional[str] = None, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = 0.5, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050, analysis: bool = True, ipa: bool = True):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
@@ -95,7 +102,7 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
   assert os.path.isdir(train_dir_wg)
   wg_checkpoint_path, _ = get_last_checkpoint(get_checkpoints_dir(train_dir_wg))
 
-  wav, wav_mel, full = infer_core(
+  wav, analysis_stack = infer_core(
     taco_path=checkpoint_path,
     waveglow_path=wg_checkpoint_path,
     conv=load_symbol_converter(train_dir),
@@ -114,22 +121,22 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
     symbols_map=load_infer_symbols_map(symbols_map) if symbols_map else None
   )
 
-  logger.info("Saving wav and plot...")
+  logger.info("Saving wav...")
   save_infer_wav(infer_dir, sampling_rate, wav)
-  save_infer_plot(infer_dir, wav_mel)
 
   if analysis:
     logger.info("Analysing...")
-    for sentence_nr, mels, sent_wav in tqdm(full):
+    for sent_id, mels, sent_wav in tqdm(analysis_stack):
       mel_outputs, mel_outputs_postnet, alignments = mels
-      save_infer_wav_sentence(infer_dir, sentence_nr, sampling_rate, sent_wav)
-      save_infer_sentence_plot(infer_dir, sentence_nr, mel_outputs)
-      save_infer_pre_postnet_sentence_plot(infer_dir, sentence_nr, mel_outputs_postnet)
-      save_infer_alignments_sentence_plot(infer_dir, sentence_nr, alignments)
-    sentence_ids = [x[0] for x in full]
-    save_infer_v_plot(infer_dir, sentence_ids)
-    save_infer_v_pre_post(infer_dir, sentence_ids)
-    save_infer_v_alignments(infer_dir, sentence_ids)
+      save_infer_wav_sentence(infer_dir, sent_id, sampling_rate, sent_wav)
+      save_infer_sentence_plot(infer_dir, sent_id, mel_outputs)
+      save_infer_pre_postnet_sentence_plot(infer_dir, sent_id, mel_outputs_postnet)
+      save_infer_alignments_sentence_plot(infer_dir, sent_id, alignments)
+    sent_ids = [x[0] for x in analysis_stack]
+    save_infer_v_plot(infer_dir, sent_ids)
+    save_infer_h_plot(infer_dir, sent_ids)
+    save_infer_v_pre_post(infer_dir, sent_ids)
+    save_infer_v_alignments(infer_dir, sent_ids)
     
   logger.info(f"Saved output to {infer_dir}")
 
@@ -137,8 +144,11 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
 if __name__ == "__main__":
   infer(
     base_dir="/datasets/models/taco2pt_v4",
-    train_name="debug",
-    text="examples/chn/north.txt",
-    lang=Language.CHN,
-    ds_speaker="thchs,D31"
+    train_name="ljs_ipa_scratch",
+    text="examples/ipa/north_sven_orig.txt",
+    lang=Language.IPA,
+    ds_speaker="ljs,1",
+    symbols_map="maps/inference/en_ipa.json",
+    ipa=True,
+    analysis=False
   )

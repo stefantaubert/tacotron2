@@ -37,21 +37,21 @@ def prepare_thchs():
   preprocess_wavs(
     base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
-    wav_name="16000kHz",
+    wav_name="16000Hz",
   )
 
   wavs_normalize(
     base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
-    orig_wav_name="16000kHz",
-    dest_wav_name="16000kHz_normalized",
+    orig_wav_name="16000Hz",
+    dest_wav_name="16000Hz_normalized",
   )
 
   wavs_remove_silence(
     base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
-    orig_wav_name="16000kHz_normalized",
-    dest_wav_name="16000kHz_normalized_nosil",
+    orig_wav_name="16000Hz_normalized",
+    dest_wav_name="16000Hz_normalized_nosil",
     threshold_start = -20,
     threshold_end = -30,
     chunk_size = 5,
@@ -62,15 +62,15 @@ def prepare_thchs():
   wavs_upsample(
     base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
-    orig_wav_name="16000kHz_normalized_nosil",
-    dest_wav_name="22050kHz_normalized_nosil",
+    orig_wav_name="16000Hz_normalized_nosil",
+    dest_wav_name="22050Hz_normalized_nosil",
     rate=22050,
   )
 
   preprocess_mels(
     base_dir="/datasets/models/taco2pt_v4",
     ds_name="thchs",
-    wav_name="22050kHz_normalized_nosil",
+    wav_name="22050Hz_normalized_nosil",
     custom_hparams="",
   )
 
@@ -78,7 +78,7 @@ def prepare_thchs():
     base_dir="/datasets/models/taco2pt_v4",
     prep_name="thchs",
     ds_speakers=[("thchs", "all")],
-    ds_text_audio=[("thchs", "ipa", "22050kHz_normalized_nosil")]
+    ds_text_audio=[("thchs", "ipa", "22050Hz_normalized_nosil")]
   )
 
 def prepare_thchs_kaldi():
@@ -141,7 +141,7 @@ def prepare_ljs():
 
 if __name__ == "__main__":
   run_all = False
-  mode = 3
+  mode = 1
   
   if run_all or mode == 1:
     prepare_thchs()

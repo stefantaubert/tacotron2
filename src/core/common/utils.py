@@ -13,7 +13,7 @@ from PIL import Image
 from scipy.io.wavfile import read
 from skimage.metrics import structural_similarity
 from sklearn.model_selection import train_test_split
-from typing import Tuple
+from typing import Tuple, List
 from scipy.spatial.distance import cdist, cosine
 __csv_separator = '\t'
 
@@ -82,6 +82,25 @@ def stack_images_vertically(list_im, out_path):
   for im in images:
     new_im.paste(im, (0, y_offset))
     y_offset += im.size[1]
+  new_im.save(out_path)
+
+def stack_images_horizontally(list_im: List[str], out_path: str):
+  images = [Image.open(i) for i in list_im]
+  widths, heights = zip(*(i.size for i in images))
+
+  total_width = sum(widths)
+  max_height = max(heights)
+
+  new_im = Image.new(
+    mode='RGB',
+    size=(total_width, max_height),
+    color=(255, 255, 255) # white
+  )
+
+  x_offset = 0
+  for im in images:
+    new_im.paste(im, (x_offset, 0))
+    x_offset += im.size[0]
   new_im.save(out_path)
 
 def save_df(df: pd.DataFrame, path: str):

@@ -13,7 +13,8 @@ from src.app.pre import (get_prepared_dir, load_filelist,
                          load_filelist_symbol_converter)
 from src.app.tacotron.io import get_train_dir
 from src.core.pre import SpeakersDict, SymbolConverter, split_train_test_val
-from src.app.pre import load_weights_map
+from src.app.pre import try_load_symbols_map
+from src.core.common import get_custom_or_last_checkpoint
 from src.core.tacotron import continue_train as continue_train_core
 from src.core.tacotron import get_train_logger, get_checkpoints_eval_logger
 from src.core.tacotron import train as train_core, load_symbol_embedding_weights_from, load_symbol_embedding_weights_from
@@ -30,15 +31,7 @@ def save_symbol_converter(train_dir: str, data: SymbolConverter):
   data_path = os.path.join(train_dir, _symbols_json)
   data.dump(data_path)
 
-def _load_pretrained_weights(emb_map_model: str) -> Optional[torch.Tensor]:
-  trained_weights = load_symbol_embedding_weights_from(emb_map_model) if emb_map_model else None
-  return trained_weights
-
-def _load_pretrained_symbol_conv(emb_map_model_symbols: str) -> Optional[SymbolConverter]:
-  trained_symbols = SymbolConverter.load_from_file(emb_map_model_symbols) if emb_map_model_symbols else None
-  return trained_symbols
-
-def train(base_dir: str, train_name: str, prep_name: str, warm_start_model: Optional[str] = None, test_size: float = 0.01, validation_size: float = 0.05, hparams: Optional[str] = None, split_seed: int = 1234, emb_map_model: Optional[str] = None, emb_map_model_symbols: Optional[str] = None, symbols_map_path: Optional[str] = None):
+def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, hparams: Optional[str] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, weights_map: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   wholeset = load_filelist(prep_dir)
   trainset, testset, valset = split_train_test_val(wholeset, test_size=test_size, val_size=validation_size, seed=split_seed, shuffle=True)
@@ -65,8 +58,25 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_model: Opti
   add_file_out_to_logger(get_train_logger(), log_file)
   add_file_out_to_logger(get_checkpoints_eval_logger(), checkpoints_log_file)
   
+  if weights_train_name:
+    weights_train_dir = get_train_dir(base_dir, weights_train_name, False)
+    weights_checkpoint_path, _ = get_custom_or_last_checkpoint(get_checkpoints_dir(weights_train_dir), weights_checkpoint)
+    weights_model_symbols_conv = load_symbol_converter(weights_train_dir)
+    weights = load_symbol_embedding_weights_from(weights_checkpoint_path)
+    weights_map = try_load_symbols_map(weights_map)
+  else:
+    weights_model_symbols_conv = None
+    weights_map = None
+    weights = None
+
+  if warm_start_train_name:
+    warm_start_train_dir = get_train_dir(base_dir, warm_start_train_name, False)
+    warm_start_model_path, _ = get_custom_or_last_checkpoint(get_checkpoints_dir(warm_start_train_dir), warm_start_checkpoint)
+  else:
+    warm_start_model_path = None
+    
   train_core(
-    warm_start_model_path=warm_start_model,
+    warm_start_model_path=warm_start_model_path,
     custom_hparams=hparams,
     logdir=logs_dir,
     symbols_conv=symbols_conv,
@@ -74,9 +84,9 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_model: Opti
     trainset=trainset,
     valset=valset,
     save_checkpoint_dir=get_checkpoints_dir(train_dir),
-    trained_weights=_load_pretrained_weights(emb_map_model),
-    symbols_map=load_weights_map(symbols_map_path),
-    trained_symbols_conv=_load_pretrained_symbol_conv(emb_map_model_symbols)
+    trained_weights=weights,
+    symbols_map=weights_map,
+    trained_symbols_conv=weights_model_symbols_conv
   )
 
 def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None):
@@ -108,39 +118,33 @@ def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None
 
 
 if __name__ == "__main__":
-  mode = 2
+  mode = 3
   if mode == 1:
     train(
       base_dir="/datasets/models/taco2pt_v4",
       train_name="debug",
       prep_name="thchs",
-      hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,cache_mels=False"
+      hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1"
     )
   elif mode == 2:
-    model_path = "/datasets/models/taco2pt_v2/ljs_ipa_ms_from_scratch/checkpoints/113500"
-    model_conv = "/datasets/models/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
     train(
-      base_dir="/datasets/models/taco2pt_v4",
+     base_dir="/datasets/models/taco2pt_v4",
       train_name="debug",
-      prep_name="thchs",
-      hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,cache_mels=False",
-      emb_map_model=model_path,
-      emb_map_model_symbols=model_conv
+      prep_name="thchs_ipa",
+      warm_start_train_name="ljs_ipa_scratch",
+      weights_train_name="ljs_ipa_scratch",
+      hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
     )
   elif mode == 3:
-    model_path = "/datasets/models/taco2pt_v2/ljs_ipa_ms_from_scratch/checkpoints/113500"
-    model_conv = "/datasets/models/taco2pt_v2/ljs_ipa_ms_from_scratch/filelist/symbols.json"
     train(
       base_dir="/datasets/models/taco2pt_v4",
       train_name="debug",
-      prep_name="thchs",
-      emb_map_model=model_path,
-      emb_map_model_symbols=model_conv,
-      symbols_map_path="maps/weights/chn_en_tones.json",
-      warm_start_model=model_path,
-      hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1,ignore_layers=[embedding.weight,speakers_embedding.weight],cache_mels=False"
+      prep_name="thchs_ipa",
+      warm_start_train_name="ljs_ipa_scratch",
+      weights_train_name="ljs_ipa_scratch",
+      weights_map="maps/weights/thchs_ipa_ljs_ipa.json",
+      hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
     )
-   
   elif mode == 4:
     continue_train(
       base_dir="/datasets/models/taco2pt_v4",

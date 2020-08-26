@@ -41,7 +41,7 @@ def _init_parser():
   _add_parser_to(subparsers, "preprocess-ljs", init_preprocess_ljs_parser)
   _add_parser_to(subparsers, "preprocess-thchs", init_preprocess_thchs_parser)
   _add_parser_to(subparsers, "preprocess-thchs-kaldi", init_preprocess_thchs_kaldi_parser)
-  
+
   _add_parser_to(subparsers, "preprocess-wavs", init_preprocess_wavs_parser)
   _add_parser_to(subparsers, "wavs-normalize", init_wavs_normalize_parser)
   _add_parser_to(subparsers, "wavs-resample", init_wavs_upsample_parser)

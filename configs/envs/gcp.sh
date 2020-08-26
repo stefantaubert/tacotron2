@@ -5,7 +5,7 @@ cd $code_dir
 export PYTHONPATH=$code_dir
 conda activate taco2pytorch
 
-export base_dir="/home/stefan_taubert/taco2pt_v2"
+export base_dir="/home/stefan_taubert/taco2pt_v4"
 
 datasets_dir="/home/stefan_taubert/datasets"
 export ljs_data="$datasets_dir/LJSpeech-1.1"

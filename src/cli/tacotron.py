@@ -23,14 +23,15 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--train_name', type=str, required=True)
   parser.add_argument('--prep_name', type=str, required=True)
-  parser.add_argument('--warm_start_model', type=str)
   parser.add_argument('--test_size', type=float, default=0.001)
   parser.add_argument('--validation_size', type=float, default=0.1)
   parser.add_argument('--split_seed', type=int, default=1234)
   parser.add_argument('--hparams', type=str)
-  parser.add_argument('--symbols_map_path', type=str)
-  parser.add_argument('--emb_map_model', type=str)
-  parser.add_argument('--emb_map_model_symbols', type=str)
+  parser.add_argument('--warm_start_train_name', type=str)
+  parser.add_argument('--warm_start_checkpoint', type=int)
+  parser.add_argument('--weights_train_name', type=str)
+  parser.add_argument('--weights_checkpoint', type=int)
+  parser.add_argument('--weights_map', type=str)
   return taco_train
 
 def init_continue_train_parser(parser: ArgumentParser):
