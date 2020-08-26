@@ -55,8 +55,8 @@ class PreparedDataList(List[PreparedData]):
     x: PreparedData
     relevant_entries = [x for x in self if x.speaker_id == speaker_id]
     assert len(relevant_entries)
-    idx = random.choice(range(relevant_entries))
-    return relevant_entries[idx]
+    entry = random.choice(relevant_entries)
+    return entry
 
   @staticmethod
   def get_key_for_sorting_after_entry_id(elem: PreparedData):

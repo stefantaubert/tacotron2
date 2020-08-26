@@ -48,3 +48,9 @@ python -m src.cli.runner tacotron-train \
 
 # Inference
 export ds_speaker="thchs,D31"
+
+python -m src.cli.runner tacotron-validate \
+  --base_dir=$base_dir \
+  --train_name=$train_name \
+  --ds_speaker=$ds_speaker
+#  --waveglow="scratch"
