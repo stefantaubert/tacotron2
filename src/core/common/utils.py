@@ -174,6 +174,13 @@ def to_gpu(x):
     x = x.cuda(non_blocking=True)
   return torch.autograd.Variable(x)
 
+def read_text(path: str) -> str:
+  assert os.path.isfile(path)
+  with open(path, "r") as f:
+    lines = f.readlines()
+  res = ''.join(lines)
+  return res
+  
 if __name__ == "__main__":
   x = "/datasets/models/taco2pt_v2/debug/filelist/filelist.csv"
   data = pd.read_csv(x, header=None, sep=__csv_separator)

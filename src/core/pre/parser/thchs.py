@@ -6,6 +6,8 @@ from src.core.common import download_tar
 from src.core.pre.parser.data import PreDataList, PreData
 from src.core.common import Language
 
+__question_particle1 = '吗'
+__question_particle2 = '呢'
 
 def download(dir_path: str):
   download_tar("http://data.cslt.org/thchs30/zip/wav.tgz", dir_path)
@@ -54,6 +56,12 @@ def parse(dir_path: str) -> PreDataList:
       # remove "=" from chinese transcription because it is not correct 
       # occurs only in sentences with nr. 374, e.g. B22_374
       chinese = chinese.replace("= ", '')
+      is_question = str.endswith(chinese, __question_particle1) or str.endswith(w, __question_particle2)
+      if is_question:
+        chinese += "？"
+      else:
+        chinese += "。"
+
       files.append((name, speaker_name, chinese, wav_path, speaker_name_letter, speaker_name_number, nr))
 
   # sort after wav_path

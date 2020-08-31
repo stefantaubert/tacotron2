@@ -104,7 +104,7 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
     seq_sents_text.append(''.join(mapped_symbols))
     if subset_id != None:
       symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True, subset_id_if_multiple=subset_id) #TODO: experiment if pad yes no
-    else:  
+    else:
       symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True) #TODO: experiment if pad yes no
     seq_sents_ids.append(symbol_ids)
     serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)

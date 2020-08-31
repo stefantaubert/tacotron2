@@ -40,6 +40,15 @@ class SymbolsMap(OrderedDictType[str, str]):
         return True
     return False
 
+  def apply_to_symbols(self, symbols: List[str]):
+    res = []
+    for s in symbols:
+      if s in self.keys():
+        res.append(self[s])
+      else:
+        res.append(s)
+    return res
+  
 def sort_map_after_map_from_symbol(symb_map: SymbolsMap):
   new_map = SymbolsMap(sorted(symb_map.items(), key = lambda x: x[1], reverse=False))
   return new_map
@@ -104,7 +113,7 @@ def create_symbols_map(dest_symbols: set, orig_symbols: set, symbols_mapping: Op
       logger.info(f"Symbol '{map_to_symbol}' has no mapping assigned.")
       not_mapped.add(map_to_symbol)
     elif map_from_symbol not in orig_symbols:
-      logger.info(f"Symbol '{map_from_symbol}' doesn't exist in trained symbol set. Ignoring mapping to '{map_to_symbol}'.")
+      logger.info(f"Symbol '{map_from_symbol}' doesn't exist in original symbol set. Ignoring mapping to '{map_to_symbol}'.")
       not_mapped.add(map_to_symbol)
     else:
       result[map_to_symbol] = map_from_symbol
