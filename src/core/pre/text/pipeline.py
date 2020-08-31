@@ -103,6 +103,7 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
     unknown_symbols = unknown_symbols.union(conv.get_unknown_symbols(mapped_symbols))
     seq_sents_text.append(''.join(mapped_symbols))
     if subset_id != None:
+      debug_logger.info(f"Using accent: {subset_id}")
       symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True, subset_id_if_multiple=subset_id) #TODO: experiment if pad yes no
     else:  
       symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True) #TODO: experiment if pad yes no

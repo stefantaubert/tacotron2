@@ -22,8 +22,8 @@ source /home/stefan/tacotron2/configs/envs/phil.sh
 export train_name="thchs_ipa_warm_mapped_w_tones"
 export prep_name="thchs_ipa"
 export batch_size=17
-export iters_per_checkpoint=500
-export epochs_per_checkpoint=1
+export iters_per_checkpoint=1000
+export epochs_per_checkpoint=2
 export epochs=1000
 
 # Create Weights Map

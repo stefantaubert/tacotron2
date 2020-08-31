@@ -95,6 +95,8 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
   
   speakers = load_speakers_json(train_dir)
   speaker_id = speakers[ds_speaker]
+  accent_id = speakers["thchs,D21"]
+  logger.info(f"Speaker id {speaker_id}, accent_id {accent_id}.")
   infer_dir = get_infer_dir(train_dir, input_name, iteration, speaker_id)
   add_file_out_to_logger(logger, get_infer_log(infer_dir))
   
@@ -116,7 +118,7 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
     ipa=ipa,
     ignore_tones=ignore_tones,
     ignore_arcs=ignore_arcs,
-    subset_id=0,
+    subset_id=accent_id,
     lang=lang,
     symbols_map=load_infer_symbols_map(symbols_map) if symbols_map else None
   )
