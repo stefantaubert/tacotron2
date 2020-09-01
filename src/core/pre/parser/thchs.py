@@ -4,7 +4,8 @@ from tqdm import tqdm
 
 from src.core.common import download_tar
 from src.core.pre.parser.data import PreDataList, PreData
-from src.core.common import Language
+from src.core.common import Language, extract_symbols
+from typing import List, Tuple
 
 __question_particle1 = '吗'
 __question_particle2 = '呢'
@@ -27,8 +28,8 @@ def parse(dir_path: str) -> PreDataList:
     (train_words, train_wavs),
     (test_words, test_wavs)
   ]
-
-  files = []
+  
+  files: List[Tuple[Tuple[str, int, int], PreData]] = []
 
   print("Parsing files...")
   for words_path, wavs_dir in parse_paths:
@@ -56,24 +57,27 @@ def parse(dir_path: str) -> PreDataList:
       # remove "=" from chinese transcription because it is not correct 
       # occurs only in sentences with nr. 374, e.g. B22_374
       chinese = chinese.replace("= ", '')
-      is_question = str.endswith(chinese, __question_particle1) or str.endswith(w, __question_particle2)
+      is_question = str.endswith(chinese, __question_particle1) or str.endswith(chinese, __question_particle2)
       if is_question:
         chinese += "？"
       else:
         chinese += "。"
 
-      files.append((name, speaker_name, chinese, wav_path, speaker_name_letter, speaker_name_number, nr))
+      symbols = extract_symbols(chinese, Language.CHN)
+      accents = [speaker_name] * len(symbols)
+      tmp = PreData(name, speaker_name, chinese, wav_path, symbols, accents, Language.CHN)
 
-  # sort after wav_path
-  files.sort(key=lambda tup: (tup[4], tup[5], tup[6]), reverse=False)
-  res = PreDataList([PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3], lang=Language.CHN) for x in files])
+      files.append((tmp, (speaker_name_letter, speaker_name_number, nr)))
+
+  files.sort(key=lambda tup: tup[1], reverse=False)
+  res = PreDataList([x for x, _ in files])
   return res
 
 if __name__ == "__main__":
   dest = '/datasets/thchs_wav'
-  download(
-    dir_path = dest
-  )
+  # download(
+  #   dir_path = dest
+  # )
 
   res = parse(
     dir_path = dest

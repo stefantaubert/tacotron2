@@ -9,6 +9,8 @@ class PreData:
   speaker_name: str
   text: str
   wav_path: str
+  symbols: List[str]
+  accents: List[str]
   lang: Language
 
 class PreDataList(List[PreData]):

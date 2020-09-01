@@ -1,8 +1,7 @@
 import unittest
 from src.core.tacotron.training import load_symbol_embedding_weights_from, get_uniform_weights, get_mapped_embedding_weights_core
-from src.core.pre import SymbolIdDict
+from src.core.common import SymbolIdDict, SymbolsMap
 from torch import nn
-from src.core.pre import SymbolsMap
 
 class UnitTests(unittest.TestCase):
   def test_load_symbol_emb_weights_from(self):

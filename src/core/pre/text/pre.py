@@ -7,27 +7,11 @@ from typing import Tuple
 import epitran
 from tqdm import tqdm
 
-from src.core.common import load_csv, parse_json, save_csv, save_json
+from unidecode import unidecode as convert_to_ascii
+
+from src.core.common import load_csv, parse_json, save_csv, save_json, expand_abbreviations, normalize_numbers, collapse_whitespace, chn_to_ipa, extract_from_sentence, Language, SymbolIdDict, SymbolsDict
 from src.core.pre.ds import DsData, DsDataList
-from src.core.common import Language
-from src.core.pre.text.adjustments import normalize_text
-from src.core.pre.text.chn_tools import chn_to_ipa
-from src.core.pre.text.ipa2symb import extract_from_sentence
-from src.core.pre.text.symbol_id_dict import SymbolIdDict
 
-
-class SymbolsDict(OrderedDictType[str, int]):
-  def save(self, file_path: str):
-    save_json(file_path, self)
-  
-  @classmethod
-  def load(cls, file_path: str):
-    data = parse_json(file_path)
-    return cls(data)
-
-  @classmethod
-  def fromcounter(cls, counter: Counter):
-    return cls(counter.most_common())
 
 @dataclass()
 class TextData:
@@ -64,6 +48,17 @@ def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_to
     processed_data.append((values.entry_id, symbols, Language.IPA))
 
   return _prepare_data(processed_data)
+
+def normalize_text(text: str) -> str:
+  '''Pipeline for English text, including number and abbreviation expansion.'''
+  text = convert_to_ascii(text)
+  # text = text.lower()
+  ### todo datetime conversion, BC to beecee
+  text = text.strip()
+  text = normalize_numbers(text)
+  text = expand_abbreviations(text)
+  text = collapse_whitespace(text)
+  return text
 
 def normalize(data: TextDataList, symbol_converter: SymbolIdDict)-> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
   processed_data: List[Tuple[int, List[str], Language]] = []
@@ -113,3 +108,8 @@ def _prepare_data(processed_data: List[Tuple[int, List[str], Language]]):
     result.append(data)
 
   return result, conv, symbols_dict
+
+if __name__ == "__main__":
+  inp = "ü hello my name is mr. test and    1 + 3 is 4.   "
+  out = normalize_text(inp)
+  print(out)

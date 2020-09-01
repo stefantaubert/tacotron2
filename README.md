@@ -179,7 +179,6 @@ $base_dir
 │  ├── ds
 │  │  ├── ljs
 │  │  │  ├── speakers.json
-│  │  │  ├── symbol_ids.json
 │  │  │  ├── symbols.json
 │  │  │  ├── accents.json
 │  │  │  ├── data.csv

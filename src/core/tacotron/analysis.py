@@ -1,6 +1,5 @@
-from src.core.pre import SymbolIdDict
 from typing import Optional, List, Dict, Tuple
-from src.core.common import get_custom_or_last_checkpoint
+from src.core.common import get_custom_or_last_checkpoint, SymbolIdDict
 from src.core.tacotron.training import load_symbol_embedding_weights_from
 from logging import Logger
 import torch

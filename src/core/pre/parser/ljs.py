@@ -5,7 +5,7 @@ import tarfile
 import wget
 from tqdm import tqdm
 
-from src.core.common import Language
+from src.core.common import Language, extract_symbols
 from src.core.pre.parser.data import PreDataList, PreData
 
 def download(dir_path: str):
@@ -48,13 +48,13 @@ def parse(path: str) -> PreDataList:
     print("WAVs not found:", wav_dirpath)
     raise Exception()
 
-  index = 1
-  result = []
+  result = PreDataList()
   speaker_name = '1'
+  accent_name = "north_america"
 
   with open(metadata_filepath, encoding='utf-8') as f:
     lines = f.readlines()
-  
+
   print("Parsing files...")
   for line in tqdm(lines):
     parts = line.strip().split('|')
@@ -63,14 +63,14 @@ def parse(path: str) -> PreDataList:
     # ex. ['LJ001-0045', '1469, 1470;', 'fourteen sixty-nine, fourteen seventy;']
     wav_path = os.path.join(wav_dirpath, '{}.wav'.format(basename))
     text = parts[2]
-    
-    tmp = (basename, speaker_name, text, wav_path)
+    symbols = extract_symbols(text, Language.ENG)
+    accents = [accent_name] * len(symbols)
+    tmp = PreData(basename, speaker_name, text, wav_path, symbols, accents, Language.ENG)
     result.append(tmp)
-  print("Done.")
 
-  # sort after basename
-  result.sort(key=lambda tup: tup[0], reverse=False)
-  result = PreDataList([PreData(x[0], x[1], x[2], x[3], Language.ENG) for i, x in enumerate(result)])
+  x: PreData
+  result.sort(key=lambda x: x.name, reverse=False)
+  print("Done.")
 
   return result
 

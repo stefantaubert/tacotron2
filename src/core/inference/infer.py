@@ -1,10 +1,10 @@
-from src.core.pre import text_to_symbols_pipeline
+#from src.core.pre import text_to_symbols_pipeline
 from src.core.common import Language, TacotronSTFT, create_hparams, mel_to_numpy
 from typing import List, Tuple
 import logging
 import torch
-from src.core.common import concatenate_audios
-from src.core.pre import PreparedData, SymbolIdDict
+from src.core.common import concatenate_audios, SymbolIdDict
+from src.core.pre import PreparedData
 from tqdm import tqdm
 import numpy as np
 from src.core.inference.synthesizer import Synthesizer

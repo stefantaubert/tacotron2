@@ -3,37 +3,11 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import List, OrderedDict, Tuple
 
-from src.core.common import load_csv, parse_json, save_csv, save_json
-from src.core.common import Language
+from src.core.common import load_csv, parse_json, save_csv, save_json, Language, SpeakersDict, SpeakersLogDict, AccentsDict, SymbolIdDict, remove_duplicates_list_orderpreserving
 from src.core.pre.parser import (PreData, PreDataList, dl_kaldi, dl_ljs,
                                  dl_thchs, parse_ljs, parse_thchs,
                                  parse_thchs_kaldi)
 
-
-class SpeakersDict(OrderedDict[str, int]):
-  def save(self, file_path: str):
-    save_json(file_path, self)
-  
-  def get_speakers(self):
-    return list(self.keys())
-
-  @classmethod
-  def load(cls, file_path: str):
-    data = parse_json(file_path)
-    return cls(data)
-
-  @classmethod
-  def fromlist(cls, l: list):
-    res = [(x, i) for i, x in enumerate(l)]
-    return cls(res)
-
-class SpeakersLogDict(OrderedDict[str, int]):
-  def save(self, file_path: str):
-    save_json(file_path, self)
-
-  @classmethod
-  def fromcounter(cls, c: Counter):
-    return cls(c.most_common())
 
 @dataclass()
 class DsData:
@@ -42,6 +16,8 @@ class DsData:
   speaker_name: str
   speaker_id: int
   text: str
+  serialized_symbols: str
+  serialized_accents: str
   wav_path: str
   lang: Language
 
@@ -57,21 +33,23 @@ class DsDataList(List[DsData]):
     data = load_csv(file_path, DsData)
     return cls(data)
 
-def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList]:
+def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   if not os.path.isdir(dir_path) and auto_dl:
     dl_func(dir_path)
   data = parse_func(dir_path)
   speakers, speakers_log = _get_all_speakers(data)
-  ds_data = _get_ds_data(data, speakers)
-  return speakers, speakers_log, ds_data
+  accents = _get_all_accents(data)
+  symbols = _get_symbols_id_dict(data)
+  ds_data = _get_ds_data(data, speakers, accents, symbols)
+  return speakers, speakers_log, symbols, accents, ds_data
 
-def thchs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList]:
+def thchs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   return _preprocess_core(dir_path, auto_dl, dl_thchs, parse_thchs)
 
-def ljs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList]:
+def ljs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   return _preprocess_core(dir_path, auto_dl, dl_ljs, parse_ljs)
 
-def thchs_kaldi_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList]:
+def thchs_kaldi_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   return _preprocess_core(dir_path, auto_dl, dl_kaldi, parse_thchs_kaldi)
 
 def _get_all_speakers(l: PreDataList) -> Tuple[SpeakersDict, SpeakersLogDict]:
@@ -79,18 +57,35 @@ def _get_all_speakers(l: PreDataList) -> Tuple[SpeakersDict, SpeakersLogDict]:
   all_speakers: List[str] = [x.speaker_name for x in l]
   all_speakers_count = Counter(all_speakers)
   speakers_log = SpeakersLogDict.fromcounter(all_speakers_count)
-  all_speakers = _remove_duplicates(all_speakers)
+  all_speakers = remove_duplicates_list_orderpreserving(all_speakers)
   speakers_dict = SpeakersDict.fromlist(all_speakers)
   return speakers_dict, speakers_log
 
-def _get_ds_data(l: PreDataList, speakers_dict: SpeakersDict) -> DsDataList:
-  values: PreData
-  result = [DsData(i, values.name, values.speaker_name, speakers_dict[values.speaker_name], values.text, values.wav_path, values.lang) for i, values in enumerate(l)]
-  return DsDataList(result)
-
-def _remove_duplicates(l: List[str]) -> List[str]:
-  result = []
+def _get_all_accents(l: PreDataList) -> AccentsDict:
+  accents = set()
+  x: PreData
   for x in l:
-    if x not in result:
-      result.append(x)
-  return result
+    accents = accents.union(set(x.accents))
+  return AccentsDict.init_from_accents(accents)
+
+def _get_symbols_id_dict(l: PreDataList) -> SymbolIdDict:
+  symbols = set()
+  x: PreData
+  for x in l:
+    symbols = symbols.union(set(x.symbols))
+  return SymbolIdDict.init_from_symbols(symbols)
+
+def _get_ds_data(l: PreDataList, speakers_dict: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict) -> DsDataList:
+  values: PreData
+  result = [DsData(
+      i,
+      values.name,
+      values.speaker_name,
+      speakers_dict[values.speaker_name],
+      values.text,
+      symbols.get_serialized_ids(values.symbols),
+      accents.get_serialized_ids(values.accents),
+      values.wav_path,
+      values.lang
+    ) for i, values in enumerate(l)]
+  return DsDataList(result)

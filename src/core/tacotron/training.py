@@ -19,10 +19,8 @@ from src.core.tacotron.logger import Tacotron2Logger
 from src.core.tacotron.model import Tacotron2, symbol_embeddings_layer_name, speaker_embeddings_layer_name
 import random
 import logging
-from src.core.common import TacotronSTFT
+from src.core.common import TacotronSTFT, SymbolIdDict, SymbolsMap, get_symbols_id_mapping
 from typing import List
-from src.core.pre import SymbolIdDict
-from src.core.pre import SymbolsMap, get_symbols_id_mapping
 
 def get_train_logger():
   return logging.getLogger("taco-train")

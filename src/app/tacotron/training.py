@@ -12,13 +12,12 @@ from src.app.pre import (get_prepared_dir, load_filelist,
                          load_filelist_speakers_json,
                          load_filelist_symbol_converter)
 from src.app.tacotron.io import get_train_dir
-from src.core.pre import SpeakersDict, SymbolIdDict, split_train_test_val
+from src.core.pre import split_train_test_val
 from src.app.pre import try_load_symbols_map
-from src.core.common import get_custom_or_last_checkpoint
+from src.core.common import get_custom_or_last_checkpoint, SymbolsMap, SpeakersDict, SymbolIdDict
 from src.core.tacotron import continue_train as continue_train_core
 from src.core.tacotron import get_train_logger, get_checkpoints_eval_logger
 from src.core.tacotron import train as train_core, load_symbol_embedding_weights_from, load_symbol_embedding_weights_from
-from src.core.pre.text import SymbolsMap
 import torch
 
 _symbols_json = "symbols.json"

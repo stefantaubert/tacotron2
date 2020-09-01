@@ -7,10 +7,9 @@ from src.app.pre.mel import get_mel_dir, load_mel_csv
 from src.app.pre.text import (get_text_dir, load_text_csv,
                               load_text_symbol_converter)
 from src.app.pre.wav import get_wav_dir, load_wav_csv
-from src.core.common import get_subdir
+from src.core.common import get_subdir, SpeakersDict, SpeakersLogDict, SymbolIdDict, SymbolsDict
 from src.core.pre import (DsData, DsDataList, MelDataList, PreparedData,
-                          PreparedDataList, SpeakersDict,
-                          SpeakersLogDict, SymbolIdDict, SymbolsDict,
+                          PreparedDataList,
                           TextDataList, WavDataList)
 from src.core.pre import merge_ds as merge_ds_core
 

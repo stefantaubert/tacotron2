@@ -2,10 +2,8 @@ import os
 from functools import partial
 
 from src.app.pre.ds import get_ds_dir, load_ds_csv
-from src.core.common import get_subdir
-from src.core.pre import (PreparedDataList,
-                          SymbolIdDict, SymbolsDict,
-                          TextDataList)
+from src.core.common import get_subdir, SymbolIdDict, SymbolsDict
+from src.core.pre import (PreparedDataList, TextDataList)
 from src.core.pre import text_convert_to_ipa as text_convert_to_ipa_core
 from src.core.pre import text_normalize as text_normalize_core
 from src.core.pre import text_preprocess as text_preprocess_core

@@ -1,10 +1,10 @@
 import unittest
-from src.core.pre.ds import SpeakersDict, DsDataList, DsData
+from src.core.pre.ds import DsDataList, DsData
 from src.core.pre.text import TextDataList, TextData
 from src.core.pre.wav import WavDataList, WavData
 from src.core.pre.mel import MelDataList, MelData
 from src.core.pre.merge_ds import expand_speakers, get_speakers, get_prepared_data, PreparedData, PreparedDataList, map_to_prepared_data, merge_prepared_data, split_prepared_data_train_test_val, split_train_test_val, preprocess
-from src.core.common import Language
+from src.core.common import Language, SpeakersDict
 from typing import List, Tuple, OrderedDict
 from src.core.pre.text import SymbolIdDict
 

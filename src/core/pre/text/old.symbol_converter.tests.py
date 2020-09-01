@@ -2,7 +2,7 @@ import unittest
 import sys
 from shutil import copyfile
 
-from src.core.pre.text.symbol_id_dict import *
+from src.core.common import *
 
 path_to_v1 = '/tmp/symbols.json'
 path_to_v2 = '/tmp/dumpv2.json'

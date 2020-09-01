@@ -1,6 +1,6 @@
 import os
 from src.app.pre.prepare import get_prepared_dir, load_filelist_symbol_converter
-from src.core.pre import create_weights_map as create_weights_map_core, SymbolsMap, create_inference_map as create_inference_map_core
+from src.core.common import create_weights_map as create_weights_map_core, SymbolsMap, create_inference_map as create_inference_map_core
 from typing import List, Optional
 
 def try_load_symbols_map(symbols_map_path: str) -> Optional[SymbolsMap]:

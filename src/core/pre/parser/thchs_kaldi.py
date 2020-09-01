@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from src.core.common import create_parent_folder, download_tar
 from src.core.pre.parser.data import PreData, PreDataList
-from src.core.common import Language
+from src.core.common import Language, extract_symbols
 
 def download(dir_path: str):
   download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
@@ -38,7 +38,7 @@ def parse(dir_path: str) -> PreDataList:
   print("Skipped:", len(skipped), "of", len(sent_files_gen))
   #print(skipped)
 
-  res = []
+  res = PreDataList()
   print("Parsing files...")
   for wav, sent_file in tqdm(wavs_sents):
     with open(sent_file, 'r', encoding='utf-8') as f:
@@ -51,18 +51,22 @@ def parse(dir_path: str) -> PreDataList:
     speaker, nr = basename.split('_')
     nr = int(nr)
     #res.append((nr, speaker, basename, wav, chn, sent_file))
-    res.append((basename, speaker, chn, wav))
+
+    symbols = extract_symbols(chn, Language.CHN)
+    accents = [speaker] * len(symbols)
+    tmp = PreData(basename, speaker, chn, wav, symbols, accents, Language.CHN)
+    res.append(tmp)
   print("Done.")
   
-  res.sort()
-  res = PreDataList([PreData(name=x[0], speaker_name=x[1], text=x[2], wav_path=x[3], lang=Language.CHN) for x in res])
+  x: PreData
+  res.sort(key=lambda x: x.name)
 
   return res
 
 if __name__ == "__main__":
-  download(
-    dir_path = '/datasets/THCHS-30'
-  )
+  # download(
+  #   dir_path = '/datasets/THCHS-30'
+  # )
 
   res = parse(
     dir_path = '/datasets/THCHS-30'

@@ -15,7 +15,16 @@ from skimage.metrics import structural_similarity
 from sklearn.model_selection import train_test_split
 from typing import Tuple, List
 from scipy.spatial.distance import cdist, cosine
+
+
 __csv_separator = '\t'
+
+def remove_duplicates_list_orderpreserving(l: List[str]) -> List[str]:
+  result = []
+  for x in l:
+    if x not in result:
+      result.append(x)
+  return result
 
 def cosine_dist_mels(a: np.ndarray, b: np.ndarray) -> float:
   a, b = make_same_dim(a, b)

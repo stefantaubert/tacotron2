@@ -4,13 +4,11 @@ from typing import List, OrderedDict, Tuple, Set
 
 from sklearn.model_selection import train_test_split
 
-from src.core.common import load_csv, parse_json, save_csv, save_json
-from src.core.pre.ds import DsData, DsDataList, SpeakersDict
-from src.core.common import Language
+from src.core.common import load_csv, parse_json, SpeakersDict, save_csv, save_json, SymbolIdDict, Language
+from src.core.pre.ds import DsData, DsDataList
 from src.core.pre.mel import MelData, MelDataList
 from src.core.pre.text import TextData, TextDataList
 from src.core.pre.wav import WavData, WavDataList
-from src.core.pre.text import SymbolIdDict
 
 
 @dataclass()

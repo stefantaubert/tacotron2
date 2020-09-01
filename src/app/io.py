@@ -6,11 +6,10 @@ from typing import List
 import matplotlib.pylab as plt
 import numpy as np
 from tqdm import tqdm
-from src.core.pre import SpeakersDict
 from src.core.common import (Language, float_to_wav, get_basename,
                              get_custom_or_last_checkpoint, get_parent_dirname,
                              get_subdir, parse_json, plot_melspec,
-                             stack_images_vertically)
+                             stack_images_vertically, SpeakersDict)
 from src.core.pre import PreparedDataList, PreparedData
 
 #region Training
