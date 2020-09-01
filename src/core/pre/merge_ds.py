@@ -10,7 +10,7 @@ from src.core.common import Language
 from src.core.pre.mel import MelData, MelDataList
 from src.core.pre.text import TextData, TextDataList
 from src.core.pre.wav import WavData, WavDataList
-from src.core.pre.text import SymbolConverter
+from src.core.pre.text import SymbolIdDict
 
 
 @dataclass()
@@ -68,11 +68,11 @@ class PreparedDataList(List[PreparedData]):
     return cls(data)
 
 
-def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDataList, MelDataList, List[str], SymbolConverter]], ds_speakers: List[Tuple[str, str]], speakers_as_accents: bool) -> Tuple[PreparedDataList, SymbolConverter, SpeakersDict]:
+def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDataList, MelDataList, List[str], SymbolIdDict]], ds_speakers: List[Tuple[str, str]], speakers_as_accents: bool) -> Tuple[PreparedDataList, SymbolIdDict, SpeakersDict]:
   speakers_dict = {k: v[4] for k, v in datasets.items()}
   expanded_ds_speakers = expand_speakers(speakers_dict, ds_speakers)
   ds_speakers_list, speakers_id_dict = get_speakers(expanded_ds_speakers)
-  ds_prepared_data: List[Tuple[PreparedData, SymbolConverter]] = []
+  ds_prepared_data: List[Tuple[PreparedData, SymbolIdDict]] = []
 
   for ds_name, dataset in datasets.items():
     ds_data, text_data, wav_data, mel_data, _, conv = dataset
@@ -127,22 +127,24 @@ def get_prepared_data(ds_name: str, ds_data: DsDataList, speaker_names: List[Tup
   res.sort(key=PreparedDataList.get_key_for_sorting_after_entry_id, reverse=False)
   return res
 
-def get_all_symbols(converters: List[SymbolConverter]) -> Set[str]:
+def get_all_symbols(converters: List[SymbolIdDict]) -> Set[str]:
   all_symbols = set()
   for conv in converters:
-    all_symbols = all_symbols.union(set(conv.get_symbols(include_id=False, include_subset_id=False)))
+    all_symbols = all_symbols.union(set(conv.get_all_symbols()))
   return all_symbols
 
-def get_final_converter(symbols: Set[str], speaker_ids: List[int], merge: bool) -> SymbolConverter:
-  if merge:
-    new_conv = SymbolConverter.init_from_symbols(symbols)
-  else:
-    new_conv = SymbolConverter.init_from_symbols({})
-    for speaker_id in speaker_ids:
-      new_conv.add_symbols(symbols, ignore_existing=False, subset_id=speaker_id)
-  return new_conv
+def get_final_converter(symbols: Set[str], speaker_ids: List[int], merge: bool) -> SymbolIdDict:
+  # TODO: refactor
+  # if merge:
+  #   new_conv = SymbolIdDict.init_from_symbols(symbols)
+  # else:
+  #   new_conv = SymbolIdDict.init_from_symbols({})
+  #   for speaker_id in speaker_ids:
+  #     new_conv.add_symbols(symbols, ignore_existing=False, subset_id=speaker_id)
+  # return new_conv
+  pass
 
-def merge_prepared_data(prep_list: List[Tuple[PreparedDataList, SymbolConverter]], new_conv: SymbolConverter, use_subset_ids: bool) -> Tuple[PreparedDataList, SymbolConverter]:
+def merge_prepared_data(prep_list: List[Tuple[PreparedDataList, SymbolIdDict]], new_conv: SymbolIdDict, use_subset_ids: bool) -> Tuple[PreparedDataList, SymbolIdDict]:
   res = PreparedDataList()
   
   counter = 0
@@ -150,11 +152,13 @@ def merge_prepared_data(prep_list: List[Tuple[PreparedDataList, SymbolConverter]
   for prep_data_list, conv in prep_list:
     entry: PreparedData
     for entry in prep_data_list:
-      original_symbol_ids = SymbolConverter.deserialize_symbol_ids(entry.serialized_updated_ids)
-      original_symbols = conv.ids_to_symbols(original_symbol_ids)
+      original_symbol_ids = SymbolIdDict.deserialize_symbol_ids(entry.serialized_updated_ids)
+      original_symbols = conv.get_symbols(original_symbol_ids)
       subset_id = entry.speaker_id if use_subset_ids else 0
-      updated_symbol_ids = new_conv.symbols_to_ids(original_symbols, subset_id_if_multiple=subset_id, add_eos=False, replace_unknown_with_pad=True)
-      serialized_updated_symbol_ids = SymbolConverter.serialize_symbol_ids(updated_symbol_ids)
+      # TODO: include accent
+      #updated_symbol_ids = new_conv.symbols_to_ids(original_symbols, subset_id_if_multiple=subset_id, add_eos=False, replace_unknown_with_pad=True)
+      updated_symbol_ids = new_conv.get_ids(original_symbols)
+      serialized_updated_symbol_ids = SymbolIdDict.serialize_symbol_ids(updated_symbol_ids)
       entry.serialized_updated_ids = serialized_updated_symbol_ids
       entry.i = counter
       res.append(entry)

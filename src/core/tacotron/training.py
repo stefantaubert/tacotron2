@@ -21,7 +21,7 @@ import random
 import logging
 from src.core.common import TacotronSTFT
 from typing import List
-from src.core.pre import SymbolConverter
+from src.core.pre import SymbolIdDict
 from src.core.pre import SymbolsMap, get_symbols_id_mapping
 
 def get_train_logger():
@@ -53,7 +53,7 @@ class SymbolsMelLoader(Dataset):
     self.data = {}
     values: PreparedData
     for i, values in enumerate(tqdm(data)):
-      symbol_ids = SymbolConverter.deserialize_symbol_ids(values.serialized_updated_ids)
+      symbol_ids = SymbolIdDict.deserialize_symbol_ids(values.serialized_updated_ids)
       symbols_tensor = torch.IntTensor(symbol_ids)
       if hparams.use_saved_mels:
         self.data[i] = (symbols_tensor, values.mel_path, values.speaker_id)
@@ -387,8 +387,8 @@ def continue_train(custom_hparams: str, n_symbols: int, n_speakers: int, logdir:
   model, optimizer, learning_rate, iteration = _train("", "", last_checkpoint_path, hp)
   train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
 
-def train(warm_start_model_path: str, custom_hparams: str, logdir: str, symbols_conv: SymbolConverter, n_speakers: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, trained_weights: Optional[torch.Tensor], symbols_map: Optional[SymbolsMap], trained_symbols_conv: Optional[SymbolConverter]):
-  n_symbols = symbols_conv.get_symbol_ids_count()
+def train(warm_start_model_path: str, custom_hparams: str, logdir: str, symbols_conv: SymbolIdDict, n_speakers: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, trained_weights: Optional[torch.Tensor], symbols_map: Optional[SymbolsMap], trained_symbols_conv: Optional[SymbolIdDict]):
+  n_symbols = symbols_conv.get_symbols_count()
   hp = create_hparams(n_speakers, n_symbols, custom_hparams)
   
   mapped_emb_weights = None
@@ -537,16 +537,16 @@ def load_symbol_embedding_weights_from(model_path: str) -> torch.Tensor:
 #   weights = torch.from_numpy(weights)
 #   return weights
 
-def get_mapped_embedding_weights(model_symbols: SymbolConverter, trained_weights: torch.Tensor, trained_symbols: SymbolConverter, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
-  model_weights = get_uniform_weights(model_symbols.get_symbol_ids_count(), trained_weights.shape[1])
+def get_mapped_embedding_weights(model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
+  model_weights = get_uniform_weights(model_symbols.get_symbols_count(), trained_weights.shape[1])
   return get_mapped_embedding_weights_core(model_weights, model_symbols, trained_weights, trained_symbols, symbols_mapping)
 
-def get_mapped_embedding_weights_core(model_weights: torch.Tensor, model_symbols: SymbolConverter, trained_weights: torch.Tensor, trained_symbols: SymbolConverter, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
-  assert model_weights.shape[0] == model_symbols.get_symbol_ids_count()
+def get_mapped_embedding_weights_core(model_weights: torch.Tensor, model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
+  assert model_weights.shape[0] == model_symbols.get_symbols_count()
 
-  symbols_match_not_model = trained_weights.shape[0] != trained_symbols.get_symbol_ids_count()
+  symbols_match_not_model = trained_weights.shape[0] != trained_symbols.get_symbols_count()
   if symbols_match_not_model:
-    debug_logger.exception(f"Weights mapping: symbol space from pretrained model ({trained_weights.shape[0]}) did not match amount of symbols ({trained_symbols.get_symbol_ids_count()}).")
+    debug_logger.exception(f"Weights mapping: symbol space from pretrained model ({trained_weights.shape[0]}) did not match amount of symbols ({trained_symbols.get_symbols_count()}).")
     raise Exception()
   
   mapping = get_symbols_id_mapping(model_symbols, trained_symbols, symbols_mapping, debug_logger)

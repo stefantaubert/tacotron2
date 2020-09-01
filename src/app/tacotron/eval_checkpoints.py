@@ -24,7 +24,7 @@ def eval_checkpoints(base_dir: str, train_name: str, custom_hparams: str, select
     select=select,
     min_it=min_it,
     max_it=max_it,
-    n_symbols=symbols_conv.get_symbol_ids_count(),
+    n_symbols=symbols_conv.get_symbols_count(),
     n_speakers=len(speakers),
     valset=load_valset(train_dir)
   )

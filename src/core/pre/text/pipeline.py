@@ -3,13 +3,13 @@ import epitran
 from src.core.common import Language
 from nltk import download
 from nltk.tokenize import sent_tokenize
-from src.core.pre.text.symbol_converter import SymbolConverter
+from src.core.pre.text.symbol_id_dict import SymbolIdDict
 from src.core.pre.text.chn_tools import chn_to_ipa
 from src.core.pre.text.adjustments import normalize_text
 from typing import List, Tuple
 import logging
 
-def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_arcs: bool, subset_id: int, lang: Language, symbols_map: dict, conv: SymbolConverter, debug_logger: logging.Logger) -> List[List[int]]:
+def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_arcs: bool, subset_id: int, lang: Language, symbols_map: dict, conv: SymbolIdDict, debug_logger: logging.Logger) -> List[List[int]]:
   if ipa:
     if lang == Language.ENG:
       epi = epitran.Epitran('eng-Latn')
@@ -73,7 +73,7 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
   debug_logger.debug(accented_sents)
  
   if symbols_map:
-    ipa_mapping = { k: extract_from_sentence(v, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs, replace_unknown_ipa_by=SymbolConverter.get_padding_symbol()) for k, v in symbols_map.items() }
+    ipa_mapping = { k: extract_from_sentence(v, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs, replace_unknown_ipa_by="_") for k, v in symbols_map.items() }
 
   #print('\n'.join(sentences))
   seq_sents = []
@@ -99,16 +99,18 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
           mapped_symbols.append(sy)
     else:
       mapped_symbols = symbols
-
-    unknown_symbols = unknown_symbols.union(conv.get_unknown_symbols(mapped_symbols))
+    
+    #unknown_symbols = unknown_symbols.union(conv.get_unknown_symbols(mapped_symbols))
     seq_sents_text.append(''.join(mapped_symbols))
     if subset_id != None:
       debug_logger.info(f"Using accent: {subset_id}")
-      symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True, subset_id_if_multiple=subset_id) #TODO: experiment if pad yes no
+      #symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True, subset_id_if_multiple=subset_id) #TODO: experiment if pad yes no
+      symbol_ids = conv.get_ids(mapped_symbols) #TODO: experiment if pad yes no
     else:  
-      symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True) #TODO: experiment if pad yes no
+      #symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True) #TODO: experiment if pad yes no
+      symbol_ids = conv.get_ids(mapped_symbols) #TODO: experiment if pad yes no
     seq_sents_ids.append(symbol_ids)
-    serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)
+    serialized_symbol_ids = SymbolIdDict.serialize_symbol_ids(symbol_ids)
     seq_sents.append(f'{serialized_symbol_ids}\n')
 
   debug_logger.debug("Input symbols")

@@ -1,7 +1,7 @@
 import os
 import unittest
 from src.core.pre.text.symbols_map import SymbolsMap, get_symbols_id_mapping, create_symbols_map, create_inference_map_core, update_map
-from src.core.pre import SymbolConverter
+from src.core.pre import SymbolIdDict
 from torch import nn
 import tempfile
 
@@ -178,9 +178,9 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(symbols_id_map["c"], "b")
 
   def test_get_symbols_id_mapping_without_map(self):
-    model_conv = SymbolConverter.init_from_symbols({"b", "c"})
+    model_conv = SymbolIdDict.init_from_symbols({"b", "c"})
 
-    trained_symbols = SymbolConverter.init_from_symbols({"a", "b"})
+    trained_symbols = SymbolIdDict.init_from_symbols({"a", "b"})
 
     symbols_id_map = get_symbols_id_mapping(
       dest_symbols=model_conv,
@@ -188,14 +188,14 @@ class UnitTests(unittest.TestCase):
     )
 
     self.assertEqual(3, len(symbols_id_map))
-    self.assertEqual(symbols_id_map[model_conv.symbol_to_id("_")], trained_symbols.symbol_to_id("_"))
-    self.assertEqual(symbols_id_map[model_conv.symbol_to_id("~")], trained_symbols.symbol_to_id("~"))
-    self.assertEqual(symbols_id_map[model_conv.symbol_to_id("b")], trained_symbols.symbol_to_id("b"))
+    self.assertEqual(symbols_id_map[model_conv.get_id("_")], trained_symbols.get_id("_"))
+    self.assertEqual(symbols_id_map[model_conv.get_id("~")], trained_symbols.get_id("~"))
+    self.assertEqual(symbols_id_map[model_conv.get_id("b")], trained_symbols.get_id("b"))
 
   def test_get_symbols_id_mapping_with_map(self):
-    model_conv = SymbolConverter.init_from_symbols({"b", "c", "d"})
+    model_conv = SymbolIdDict.init_from_symbols({"b", "c", "d"})
 
-    trained_symbols = SymbolConverter.init_from_symbols({"a", "b"})
+    trained_symbols = SymbolIdDict.init_from_symbols({"a", "b"})
     symbols_map = SymbolsMap.from_tuples([
       ("b", "a"),
       ("c", "b"),
@@ -205,8 +205,8 @@ class UnitTests(unittest.TestCase):
     symbols_id_map = get_symbols_id_mapping(model_conv, trained_symbols, symbols_map)
 
     self.assertEqual(2, len(symbols_id_map))
-    self.assertEqual(symbols_id_map[model_conv.symbol_to_id("b")], trained_symbols.symbol_to_id("a"))
-    self.assertEqual(symbols_id_map[model_conv.symbol_to_id("c")], trained_symbols.symbol_to_id("b"))
+    self.assertEqual(symbols_id_map[model_conv.get_id("b")], trained_symbols.get_id("a"))
+    self.assertEqual(symbols_id_map[model_conv.get_id("c")], trained_symbols.get_id("b"))
 
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)

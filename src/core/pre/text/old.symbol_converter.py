@@ -137,7 +137,7 @@ class SymbolConverter():
 
   def add_symbols(self, symbols: set, ignore_existing: bool, subset_id: int):
     all_new_symbols = _get_all_symbols(symbols)
-    next_id = self.get_symbol_ids_count()
+    next_id = self.get_symbols_count()
     for i, new_symbol in enumerate(all_new_symbols):
       symbol_already_exists_and_should_be_ignored = new_symbol in self._symbol_id_dict.keys() and ignore_existing
       if symbol_already_exists_and_should_be_ignored:

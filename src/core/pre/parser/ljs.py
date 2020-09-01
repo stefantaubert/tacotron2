@@ -63,6 +63,7 @@ def parse(path: str) -> PreDataList:
     # ex. ['LJ001-0045', '1469, 1470;', 'fourteen sixty-nine, fourteen seventy;']
     wav_path = os.path.join(wav_dirpath, '{}.wav'.format(basename))
     text = parts[2]
+    
     tmp = (basename, speaker_name, text, wav_path)
     result.append(tmp)
   print("Done.")

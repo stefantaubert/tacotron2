@@ -1,6 +1,6 @@
 from src.core.pre.text.chn_tools import chn_to_ipa
 from src.core.pre.text.ipa2symb import extract_from_sentence
-from src.core.pre.text.symbol_converter import SymbolConverter
+from src.core.pre.text.symbol_id_dict import SymbolIdDict
 from src.core.pre.text.pre import SymbolsDict, TextData, TextDataList
 from src.core.pre.text.pre import convert_to_ipa as text_convert_to_ipa
 from src.core.pre.text.pre import normalize as text_normalize

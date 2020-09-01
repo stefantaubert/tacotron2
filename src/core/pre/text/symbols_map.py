@@ -2,7 +2,7 @@ import logging
 from collections import OrderedDict
 import torch
 from math import sqrt
-from src.core.pre.text.symbol_converter import SymbolConverter
+from src.core.pre.text.symbol_id_dict import SymbolIdDict
 from src.core.pre.text.ipa2symb import extract_from_sentence
 from typing import OrderedDict as OrderedDictType, Tuple, List, Set, Optional
 from enum import IntEnum
@@ -44,9 +44,9 @@ def sort_map_after_map_from_symbol(symb_map: SymbolsMap):
   new_map = SymbolsMap(sorted(symb_map.items(), key = lambda x: x[1], reverse=False))
   return new_map
 
-def create_weights_map(orig_conv: SymbolConverter, dest_conv: SymbolConverter, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
-  orig = set(orig_conv.get_symbols())
-  dest = set(dest_conv.get_symbols())
+def create_weights_map(orig_conv: SymbolIdDict, dest_conv: SymbolIdDict, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
+  orig = orig_conv.get_all_symbols()
+  dest = dest_conv.get_all_symbols()
   weights_map = SymbolsMap.from_two_sets(orig, dest)
   if existing_map:
     # The usecase is, when thchs map without tones exist and I want to create a map for thchs with tones.
@@ -66,8 +66,8 @@ def update_map(old_map: SymbolsMap, new_map: SymbolsMap) -> bool:
       return True
   return False
 
-def create_inference_map(model_symb_conv: SymbolConverter, corpora: str, is_ipa: str = False, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
-  model_symbs = set(model_symb_conv.get_symbols())
+def create_inference_map(model_symb_conv: SymbolIdDict, corpora: str, is_ipa: str = False, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
+  model_symbs = model_symb_conv.get_all_symbols()
   return create_inference_map_core(model_symbs, corpora, is_ipa, ignore_tones, ignore_arcs, existing_map, logger)
 
 def create_inference_map_core(model_symbols: set, corpora: str, is_ipa: str = False, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
@@ -118,9 +118,9 @@ def create_symbols_map(dest_symbols: set, orig_symbols: set, symbols_mapping: Op
 
   return result
 
-def get_symbols_id_mapping(dest_symbols: SymbolConverter, orig_symbols: SymbolConverter, symbols_mapping: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> OrderedDictType[int, int]:
-  map_from = set(orig_symbols.get_symbols())
-  map_to = set(dest_symbols.get_symbols())
+def get_symbols_id_mapping(dest_symbols: SymbolIdDict, orig_symbols: SymbolIdDict, symbols_mapping: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> OrderedDictType[int, int]:
+  map_from = orig_symbols.get_all_symbols()
+  map_to = dest_symbols.get_all_symbols()
   symbols_map = create_symbols_map(map_to, map_from, symbols_mapping, logger)
 
   result: OrderedDictType[int, int] = OrderedDict()
@@ -128,12 +128,10 @@ def get_symbols_id_mapping(dest_symbols: SymbolConverter, orig_symbols: SymbolCo
   for map_to_symbol, map_from_symbol in symbols_map.items():
     assert dest_symbols.symbol_exists(map_to_symbol)
     assert orig_symbols.symbol_exists(map_from_symbol)
-    map_from_symbol_id = orig_symbols.symbol_to_id(map_from_symbol, subset_id_if_multiple=0)
-    all_subset_ids = dest_symbols.get_all_subset_ids()
-    for subset_id in all_subset_ids:
-      map_to_symbol_id = dest_symbols.symbol_to_id(map_to_symbol, subset_id_if_multiple=subset_id)
-      result[map_to_symbol_id] = map_from_symbol_id
-      logger.info(f"Mapped symbol '{map_from_symbol}' ({map_from_symbol_id}) to symbol '{map_to_symbol}' ({map_to_symbol_id})")
-
+    map_from_symbol_id = orig_symbols.get_id(map_from_symbol)
+    # TODO: do i have to include the accents here?
+    map_to_symbol_id = dest_symbols.get_id(map_to_symbol)
+    logger.info(f"Mapped symbol '{map_from_symbol}' ({map_from_symbol_id}) to symbol '{map_to_symbol}' ({map_to_symbol_id})")
+    
   return result
 

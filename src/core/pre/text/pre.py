@@ -13,7 +13,7 @@ from src.core.common import Language
 from src.core.pre.text.adjustments import normalize_text
 from src.core.pre.text.chn_tools import chn_to_ipa
 from src.core.pre.text.ipa2symb import extract_from_sentence
-from src.core.pre.text.symbol_converter import SymbolConverter
+from src.core.pre.text.symbol_id_dict import SymbolIdDict
 
 
 class SymbolsDict(OrderedDictType[str, int]):
@@ -45,7 +45,7 @@ class TextDataList(List[TextData]):
     data = load_csv(file_path, TextData)
     return cls(data)
 
-def convert_to_ipa(data: TextDataList, symbol_converter: SymbolConverter, ignore_tones: bool, ignore_arcs: bool) -> Tuple[TextDataList, SymbolConverter, SymbolsDict]:
+def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
   processed_data: List[Tuple[int, List[str], Language]] = []
   epi = epitran.Epitran('eng-Latn')
   
@@ -60,12 +60,12 @@ def convert_to_ipa(data: TextDataList, symbol_converter: SymbolConverter, ignore
     else:
       assert False
 
-    symbols: List[str] = extract_from_sentence(ipa, ignore_tones, ignore_arcs, replace_unknown_ipa_by=SymbolConverter.get_padding_symbol())
+    symbols: List[str] = extract_from_sentence(ipa, ignore_tones, ignore_arcs, replace_unknown_ipa_by="_")
     processed_data.append((values.entry_id, symbols, Language.IPA))
 
   return _prepare_data(processed_data)
 
-def normalize(data: TextDataList, symbol_converter: SymbolConverter)-> Tuple[TextDataList, SymbolConverter, SymbolsDict]:
+def normalize(data: TextDataList, symbol_converter: SymbolIdDict)-> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
   processed_data: List[Tuple[int, List[str], Language]] = []
 
   values: TextData
@@ -84,7 +84,7 @@ def normalize(data: TextDataList, symbol_converter: SymbolConverter)-> Tuple[Tex
 
   return _prepare_data(processed_data)
 
-def preprocess(data: DsDataList) -> Tuple[TextDataList, SymbolConverter, SymbolsDict]:
+def preprocess(data: DsDataList) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
   processed_data: List[Tuple[int, List[str], Language]] = []
   
   values: DsData
@@ -103,12 +103,12 @@ def _prepare_data(processed_data: List[Tuple[int, List[str], Language]]):
 
   symbol_counter = Counter(all_symbols)
   symbols_dict = SymbolsDict.fromcounter(symbol_counter)
-  conv = SymbolConverter.init_from_symbols(set(symbols_dict.keys()))
+  conv = SymbolIdDict.init_from_symbols(set(symbols_dict.keys()))
 
   for entry_id, symbols, lang in processed_data:
-    symbol_ids = conv.symbols_to_ids(symbols, add_eos=False, replace_unknown_with_pad=True)
-    text = SymbolConverter.symbols_to_str(symbols)
-    serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)
+    symbol_ids = conv.get_ids(symbols)
+    text = SymbolIdDict.symbols_to_str(symbols)
+    serialized_symbol_ids = SymbolIdDict.serialize_symbol_ids(symbol_ids)
     data = TextData(entry_id, text, serialized_symbol_ids, lang)
     result.append(data)
 

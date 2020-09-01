@@ -10,7 +10,7 @@ import numpy as np
 from src.core.common import parse_json
 
 from src.paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_file_name, filelist_weights_file_name, train_map_file, filelist_file_log_name
-from src.text.symbol_converter import load_from_file, serialize_symbol_ids, deserialize_symbol_ids
+from src.text.symbol_id_dict import load_from_file, serialize_symbol_ids, deserialize_symbol_ids
 from src.core.common import csv_separator
 from src.tacotron.hparams import create_hparams
 from src.core.common import log
@@ -81,7 +81,7 @@ def prepare(base_dir: str, training_dir_path: str, merge_mode: str, pretrained_m
 
     hparams = create_hparams(hparams)
     final_conv = load_from_file(os.path.join(get_filelist_dir(training_dir_path), filelist_symbols_file_name))
-    n_symbols = final_conv.get_symbol_ids_count()
+    n_symbols = final_conv.get_symbols_count()
     embedding = nn.Embedding(n_symbols, hparams.symbols_embedding_dim)
     std = sqrt(2.0 / (n_symbols + hparams.symbols_embedding_dim))
     val = sqrt(3.0) * std  # uniform bounds for std

@@ -6,7 +6,7 @@ from src.core.pre.mel import MelDataList, MelData
 from src.core.pre.merge_ds import expand_speakers, get_speakers, get_prepared_data, PreparedData, PreparedDataList, map_to_prepared_data, merge_prepared_data, split_prepared_data_train_test_val, split_train_test_val, preprocess
 from src.core.common import Language
 from typing import List, Tuple, OrderedDict
-from src.core.pre.text import SymbolConverter
+from src.core.pre.text import SymbolIdDict
 
 
 class UnitTests(unittest.TestCase):
@@ -93,7 +93,7 @@ class UnitTests(unittest.TestCase):
           MelData(2, "melpath_pre0", 80),
         ]),
         ["speaker0", "speaker1"],
-        SymbolConverter.init_from_symbols({"a", "b"})
+        SymbolIdDict.init_from_symbols({"a", "b"})
       ),
       "thchs": (
         DsDataList([
@@ -117,7 +117,7 @@ class UnitTests(unittest.TestCase):
           MelData(2, "melpath_pre0", 80),
         ]),
         ["speaker0", "speaker1"],
-        SymbolConverter.init_from_symbols({"b", "c"})
+        SymbolIdDict.init_from_symbols({"b", "c"})
       )
     }
     ds_speakers = {
@@ -128,7 +128,7 @@ class UnitTests(unittest.TestCase):
     whole, conv, speakers_id_dict = preprocess(datasets, ds_speakers, speakers_as_accents=False)
 
     self.assertEqual(4, len(whole))
-    self.assertEqual(set({"_", "~", "a", "b", "c"}) ,set(conv.get_symbols()))
+    self.assertEqual(set({"_", "~", "a", "b", "c"}) ,set(conv.get_all_symbols()))
     self.assertEqual("1,2,3", whole[0].serialized_updated_ids)
     self.assertEqual("1,2,3", whole[1].serialized_updated_ids)
     self.assertEqual("1,3,4", whole[2].serialized_updated_ids)
@@ -205,7 +205,7 @@ class UnitTests(unittest.TestCase):
       (PreparedDataList([
         PreparedData(0, 1, "", "", "", 0, "0,1,2", 0, 0, "", 0, ""),
       ]),
-      SymbolConverter({
+      SymbolIdDict({
         0: (0, "a"),
         1: (0, "b"),
         2: (0, "c"),
@@ -213,7 +213,7 @@ class UnitTests(unittest.TestCase):
       (PreparedDataList([
         PreparedData(0, 2, "", "", "", 0, "0,1,2", 0, 0, "", 0, ""),
       ]),
-      SymbolConverter({
+      SymbolIdDict({
         0: (0, "b"),
         1: (0, "a"),
         2: (0, "d"),
@@ -222,13 +222,13 @@ class UnitTests(unittest.TestCase):
 
     res, conv = merge_prepared_data(prep_list)
 
-    self.assertEqual(6, conv.get_symbol_ids_count())
-    self.assertEqual("_", conv.id_to_symbol(0))
-    self.assertEqual("~", conv.id_to_symbol(1))
-    self.assertEqual("a", conv.id_to_symbol(2))
-    self.assertEqual("b", conv.id_to_symbol(3))
-    self.assertEqual("c", conv.id_to_symbol(4))
-    self.assertEqual("d", conv.id_to_symbol(5))
+    self.assertEqual(6, conv.get_symbols_count())
+    self.assertEqual("_", conv.get_symbol(0))
+    self.assertEqual("~", conv.get_symbol(1))
+    self.assertEqual("a", conv.get_symbol(2))
+    self.assertEqual("b", conv.get_symbol(3))
+    self.assertEqual("c", conv.get_symbol(4))
+    self.assertEqual("d", conv.get_symbol(5))
 
     self.assertEqual(2, len(res))
     self.assertEqual(0, res[0].i)

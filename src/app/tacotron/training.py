@@ -12,7 +12,7 @@ from src.app.pre import (get_prepared_dir, load_filelist,
                          load_filelist_speakers_json,
                          load_filelist_symbol_converter)
 from src.app.tacotron.io import get_train_dir
-from src.core.pre import SpeakersDict, SymbolConverter, split_train_test_val
+from src.core.pre import SpeakersDict, SymbolIdDict, split_train_test_val
 from src.app.pre import try_load_symbols_map
 from src.core.common import get_custom_or_last_checkpoint
 from src.core.tacotron import continue_train as continue_train_core
@@ -23,13 +23,13 @@ import torch
 
 _symbols_json = "symbols.json"
 
-def load_symbol_converter(train_dir: str) -> SymbolConverter:
+def load_symbol_converter(train_dir: str) -> SymbolIdDict:
   data_path = os.path.join(train_dir, _symbols_json)
-  return SymbolConverter.load_from_file(data_path)
+  return SymbolIdDict.load_from_file(data_path)
   
-def save_symbol_converter(train_dir: str, data: SymbolConverter):
+def save_symbol_converter(train_dir: str, data: SymbolIdDict):
   data_path = os.path.join(train_dir, _symbols_json)
-  data.dump(data_path)
+  data.save(data_path)
 
 def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, hparams: Optional[str] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, weights_map: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name)
@@ -109,7 +109,7 @@ def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None
   continue_train_core(
     custom_hparams=hparams,
     logdir=logs_dir,
-    n_symbols=symbols_conv.get_symbol_ids_count(),
+    n_symbols=symbols_conv.get_symbols_count(),
     n_speakers=len(speakers),
     trainset=load_trainset(train_dir),
     valset=load_valset(train_dir),

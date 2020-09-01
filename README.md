@@ -179,20 +179,26 @@ $base_dir
 │  ├── ds
 │  │  ├── ljs
 │  │  │  ├── speakers.json
+│  │  │  ├── symbol_ids.json
+│  │  │  ├── symbols.json
+│  │  │  ├── accents.json
 │  │  │  ├── data.csv
 │  │  │  ├── text
 │  │  │  │  ├── en
 │  │  │  │  │  ├── data.csv
 │  │  │  │  │  ├── symbol_ids.json
 │  │  │  │  │  ├── symbols.json
+│  │  │  │  │  ├── accents.json
 │  │  │  │  ├── en_normalized
 │  │  │  │  │  ├── data.csv
 │  │  │  │  │  ├── symbol_ids.json
 │  │  │  │  │  ├── symbols.json
+│  │  │  │  │  ├── accents.json
 │  │  │  │  ├── ipa_normalized
 │  │  │  │  │  ├── data.csv
 │  │  │  │  │  ├── symbol_ids.json
 │  │  │  │  │  ├── symbols.json
+│  │  │  │  │  ├── accents.json
 │  │  │  ├── wav
 │  │  │  │  ├── 22050kHz
 │  │  │  │  │  ├── data.csv

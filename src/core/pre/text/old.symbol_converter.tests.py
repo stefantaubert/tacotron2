@@ -2,7 +2,7 @@ import unittest
 import sys
 from shutil import copyfile
 
-from src.core.pre.text.symbol_converter import *
+from src.core.pre.text.symbol_id_dict import *
 
 path_to_v1 = '/tmp/symbols.json'
 path_to_v2 = '/tmp/dumpv2.json'
@@ -14,7 +14,7 @@ class UnitTests(unittest.TestCase):
     symbols = {'a', 'c', 'b'}
     c = init_from_symbols(symbols)
     internal_symbols_count = 2 # pad and eos
-    self.assertEqual(3 + internal_symbols_count, c.get_symbol_ids_count())
+    self.assertEqual(3 + internal_symbols_count, c.get_symbols_count())
 
   def test_init_from_symbols_keys_are_int(self):
     c = init_from_symbols({'a', 'c', 'b'})
@@ -90,7 +90,7 @@ class UnitTests(unittest.TestCase):
     symbols = {'a', 'b', 'c'}
     c = init_from_symbols(symbols)
     
-    res = c.ids_to_text([2, 3, 4, 2, 2])
+    res = c.get_text([2, 3, 4, 2, 2])
 
     self.assertEqual('abcaa', res)
 

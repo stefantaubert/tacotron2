@@ -4,7 +4,7 @@ from functools import partial
 from src.app.pre.ds import get_ds_dir, load_ds_csv
 from src.core.common import get_subdir
 from src.core.pre import (PreparedDataList,
-                          SymbolConverter, SymbolsDict,
+                          SymbolIdDict, SymbolsDict,
                           TextDataList)
 from src.core.pre import text_convert_to_ipa as text_convert_to_ipa_core
 from src.core.pre import text_normalize as text_normalize_core
@@ -20,13 +20,13 @@ def _get_text_root_dir(ds_dir: str, create: bool = False):
 def get_text_dir(ds_dir: str, text_name: str, create: bool = False):
   return get_subdir(_get_text_root_dir(ds_dir, create), text_name, create)
 
-def load_text_symbol_converter(text_dir: str) -> SymbolConverter:
+def load_text_symbol_converter(text_dir: str) -> SymbolIdDict:
   path = os.path.join(text_dir, _text_symbol_ids_json)
-  return SymbolConverter.load_from_file(path)
+  return SymbolIdDict.load_from_file(path)
 
-def save_text_symbol_converter(text_dir: str, data: SymbolConverter):
+def save_text_symbol_converter(text_dir: str, data: SymbolIdDict):
   path = os.path.join(text_dir, _text_symbol_ids_json)
-  data.dump(path)
+  data.save(path)
 
 def load_text_symbols_json(text_dir: str) -> SymbolsDict:
   path = os.path.join(text_dir, _text_symbols_json)

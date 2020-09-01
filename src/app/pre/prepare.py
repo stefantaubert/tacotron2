@@ -10,7 +10,7 @@ from src.app.pre.wav import get_wav_dir, load_wav_csv
 from src.core.common import get_subdir
 from src.core.pre import (DsData, DsDataList, MelDataList, PreparedData,
                           PreparedDataList, SpeakersDict,
-                          SpeakersLogDict, SymbolConverter, SymbolsDict,
+                          SpeakersLogDict, SymbolIdDict, SymbolsDict,
                           TextDataList, WavDataList)
 from src.core.pre import merge_ds as merge_ds_core
 
@@ -41,13 +41,13 @@ def save_filelist_speakers_json(prep_dir: str, speakers: SpeakersDict):
   path = os.path.join(prep_dir, _prepared_speakers_json)
   speakers.save(path)
 
-def load_filelist_symbol_converter(prep_dir: str) -> SymbolConverter:
+def load_filelist_symbol_converter(prep_dir: str) -> SymbolIdDict:
   path = os.path.join(prep_dir, _prepared_symbols_json)
-  return SymbolConverter.load_from_file(path)
+  return SymbolIdDict.load_from_file(path)
   
-def save_filelist_symbol_converter(prep_dir: str, data: SymbolConverter):
+def save_filelist_symbol_converter(prep_dir: str, data: SymbolIdDict):
   path = os.path.join(prep_dir, _prepared_symbols_json)
-  data.dump(path)
+  data.save(path)
 
 def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]], speakers_as_accents: bool = False):
   prep_dir = get_prepared_dir(base_dir, prep_name)

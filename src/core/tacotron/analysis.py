@@ -1,4 +1,4 @@
-from src.core.pre import SymbolConverter
+from src.core.pre import SymbolIdDict
 from typing import Optional, List, Dict, Tuple
 from src.core.common import get_custom_or_last_checkpoint
 from src.core.tacotron.training import load_symbol_embedding_weights_from
@@ -34,19 +34,19 @@ def get_similarities(emb: np.ndarray) -> Dict[int, List[Tuple[int, float]]]:
     sims[i] = tmp
   return sims
 
-def sims_to_csv(sims: Dict[int, List[Tuple[int, float]]], symbols: SymbolConverter) -> pd.DataFrame:
+def sims_to_csv(sims: Dict[int, List[Tuple[int, float]]], symbols: SymbolIdDict) -> pd.DataFrame:
   lines = []
-  assert len(sims) == symbols.get_symbol_ids_count()
+  assert len(sims) == symbols.get_symbols_count()
   for symbol_id, similarities in sims.items():
-    sims = [f"{symbols.id_to_symbol(symbol_id)}", "<=>"]
+    sims = [f"{symbols.get_symbol(symbol_id)}", "<=>"]
     for other_symbol_id, similarity in similarities:
-      sims.append(symbols.id_to_symbol(other_symbol_id))
+      sims.append(symbols.get_symbol(other_symbol_id))
       sims.append(f"{similarity:.2f}")
     lines.append(sims)
   df = pd.DataFrame(lines)
   return df
 
-def emb_plot_3d(emb: np.ndarray, symbols: SymbolConverter) -> go.Figure:
+def emb_plot_3d(emb: np.ndarray, symbols: SymbolIdDict) -> go.Figure:
   np.set_printoptions(suppress=True)
 
   tsne = TSNE(n_components=3, random_state=0)
@@ -61,7 +61,7 @@ def emb_plot_3d(emb: np.ndarray, symbols: SymbolConverter) -> go.Figure:
   fig = go.Figure(data=[plot_3d], layout=layout)
   return fig
 
-def emb_plot_2d(emb: np.ndarray, symbols: SymbolConverter) -> go.Figure:
+def emb_plot_2d(emb: np.ndarray, symbols: SymbolIdDict) -> go.Figure:
   np.set_printoptions(suppress=True)
   tsne_2d = TSNE(n_components=2, random_state=0)
   Y_2d = tsne_2d.fit_transform(emb)
@@ -73,15 +73,15 @@ def emb_plot_2d(emb: np.ndarray, symbols: SymbolConverter) -> go.Figure:
   fig = go.Figure(data=[plot_2d], layout=layout)
   return fig
 
-def plot_embeddings(symbols: SymbolConverter, emb: torch.Tensor, logger: Logger) -> Tuple[pd.DataFrame, go.Figure, go.Figure]:
-  assert emb.shape[0] == symbols.get_symbol_ids_count()
+def plot_embeddings(symbols: SymbolIdDict, emb: torch.Tensor, logger: Logger) -> Tuple[pd.DataFrame, go.Figure, go.Figure]:
+  assert emb.shape[0] == symbols.get_symbols_count()
 
   logger.info(f"Emb size {emb.shape}")
-  logger.info(f"Sym len {symbols.get_symbol_ids_count()}")
+  logger.info(f"Sym len {symbols.get_symbols_count()}")
   
   sims = get_similarities(emb.numpy())
   df = sims_to_csv(sims, symbols)
-  all_symbols = symbols.get_symbols(include_subset_id=False, include_id=False)
+  all_symbols = symbols.get_all_symbols()
   emb_normed = norm2emb(emb)
   fig_2d = emb_plot_2d(emb_normed, all_symbols)
   fig_3d = emb_plot_3d(emb_normed, all_symbols)
