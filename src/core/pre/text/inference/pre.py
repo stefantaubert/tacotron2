@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Set
 from src.core.common import Language
 from nltk.tokenize import sent_tokenize
 from src.core.pre.text.utils import split_chn_text, split_ipa_text
@@ -17,6 +17,9 @@ class Sentence:
   sent_id: int
   text: str
   lang: Language
+  # Contains only the symbols which are known
+  infer_text: str
+  infer_serialized_symbols: str
 
 class SentenceList(List[Sentence]):
   def save(self, file_path: str):
@@ -25,6 +28,27 @@ class SentenceList(List[Sentence]):
   @classmethod
   def load(cls, file_path: str):
     data = load_csv(file_path, Sentence)
+    return cls(data)
+
+  def get_occuring_symbols(self) -> Set[str]:
+    result = set()
+    for s in self:
+      result = result.union(set(extract_symbols(s.text, s.lang)))
+    return result
+
+@dataclass()
+class AccentedSymbol:
+  position: int
+  symbol: str
+  accent_id: int
+
+class AccentedSymbolList(List[AccentedSymbol]):
+  def save(self, file_path: str):
+    save_csv(self, file_path)
+
+  @classmethod
+  def load(cls, file_path: str):
+    data = load_csv(file_path, AccentedSymbol)
     return cls(data)
 
 
@@ -45,11 +69,15 @@ def split_sentences(text: str, lang: Language) -> List[str]:
 
   return sentences
 
-def add_text(text: str, lang: Language) -> SentenceList:
+def add_text(text: str, lang: Language, known_symbols: SymbolConverter, accent_id: int = 0) -> SentenceList:
   res = SentenceList()
   sents = split_sentences(text, lang)
   for i, sent in enumerate(sents):
-    s = Sentence(i, sent, lang)
+    symbols = extract_symbols(sent, lang)
+    symbol_ids = known_symbols.symbols_to_ids(symbols, subset_id_if_multiple=accent_id, add_eos=False, replace_unknown_with_pad=True)
+    infer_serialized_symbol_ids = SymbolConverter.serialize_symbol_ids(symbol_ids)
+    infer_text = known_symbols.ids_to_text(symbol_ids)
+    s = Sentence(i, sent, lang, infer_text, infer_serialized_symbol_ids)
     res.append(s)
   return res
 
@@ -107,11 +135,22 @@ def sents_map(sentences: SentenceList, symbols_map: SymbolsMap) -> SentenceList:
       counter += 1
   return result
 
+
+def sents_rules(sentences: SentenceList, rules: str) -> SentenceList:
+  pass
+
+def sents_accent_template(sentences: SentenceList, rules: str) -> AccentedSymbolList:
+  pass
+
+def sents_accent_apply(sentences: SentenceList, accented_symbols: AccentedSymbolList) -> SentenceList:
+  pass
+
 if __name__ == "__main__":
   from src.core.common import read_text
   example_text = "This is a test. And an other one.\nAnd a new line.\r\nAnd a line with \r.\n\nAnd a line with \n in it. This is a question? This is a error!"
-  example_text = read_text("examples/en/democritus.txt")
-  sents = add_text(example_text, Language.ENG)
+  #example_text = read_text("examples/en/democritus.txt")
+  conv = SymbolConverter.init_from_symbols({"T", "h", "i", "s"})
+  sents = add_text(example_text, Language.ENG, conv)
   print(sents)
   sents = sents_normalize(sents)
   print(sents)

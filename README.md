@@ -245,6 +245,9 @@ $base_dir
 │  │  │  ├── speakers.json
 │  │  │  ├── symbols.json
 │  │  │  ├── data.csv
+│  │  │  ├── north
+│  │  │  │  ├── text.csv
+│  │  │  │  ├── accent.csv
 │  │  ├── ljs
 │  │  ├── ljs_thchs
 ├── pre

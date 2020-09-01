@@ -16,3 +16,5 @@ from src.core.pre.text import text_normalize
 from src.core.pre.text import text_preprocess
 from src.core.pre.text import extract_from_sentence, text_to_symbols_pipeline
 from src.core.pre.text import SymbolsMap, get_symbols_id_mapping, create_weights_map, create_inference_map
+
+from src.core.pre.text import Sentence, SentenceList, infer_add, infer_convert_ipa, infer_map, infer_norm
