@@ -69,6 +69,7 @@ if __name__ == "__main__":
   epi = epitran.Epitran('eng-Latn')
   y = epi.transliterate("At Müller's execution there was great competition for front seats,")
   #y += " ɡɹât͡ʃi"
+  y += "？"
   res = extract_from_sentence(y, ignore_tones=True, ignore_arcs=True)
   print(res)
 

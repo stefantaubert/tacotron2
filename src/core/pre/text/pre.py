@@ -54,7 +54,7 @@ def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_to
     orig_text = symbol_converter.serialized_symbol_ids_to_text(values.serialized_symbol_ids)
 
     if values.lang == Language.CHN:
-      ipa = chn_to_ipa(orig_text, add_period=True)
+      ipa = chn_to_ipa(orig_text)
     elif values.lang == Language.ENG:
       ipa = epi.transliterate(orig_text)
     else:
