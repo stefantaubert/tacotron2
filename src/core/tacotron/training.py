@@ -386,7 +386,7 @@ def continue_train(custom_hparams: str, n_symbols: int, n_speakers: int, logdir:
   train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
 
 def train(warm_start_model_path: str, custom_hparams: str, logdir: str, symbols_conv: SymbolIdDict, n_speakers: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, trained_weights: Optional[torch.Tensor], symbols_map: Optional[SymbolsMap], trained_symbols_conv: Optional[SymbolIdDict]):
-  n_symbols = symbols_conv.get_symbols_count()
+  n_symbols = len(symbols_conv)
   hp = create_hparams(n_speakers, n_symbols, custom_hparams)
   
   mapped_emb_weights = None
@@ -536,15 +536,15 @@ def load_symbol_embedding_weights_from(model_path: str) -> torch.Tensor:
 #   return weights
 
 def get_mapped_embedding_weights(model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
-  model_weights = get_uniform_weights(model_symbols.get_symbols_count(), trained_weights.shape[1])
+  model_weights = get_uniform_weights(len(model_symbols), trained_weights.shape[1])
   return get_mapped_embedding_weights_core(model_weights, model_symbols, trained_weights, trained_symbols, symbols_mapping)
 
 def get_mapped_embedding_weights_core(model_weights: torch.Tensor, model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
-  assert model_weights.shape[0] == model_symbols.get_symbols_count()
+  assert model_weights.shape[0] == len(model_symbols)
 
-  symbols_match_not_model = trained_weights.shape[0] != trained_symbols.get_symbols_count()
+  symbols_match_not_model = trained_weights.shape[0] != len(trained_symbols)
   if symbols_match_not_model:
-    debug_logger.exception(f"Weights mapping: symbol space from pretrained model ({trained_weights.shape[0]}) did not match amount of symbols ({trained_symbols.get_symbols_count()}).")
+    debug_logger.exception(f"Weights mapping: symbol space from pretrained model ({trained_weights.shape[0]}) did not match amount of symbols ({len(trained_symbols)}).")
     raise Exception()
   
   mapping = get_symbols_id_mapping(model_symbols, trained_symbols, symbols_mapping, debug_logger)

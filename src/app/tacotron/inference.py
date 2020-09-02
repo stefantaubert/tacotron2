@@ -2,8 +2,6 @@ import datetime
 import os
 from typing import List, Optional, Tuple
 
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pylab as plt
 import numpy as np
 from tqdm import tqdm
@@ -33,7 +31,7 @@ def load_infer_text(file_name: str) -> List[str]:
     return f.readlines()
 
 def load_infer_symbols_map(symbols_map: str) -> List[str]:
-  return parse_json(symbols_map) 
+  return parse_json(symbols_map)
 
 def save_infer_sentence_plot(infer_dir: str, sentence_nr: int, mel: np.ndarray):
   plot_melspec(mel, title="{}: {}".format(get_parent_dirname(infer_dir), sentence_nr))
@@ -92,14 +90,14 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
 
   input_name = get_basename(text)
   checkpoint_path, iteration = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
-  
+
   speakers = load_speakers_json(train_dir)
   speaker_id = speakers[ds_speaker]
   accent_id = speakers["thchs,D21"]
   logger.info(f"Speaker id {speaker_id}, accent_id {accent_id}.")
   infer_dir = get_infer_dir(train_dir, input_name, iteration, speaker_id)
   add_file_out_to_logger(logger, get_infer_log(infer_dir))
-  
+
   train_dir_wg = get_wg_train_dir(base_dir, waveglow, create=False)
   assert os.path.isdir(train_dir_wg)
   wg_checkpoint_path, _ = get_last_checkpoint(get_checkpoints_dir(train_dir_wg))
@@ -139,7 +137,7 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
     save_infer_h_plot(infer_dir, sent_ids)
     save_infer_v_pre_post(infer_dir, sent_ids)
     save_infer_v_alignments(infer_dir, sent_ids)
-    
+
   logger.info(f"Saved output to {infer_dir}")
 
 

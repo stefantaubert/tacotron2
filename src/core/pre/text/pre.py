@@ -4,12 +4,9 @@ from typing import List
 from typing import OrderedDict as OrderedDictType
 from typing import Tuple
 
-import epitran
 from tqdm import tqdm
 
-from unidecode import unidecode as convert_to_ascii
-
-from src.core.common import load_csv, parse_json, save_csv, save_json, expand_abbreviations, normalize_numbers, collapse_whitespace, chn_to_ipa, extract_from_sentence, Language, SymbolIdDict, SymbolsDict
+from src.core.common import load_csv, parse_json, save_csv, save_json, Language, SymbolIdDict, SymbolsDict, AccentsDict, deserialize_list, serialize_list, text_to_symbols, convert_to_ipa as text_convert_to_ipa, normalize as text_normalize, get_unique_items, get_counter
 from src.core.pre.ds import DsData, DsDataList
 
 
@@ -18,6 +15,7 @@ class TextData:
   entry_id: int
   text: str
   serialized_symbol_ids: str
+  serialized_accent_ids: str
   lang: Language
 
 class TextDataList(List[TextData]):
@@ -29,87 +27,73 @@ class TextDataList(List[TextData]):
     data = load_csv(file_path, TextData)
     return cls(data)
 
-def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
-  processed_data: List[Tuple[int, List[str], Language]] = []
-  epi = epitran.Epitran('eng-Latn')
+def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
+  processed_data: List[Tuple[int, List[str], List[int], Language]] = []
   
   values: TextData
   for values in tqdm(data):
-    orig_text = symbol_converter.serialized_symbol_ids_to_text(values.serialized_symbol_ids)
-
-    if values.lang == Language.CHN:
-      ipa = chn_to_ipa(orig_text)
-    elif values.lang == Language.ENG:
-      ipa = epi.transliterate(orig_text)
+    if values.lang != Language.IPA:
+      orig_text = symbol_converter.get_text(values.serialized_symbol_ids)
+      ipa = text_convert_to_ipa(orig_text, values.lang)
+      symbols: List[str] = text_to_symbols(ipa, Language.IPA, ignore_tones, ignore_arcs, replace_unknown_ipa_by=replace_unknown_ipa_by)
+      orig_accents = deserialize_list(values.serialized_accent_ids)
+      if len(orig_accents):
+        accents = [orig_accents[0]] * len(symbols)
+      else:
+        accents = []
     else:
-      assert False
-
-    symbols: List[str] = extract_from_sentence(ipa, ignore_tones, ignore_arcs, replace_unknown_ipa_by="_")
-    processed_data.append((values.entry_id, symbols, Language.IPA))
+      symbols = deserialize_list(values.serialized_symbol_ids)
+      accents = deserialize_list(values.serialized_accent_ids)
+    processed_data.append((values.entry_id, symbols, accents, Language.IPA))
 
   return _prepare_data(processed_data)
 
-def normalize_text(text: str) -> str:
-  '''Pipeline for English text, including number and abbreviation expansion.'''
-  text = convert_to_ascii(text)
-  # text = text.lower()
-  ### todo datetime conversion, BC to beecee
-  text = text.strip()
-  text = normalize_numbers(text)
-  text = expand_abbreviations(text)
-  text = collapse_whitespace(text)
-  return text
-
 def normalize(data: TextDataList, symbol_converter: SymbolIdDict)-> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
-  processed_data: List[Tuple[int, List[str], Language]] = []
+  processed_data: List[Tuple[int, List[str], List[int], Language]] = []
 
   values: TextData
   for values in tqdm(data):
-    orig_text = symbol_converter.serialized_symbol_ids_to_text(values.serialized_symbol_ids)
-
-    if values.lang == Language.ENG:
-      text = normalize_text(orig_text)
-    elif values.lang == Language.CHN:
-      text = orig_text
+    orig_text = symbol_converter.get_text(values.serialized_symbol_ids)
+    text = text_normalize(orig_text, values.lang)
+    symbols: List[str] = text_to_symbols(text, values.lang)
+    orig_accents = deserialize_list(values.serialized_accent_ids)
+    if values.lang != Language.IPA:
+      if len(orig_accents):
+        accents = [orig_accents[0]] * len(symbols)
+      else:
+        accents = []
     else:
-      assert False
+      # because no replacing was done in ipa normalization
+      # maybe support remove whitespace
+      accents = orig_accents
 
-    symbols: List[str] = list(text)
-    processed_data.append((values.entry_id, symbols, values.lang))
+    processed_data.append((values.entry_id, symbols, accents, values.lang))
 
   return _prepare_data(processed_data)
 
-def preprocess(data: DsDataList) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
-  processed_data: List[Tuple[int, List[str], Language]] = []
+def preprocess(data: DsDataList, symbol_ids: SymbolIdDict) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
+  processed_data: List[Tuple[int, List[str], List[int], Language]] = []
   
   values: DsData
   for values in tqdm(data):
-    symbols: List[str] = list(values.text)
-    processed_data.append((values.entry_id, symbols, values.lang))
+    symbols: List[str] = symbol_ids.get_symbols(deserialize_list(values.serialized_symbols))
+    accents: List[int] = deserialize_list(values.serialized_accents)
+    processed_data.append((values.entry_id, symbols, accents, values.lang))
 
   return _prepare_data(processed_data)
 
-def _prepare_data(processed_data: List[Tuple[int, List[str], Language]]):
-  all_symbols = []
+def _prepare_data(processed_data: List[Tuple[int, List[str], List[int], Language]]) -> Tuple[TextDataList, SymbolIdDict, AccentsDict, SymbolsDict]:
   result = TextDataList()
-
-  for _, symbols, _ in processed_data:
-    all_symbols.extend(symbols)
-
-  symbol_counter = Counter(all_symbols)
+  symbol_counter = get_counter([x[1] for x in processed_data])
   symbols_dict = SymbolsDict.fromcounter(symbol_counter)
   conv = SymbolIdDict.init_from_symbols(set(symbols_dict.keys()))
-
-  for entry_id, symbols, lang in processed_data:
-    symbol_ids = conv.get_ids(symbols)
+  
+  for entry_id, symbols, accent_ids, lang in processed_data:
+    assert len(accent_ids) == len(symbols)
     text = SymbolIdDict.symbols_to_str(symbols)
-    serialized_symbol_ids = SymbolIdDict.serialize_symbol_ids(symbol_ids)
-    data = TextData(entry_id, text, serialized_symbol_ids, lang)
+    serialized_symbol_ids = conv.get_serialized_ids(symbols)
+    serialized_accent_ids = serialize_list(accent_ids)
+    data = TextData(entry_id, text, serialized_symbol_ids, serialized_accent_ids, lang)
     result.append(data)
 
   return result, conv, symbols_dict
-
-if __name__ == "__main__":
-  inp = "ü hello my name is mr. test and    1 + 3 is 4.   "
-  out = normalize_text(inp)
-  print(out)

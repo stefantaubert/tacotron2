@@ -16,12 +16,12 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(100, res.shape[1])
 
   def test_get_mapped_embedding_weights_no_map(self):
-    model_conv = SymbolIdDict.init_from_symbols({"b", "c"})
-    model_embeddings = nn.Embedding(model_conv.get_symbols_count(), 1)
+    model_conv = SymbolIdDict.init_from_symbols({"~", "_", "b", "c"})
+    model_embeddings = nn.Embedding(len(model_conv), 1)
     nn.init.zeros_(model_embeddings.weight)
 
-    trained_symbols = SymbolIdDict.init_from_symbols({"a", "b"})
-    trained_embeddings = nn.Embedding(trained_symbols.get_symbols_count(), 1)
+    trained_symbols = SymbolIdDict.init_from_symbols({"~", "_", "a", "b"})
+    trained_embeddings = nn.Embedding(len(trained_symbols), 1)
     trained_embeddings.weight[trained_symbols.get_id("~")] = 1
     trained_embeddings.weight[trained_symbols.get_id("_")] = 2
     trained_embeddings.weight[trained_symbols.get_id("a")] = 3
@@ -40,12 +40,12 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(0, mapped_emb_weights[model_conv.get_id("c")][0].item())
 
   def test_get_mapped_embedding_weights_with_map(self):
-    model_conv = SymbolIdDict.init_from_symbols({"b", "c", "d"})
-    model_embeddings = nn.Embedding(model_conv.get_symbols_count(), 1)
+    model_conv = SymbolIdDict.init_from_symbols({"~", "_", "b", "c", "d"})
+    model_embeddings = nn.Embedding(len(model_conv), 1)
     nn.init.zeros_(model_embeddings.weight)
 
-    trained_symbols = SymbolIdDict.init_from_symbols({"a", "b"})
-    trained_embeddings = nn.Embedding(trained_symbols.get_symbols_count(), 1)
+    trained_symbols = SymbolIdDict.init_from_symbols({"~", "_", "a", "b"})
+    trained_embeddings = nn.Embedding(len(trained_symbols), 1)
     trained_embeddings.weight[trained_symbols.get_id("a")] = 1
     trained_embeddings.weight[trained_symbols.get_id("b")] = 2
     symbols_map = SymbolsMap([

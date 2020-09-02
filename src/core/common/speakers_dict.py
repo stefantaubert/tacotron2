@@ -1,11 +1,11 @@
-from typing import OrderedDict
 from src.core.common.utils import parse_json, save_json
-from collections import Counter
+from collections import Counter, OrderedDict
 
-class SpeakersDict(OrderedDict[str, int]):
+
+class SpeakersDict(OrderedDict):  # [str, int]
   def save(self, file_path: str):
     save_json(file_path, self)
-  
+
   def get_speakers(self):
     return list(self.keys())
 
@@ -15,14 +15,15 @@ class SpeakersDict(OrderedDict[str, int]):
     return cls(data)
 
   @classmethod
-  def fromlist(cls, l: list):
-    res = [(x, i) for i, x in enumerate(l)]
-    return cls(res)
+  def fromlist(cls, lst: list):
+    res = [(x, i) for i, x in enumerate(lst)]
+    return cls(cls, res)
 
-class SpeakersLogDict(OrderedDict[str, int]):
+
+class SpeakersLogDict(OrderedDict):  # [str, int]
   def save(self, file_path: str):
     save_json(file_path, self)
 
   @classmethod
-  def fromcounter(cls, c: Counter):
-    return cls(c.most_common())
+  def fromcounter(cls, counter: Counter):
+    return cls(counter.most_common())

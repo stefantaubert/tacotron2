@@ -1,7 +1,5 @@
 import os
 
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pylab as plt
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
@@ -39,7 +37,7 @@ def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[i
   logger = get_logger()
   init_logger(logger)
   add_console_out_to_logger(logger)
-  
+
   assert ds != ""
   if ds == "val":
     data = load_valset(train_dir)
@@ -57,7 +55,7 @@ def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[i
     entry = data.get_random_entry_ds_speaker(speaker_id)
   else:
     entry = data.get_random_entry()
-  
+
   checkpoint_path, iteration = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
   val_dir = get_val_dir(train_dir, entry, iteration)
   add_file_out_to_logger(logger, get_val_log(val_dir))

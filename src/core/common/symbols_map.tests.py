@@ -1,6 +1,6 @@
 import os
 import unittest
-from src.core.common.symbols_map import SymbolsMap, get_symbols_id_mapping, create_symbols_map, create_inference_map_core, update_map
+from src.core.common.symbols_map import SymbolsMap, get_symbols_id_mapping, create_symbols_map, create_inference_map_core, update_map, Language
 from src.core.common.symbol_id_dict import SymbolIdDict
 from torch import nn
 import tempfile
@@ -122,7 +122,7 @@ class UnitTests(unittest.TestCase):
     orig_symbols = {"b", "c"}
     corpora = "abc d\n \te"
 
-    symbols_id_map, symbols = create_inference_map_core(orig_symbols, corpora, is_ipa=False)
+    symbols_id_map, symbols = create_inference_map_core(orig_symbols, corpora, lang=Language.ENG)
 
     self.assertEqual(8, len(symbols_id_map))
     self.assertEqual("b", symbols_id_map["b"])
@@ -139,7 +139,7 @@ class UnitTests(unittest.TestCase):
     orig_symbols = {"ŋ", "ɔ", " "}
     corpora = "ɛəŋ m\n \tɔ"
 
-    symbols_id_map, symbols = create_inference_map_core(orig_symbols, corpora, is_ipa=True, ignore_arcs=True, ignore_tones=True)
+    symbols_id_map, symbols = create_inference_map_core(orig_symbols, corpora, lang=Language.ENG, ignore_arcs=True, ignore_tones=True)
 
     self.assertEqual(8, len(symbols_id_map))
     self.assertEqual(symbols_id_map["ŋ"], "ŋ")
@@ -187,9 +187,7 @@ class UnitTests(unittest.TestCase):
       orig_symbols=trained_symbols
     )
 
-    self.assertEqual(3, len(symbols_id_map))
-    self.assertEqual(symbols_id_map[model_conv.get_id("_")], trained_symbols.get_id("_"))
-    self.assertEqual(symbols_id_map[model_conv.get_id("~")], trained_symbols.get_id("~"))
+    self.assertEqual(1, len(symbols_id_map))
     self.assertEqual(symbols_id_map[model_conv.get_id("b")], trained_symbols.get_id("b"))
 
   def test_get_symbols_id_mapping_with_map(self):

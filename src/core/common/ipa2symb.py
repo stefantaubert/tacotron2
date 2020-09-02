@@ -8,7 +8,7 @@ _rx = '[{}]'.format(re.escape(string.punctuation))
 
 _arc = '͡'
 
-def extract_from_sentence(ipa_sentence: str, ignore_tones: bool = False, ignore_arcs: bool = False, replace_unknown_ipa_by: str = '_'):
+def extract_from_sentence(ipa_sentence: str, ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str):
   res = []
   tmp: List[str] = []
 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
   y = epi.transliterate("At Müller's execution there was great competition for front seats,")
   #y += " ɡɹât͡ʃi"
   y += "？"
-  res = extract_from_sentence(y, ignore_tones=True, ignore_arcs=True)
+  res = extract_from_sentence(y, ignore_tones=True, ignore_arcs=True, replace_unknown_ipa_by="_")
   print(res)
 
   #y = u"ˈprɪnɪŋ, ɪn ðə ˈoʊnli sɛns wɪθ wɪʧ wi ər æt ˈprɛzənt kənˈsərnd, ˈdɪfərz frəm moʊst ɪf nɑt frəm ɔl ðə ɑrts ənd kræfts ˌrɛprɪˈzɛnɪd ɪn ðə ˌɛksəˈbɪʃən."
@@ -89,5 +89,5 @@ if __name__ == "__main__":
   # print(''.join(res))
   # print(res)
   # print(set(res))
-  # print(len(set(res)))
-  
+  # print(len(set(res)))a
+

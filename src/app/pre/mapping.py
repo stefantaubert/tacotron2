@@ -1,6 +1,6 @@
 import os
 from src.app.pre.prepare import get_prepared_dir, load_filelist_symbol_converter
-from src.core.common import create_weights_map as create_weights_map_core, SymbolsMap, create_inference_map as create_inference_map_core
+from src.core.common import create_weights_map as create_weights_map_core, SymbolsMap, create_inference_map as create_inference_map_core, Language
 from typing import List, Optional
 
 def try_load_symbols_map(symbols_map_path: str) -> Optional[SymbolsMap]:
@@ -42,14 +42,14 @@ def create_weights_map(base_dir: str, dest_prep_name: str, orig_prep_name: str, 
   _save_weights_map(dest_dir, dest_prep_name, orig_prep_name, weights_map)
   _save_weights_symbols(dest_dir, dest_prep_name, orig_prep_name, symbols)
 
-def create_inference_map(base_dir: str, prep_name: str, corpora: str, is_ipa: bool = False, ignore_tones: bool = False, ignore_arcs: bool = True, existing_map: Optional[str] = None, dest_dir: str = "maps/inference"):
+def create_inference_map(base_dir: str, prep_name: str, corpora: str, lang: Language = Language.IPA, ignore_tones: Optional[bool] = False, ignore_arcs: Optional[bool] = True, replace_unknown_ipa_by: Optional[str] = "_", existing_map: Optional[str] = None, dest_dir: str = "maps/inference"):
   assert os.path.isfile(corpora)
   prep_dir = get_prepared_dir(base_dir, prep_name)
   assert os.path.isdir(prep_dir)
   model_conv = load_filelist_symbol_converter(prep_dir)
   corpora_content = _read_corpora(corpora)
   existing_map = try_load_symbols_map(existing_map)
-  infer_map, symbols = create_inference_map_core(model_conv, corpora_content, is_ipa, ignore_tones, ignore_arcs, existing_map=existing_map)
+  infer_map, symbols = create_inference_map_core(model_conv, corpora_content, lang, ignore_tones, ignore_arcs, existing_map=existing_map)
   _save_infer_map(dest_dir, prep_name, infer_map)
   _save_infer_symbols(dest_dir, prep_name, symbols)
 
@@ -67,5 +67,6 @@ if __name__ == "__main__":
       prep_name="thchs",
       corpora="examples/ipa/corpora.txt",
       existing_map="maps/inference/chn_v1.json",
-      is_ipa=True,
+      replace_unknown_ipa_by="_",
+      lang=Language.IPA
     )

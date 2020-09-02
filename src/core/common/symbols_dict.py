@@ -1,8 +1,11 @@
-from typing import List, OrderedDict as OrderedDictType
+from typing import List
 from src.core.common.utils import parse_json, save_json
-from collections import Counter
+from collections import Counter, OrderedDict
 
-class SymbolsDict(OrderedDictType[str, int]):
+class SymbolsDict(OrderedDict): # Tuple[str, int]
+  def __init__(self, *args, **kwargs):
+    super(SymbolsDict, self).__init__(*args, **kwargs)
+
   def save(self, file_path: str):
     save_json(file_path, self)
   

@@ -5,7 +5,7 @@ import tarfile
 import wget
 from tqdm import tqdm
 
-from src.core.common import Language, extract_symbols
+from src.core.common import Language, text_to_symbols
 from src.core.pre.parser.data import PreDataList, PreData
 
 def download(dir_path: str):
@@ -63,7 +63,7 @@ def parse(path: str) -> PreDataList:
     # ex. ['LJ001-0045', '1469, 1470;', 'fourteen sixty-nine, fourteen seventy;']
     wav_path = os.path.join(wav_dirpath, '{}.wav'.format(basename))
     text = parts[2]
-    symbols = extract_symbols(text, Language.ENG)
+    symbols = text_to_symbols(text, Language.ENG)
     accents = [accent_name] * len(symbols)
     tmp = PreData(basename, speaker_name, text, wav_path, symbols, accents, Language.ENG)
     result.append(tmp)

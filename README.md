@@ -358,6 +358,15 @@ These maps are used to translate unknown symbols in the text which should be inf
 
 # Notes
 
+Create custom pylint file: `pylint --generate-rcfile > pylintrc`
+Sort imports on save (not really working):
+```json
+{
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  }
+}
+```
 ## Requirements
 
 - `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)

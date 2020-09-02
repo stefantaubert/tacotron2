@@ -35,7 +35,7 @@ def get_similarities(emb: np.ndarray) -> Dict[int, List[Tuple[int, float]]]:
 
 def sims_to_csv(sims: Dict[int, List[Tuple[int, float]]], symbols: SymbolIdDict) -> pd.DataFrame:
   lines = []
-  assert len(sims) == symbols.get_symbols_count()
+  assert len(sims) == len(symbols)
   for symbol_id, similarities in sims.items():
     sims = [f"{symbols.get_symbol(symbol_id)}", "<=>"]
     for other_symbol_id, similarity in similarities:
@@ -73,10 +73,10 @@ def emb_plot_2d(emb: np.ndarray, symbols: SymbolIdDict) -> go.Figure:
   return fig
 
 def plot_embeddings(symbols: SymbolIdDict, emb: torch.Tensor, logger: Logger) -> Tuple[pd.DataFrame, go.Figure, go.Figure]:
-  assert emb.shape[0] == symbols.get_symbols_count()
+  assert emb.shape[0] == len(symbols)
 
   logger.info(f"Emb size {emb.shape}")
-  logger.info(f"Sym len {symbols.get_symbols_count()}")
+  logger.info(f"Sym len {len(symbols)}")
   
   sims = get_similarities(emb.numpy())
   df = sims_to_csv(sims, symbols)

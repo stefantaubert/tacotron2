@@ -6,6 +6,10 @@ from src.core.pre import (DsData, DsDataList,
                           PreparedDataList, 
                           ljs_preprocess,
                           thchs_kaldi_preprocess, thchs_preprocess)
+# don't do preprocessing here because inconsistent with mels because it is not always usefull to calc mels instand
+# from src.app.pre.text import preprocess_text
+# from src.app.pre.wav import preprocess_wavs
+# from src.app.pre.mel import preprocess_mels
 
 _ds_data_csv = "data.csv"
 _ds_speakers_json = "speakers.json"

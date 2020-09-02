@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 from src.core.common import download_tar
 from src.core.pre.parser.data import PreDataList, PreData
-from src.core.common import Language, extract_symbols
+from src.core.common import Language, text_to_symbols
 from typing import List, Tuple
 
 __question_particle1 = '吗'
@@ -41,7 +41,7 @@ def parse(dir_path: str) -> PreDataList:
       pos = x.find(' ')
       name, chinese = x[:pos], x[pos + 1:]
       
-      speaker_name, nr = name.split('_')
+      speaker_name, nr = name.split("_")
       nr = int(nr)
       speaker_name_letter = speaker_name[0]
       speaker_name_number = int(speaker_name[1:])
@@ -63,7 +63,7 @@ def parse(dir_path: str) -> PreDataList:
       else:
         chinese += "。"
 
-      symbols = extract_symbols(chinese, Language.CHN)
+      symbols = text_to_symbols(chinese, Language.CHN)
       accents = [speaker_name] * len(symbols)
       tmp = PreData(name, speaker_name, chinese, wav_path, symbols, accents, Language.CHN)
 

@@ -1,0 +1,35 @@
+import unittest
+from src.core.common.symbol_id_dict import *
+
+class UnitTests(unittest.TestCase):
+  
+  def test_init_from_symbols_adds_no_symbols(self):
+    res = SymbolIdDict.init_from_symbols({"a", "b", "c"})
+
+    self.assertEqual(3, len(res))
+
+  def test_init_from_symbols_is_sorted(self):
+    res = SymbolIdDict.init_from_symbols({"c", "a", "b"})
+
+    self.assertEqual("a", res.get_symbol(0))
+    self.assertEqual("b", res.get_symbol(1))
+    self.assertEqual("c", res.get_symbol(2))
+
+  def test_get_text_from_serialized_ids(self):
+    symbol_ids = SymbolIdDict.init_from_symbols({"a", "b"})
+
+    res = symbol_ids.get_text("0,1,1")
+
+    self.assertEqual("abb", res)
+
+  def test_get_text_from_ids(self):
+    symbol_ids = SymbolIdDict.init_from_symbols({"a", "b"})
+
+    res = symbol_ids.get_text([0, 1, 1])
+
+    self.assertEqual("abb", res)
+
+
+if __name__ == '__main__':
+  suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)
+  unittest.TextTestRunner(verbosity=2).run(suite)

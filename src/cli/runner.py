@@ -1,8 +1,5 @@
 from argparse import ArgumentParser
 
-from matplotlib import use as use_matplotlib_backend
-use_matplotlib_backend("Agg")
-
 from src.cli.pre import (init_prepare_ds_parser, init_preprocess_ljs_parser,
                          init_preprocess_mels_parser,
                          init_preprocess_text_parser,init_wavs_remove_silence_plot_parser,
@@ -35,8 +32,8 @@ def _add_parser_to(subparsers, name: str, init_method):
   return parser
 
 def _init_parser():
-  main_parser = ArgumentParser()
-  subparsers = main_parser.add_subparsers(help='sub-command help')
+  result = ArgumentParser()
+  subparsers = result.add_subparsers(help='sub-command help')
 
   _add_parser_to(subparsers, "preprocess-ljs", init_preprocess_ljs_parser)
   _add_parser_to(subparsers, "preprocess-thchs", init_preprocess_thchs_parser)
@@ -71,7 +68,7 @@ def _init_parser():
   _add_parser_to(subparsers, "tacotron-eval-checkpoints", init_taco_eval_checkpoints_parser)
   _add_parser_to(subparsers, "tacotron-plot-embeddings", init_taco_plot_emb_parser)
 
-  return main_parser
+  return result
 
 def _process_args(args):
   params = vars(args)
@@ -80,8 +77,8 @@ def _process_args(args):
 
 if __name__ == "__main__":
   main_parser = _init_parser()
-  
-  args = main_parser.parse_args()
+
+  received_args = main_parser.parse_args()
   #args = main_parser.parse_args("ljs-text --base_dir=/datasets/models/taco2pt_v2 --mel_name=ljs --ds_name=test_ljs --convert_to_ipa".split())
 
-  _process_args(args)
+  _process_args(received_args)

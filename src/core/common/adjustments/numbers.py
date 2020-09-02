@@ -18,7 +18,6 @@ def _remove_commas(m):
 def _expand_decimal_point(m):
   return m.group(1).replace('.', ' point ')
 
-
 def _expand_dollars(m):
   match = m.group(1)
   parts = match.split('.')

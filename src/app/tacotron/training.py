@@ -1,6 +1,4 @@
 import os
-import matplotlib
-matplotlib.use('Agg')
 from typing import Optional
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
@@ -25,7 +23,7 @@ _symbols_json = "symbols.json"
 def load_symbol_converter(train_dir: str) -> SymbolIdDict:
   data_path = os.path.join(train_dir, _symbols_json)
   return SymbolIdDict.load_from_file(data_path)
-  
+
 def save_symbol_converter(train_dir: str, data: SymbolIdDict):
   data_path = os.path.join(train_dir, _symbols_json)
   data.save(data_path)
@@ -56,7 +54,7 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
   add_console_out_to_logger(get_checkpoints_eval_logger())
   add_file_out_to_logger(get_train_logger(), log_file)
   add_file_out_to_logger(get_checkpoints_eval_logger(), checkpoints_log_file)
-  
+
   if weights_train_name:
     weights_train_dir = get_train_dir(base_dir, weights_train_name, False)
     weights_checkpoint_path, _ = get_custom_or_last_checkpoint(get_checkpoints_dir(weights_train_dir), weights_checkpoint)
@@ -73,7 +71,7 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
     warm_start_model_path, _ = get_custom_or_last_checkpoint(get_checkpoints_dir(warm_start_train_dir), warm_start_checkpoint)
   else:
     warm_start_model_path = None
-    
+
   train_core(
     warm_start_model_path=warm_start_model_path,
     custom_hparams=hparams,
@@ -108,7 +106,7 @@ def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None
   continue_train_core(
     custom_hparams=hparams,
     logdir=logs_dir,
-    n_symbols=symbols_conv.get_symbols_count(),
+    n_symbols=len(symbols_conv),
     n_speakers=len(speakers),
     trainset=load_trainset(train_dir),
     valset=load_valset(train_dir),

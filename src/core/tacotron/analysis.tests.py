@@ -33,27 +33,27 @@ class UnitTests(unittest.TestCase):
     self.assertTrue(np.isnan(res[1][0][1]))
 
   def test_get_similarities_is_sorted(self):
-    symbols = SymbolIdDict.init_from_symbols({"a"})
+    symbols = SymbolIdDict.init_from_symbols({"a", "b", "c"})
     emb = np.zeros(shape=(3,3))
-    emb[symbols.get_id("_")] = [0.5, 1.0, 0]
-    emb[symbols.get_id("~")] = [1.0, 0.6, 0]
-    emb[symbols.get_id("a")] = [1.0, 0.5, 0]
+    emb[symbols.get_id("a")] = [0.5, 1.0, 0]
+    emb[symbols.get_id("b")] = [1.0, 0.6, 0]
+    emb[symbols.get_id("c")] = [1.0, 0.5, 0]
 
     sims = get_similarities(emb)
 
     self.assertEqual(3, len(sims))
-    self.assertEqual(symbols.get_id("~"), sims[symbols.get_id("_")][0][0])
-    self.assertEqual(symbols.get_id("a"), sims[symbols.get_id("_")][1][0])
-    self.assertEqual(symbols.get_id("~"), sims[symbols.get_id("a")][0][0])
-    self.assertEqual(symbols.get_id("_"), sims[symbols.get_id("a")][1][0])
-    self.assertEqual(symbols.get_id("a"), sims[symbols.get_id("~")][0][0])
-    self.assertEqual(symbols.get_id("_"), sims[symbols.get_id("~")][1][0])
+    self.assertEqual(symbols.get_id("b"), sims[symbols.get_id("a")][0][0])
+    self.assertEqual(symbols.get_id("c"), sims[symbols.get_id("a")][1][0])
+    self.assertEqual(symbols.get_id("b"), sims[symbols.get_id("c")][0][0])
+    self.assertEqual(symbols.get_id("a"), sims[symbols.get_id("c")][1][0])
+    self.assertEqual(symbols.get_id("c"), sims[symbols.get_id("b")][0][0])
+    self.assertEqual(symbols.get_id("a"), sims[symbols.get_id("b")][1][0])
 
   def test_sims_to_csv(self):
     emb = torch.ones(size=(2,3))
     torch.nn.init.zeros_(emb[0])
     sims = get_similarities(emb)
-    symbols = SymbolIdDict.init_from_symbols({})
+    symbols = SymbolIdDict.init_from_symbols({"_", "~"})
     res = sims_to_csv(sims, symbols)
     self.assertEqual(2, len(res.index))
     self.assertListEqual(['_', '<=>', '~', 'nan'], list(res.values[0]))
@@ -61,13 +61,13 @@ class UnitTests(unittest.TestCase):
 
   def test_emb_plot_2d(self):
     emb = torch.ones(size=(2,3))
-    symbols = ["_", "~"]
+    symbols = ["a", "b"]
     res = emb_plot_2d(emb, symbols)
     self.assertEqual("2D-Embeddings", res.layout.title.text)
 
   def test_emb_plot_3d(self):
     emb = torch.ones(size=(2,3))
-    symbols = ["_", "~"]
+    symbols = ["a", "b"]
     res = emb_plot_3d(emb, symbols)
     self.assertEqual("3D-Embeddings", res.layout.title.text)
 
@@ -77,8 +77,8 @@ class UnitTests(unittest.TestCase):
     text, plot2d, plot3d = plot_embeddings(symbols, emb, logging.getLogger())
 
     self.assertEqual(2, len(text.index))
-    self.assertListEqual(['_', '<=>', '~', '1.00'], list(text.values[0]))
-    self.assertListEqual(['~', '<=>', '_', '1.00'], list(text.values[1]))
+    self.assertListEqual(['a', '<=>', 'b', '1.00'], list(text.values[0]))
+    self.assertListEqual(['b', '<=>', 'a', '1.00'], list(text.values[1]))
     self.assertEqual("2D-Embeddings", plot2d.layout.title.text)
     self.assertEqual("3D-Embeddings", plot3d.layout.title.text)
 

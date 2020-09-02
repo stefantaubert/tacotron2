@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from src.core.common import create_parent_folder, download_tar
 from src.core.pre.parser.data import PreData, PreDataList
-from src.core.common import Language, extract_symbols
+from src.core.common import Language, text_to_symbols
 
 def download(dir_path: str):
   download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
@@ -48,11 +48,11 @@ def parse(dir_path: str) -> PreDataList:
     # occurs only in sentences with nr. 374, e.g. B22_374
     chn = chn.replace("= ", '')
     basename = os.path.basename(wav)[:-4]
-    speaker, nr = basename.split('_')
+    speaker, nr = basename.split("_")
     nr = int(nr)
     #res.append((nr, speaker, basename, wav, chn, sent_file))
 
-    symbols = extract_symbols(chn, Language.CHN)
+    symbols = text_to_symbols(chn, Language.CHN)
     accents = [speaker] * len(symbols)
     tmp = PreData(basename, speaker, chn, wav, symbols, accents, Language.CHN)
     res.append(tmp)

@@ -128,7 +128,8 @@ class UnitTests(unittest.TestCase):
     whole, conv, speakers_id_dict = preprocess(datasets, ds_speakers, speakers_as_accents=False)
 
     self.assertEqual(4, len(whole))
-    self.assertEqual(set({"_", "~", "a", "b", "c"}) ,set(conv.get_all_symbols()))
+    self.assertEqual(set({"a", "b", "c"}) ,set(conv.get_all_symbols()))
+    # TODO
     self.assertEqual("1,2,3", whole[0].serialized_updated_ids)
     self.assertEqual("1,2,3", whole[1].serialized_updated_ids)
     self.assertEqual("1,3,4", whole[2].serialized_updated_ids)
@@ -222,7 +223,7 @@ class UnitTests(unittest.TestCase):
 
     res, conv = merge_prepared_data(prep_list)
 
-    self.assertEqual(6, conv.get_symbols_count())
+    self.assertEqual(6, len(conv))
     self.assertEqual("_", conv.get_symbol(0))
     self.assertEqual("~", conv.get_symbol(1))
     self.assertEqual("a", conv.get_symbol(2))

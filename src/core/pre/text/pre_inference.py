@@ -1,8 +1,6 @@
 from typing import List, Optional, Set
-from src.core.common import Language, load_csv, save_csv, extract_from_sentence, chn_to_ipa, split_chn_text, split_ipa_text, extract_symbols, split_sentences
+from src.core.common import Language, load_csv, save_csv, convert_to_ipa, text_to_symbols, split_sentences, normalize, get_unique_items
 from dataclasses import dataclass
-import epitran
-from src.core.pre.text.pre import normalize_text
 from src.core.common import SymbolIdDict, SymbolsMap, create_symbols_map
 
 @dataclass()
@@ -24,10 +22,7 @@ class SentenceList(List[Sentence]):
     return cls(data)
 
   def get_occuring_symbols(self) -> Set[str]:
-    result = set()
-    for s in self:
-      result = result.union(set(extract_symbols(s.text, s.lang)))
-    return result
+    return get_unique_items([text_to_symbols(x.text, x.lang) for x in self])
 
 @dataclass()
 class AccentedSymbol:
@@ -49,7 +44,7 @@ def add_text(text: str, lang: Language, known_symbols: SymbolIdDict, accent_id: 
   res = SentenceList()
   sents = split_sentences(text, lang)
   for i, sent in enumerate(sents):
-    symbols = extract_symbols(sent, lang)
+    symbols = text_to_symbols(sent, lang)
     symbol_ids = known_symbols.get_ids(symbols)
     #symbol_ids = known_symbols.symbols_to_ids(symbols, subset_id_if_multiple=accent_id, add_eos=False, replace_unknown_with_pad=True)
     infer_serialized_symbol_ids = SymbolIdDict.serialize_symbol_ids(symbol_ids)
@@ -60,39 +55,28 @@ def add_text(text: str, lang: Language, known_symbols: SymbolIdDict, accent_id: 
 
 def sents_normalize(sentences: SentenceList) -> SentenceList:
   for s in sentences:
-    if s.lang == Language.ENG:
-      s.text = normalize_text(s.text)
-    else:
-      continue
+    s.text = normalize(s.text, s.lang)
   return sentences
 
 def sents_convert_to_ipa(sentences: SentenceList, ignore_tones: bool, ignore_arcs: bool, replace_unknown_by: str) -> SentenceList:
-  epi_en = epitran.Epitran('eng-Latn')
-  epi_de = epitran.Epitran('deu-Latn')
-  
+
   for s in sentences:
-    if s.lang == Language.ENG:
-      s.text = epi_en.transliterate(s.text)
-    elif s.lang == Language.GER:
-      s.text = epi_de.transliterate(s.text)
-    elif s.lang == Language.CHN:
-      s.text = chn_to_ipa(s.text)
-    elif s.lang == Language.IPA:
-      pass
-    symbols = extract_from_sentence(s.text, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs, replace_unknown_ipa_by=replace_unknown_by)
+    s.text = convert_to_ipa(s.text, s.lang)
+    s.lang = Language.IPA
+
+    symbols = text_to_symbols(s.text, s.lang, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs, replace_unknown_ipa_by=replace_unknown_by)
     # Maybe add info if something was unknown
     # Theoretically arcs could be out but in rereading the text with extract_from_sentence they would be automatically included as far as i know through ipapy
-    s.text = SymbolIdDict.get_text(symbols)
-    s.lang = Language.IPA
+    s.text = SymbolIdDict.symbols_to_str(symbols)
   return sentences
 
 def sents_map(sentences: SentenceList, symbols_map: SymbolsMap) -> SentenceList:
   result = SentenceList()
   counter = 0
   for s in sentences:
-    symbols = extract_symbols(s.text, s.lang)
+    symbols = text_to_symbols(s.text, s.lang)
     mapped_symbols = symbols_map.apply_to_symbols(symbols)
-    text = SymbolIdDict.get_text(mapped_symbols)
+    text = SymbolIdDict.symbols_to_str(mapped_symbols)
     # a resulting empty text would make no problems
     sents = split_sentences(text, s.lang)
     for new_sent_text in sents:
