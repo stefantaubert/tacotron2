@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from src.core.common import GenericList
 from typing import List
 from src.core.common import Language
 
@@ -13,7 +14,7 @@ class PreData:
   accents: List[str]
   lang: Language
 
-class PreDataList(List[PreData]):
+class PreDataList(GenericList[PreData]):
   pass
 
 if __name__ == "__main__":

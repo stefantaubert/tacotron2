@@ -33,14 +33,14 @@ def save_infer_orig_wav(infer_dir: str, wav_path_orig: str):
 def infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
-  
+
   init_logger(get_infer_logger())
   input_name = get_basename(wav_path)
   checkpoint_path, iteration = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
   infer_dir = get_infer_dir(train_dir, input_name, iteration)
   add_console_out_to_logger(get_infer_logger())
   add_file_out_to_logger(get_infer_logger(), get_infer_log(infer_dir))
-  
+
   wav, wav_mel, orig_mel = infer_core(
     wav_path=wav_path,
     custom_hparams=custom_checkpoint,
@@ -61,7 +61,7 @@ def infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: int 
 
 if __name__ == "__main__":
   infer(
-    base_dir="/datasets/models/taco2pt_v4",
+    base_dir="/datasets/models/taco2pt_v5",
     train_name="debug",
     wav_path="/datasets/LJSpeech-1.1-lite/wavs/LJ003-0347.wav"
   )

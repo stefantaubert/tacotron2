@@ -2,9 +2,9 @@ import os
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
 from src.app.io import (get_checkpoints_dir, load_speakers_json,
-                     get_val_dir, get_val_log, load_valset, load_testset,
-                     save_val_comparison, save_val_orig_plot,
-                     save_val_orig_wav, save_val_plot, save_val_wav)
+                        get_val_dir, get_val_log, load_valset, load_testset,
+                        save_val_comparison, save_val_orig_plot,
+                        save_val_orig_wav, save_val_plot, save_val_wav)
 from src.app.waveglow.io import get_train_dir, save_diff_plot, save_v
 from src.core.common import get_custom_or_last_checkpoint
 from src.core.waveglow import get_infer_logger
@@ -38,7 +38,8 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
   else:
     entry = data.get_random_entry()
 
-  checkpoint_path, iteration = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
+  checkpoint_path, iteration = get_custom_or_last_checkpoint(
+    get_checkpoints_dir(train_dir), custom_checkpoint)
   val_dir = get_val_dir(train_dir, entry, iteration)
   add_file_out_to_logger(logger, get_val_log(val_dir))
 
@@ -60,14 +61,15 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
   logger.info(f"Imagescore: {score*100}%")
   logger.info(f"Saved output to: {val_dir}")
 
+
 if __name__ == "__main__":
   validate(
-    base_dir="/datasets/models/taco2pt_v4",
+    base_dir="/datasets/models/taco2pt_v5",
     train_name="debug",
   )
 
   validate(
-    base_dir="/datasets/models/taco2pt_v4",
+    base_dir="/datasets/models/taco2pt_v5",
     train_name="debug",
     entry_id=31
   )

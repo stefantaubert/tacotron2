@@ -7,7 +7,8 @@ import numpy as np
 from tqdm import tqdm
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
-from src.app.io import (get_checkpoints_dir, get_infer_log, save_infer_plot, load_speakers_json, save_infer_wav, get_inference_root_dir)
+from src.app.io import (get_checkpoints_dir, get_infer_log, save_infer_plot,
+                        load_speakers_json, save_infer_wav, get_inference_root_dir)
 from src.app.pre import (load_filelist, load_filelist_speakers_json,
                          load_filelist_symbol_converter)
 from src.app.tacotron.io import get_train_dir
@@ -26,31 +27,38 @@ def get_infer_dir(train_dir: str, input_name: str, iteration: int, speaker_id: i
   subdir_name = f"{datetime.datetime.now():%Y-%m-%d,%H-%M-%S},text={input_name},speaker={speaker_id},it={iteration}"
   return get_subdir(get_inference_root_dir(train_dir), subdir_name, create=True)
 
+
 def load_infer_text(file_name: str) -> List[str]:
   with open(file_name, "r") as f:
     return f.readlines()
 
+
 def load_infer_symbols_map(symbols_map: str) -> List[str]:
   return parse_json(symbols_map)
+
 
 def save_infer_sentence_plot(infer_dir: str, sentence_nr: int, mel: np.ndarray):
   plot_melspec(mel, title="{}: {}".format(get_parent_dirname(infer_dir), sentence_nr))
   path = os.path.join(infer_dir, f"{sentence_nr}.png")
   plt.savefig(path, bbox_inches='tight')
 
+
 def save_infer_pre_postnet_sentence_plot(infer_dir: str, sentence_nr: int, mel: np.ndarray):
   plot_melspec(mel, title="{}: Pre-Postnet {}".format(get_parent_dirname(infer_dir), sentence_nr))
   path = os.path.join(infer_dir, f"{sentence_nr}_pre_post.png")
   plt.savefig(path, bbox_inches='tight')
+
 
 def save_infer_alignments_sentence_plot(infer_dir: str, sentence_nr: int, mel: np.ndarray):
   plot_melspec(mel, title="{}: Alignments {}".format(get_parent_dirname(infer_dir), sentence_nr))
   path = os.path.join(infer_dir, f"{sentence_nr}_alignments.png")
   plt.savefig(path, bbox_inches='tight')
 
+
 def save_infer_wav_sentence(infer_dir: str, sentence_nr: int, sampling_rate: int, sent_wav: np.ndarray):
   path = os.path.join(infer_dir, f"{sentence_nr}.wav")
   float_to_wav(sent_wav, path, normalize=True, sample_rate=sampling_rate)
+
 
 def save_infer_v_pre_post(infer_dir: str, sentence_ids: List[int]):
   paths = []
@@ -59,12 +67,14 @@ def save_infer_v_pre_post(infer_dir: str, sentence_ids: List[int]):
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}_v_pre_post.png")
   stack_images_vertically(paths, path)
 
+
 def save_infer_v_alignments(infer_dir: str, sentence_ids: List[int]):
   paths = []
   for x in sentence_ids:
     paths.append(os.path.join(infer_dir, f"{x}_alignments.png"))
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}_v_alignments.png")
   stack_images_vertically(paths, path)
+
 
 def save_infer_v_plot(infer_dir: str, sentence_ids: List[int]):
   paths = []
@@ -73,12 +83,14 @@ def save_infer_v_plot(infer_dir: str, sentence_ids: List[int]):
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}_v.png")
   stack_images_vertically(paths, path)
 
+
 def save_infer_h_plot(infer_dir: str, sentence_ids: List[int]):
   paths = []
   for x in sentence_ids:
     paths.append(os.path.join(infer_dir, f"{x}.png"))
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}_h.png")
   stack_images_horizontally(paths, path)
+
 
 def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker: str, waveglow: str = "pretrained", ignore_tones: bool = False, ignore_arcs: bool = True, symbols_map: Optional[str] = None, hparams: Optional[str] = None, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = 0.5, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050, analysis: bool = True, ipa: bool = True):
   train_dir = get_train_dir(base_dir, train_name, create=False)
@@ -89,7 +101,8 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
   add_console_out_to_logger(logger)
 
   input_name = get_basename(text)
-  checkpoint_path, iteration = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
+  checkpoint_path, iteration = get_custom_or_last_checkpoint(
+    get_checkpoints_dir(train_dir), custom_checkpoint)
 
   speakers = load_speakers_json(train_dir)
   speaker_id = speakers[ds_speaker]
@@ -143,7 +156,7 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
 
 if __name__ == "__main__":
   infer(
-    base_dir="/datasets/models/taco2pt_v4",
+    base_dir="/datasets/models/taco2pt_v5",
     train_name="ljs_ipa_scratch",
     text="examples/ipa/north_sven_orig.txt",
     lang=Language.IPA,

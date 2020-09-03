@@ -4,6 +4,7 @@ import time
 
 from src.core.common.text import *
 
+
 class UnitTests(unittest.TestCase):
 
   def test_normalize_en(self):
@@ -126,6 +127,7 @@ class UnitTests(unittest.TestCase):
   #   res = chn_to_ipa(inp)
 
   #   self.assertEqual('aɪ˥˩nɤ？', res)
+
 
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)

@@ -35,7 +35,7 @@ def plot_embeddings(base_dir: str, train_name: str, custom_checkpoint: Optional[
   analysis_dir = get_analysis_root_dir(train_dir)
   init_logger(get_train_logger())
   add_console_out_to_logger(get_train_logger())
-  
+
   checkpoint_path, checkpoint_it = get_custom_or_last_checkpoint(get_checkpoints_dir(train_dir), custom_checkpoint)
 
   text, fig_2d, fig_3d = plot_embeddings_core(
@@ -51,6 +51,6 @@ def plot_embeddings(base_dir: str, train_name: str, custom_checkpoint: Optional[
 
 if __name__ == "__main__":
   plot_embeddings(
-    base_dir="/datasets/models/taco2pt_v4",
+    base_dir="/datasets/models/taco2pt_v5",
     train_name="debug"
   )

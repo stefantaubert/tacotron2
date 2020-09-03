@@ -12,7 +12,6 @@ from src.core.pre import WavData
 from src.core.pre import remove_silence_plot as remove_silence_plot_core
 
 
-
 def _save_orig_plot_if_not_exists(dest_dir: str, mel):
   path = os.path.join(dest_dir, "original.png")
   if not os.path.isfile(path):
@@ -87,7 +86,7 @@ def remove_silence_plot(base_dir: str, ds_name: str, wav_name: str, chunk_size: 
 
 if __name__ == "__main__":
   remove_silence_plot(
-    base_dir="/datasets/models/taco2pt_v4",
+    base_dir="/datasets/models/taco2pt_v5",
     ds_name="thchs",
     wav_name="16000kHz_normalized",
     threshold_start=-20,

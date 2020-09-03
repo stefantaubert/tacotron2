@@ -4,7 +4,8 @@ import tarfile
 from collections import Counter
 from dataclasses import astuple
 from pathlib import Path
-from typing import List, Set, Tuple, TypeVar
+from typing import List, Set, Tuple, Type, TypeVar, Generic, Union
+import random
 
 import numpy as np
 import pandas as pd
@@ -15,11 +16,52 @@ from scipy.spatial.distance import cosine
 
 T = TypeVar('T')
 
-_csv_separator = '\t'
+CSV_SEPERATOR = '\t'
 
 
-def get_sorted_set(s: Set[T]) -> List[T]:
-  res: List[str] = list(sorted(list(s)))
+class GenericList(list, Generic[T]):
+  def save(self, file_path: str):
+    data = [astuple(xi) for xi in self.items()]
+    dataframe = pd.DataFrame(data)
+    save_df(dataframe, file_path)
+
+  @classmethod
+  def load(cls, member_class: Type[T], file_path: str):
+    data = load_df(file_path)
+    data_loaded: List[T] = [member_class(*xi) for xi in data.values]
+    return cls(data_loaded)
+
+  def items(self) -> List[T]:
+    return self
+
+  def get_random_entry(self) -> T:
+    idx = random.choice(range(len(self)))
+    return self[idx]
+
+
+def load_df(path: str) -> pd.DataFrame:
+  data = pd.read_csv(path, header=None, sep=CSV_SEPERATOR)
+  return data
+
+
+def save_df(dataframe: pd.DataFrame, path: str):
+  dataframe.to_csv(path, header=None, index=None, sep=CSV_SEPERATOR)
+
+
+# def save_csv(data: list, path: str):
+#   data = [astuple(xi) for xi in data]
+#   df = pd.DataFrame(data)
+#   save_df(df, path)
+
+
+# def load_csv(path: str, dc_type) -> list:
+#   data = pd.read_csv(path, header=None, sep=CSV_SEPERATOR)
+#   data_loaded = [dc_type(*xi) for xi in data.values]
+#   return data_loaded
+
+
+def get_sorted_set(unsorted_set: Set[T]) -> List[T]:
+  res: List[T] = list(sorted(list(unsorted_set)))
   return res
 
 
@@ -28,6 +70,7 @@ def remove_duplicates_list_orderpreserving(l: List[str]) -> List[str]:
   for x in l:
     if x not in result:
       result.append(x)
+  assert len(result) == len(set(result))
   return result
 
 
@@ -39,10 +82,10 @@ def get_counter(l: List[List[T]]) -> Counter:
   return symbol_counter
 
 
-def get_unique_items(l: List[List[T]]) -> Set[T]:
+def get_unique_items(of_list: List[Union[List[T], Set[T]]]) -> Set[T]:
   items: Set[T] = set()
-  for x in l:
-    items = items.union(set(x))
+  for sub_entries in of_list:
+    items = items.union(set(sub_entries))
   return items
 
 
@@ -76,9 +119,9 @@ def make_same_dim(a: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, np.ndarray]
   return a, b
 
 
-def get_basename(filepath: str):
-  bn, _ = os.path.splitext(os.path.basename(filepath))
-  return bn
+def get_basename(filepath: str) -> str:
+  basename, _ = os.path.splitext(os.path.basename(filepath))
+  return basename
 
 
 def get_parent_dirname(filepath: str):
@@ -137,22 +180,6 @@ def stack_images_horizontally(list_im: List[str], out_path: str):
     new_im.paste(im, (x_offset, 0))
     x_offset += im.size[0]
   new_im.save(out_path)
-
-
-def save_df(df: pd.DataFrame, path: str):
-  df.to_csv(path, header=None, index=None, sep=_csv_separator)
-
-
-def save_csv(data: list, path: str):
-  data = [astuple(xi) for xi in data]
-  df = pd.DataFrame(data)
-  save_df(df, path)
-
-
-def load_csv(path: str, dc_type) -> list:
-  data = pd.read_csv(path, header=None, sep=_csv_separator)
-  data_loaded = [dc_type(*xi) for xi in data.values]
-  return data_loaded
 
 
 def create_parent_folder(file: str):

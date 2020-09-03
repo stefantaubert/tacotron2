@@ -40,7 +40,7 @@ def save_trainset(train_dir: str, dataset: PreparedDataList):
 
 def load_trainset(train_dir: str) -> PreparedDataList:
   path = os.path.join(train_dir, _train_csv)
-  return PreparedDataList.load(path)
+  return PreparedDataList.load(PreparedData, path)
 
 def save_testset(train_dir: str, dataset: PreparedDataList):
   path = os.path.join(train_dir, _test_csv)
@@ -48,20 +48,20 @@ def save_testset(train_dir: str, dataset: PreparedDataList):
 
 def load_testset(train_dir: str) -> PreparedDataList:
   path = os.path.join(train_dir, _test_csv)
-  return PreparedDataList.load(path)
-  
+  return PreparedDataList.load(PreparedData, path)
+
 def save_valset(train_dir: str, dataset: PreparedDataList):
   path = os.path.join(train_dir, _val_csv)
   dataset.save(path)
 
 def load_valset(train_dir: str) -> PreparedDataList:
   path = os.path.join(train_dir, _val_csv)
-  return PreparedDataList.load(path)
-  
+  return PreparedDataList.load(PreparedData, path)
+
 def load_speakers_json(train_dir: str) -> SpeakersDict:
   speakers_path = os.path.join(train_dir, _speakers_json)
   return SpeakersDict.load(speakers_path)
-  
+
 def save_speakers_json(train_dir: str, speakers: SpeakersDict):
   speakers_path = os.path.join(train_dir, _speakers_json)
   speakers.save(speakers_path)
@@ -85,7 +85,7 @@ def save_infer_plot(infer_dir: str, mel: np.ndarray):
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}.png")
   plt.savefig(path, bbox_inches='tight')
   return path
-  
+
 #endregion
 
 #region Validation

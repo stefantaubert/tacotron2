@@ -1,5 +1,6 @@
 from math import sqrt
 from logging import Logger, getLogger
+from src.core.common.audio import int16_max_wav
 
 import torch
 from torch import nn
@@ -494,6 +495,24 @@ class Decoder(nn.Module):
     return self.parse_decoder_outputs(mel_outputs, gate_outputs, alignments)
 
 
+def get_model_symbols_count(n_symbols: int, n_accents: int, accents_use_own_symbols: bool) -> int16_max_wav:
+  if accents_use_own_symbols:
+    return n_symbols * n_accents
+  return n_symbols
+
+
+def get_model_symbol_id(symbol_id: int, accent_id: int, n_symbols: int, accents_use_own_symbols: bool) -> int:
+  if accents_use_own_symbols:
+    return n_symbols * accent_id + symbol_id
+  return symbol_id
+
+
+def get_symbol_id(model_symbol_id: int, n_symbols: int, accents_use_own_symbols: bool) -> int:
+  if accents_use_own_symbols:
+    return model_symbol_id % n_symbols
+  return model_symbol_id
+
+
 class Tacotron2(nn.Module):
   def __init__(self, hparams, logger: Logger = getLogger()):
     super(Tacotron2, self).__init__()
@@ -501,20 +520,25 @@ class Tacotron2(nn.Module):
     self.mask_padding = hparams.mask_padding
     self.n_mel_channels = hparams.n_mel_channels
     # TODO rename to symbol_embeddings but it will destroy all previous trained models
-    self.embedding = nn.Embedding(hparams.n_symbols, hparams.symbols_embedding_dim)
-    std = sqrt(2.0 / (hparams.n_symbols + hparams.symbols_embedding_dim))
+    model_n_symbols = get_model_symbols_count(hparams.n_symbols, hparams.n_accents, hparams.accents_use_own_symbols)
+    self.embedding = nn.Embedding(model_n_symbols, hparams.symbols_embedding_dim)
+    std = sqrt(2.0 / (model_n_symbols + hparams.symbols_embedding_dim))
     val = sqrt(3.0) * std  # uniform bounds for std
     self.embedding.weight.data.uniform_(-val, val)
 
     self.speakers_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
     torch.nn.init.xavier_uniform_(self.speakers_embedding.weight)
 
+    # TODO: insert accent embedding here
+
     self.encoder = Encoder(hparams)
     self.decoder = Decoder(hparams, logger)
     self.postnet = Postnet(hparams)
 
-  def parse_batch(self, batch):
+  @staticmethod
+  def parse_batch(batch: Tuple[torch.LongTensor, torch.LongTensor, torch.FloatTensor, torch.FloatTensor, torch.LongTensor, torch.Tensor]):
     text_padded, input_lengths, mel_padded, gate_padded, output_lengths, speaker_ids = batch
+    # TODO: insert accent handling here
     text_padded = to_gpu(text_padded).long()
     input_lengths = to_gpu(input_lengths).long()
     max_len = torch.max(input_lengths.data).item()
@@ -557,7 +581,7 @@ class Tacotron2(nn.Module):
     # From [20, 1, 16] to [20, 133, 16]
     # copies the values from one speaker to all max_len dimension arrays
     embedded_speakers = embedded_speakers.expand(-1, max_len, -1)
-    
+
     outputs = []
     # [20, 133, 512]
     outputs.append(encoder_outputs)
@@ -586,7 +610,7 @@ class Tacotron2(nn.Module):
     speaker_id = speaker_id.unsqueeze(1)
     embedded_speaker = self.speakers_embedding(input=speaker_id)
     embedded_speaker = embedded_speaker.expand(-1, encoder_outputs.shape[1], -1)
-    
+
     outputs = []
     outputs.append(encoder_outputs)
     outputs.append(embedded_speaker)

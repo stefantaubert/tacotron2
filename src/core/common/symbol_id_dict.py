@@ -79,7 +79,11 @@ class SymbolIdDict():
     ids = self.get_ids(symbols)
     return SymbolIdDict.serialize_symbol_ids(ids)
 
-  def get_symbols(self, symbol_ids: List[int]) -> List[str]:
+  def get_symbols(self, symbol_ids: Union[str, List[int]]) -> List[str]:
+    if isinstance(symbol_ids, str):
+      symbol_ids = deserialize_list(symbol_ids)
+    elif not isinstance(symbol_ids, list):
+      assert False
     symbols = [self.get_symbol(s_id) for s_id in symbol_ids]
     return symbols
 
@@ -88,10 +92,6 @@ class SymbolIdDict():
   #   return self.get_text(symbol_ids)
 
   def get_text(self, symbol_ids: Union[str, List[int]]) -> str:
-    if isinstance(symbol_ids, str):
-      symbol_ids = deserialize_list(symbol_ids)
-    elif not isinstance(symbol_ids, list):
-      assert False
     symbols = self.get_symbols(symbol_ids)
     return SymbolIdDict.symbols_to_str(symbols)
 

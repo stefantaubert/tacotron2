@@ -1,5 +1,6 @@
+from src.core.common import GenericList
 from typing import List, Optional, Set
-from src.core.common import Language, load_csv, save_csv, convert_to_ipa, text_to_symbols, split_sentences, normalize, get_unique_items
+from src.core.common import Language, convert_to_ipa, text_to_symbols, split_sentences, normalize, get_unique_items
 from dataclasses import dataclass
 from src.core.common import SymbolIdDict, SymbolsMap, create_symbols_map
 
@@ -12,17 +13,10 @@ class Sentence:
   infer_text: str
   infer_serialized_symbols: str
 
-class SentenceList(List[Sentence]):
-  def save(self, file_path: str):
-    save_csv(self, file_path)
-
-  @classmethod
-  def load(cls, file_path: str):
-    data = load_csv(file_path, Sentence)
-    return cls(data)
-
+class SentenceList(GenericList[Sentence]):
   def get_occuring_symbols(self) -> Set[str]:
-    return get_unique_items([text_to_symbols(x.text, x.lang) for x in self])
+    return get_unique_items([text_to_symbols(x.text, x.lang) for x in self.items()])
+
 
 @dataclass()
 class AccentedSymbol:
@@ -30,15 +24,8 @@ class AccentedSymbol:
   symbol: str
   accent_id: int
 
-class AccentedSymbolList(List[AccentedSymbol]):
-  def save(self, file_path: str):
-    save_csv(self, file_path)
-
-  @classmethod
-  def load(cls, file_path: str):
-    data = load_csv(file_path, AccentedSymbol)
-    return cls(data)
-
+class AccentedSymbolList(GenericList[AccentedSymbol]):
+  pass
 
 def add_text(text: str, lang: Language, known_symbols: SymbolIdDict, accent_id: int = 0) -> SentenceList:
   res = SentenceList()

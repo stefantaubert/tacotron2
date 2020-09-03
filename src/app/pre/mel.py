@@ -1,4 +1,5 @@
 import os
+from src.core.pre import MelData
 
 from src.app.pre.ds import get_ds_dir
 from src.app.pre.wav import get_wav_dir, load_wav_csv
@@ -15,13 +16,14 @@ def get_mel_dir(ds_dir: str, mel_name: str, create: bool = False):
 
 def load_mel_csv(mel_dir: str) -> MelDataList:
   path = os.path.join(mel_dir, _mel_data_csv)
-  return MelDataList.load(path)
-  
+  return MelDataList.load(MelData, path)
+
 def save_mel_csv(mel_dir: str, mel_data: MelDataList):
   path = os.path.join(mel_dir, _mel_data_csv)
   mel_data.save(path)
 
 def preprocess_mels(base_dir: str, ds_name: str, wav_name: str, custom_hparams: str):
+  print("Preprocessing mels...")
   ds_dir = get_ds_dir(base_dir, ds_name)
   mel_dir = get_mel_dir(ds_dir, wav_name)
   if os.path.isdir(mel_dir):
@@ -35,16 +37,16 @@ def preprocess_mels(base_dir: str, ds_name: str, wav_name: str, custom_hparams: 
     save_mel_csv(mel_dir, mel_data)
 
 if __name__ == "__main__":
-  
+
   preprocess_mels(
-    base_dir="/datasets/models/taco2pt_v4",
+    base_dir="/datasets/models/taco2pt_v5",
     ds_name="thchs",
     wav_name="22050kHz_normalized_nosil",
     custom_hparams="",
   )
 
   preprocess_mels(
-    base_dir="/datasets/models/taco2pt_v4",
+    base_dir="/datasets/models/taco2pt_v5",
     ds_name="ljs",
     wav_name="22050kHz",
     custom_hparams="",

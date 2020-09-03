@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def create_hparams(n_speakers: int, n_symbols: int, hparams_string=None, verbose=False):
+def create_hparams(n_speakers: int, n_symbols: int, n_accents: int, hparams_string=None, verbose=False):
   """Create model hyperparameters. Parse nondefault from given string."""
 
   hparams = tf.contrib.training.HParams(
@@ -33,7 +33,7 @@ def create_hparams(n_speakers: int, n_symbols: int, hparams_string=None, verbose
     ################################
     n_mel_channels=80,
     sampling_rate=22050,
-    ## only in mel calculation
+    ## next 5 occure in mel calculation only
     filter_length=1024,
     hop_length=256,
     win_length=1024,
@@ -47,6 +47,9 @@ def create_hparams(n_speakers: int, n_symbols: int, hparams_string=None, verbose
     symbols_embedding_dim=512,
     n_speakers=n_speakers,
     speakers_embedding_dim=16,
+    n_accents=n_accents,
+    accents_embedding_dim=16,
+    accents_use_own_symbols=False,
 
     # Encoder parameters
     encoder_kernel_size=5,
@@ -89,7 +92,7 @@ def create_hparams(n_speakers: int, n_symbols: int, hparams_string=None, verbose
   if hparams_string:
     tf.logging.info('Parsing command line hparams: %s', hparams_string)
     hparams.parse(hparams_string)
-  
+
   if verbose:
     tf.logging.info('Final parsed hparams: %s', hparams.values())
 

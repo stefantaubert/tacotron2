@@ -1,5 +1,6 @@
 import os
 from functools import partial
+from src.core.pre import TextData
 
 from src.app.pre.ds import get_ds_dir, load_ds_csv, load_symbols_json
 from src.core.common import SymbolIdDict, SymbolsDict, get_subdir
@@ -43,7 +44,7 @@ def save_text_symbols_json(text_dir: str, data: SymbolsDict):
 
 def load_text_csv(text_dir: str) -> TextDataList:
   path = os.path.join(text_dir, _text_data_csv)
-  return TextDataList.load(path)
+  return TextDataList.load(TextData, path)
 
 
 def save_text_csv(text_dir: str, data: TextDataList):
@@ -52,6 +53,7 @@ def save_text_csv(text_dir: str, data: TextDataList):
 
 
 def preprocess_text(base_dir: str, ds_name: str, text_name: str):
+  print("Preprocessing text...")
   ds_dir = get_ds_dir(base_dir, ds_name)
   text_dir = get_text_dir(ds_dir, text_name)
   if os.path.isdir(text_dir):
@@ -86,11 +88,13 @@ def _text_op(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: s
 
 
 def text_normalize(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: str):
+  print("Normalizing text...")
   operation = partial(text_normalize_core)
   _text_op(base_dir, ds_name, orig_text_name, dest_text_name, operation)
 
 
 def text_convert_to_ipa(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: str, ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str):
+  print("Converting text to IPA...")
   operation = partial(text_convert_to_ipa_core, ignore_tones=ignore_tones,
                       ignore_arcs=ignore_arcs, replace_unknown_ipa_by=replace_unknown_ipa_by)
   _text_op(base_dir, ds_name, orig_text_name, dest_text_name, operation)
@@ -98,40 +102,40 @@ def text_convert_to_ipa(base_dir: str, ds_name: str, orig_text_name: str, dest_t
 
 if __name__ == "__main__":
   preprocess_text(
-      base_dir="/datasets/models/taco2pt_v5",
-      ds_name="ljs",
-      text_name="en",
+    base_dir="/datasets/models/taco2pt_v5",
+    ds_name="ljs",
+    text_name="en",
   )
 
   text_normalize(
-      base_dir="/datasets/models/taco2pt_v5",
-      ds_name="ljs",
-      orig_text_name="en",
-      dest_text_name="en_norm",
+    base_dir="/datasets/models/taco2pt_v5",
+    ds_name="ljs",
+    orig_text_name="en",
+    dest_text_name="en_norm",
   )
 
   text_convert_to_ipa(
-      base_dir="/datasets/models/taco2pt_v5",
-      ds_name="ljs",
-      orig_text_name="en_norm",
-      dest_text_name="ipa_norm",
-      ignore_tones=True,
-      ignore_arcs=True,
-      replace_unknown_ipa_by="_"
+    base_dir="/datasets/models/taco2pt_v5",
+    ds_name="ljs",
+    orig_text_name="en_norm",
+    dest_text_name="ipa_norm",
+    ignore_tones=True,
+    ignore_arcs=True,
+    replace_unknown_ipa_by="_"
   )
 
   preprocess_text(
-      base_dir="/datasets/models/taco2pt_v5",
-      ds_name="thchs",
-      text_name="chn",
+    base_dir="/datasets/models/taco2pt_v5",
+    ds_name="thchs",
+    text_name="chn",
   )
 
   text_convert_to_ipa(
-      base_dir="/datasets/models/taco2pt_v5",
-      ds_name="thchs",
-      orig_text_name="chn",
-      dest_text_name="ipa",
-      ignore_tones=False,
-      ignore_arcs=True,
-      replace_unknown_ipa_by="_"
+    base_dir="/datasets/models/taco2pt_v5",
+    ds_name="thchs",
+    orig_text_name="chn",
+    dest_text_name="ipa",
+    ignore_tones=False,
+    ignore_arcs=True,
+    replace_unknown_ipa_by="_"
   )

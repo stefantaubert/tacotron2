@@ -1,17 +1,18 @@
 from collections import OrderedDict
-from typing import OrderedDict as OrderedDictType, Tuple, List, Set, Optional
+from typing import List
+from typing import OrderedDict as OrderedDictType, Tuple, List, Set, Optional, Union
 from src.core.common.utils import parse_json, save_json
-from src.core.common.text import get_entries_ids_dict, serialize_list
+from src.core.common.text import get_entries_ids_dict, serialize_list, deserialize_list
 
 
 class AccentsDict():
   def __init__(self, ids_to_accents: OrderedDictType[int, str]):
     super().__init__()
     self._ids_to_accents = ids_to_accents
-  
+
   def save(self, file_path: str):
     save_json(file_path, self._ids_to_accents)
-  
+
   def get_id(self, accent: str) -> int:
     assert accent in self._ids_to_accents.keys()
     return self._ids_to_accents[accent]
@@ -23,9 +24,20 @@ class AccentsDict():
         return accent
     assert False
 
+  def get_all_accents(self) -> Set[str]:
+    return set(self._ids_to_accents.keys())
+
   def get_ids(self, accents: List[str]) -> List[int]:
     ids = [self.get_id(accent) for accent in accents]
     return ids
+
+  def get_accents(self, accent_ids: Union[str, List[int]]) -> List[str]:
+    if isinstance(accent_ids, str):
+      accent_ids = deserialize_list(accent_ids)
+    elif not isinstance(accent_ids, list):
+      assert False
+    accents = [self.get_accent(accent_id) for accent_id in accent_ids]
+    return accents
 
   def get_serialized_ids(self, accents: List[str]) -> str:
     ids = self.get_ids(accents)
@@ -35,7 +47,7 @@ class AccentsDict():
   def load(cls, file_path: str):
     data = parse_json(file_path)
     return cls(data)
- 
+
   @classmethod
   def init_from_accents(cls, accents: Set[str]):
     ids_to_accents = get_entries_ids_dict(accents)

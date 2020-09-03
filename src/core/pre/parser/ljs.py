@@ -8,6 +8,7 @@ from tqdm import tqdm
 from src.core.common import Language, text_to_symbols
 from src.core.pre.parser.data import PreDataList, PreData
 
+
 def download(dir_path: str):
   print("LJSpeech is not downloaded yet.")
   print("Starting download...")
@@ -17,7 +18,7 @@ def download(dir_path: str):
   downloaded_file = os.path.join(dir_path, dest)
   print("\nFinished download to {}".format(downloaded_file))
   print("Unpacking...")
-  tar = tarfile.open(downloaded_file, "r:bz2")  
+  tar = tarfile.open(downloaded_file, "r:bz2")
   tar.extractall(dir_path)
   tar.close()
   print("Done.")
@@ -30,6 +31,7 @@ def download(dir_path: str):
   print("Done.")
   os.remove(downloaded_file)
   os.rmdir(ljs_data_dir)
+
 
 def parse(path: str) -> PreDataList:
   if not os.path.exists(path):
@@ -51,34 +53,44 @@ def parse(path: str) -> PreDataList:
   result = PreDataList()
   speaker_name = '1'
   accent_name = "north_america"
+  lang = Language.ENG
 
   with open(metadata_filepath, encoding='utf-8') as f:
     lines = f.readlines()
-
   print("Parsing files...")
   for line in tqdm(lines):
     parts = line.strip().split('|')
     basename = parts[0]
     # parts[1] contains years, in parts[2] the years are written out
     # ex. ['LJ001-0045', '1469, 1470;', 'fourteen sixty-nine, fourteen seventy;']
-    wav_path = os.path.join(wav_dirpath, '{}.wav'.format(basename))
+    wav_path = os.path.join(wav_dirpath, f'{basename}.wav')
     text = parts[2]
-    symbols = text_to_symbols(text, Language.ENG)
+    symbols = text_to_symbols(text, lang)
     accents = [accent_name] * len(symbols)
-    tmp = PreData(basename, speaker_name, text, wav_path, symbols, accents, Language.ENG)
-    result.append(tmp)
+    result.append(PreData(
+      basename,
+      speaker_name,
+      text, wav_path,
+      symbols,
+      accents,
+      lang
+    ))
 
-  x: PreData
-  result.sort(key=lambda x: x.name, reverse=False)
+  result.sort(key=sort_ljs, reverse=False)
   print("Done.")
 
   return result
 
-if __name__ == "__main__":
-  download(
-    dir_path = '/datasets/LJSpeech-1.1'
-  )
 
-  result = parse(
-    path = '/datasets/LJSpeech-1.1'
+def sort_ljs(entry: PreData) -> str:
+  return entry.name
+
+
+if __name__ == "__main__":
+  # download(
+  #   dir_path = '/datasets/LJSpeech-1.1'
+  # )
+
+  tmp = parse(
+    path='/datasets/LJSpeech-1.1'
   )

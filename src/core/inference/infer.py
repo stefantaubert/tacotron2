@@ -19,15 +19,25 @@ def infer(taco_path: str, waveglow_path: str, conv: SymbolIdDict, n_speakers: in
 
   symbol_ids_sentences = text_to_symbols_pipeline(lines, ipa, ignore_tones, ignore_arcs, subset_id, lang, symbols_map, conv, _logger)
 
-  return _infer_core(taco_path, waveglow_path, conv, n_speakers, speaker_id, sentence_pause_s, sigma, denoiser_strength, sampling_rate, symbol_ids_sentences)
+  return _infer_core(
+    taco_path,
+    waveglow_path,
+    conv,
+    n_speakers,
+    speaker_id,
+    sentence_pause_s,
+    sigma, denoiser_strength,
+    sampling_rate,
+    symbol_ids_sentences
+  )
 
 def validate(entry: PreparedData, taco_path: str, waveglow_path: str, denoiser_strength: float, sigma: float, conv: SymbolIdDict, n_speakers: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
   _logger.info("Validating...")
 
-  hp = create_hparams()
-  taco_stft = TacotronSTFT.fromhparams(hp)
+  hparams = create_hparams()
+  taco_stft = TacotronSTFT.fromhparams(hparams)
   orig_mel = taco_stft.get_mel_tensor_from_file(entry.wav_path)
-  symbol_ids = SymbolIdDict.deserialize_symbol_ids(entry.serialized_updated_ids)
+  symbol_ids = SymbolIdDict.deserialize_symbol_ids(entry.serialized_symbol_ids)
   symbol_ids_sentences = [symbol_ids]
 
   output, result = _infer_core(taco_path, waveglow_path, conv, n_speakers, entry.speaker_id, 0, sigma, denoiser_strength, 0, symbol_ids_sentences)
@@ -36,7 +46,7 @@ def validate(entry: PreparedData, taco_path: str, waveglow_path: str, denoiser_s
 
 def _infer_core(taco_path: str, waveglow_path: str, conv: SymbolIdDict, n_speakers: int, speaker_id: int, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: int, symbol_ids_sentences: List[List[int]]) -> Tuple[np.ndarray, List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]]]:
   synth = Synthesizer(taco_path, waveglow_path, n_symbols=len(conv), n_speakers=n_speakers, logger=_logger)
-  
+
   result: List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]] = list()
   # Speed is: 1min inference for 3min wav result
   for i, symbol_ids in enumerate(tqdm(symbol_ids_sentences)):

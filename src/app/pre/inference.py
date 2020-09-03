@@ -11,8 +11,8 @@ def _get_text_dir(prep_dir: str, text_name: str):
 
 def load_text_csv(text_dir: str, text_name: str) -> SentenceList:
   path = os.path.join(text_dir, _text_csv)
-  return SentenceList.load(path)
-  
+  return SentenceList.load(Sentence, path)
+
 def save_text_csv(text_dir: str, data: SentenceList):
   path = os.path.join(text_dir, _text_csv)
   data.save(path)
@@ -29,7 +29,7 @@ def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang:
 
 if __name__ == "__main__":
   add_text(
-    base_dir="/datasets/models/taco2pt_v4",
+    base_dir="/datasets/models/taco2pt_v5",
     prep_name="ljs_ipa",
     text_name="north",
     filepath="examples/en/north.txt",

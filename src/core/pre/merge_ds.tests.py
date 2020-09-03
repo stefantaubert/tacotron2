@@ -62,7 +62,7 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("basename0", res.basename)
     self.assertEqual("wavpath_pre0", res.wav_path)
     self.assertEqual("melpath_pre0", res.mel_path)
-    self.assertEqual("12,45,65", res.serialized_updated_ids)
+    self.assertEqual("12,45,65", res.serialized_symbol_ids)
     self.assertEqual(7.89, res.duration)
     self.assertEqual(0, res.speaker_id)
     self.assertEqual("11233", res.speaker_name)
@@ -124,16 +124,16 @@ class UnitTests(unittest.TestCase):
       ("ljs", "speaker0"),
       ("thchs", "speaker1"),
     }
-    
+
     whole, conv, speakers_id_dict = preprocess(datasets, ds_speakers, speakers_as_accents=False)
 
     self.assertEqual(4, len(whole))
     self.assertEqual(set({"a", "b", "c"}) ,set(conv.get_all_symbols()))
     # TODO
-    self.assertEqual("1,2,3", whole[0].serialized_updated_ids)
-    self.assertEqual("1,2,3", whole[1].serialized_updated_ids)
-    self.assertEqual("1,3,4", whole[2].serialized_updated_ids)
-    self.assertEqual("1,3,4", whole[3].serialized_updated_ids)
+    self.assertEqual("1,2,3", whole[0].serialized_symbol_ids)
+    self.assertEqual("1,2,3", whole[1].serialized_symbol_ids)
+    self.assertEqual("1,3,4", whole[2].serialized_symbol_ids)
+    self.assertEqual("1,3,4", whole[3].serialized_symbol_ids)
     self.assertEqual(["ljs,speaker0", "thchs,speaker1"], speakers_id_dict.get_speakers())
 
   def test_get_prepared_data_speaker_name_is_int(self):
@@ -187,7 +187,7 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(1, res[0].entry_id)
     self.assertEqual(15, res[0].speaker_id)
     self.assertEqual("basename1", res[0].basename)
-    self.assertEqual("65,78,16", res[0].serialized_updated_ids)
+    self.assertEqual("65,78,16", res[0].serialized_symbol_ids)
     self.assertEqual("wavpath_pre1", res[0].wav_path)
     self.assertEqual("melpath_pre1", res[0].mel_path)
     self.assertEqual("ds1", res[0].ds_name)
@@ -196,7 +196,7 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(2, res[1].entry_id)
     self.assertEqual(15, res[1].speaker_id)
     self.assertEqual("basename2", res[1].basename)
-    self.assertEqual("66,78,16", res[1].serialized_updated_ids)
+    self.assertEqual("66,78,16", res[1].serialized_symbol_ids)
     self.assertEqual("wavpath_pre2", res[1].wav_path)
     self.assertEqual("melpath_pre2", res[1].mel_path)
     self.assertEqual("ds1", res[1].ds_name)
@@ -236,8 +236,8 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(1, res[1].i)
     self.assertEqual(1, res[0].entry_id)
     self.assertEqual(2, res[1].entry_id)
-    self.assertEqual("2,3,4", res[0].serialized_updated_ids)
-    self.assertEqual("3,2,5", res[1].serialized_updated_ids)
+    self.assertEqual("2,3,4", res[0].serialized_symbol_ids)
+    self.assertEqual("3,2,5", res[1].serialized_symbol_ids)
 
   # def test_split_train_test_val_low_data_count_ignores_testset_and_valset(self):
   #   data = [1]
@@ -333,7 +333,7 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(2, len(test))
     self.assertEqual(4, len(val))
     self.assertEqual(6, len(train))
-  
+
   @staticmethod
   def get_dummy_prep_data(i: int=0, entry_id: int=0):
     return PreparedData(i, entry_id, "", "", "", 0, "", 0, 1, "", Language.ENG, "")

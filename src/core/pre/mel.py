@@ -4,12 +4,12 @@ output: mel data
 """
 import os
 from dataclasses import dataclass
-from typing import List
+from src.core.common import GenericList
 
 import torch
 from tqdm import tqdm
 
-from src.core.common import load_csv, save_csv, get_pytorch_filename
+from src.core.common import get_pytorch_filename
 from src.core.common import get_chunk_name
 from src.core.pre.wav import WavData, WavDataList
 from src.core.common import TacotronSTFT, create_hparams
@@ -21,14 +21,10 @@ class MelData:
   mel_path: str
   n_mel_channels: int
 
-class MelDataList(List[MelData]):
-  def save(self, file_path: str):
-    save_csv(self, file_path)
 
-  @classmethod
-  def load(cls, file_path: str):
-    data = load_csv(file_path, MelData)
-    return cls(data)
+class MelDataList(GenericList[MelData]):
+  pass
+
 
 def process(data: WavDataList, dest_dir: str, custom_hparams: str) -> MelDataList:
   assert os.path.isdir(dest_dir)
@@ -39,7 +35,8 @@ def process(data: WavDataList, dest_dir: str, custom_hparams: str) -> MelDataLis
 
   values: WavData
   for values in tqdm(data):
-    chunk_dir = os.path.join(dest_dir, get_chunk_name(values.entry_id, chunksize=500, maximum=len(data) - 1))
+    chunk_dir = os.path.join(dest_dir, get_chunk_name(
+      values.entry_id, chunksize=500, maximum=len(data) - 1))
     os.makedirs(chunk_dir, exist_ok=True)
     dest_mel_path = os.path.join(chunk_dir, get_pytorch_filename(repr(values)))
     mel_tensor = mel_parser.get_mel_tensor_from_file(values.wav)

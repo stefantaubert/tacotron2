@@ -8,6 +8,7 @@ from src.core.tacotron import get_train_logger
 
 from src.app.tacotron.training import load_symbol_converter, load_speakers_json
 
+
 def eval_checkpoints(base_dir: str, train_name: str, custom_hparams: str, select: int, min_it: int, max_it: int):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
@@ -29,12 +30,13 @@ def eval_checkpoints(base_dir: str, train_name: str, custom_hparams: str, select
     valset=load_valset(train_dir)
   )
 
+
 if __name__ == "__main__":
   eval_checkpoints(
-    base_dir="/datasets/models/taco2pt_v4",
+    base_dir="/datasets/models/taco2pt_v5",
     train_name="debug",
     custom_hparams="batch_size=17",
-    select = 1,
-    min_it = 0,
-    max_it = 0
+    select=1,
+    min_it=0,
+    max_it=0
   )

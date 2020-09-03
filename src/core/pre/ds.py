@@ -3,7 +3,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import List, OrderedDict, Tuple
 
-from src.core.common import load_csv, parse_json, save_csv, save_json, Language, SpeakersDict, SpeakersLogDict, AccentsDict, SymbolIdDict, remove_duplicates_list_orderpreserving
+from src.core.common import parse_json, save_json, Language, SpeakersDict, SpeakersLogDict, AccentsDict, SymbolIdDict, remove_duplicates_list_orderpreserving, GenericList
 from src.core.pre.parser import (PreData, PreDataList, dl_kaldi, dl_ljs,
                                  dl_thchs, parse_ljs, parse_thchs,
                                  parse_thchs_kaldi)
@@ -24,16 +24,13 @@ class DsData:
   def get_speaker_name(self):
     return str(self.speaker_name)
 
-class DsDataList(List[DsData]):
-  def save(self, file_path: str):
-    save_csv(self, file_path)
 
-  @classmethod
-  def load(cls, file_path: str):
-    data = load_csv(file_path, DsData)
-    return cls(data)
+class DsDataList(GenericList[DsData]):
+  pass
 
-def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
+
+def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple[
+        SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   if not os.path.isdir(dir_path) and auto_dl:
     dl_func(dir_path)
   data = parse_func(dir_path)
@@ -43,14 +40,20 @@ def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple
   ds_data = _get_ds_data(data, speakers, accents, symbols)
   return speakers, speakers_log, symbols, accents, ds_data
 
-def thchs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
+
+def thchs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[
+        SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   return _preprocess_core(dir_path, auto_dl, dl_thchs, parse_thchs)
 
-def ljs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
+
+def ljs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[
+  SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   return _preprocess_core(dir_path, auto_dl, dl_ljs, parse_ljs)
+
 
 def thchs_kaldi_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   return _preprocess_core(dir_path, auto_dl, dl_kaldi, parse_thchs_kaldi)
+
 
 def _get_all_speakers(l: PreDataList) -> Tuple[SpeakersDict, SpeakersLogDict]:
   x: PreData
@@ -61,6 +64,7 @@ def _get_all_speakers(l: PreDataList) -> Tuple[SpeakersDict, SpeakersLogDict]:
   speakers_dict = SpeakersDict.fromlist(all_speakers)
   return speakers_dict, speakers_log
 
+
 def _get_all_accents(l: PreDataList) -> AccentsDict:
   accents = set()
   x: PreData
@@ -68,12 +72,14 @@ def _get_all_accents(l: PreDataList) -> AccentsDict:
     accents = accents.union(set(x.accents))
   return AccentsDict.init_from_accents(accents)
 
+
 def _get_symbols_id_dict(l: PreDataList) -> SymbolIdDict:
   symbols = set()
   x: PreData
   for x in l:
     symbols = symbols.union(set(x.symbols))
   return SymbolIdDict.init_from_symbols(symbols)
+
 
 def _get_ds_data(l: PreDataList, speakers_dict: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict) -> DsDataList:
   values: PreData
