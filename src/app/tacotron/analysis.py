@@ -12,7 +12,7 @@ from src.core.tacotron import get_train_logger, load_symbol_embedding_weights_fr
 from src.app.io import get_train_root_dir
 from src.core.common import get_subdir
 
-from src.app.tacotron.training import load_symbol_converter, load_speakers_json
+from src.app.tacotron.training import load_settings
 
 def get_analysis_root_dir(train_dir: str):
   return get_subdir(train_dir, "analysis", create=True)

@@ -70,7 +70,7 @@ def save_filelist_accents_ids(prep_dir: str, data: AccentsDict):
   data.save(path)
 
 
-def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]]):
+def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]], include_symbols: Set[str] = { "_" }):
   print(f"Preparing dataset: {prep_name}...")
   prep_dir = get_prepared_dir(base_dir, prep_name)
   if os.path.isdir(prep_dir):
@@ -97,7 +97,11 @@ def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]]
         load_accents_json(ds_dir)
       )
 
-    data, symbol_ids, accent_ids, speakers_id_dict = merge_ds_core(datasets, ds_speakers)
+    data, symbol_ids, accent_ids, speakers_id_dict = merge_ds_core(
+      datasets,
+      ds_speakers,
+      include_symbols
+    )
 
     os.makedirs(prep_dir)
     save_filelist(prep_dir, data)

@@ -252,7 +252,9 @@ $base_dir
 │  │  │  ├── data.csv
 │  │  │  ├── north
 │  │  │  │  ├── text.csv
-│  │  │  │  ├── accent.csv
+│  │  │  │  ├── accents.csv
+│  │  │  │  ├── inference.csv
+│  │  │  │  ├── symbols.json
 │  │  ├── ljs
 │  │  ├── ljs_thchs
 ├── pre
@@ -309,8 +311,7 @@ $base_dir
 │  ├── ...
 ├── tacotron
 │  ├── training1
-│  │  ├── symbols.json
-│  │  ├── speakers.json
+│  │  ├── settings.json
 │  │  ├── train.csv
 │  │  ├── test.csv
 │  │  └── validation.csv

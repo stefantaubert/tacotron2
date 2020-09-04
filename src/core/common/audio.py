@@ -64,7 +64,7 @@ def remove_silence(
     chunk_size=chunk_size,
     buffer=buffer_end
   )
-  
+
   wav = wav[start_trim:len(wav) - end_trim]
   return wav
 
@@ -178,7 +178,7 @@ def normalize_wav(wav):
     return wav
   elif wav.dtype == np.int32 and np.min(wav) == get_min_value(np.int32):
     return wav
-  
+
   wav_abs = np.abs(wav)
   max_val = np.max(wav_abs)
   is_div_by_zero = max_val == 0
@@ -195,12 +195,12 @@ def normalize_wav(wav):
       # 32766.998 gets 32767 because of float unaccuracy
       wav_float = np.round(wav_float, 0)
     wav = wav_float.astype(orig_dtype)
-  
+
   assert np.max(np.abs(wav)) == max_possible_value or np.max(np.abs(wav)) == 0
 
   return wav
 
-def wav_to_float32(path: str) -> (np.float32, int):
+def wav_to_float32(path: str) -> Tuple[np.float, int]:
   sampling_rate, wav = read(path)
   wav = convert_wav(wav, np.float32)
   return wav, sampling_rate
@@ -256,7 +256,7 @@ def get_wav_tensor_segment(wav_tensor: torch.float32, segment_length: int) -> to
   else:
     fill_size = segment_length - wav_tensor.size(0)
     wav_tensor = torch.nn.functional.pad(wav_tensor, (0, fill_size), 'constant').data
-  
+
   return wav_tensor
 
 if __name__ == "__main__":
@@ -278,6 +278,6 @@ if __name__ == "__main__":
   wav = wav[trim:]
   float_to_wav(wav, "/tmp/A22_107_nosil.wav", sample_rate=sr)
   #upsample("/datasets/Report/08/03/B4_322.wav", "/tmp/B4_322.wav", 22050)
-  upsample("/datasets/thchs_wav/wav/test/D31/D31_881.wav", "/tmp/D31_881.wav", 22050)
+  #upsample("/datasets/thchs_wav/wav/test/D31/D31_881.wav", "/tmp/D31_881.wav", 22050)
   #ewav, _ = wav_to_float32("/datasets/models/taco2pt_v2/thchs_ipa_warm_mapped_all_tones/inference/validation_2020-07-27_08-54-17_D31_769_D31_50777/validation_2020-07-27_08-54-17_D31_769_D31_50777_inferred.wav")
   #float_to_wav(wav, "/tmp/out.wav", dtype=np.int16, normalize=True, sample_rate=22050)

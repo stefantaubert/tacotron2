@@ -1,5 +1,6 @@
 from collections import Counter, OrderedDict
 from dataclasses import dataclass
+from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
 from src.core.common.utils import GenericList
 from typing import List
 from typing import OrderedDict as OrderedDictType
@@ -28,21 +29,16 @@ def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_to
   processed_data: List[Tuple[int, List[str], List[int], Language]] = []
 
   values: TextData
-  for values in tqdm(data):
-    if values.lang != Language.IPA:
-      orig_text = symbol_converter.get_text(values.serialized_symbol_ids)
-      ipa = text_convert_to_ipa(orig_text, values.lang)
-      symbols: List[str] = text_to_symbols(
-        ipa, Language.IPA, ignore_tones, ignore_arcs, replace_unknown_ipa_by=replace_unknown_ipa_by)
-      orig_accents = deserialize_list(values.serialized_accent_ids)
-      if len(orig_accents):
-        accents = [orig_accents[0]] * len(symbols)
-      else:
-        accents = []
-    else:
-      symbols = deserialize_list(values.serialized_symbol_ids)
-      accents = deserialize_list(values.serialized_accent_ids)
-    processed_data.append((values.entry_id, symbols, accents, Language.IPA))
+  for values in tqdm(data.items()):
+    new_symbols, new_accent_ids = symbols_convert_to_ipa(
+      symbols=symbol_converter.get_symbols(values.serialized_symbol_ids),
+      lang=values.lang,
+      accent_ids=deserialize_list(values.serialized_accent_ids),
+      ignore_arcs=ignore_arcs,
+      ignore_tones=ignore_tones,
+      replace_unknown_ipa_by=replace_unknown_ipa_by
+    )
+    processed_data.append((values.entry_id, new_symbols, new_accent_ids, Language.IPA))
 
   return _prepare_data(processed_data)
 
@@ -52,21 +48,13 @@ def normalize(data: TextDataList, symbol_converter: SymbolIdDict) -> Tuple[TextD
 
   values: TextData
   for values in tqdm(data):
-    orig_text = symbol_converter.get_text(values.serialized_symbol_ids)
-    text = text_normalize(orig_text, values.lang)
-    symbols: List[str] = text_to_symbols(text, values.lang)
-    orig_accents = deserialize_list(values.serialized_accent_ids)
-    if values.lang != Language.IPA:
-      if len(orig_accents):
-        accents = [orig_accents[0]] * len(symbols)
-      else:
-        accents = []
-    else:
-      # because no replacing was done in ipa normalization
-      # maybe support remove whitespace
-      accents = orig_accents
+    new_symbols, new_accent_ids = symbols_normalize(
+      symbols=symbol_converter.get_symbols(values.serialized_symbol_ids),
+      lang=values.lang,
+      accent_ids=deserialize_list(values.serialized_accent_ids),
+    )
 
-    processed_data.append((values.entry_id, symbols, accents, values.lang))
+    processed_data.append((values.entry_id, new_symbols, new_accent_ids, values.lang))
 
   return _prepare_data(processed_data)
 

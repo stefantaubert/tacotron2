@@ -1,7 +1,7 @@
 import os
 from collections import OrderedDict
 from shutil import copyfile
-from typing import List
+from typing import List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Union
 
@@ -56,14 +56,14 @@ class SymbolIdDict():
   def save(self, file_path: str):
     save_json(file_path, self._ids_to_symbols)
 
-  def __replace_unknown_symbols(self, symbols: list, replace_with_symbol: str = None) -> list:
-    assert replace_with_symbol is None or replace_with_symbol in self._ids_to_symbols.keys()
+  def replace_unknown_symbols(self, symbols: List[str], replace_with_known_symbol: Optional[str] = None) -> List[str]:
+    assert replace_with_known_symbol is None or replace_with_known_symbol in self._ids_to_symbols.keys()
     result = []
     for symbol in symbols:
       if symbol in self._ids_to_symbols.keys():
         result.append(symbol)
-      elif replace_with_symbol is not None:
-        result.append(replace_with_symbol)
+      elif replace_with_known_symbol is not None:
+        result.append(replace_with_known_symbol)
     return result
 
   def get_unknown_symbols(self, symbols: List[str]):

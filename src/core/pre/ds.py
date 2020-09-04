@@ -84,14 +84,14 @@ def _get_symbols_id_dict(l: PreDataList) -> SymbolIdDict:
 def _get_ds_data(l: PreDataList, speakers_dict: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict) -> DsDataList:
   values: PreData
   result = [DsData(
-      i,
-      values.name,
-      values.speaker_name,
-      speakers_dict[values.speaker_name],
-      values.text,
-      symbols.get_serialized_ids(values.symbols),
-      accents.get_serialized_ids(values.accents),
-      values.wav_path,
-      values.lang
-    ) for i, values in enumerate(l)]
+    i,
+    values.name,
+    values.speaker_name,
+    speakers_dict[values.speaker_name],
+    values.text,
+    symbols.get_serialized_ids(values.symbols),
+    accents.get_serialized_ids(values.accents),
+    values.wav_path,
+    values.lang
+  ) for i, values in enumerate(l)]
   return DsDataList(result)

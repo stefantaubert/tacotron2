@@ -8,7 +8,7 @@ from src.app.io import (get_checkpoints_dir, load_speakers_json,
                         save_val_comparison, save_val_orig_plot, load_testset,
                         save_val_orig_wav, save_val_plot, save_val_wav)
 from src.app.tacotron.io import get_train_dir
-from src.app.tacotron.training import load_symbol_converter
+from src.app.tacotron.training import load_settings
 from src.app.waveglow import get_train_dir as get_wg_train_dir
 from src.core.common import (get_custom_or_last_checkpoint,
                              get_last_checkpoint, get_parent_dirname,

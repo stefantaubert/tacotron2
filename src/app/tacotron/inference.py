@@ -12,7 +12,7 @@ from src.app.io import (get_checkpoints_dir, get_infer_log, save_infer_plot,
 from src.app.pre import (load_filelist, load_filelist_speakers_json,
                          load_filelist_symbol_converter)
 from src.app.tacotron.io import get_train_dir
-from src.app.tacotron.training import load_symbol_converter
+from src.app.tacotron.training import load_settings
 from src.app.waveglow import get_train_dir as get_wg_train_dir
 from src.core.common import (Language, float_to_wav, get_basename,
                              get_custom_or_last_checkpoint,
@@ -92,7 +92,7 @@ def save_infer_h_plot(infer_dir: str, sentence_ids: List[int]):
   stack_images_horizontally(paths, path)
 
 
-def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker: str, waveglow: str = "pretrained", ignore_tones: bool = False, ignore_arcs: bool = True, symbols_map: Optional[str] = None, hparams: Optional[str] = None, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = 0.5, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050, analysis: bool = True, ipa: bool = True):
+def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker: str, waveglow: str = "pretrained", ignore_tones: bool = False, ignore_arcs: bool = True, symbols_map: Optional[str] = None, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = 0.5, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050, analysis: bool = True, ipa: bool = True):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 

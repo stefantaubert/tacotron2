@@ -43,6 +43,9 @@ class AccentsDict():
     ids = self.get_ids(accents)
     return serialize_list(ids)
 
+  def __len__(self):
+    return len(self._ids_to_accents)
+
   @classmethod
   def load(cls, file_path: str):
     data = parse_json(file_path)

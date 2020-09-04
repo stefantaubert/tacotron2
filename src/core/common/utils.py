@@ -10,6 +10,7 @@ import random
 import numpy as np
 import pandas as pd
 import torch
+from tqdm import tqdm
 import wget
 from PIL import Image
 from scipy.spatial.distance import cosine
@@ -31,8 +32,11 @@ class GenericList(list, Generic[T]):
     data_loaded: List[T] = [member_class(*xi) for xi in data.values]
     return cls(data_loaded)
 
-  def items(self) -> List[T]:
-    return self
+  def items(self, with_tqdm: bool = False) -> List[T]:
+    if with_tqdm:
+      return tqdm(self)
+    else:
+      return self
 
   def get_random_entry(self) -> T:
     idx = random.choice(range(len(self)))

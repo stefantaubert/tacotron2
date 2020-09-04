@@ -45,7 +45,13 @@ def validate(entry: PreparedData, taco_path: str, waveglow_path: str, denoiser_s
   return output, mel_outputs, mel_outputs_postnet, alignments, orig_mel.numpy()
 
 def _infer_core(taco_path: str, waveglow_path: str, conv: SymbolIdDict, n_speakers: int, speaker_id: int, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: int, symbol_ids_sentences: List[List[int]]) -> Tuple[np.ndarray, List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]]]:
-  synth = Synthesizer(taco_path, waveglow_path, n_symbols=len(conv), n_speakers=n_speakers, logger=_logger)
+  synth = Synthesizer(
+    taco_path,
+    waveglow_path,
+    n_symbols=len(conv),
+    n_speakers=n_speakers,
+    logger=_logger
+  )
 
   result: List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]] = list()
   # Speed is: 1min inference for 3min wav result

@@ -536,7 +536,7 @@ class Tacotron2(nn.Module):
     self.postnet = Postnet(hparams)
 
   @staticmethod
-  def parse_batch(batch: Tuple[torch.LongTensor, torch.LongTensor, torch.FloatTensor, torch.FloatTensor, torch.LongTensor, torch.Tensor]):
+  def parse_batch(batch: Tuple[torch.LongTensor, torch.LongTensor, torch.FloatTensor, torch.FloatTensor, torch.LongTensor, torch.LongTensor]):
     text_padded, input_lengths, mel_padded, gate_padded, output_lengths, speaker_ids = batch
     # TODO: insert accent handling here
     text_padded = to_gpu(text_padded).long()

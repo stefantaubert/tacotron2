@@ -1,15 +1,11 @@
-from dataclasses import dataclass
-import math
 import os
 import time
-from functools import partial
 from math import sqrt
 import torch
-from numpy import finfo
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
-from typing import Set, Tuple, Dict
+from typing import Tuple, Dict
 from typing import Optional
 from src.core.common import get_custom_checkpoint, get_pytorch_filename, deserialize_list
 from src.core.common import get_last_checkpoint, get_all_checkpoint_iterations
@@ -162,7 +158,7 @@ class SymbolsMelCollate():
       speaker_ids.append(speaker_id)
 
     #len_x = torch.Tensor(len_x)
-    speaker_ids = torch.Tensor(speaker_ids)
+    speaker_ids = torch.LongTensor(speaker_ids)
 
     return symbols_padded, input_lengths, mel_padded, gate_padded, output_lengths, speaker_ids
 
@@ -190,9 +186,6 @@ class SymbolsMelCollate():
 
 
 class Tacotron2Loss(nn.Module):
-  def __init__(self):
-    super(Tacotron2Loss, self).__init__()
-
   def forward(self, model_output, targets):
     mel_target, gate_target = targets[0], targets[1]
     mel_target.requires_grad = False

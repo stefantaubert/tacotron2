@@ -15,4 +15,4 @@ from src.core.pre.text import text_normalize
 from src.core.pre.text import text_preprocess
 #from src.core.pre.text import text_to_symbols_pipeline
 
-from src.core.pre.text import Sentence, SentenceList, infer_add, infer_convert_ipa, infer_map, infer_norm
+from src.core.pre.text import Sentence, SentenceList, infer_add, infer_convert_ipa, infer_map, infer_norm, infer_accents_apply, infer_accents_template, AccentedSymbolList, AccentedSymbol, InferSentenceList, infer_prepare

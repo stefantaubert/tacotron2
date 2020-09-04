@@ -120,7 +120,7 @@ def split_sentences(text: str, lang: Language) -> List[str]:
     assert False
 
 
-def text_to_symbols(text: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, replace_unknown_ipa_by: Optional[str] = None):
+def text_to_symbols(text: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, replace_unknown_ipa_by: Optional[str] = None) -> List[str]:
   if lang == Language.ENG:
     symbols = list(text)
   elif lang == Language.GER:

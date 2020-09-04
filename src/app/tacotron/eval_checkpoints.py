@@ -6,7 +6,7 @@ from src.app.tacotron.io import get_train_dir
 from src.core.tacotron import eval_checkpoints as eval_checkpoints_core
 from src.core.tacotron import get_train_logger
 
-from src.app.tacotron.training import load_symbol_converter, load_speakers_json
+from src.app.tacotron.training import load_settings
 
 
 def eval_checkpoints(base_dir: str, train_name: str, custom_hparams: str, select: int, min_it: int, max_it: int):
