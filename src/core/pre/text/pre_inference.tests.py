@@ -17,6 +17,18 @@ class UnitTests(unittest.TestCase):
   #   sents = sents_convert_to_ipa(sents, ignore_tones=True, ignore_arcs=True, replace_unknown_by="_")
   #   print(sents)
 
+  def test_get_formatted(self):
+    sents = SentenceList([
+      Sentence(0, "", 0, "1,2", "2,1"),
+      Sentence(1, "", 0, "0", "0")
+    ])
+    symbol_ids = SymbolIdDict.init_from_symbols({"a", "b", "c"})
+    accent_ids = AccentsDict.init_from_accents({"a1", "a2", "a3"})
+
+    res = sents.get_formatted(symbol_ids, accent_ids)
+    print("\n" + res)
+    self.assertEqual("0: bc (2)\n   21\n   1 = a2, 2 = a3\n1: a (1)\n   0\n   0 = a1\n", res)
+
   def test_sents_accent_template(self):
     sents = SentenceList([
       Sentence(0, "", 0, "1,2", "2,1"),

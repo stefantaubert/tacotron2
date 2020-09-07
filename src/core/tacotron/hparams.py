@@ -1,7 +1,9 @@
+from typing import Optional
 import tensorflow as tf
 
 
-def create_hparams(n_speakers: int, n_symbols: int, n_accents: int, hparams_string=None, verbose=False):
+def create_hparams(n_speakers: int, n_symbols: int, n_accents: int,
+                   hparams_string: Optional[str], verbose: bool = False):
   """Create model hyperparameters. Parse nondefault from given string."""
 
   hparams = tf.contrib.training.HParams(
@@ -19,7 +21,7 @@ def create_hparams(n_speakers: int, n_symbols: int, n_accents: int, hparams_stri
     dist_url="tcp://localhost:54321",
     cudnn_enabled=True,
     cudnn_benchmark=False,
-    ignore_layers=[""], # is list
+    ignore_layers=[""], # [""] -> to define that it is a list
 
     ################################
     # Data Parameters       #
@@ -89,8 +91,9 @@ def create_hparams(n_speakers: int, n_symbols: int, n_accents: int, hparams_stri
     mask_padding=True  # set model's padded outputs to padded values
   )
 
-  if hparams_string:
-    tf.logging.info('Parsing command line hparams: %s', hparams_string)
+  if hparams_string is not None:
+    if verbose:
+      tf.logging.info(f"Parsing command line hparams: {hparams_string}")
     hparams.parse(hparams_string)
 
   if verbose:

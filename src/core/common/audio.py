@@ -156,17 +156,17 @@ def concatenate_audios_core(audios: List[np.ndarray], sentence_pause_samples_cou
   """Concatenates the np.ndarray list on the last axis."""
   if len(audios) == 1:
     return audios[0]
-  else:
-    pause_shape = list(audios[0].shape)
-    pause_shape[-1] = sentence_pause_samples_count
-    sentence_pause_samples = np.zeros(tuple(pause_shape))
-    conc = []
-    for audio in audios[:-1]:
-      conc.append(audio)
-      conc.append(sentence_pause_samples)
-    conc.append(audios[-1])
-    output = np.concatenate(tuple(conc), axis=-1)
-    return output
+
+  pause_shape = list(audios[0].shape)
+  pause_shape[-1] = sentence_pause_samples_count
+  sentence_pause_samples = np.zeros(tuple(pause_shape))
+  conc = []
+  for audio in audios[:-1]:
+    conc.append(audio)
+    conc.append(sentence_pause_samples)
+  conc.append(audios[-1])
+  output = np.concatenate(tuple(conc), axis=-1)
+  return output
 
 def normalize_file(in_path, out_path):
   sampling_rate, wav = read(in_path)

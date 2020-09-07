@@ -3,7 +3,7 @@ import os
 import matplotlib.pylab as plt
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
-from src.app.io import (get_checkpoints_dir, load_speakers_json,
+from src.app.io import (get_checkpoints_dir,
                         get_val_dir, get_val_log, load_valset, save_infer_wav,
                         save_val_comparison, save_val_orig_plot, load_testset,
                         save_val_orig_wav, save_val_plot, save_val_wav)
@@ -16,6 +16,8 @@ from src.core.common import (get_custom_or_last_checkpoint,
 from src.core.inference import get_logger
 from src.core.inference import validate as validate_core
 from typing import Optional, Tuple
+from src.app.pre import (get_prepared_dir, load_filelist, load_filelist_accents_ids,
+                         load_filelist_speakers_json, load_inference_csv, get_text_dir, load_filelist_symbol_converter)
 
 
 def save_val_pre_postnet_plot(val_dir: str, mel):
@@ -40,7 +42,6 @@ def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[i
   init_logger(logger)
   add_console_out_to_logger(logger)
 
-  assert ds != ""
   if ds == "val":
     data = load_valset(train_dir)
   elif ds == "test":
@@ -48,7 +49,11 @@ def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[i
   else:
     assert False
 
-  speakers = load_speakers_json(train_dir)
+  prep_name, custom_taco_hparams_loaded = load_settings(train_dir)
+  prep_dir = get_prepared_dir(base_dir, prep_name)
+  assert os.path.isdir(prep_dir)
+
+  speakers = load_filelist_speakers_json(prep_dir)
 
   if entry_id:
     entry = data.get_entry(entry_id)
@@ -66,15 +71,19 @@ def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[i
   train_dir_wg = get_wg_train_dir(base_dir, waveglow, create=False)
   assert os.path.isdir(train_dir_wg)
   wg_checkpoint_path, _ = get_last_checkpoint(get_checkpoints_dir(train_dir_wg))
+  _, custom_wg_hparams_loaded = load_settings(train_dir_wg)
 
   wav, mel_outputs, mel_outputs_postnet, alignments, orig_mel = validate_core(
     entry=entry,
     taco_path=checkpoint_path,
     waveglow_path=wg_checkpoint_path,
-    denoiser_strength=denoiser_strength,
+    symbol_id_dict=load_filelist_symbol_converter(prep_dir),
+    accent_id_dict=load_filelist_accents_ids(prep_dir),
+    n_speakers=len(speakers),
     sigma=sigma,
-    conv=load_symbol_converter(train_dir),
-    n_speakers=len(speakers)
+    denoiser_strength=denoiser_strength,
+    custom_taco_hparams=custom_taco_hparams_loaded,
+    custom_wg_hparams=custom_wg_hparams_loaded
   )
 
   save_val_wav(val_dir, sampling_rate, wav)
@@ -95,9 +104,9 @@ if __name__ == "__main__":
     waveglow="pretrained",
   )
 
-  validate(
-    base_dir="/datasets/models/taco2pt_v5",
-    train_name="debug",
-    entry_id=6,
-    waveglow="pretrained",
-  )
+  # validate(
+  #   base_dir="/datasets/models/taco2pt_v5",
+  #   train_name="debug",
+  #   entry_id=6,
+  #   waveglow="pretrained",
+  # )

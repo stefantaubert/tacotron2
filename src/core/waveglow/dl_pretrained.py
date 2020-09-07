@@ -15,6 +15,9 @@ def main(destination: str, auto_convert: bool = True, keep_orig: bool = False):
     print("Pretrained model is now beeing converted to be able to use it...")
     convert_glow(destination, destination, keep_orig)
 
+# new file: wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/waveglow_ljs_256channels/versions/3/zip -O waveglow_ljs_256channels_3.zip
+# https://ngc.nvidia.com/catalog/models/nvidia:waveglow_ljs_256channels
+
 def dl(destination: str):
   # Download waveglow_universal_256channels_v5.pt (644M)
   download_url = "https://drive.google.com/uc?id=1rpK8CzAAirq9sWZhe9nlfvxMF1dRgFbF"

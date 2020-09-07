@@ -1,7 +1,8 @@
+from typing import Optional
 import tensorflow as tf
 
 
-def create_hparams(hparams_string=None, verbose=False):
+def create_hparams(hparams_string: Optional[str], verbose: bool = False):
   """Create model hyperparameters. Parse nondefault from given string."""
 
   hparams = tf.contrib.training.HParams(
@@ -14,11 +15,11 @@ def create_hparams(hparams_string=None, verbose=False):
     seed=1234,
     # is not usefull
     cache_wavs=False,
-    
+
     # # dist_config
     # dist_backend="nccl",
     # dist_url="tcp://localhost:54321",
-    
+
     ################################
     # Audio Parameters       #
     ################################
@@ -52,8 +53,9 @@ def create_hparams(hparams_string=None, verbose=False):
     batch_size=12
   )
 
-  if hparams_string:
-    tf.logging.info('Parsing command line hparams: %s', hparams_string)
+  if hparams_string is not None:
+    if verbose:
+      tf.logging.info(f"Parsing command line hparams: {hparams_string}")
     hparams.parse(hparams_string)
 
   if verbose:

@@ -1,15 +1,16 @@
 import os
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
-from src.app.io import (get_checkpoints_dir, load_speakers_json,
+from src.app.io import (get_checkpoints_dir,
                         get_val_dir, get_val_log, load_valset, load_testset,
-                        save_val_comparison, save_val_orig_plot,
+                        save_val_orig_plot, load_settings,
                         save_val_orig_wav, save_val_plot, save_val_wav)
 from src.app.waveglow.io import get_train_dir, save_diff_plot, save_v
 from src.core.common import get_custom_or_last_checkpoint
 from src.core.waveglow import get_infer_logger
 from src.core.waveglow import validate as validate_core
-from typing import Optional, Tuple
+from typing import Optional
+from src.app.pre import (get_prepared_dir, load_filelist_speakers_json)
 
 
 def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
@@ -20,7 +21,6 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
   init_logger(logger)
   add_console_out_to_logger(logger)
 
-  assert ds != ""
   if ds == "val":
     data = load_valset(train_dir)
   elif ds == "test":
@@ -28,11 +28,14 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
   else:
     assert False
 
-  speakers = load_speakers_json(train_dir)
+  prep_name, custom_hparams_loaded = load_settings(train_dir)
 
   if entry_id:
     entry = data.get_entry(entry_id)
   elif ds_speaker:
+    prep_dir = get_prepared_dir(base_dir, prep_name)
+    assert os.path.isdir(prep_dir)
+    speakers = load_filelist_speakers_json(prep_dir)
     speaker_id = speakers[ds_speaker]
     entry = data.get_random_entry_ds_speaker(speaker_id)
   else:
@@ -45,10 +48,10 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
 
   wav, wav_mel, orig_mel = validate_core(
     entry=entry,
-    custom_hparams=custom_checkpoint,
     denoiser_strength=denoiser_strength,
     sigma=sigma,
-    checkpoint_path=checkpoint_path
+    checkpoint_path=checkpoint_path,
+    custom_hparams=custom_hparams_loaded,
   )
 
   save_val_wav(val_dir, sampling_rate, wav)

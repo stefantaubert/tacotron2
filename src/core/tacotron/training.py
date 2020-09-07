@@ -108,7 +108,7 @@ class SymbolsMelCollate():
   def __init__(self, n_frames_per_step):
     self.n_frames_per_step = n_frames_per_step
 
-  def __call__(self, batch: List[Tuple[torch.IntTensor, torch.IntTensor, torch.Tensor, int]]) -> Tuple[torch.LongTensor, torch.LongTensor, torch.FloatTensor, torch.FloatTensor, torch.LongTensor, torch.Tensor]:
+  def __call__(self, batch: List[Tuple[torch.IntTensor, torch.IntTensor, torch.Tensor, int]]):
     """Collate's training batch from normalized text and mel-spectrogram
     PARAMS
     ------
@@ -120,11 +120,17 @@ class SymbolsMelCollate():
     max_input_len = input_lengths[0]
 
     symbols_padded = torch.LongTensor(len(batch), max_input_len)
-    symbols_padded.zero_()
+    symbols_padded.zero_()  # big bug! need a symbol ~
 
-    for i in range(len(ids_sorted_decreasing)):
-      symbols = batch[ids_sorted_decreasing[i]][0]
+    accents_padded = torch.LongTensor(len(batch), max_input_len)
+    accents_padded.zero_()  # big bug! need a accent ~
+
+    for i, batch_id in enumerate(ids_sorted_decreasing):
+      symbols = batch[batch_id][0]
       symbols_padded[i, :symbols.size(0)] = symbols
+
+      accents = batch[batch_id][1]
+      accents_padded[i, :accents.size(0)] = accents
 
     # Right zero-pad mel-spec
     _, _, first_mel, _ = batch[0]
@@ -142,8 +148,8 @@ class SymbolsMelCollate():
     gate_padded.zero_()
 
     output_lengths = torch.LongTensor(len(batch))
-    for i in range(len(ids_sorted_decreasing)):
-      _, _, mel, _ = batch[ids_sorted_decreasing[i]]
+    for i, batch_id in enumerate(ids_sorted_decreasing):
+      _, _, mel, _ = batch[batch_id]
       mel_padded[i, :, :mel.size(1)] = mel
       gate_padded[i, mel.size(1) - 1:] = 1
       output_lengths[i] = mel.size(1)
@@ -151,16 +157,25 @@ class SymbolsMelCollate():
     # count number of items - characters in text
     #len_x = []
     speaker_ids = []
-    for i in range(len(ids_sorted_decreasing)):
-      #len_symb = batch[ids_sorted_decreasing[i]][0].get_shape()[0]
+    for i, batch_id in enumerate(ids_sorted_decreasing):
+      #len_symb = batch[batch_id][0].get_shape()[0]
       # len_x.append(len_symb)
-      _, _, _, speaker_id = batch[ids_sorted_decreasing[i]]
+      _, _, _, speaker_id = batch[batch_id]
       speaker_ids.append(speaker_id)
 
     #len_x = torch.Tensor(len_x)
     speaker_ids = torch.LongTensor(speaker_ids)
 
-    return symbols_padded, input_lengths, mel_padded, gate_padded, output_lengths, speaker_ids
+    return Tacotron2.make_batch(
+      symbols_padded,
+      accents_padded,
+      input_lengths,
+      mel_padded,
+      gate_padded,
+      output_lengths,
+      speaker_ids
+    )
+
 
 # import torch.distributed as dist
 
@@ -619,7 +634,7 @@ def _filter_checkpoints(iterations: List[int], select: int, min_it: int, max_it:
   return process_checkpoints
 
 
-def eval_checkpoints(custom_hparams: str, checkpoint_dir: str, select: int, min_it: int, max_it: int, n_symbols: int, n_speakers: int, valset: PreparedDataList):
+def eval_checkpoints(custom_hparams: Optional[str], checkpoint_dir: str, select: int, min_it: int, max_it: int, n_symbols: int, n_accents: int, n_speakers: int, valset: PreparedDataList):
   its = get_all_checkpoint_iterations(checkpoint_dir)
   debug_logger.info(f"Available iterations {its}")
   filtered_its = _filter_checkpoints(its, select, min_it, max_it)
@@ -629,7 +644,7 @@ def eval_checkpoints(custom_hparams: str, checkpoint_dir: str, select: int, min_
     debug_logger.info("None selected. Exiting.")
     return
 
-  hparams = create_hparams(n_speakers, n_symbols, custom_hparams)
+  hparams = create_hparams(n_speakers, n_symbols, n_accents, custom_hparams)
 
   collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
   val_loader = prepare_valloader(hparams, collate_fn, valset)

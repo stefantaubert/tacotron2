@@ -6,31 +6,27 @@ import matplotlib.pylab as plt
 import numpy as np
 from tqdm import tqdm
 
-from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
-from src.app.io import (get_checkpoints_dir, get_infer_log, save_infer_plot,
-                        load_speakers_json, save_infer_wav, get_inference_root_dir)
-from src.app.pre import (load_filelist, load_filelist_speakers_json,
-                         load_filelist_symbol_converter)
+from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
+from src.app.io import (get_checkpoints_dir, get_infer_log,
+                        save_infer_wav, get_inference_root_dir)
 from src.app.tacotron.io import get_train_dir
 from src.app.tacotron.training import load_settings
 from src.app.waveglow import get_train_dir as get_wg_train_dir
-from src.core.common import (Language, float_to_wav, get_basename,
+from src.core.common import (float_to_wav,
                              get_custom_or_last_checkpoint,
                              get_last_checkpoint, get_parent_dirname,
                              get_subdir, parse_json, plot_melspec,
                              stack_images_vertically, stack_images_horizontally)
 from src.core.inference import get_logger
 from src.core.inference import infer as infer_core
+from src.app.tacotron.training import load_settings
+from src.app.pre import (get_prepared_dir, load_filelist_accents_ids,
+                         load_filelist_speakers_json, load_inference_csv, get_text_dir, load_filelist_symbol_converter)
 
 
 def get_infer_dir(train_dir: str, input_name: str, iteration: int, speaker_id: int):
   subdir_name = f"{datetime.datetime.now():%Y-%m-%d,%H-%M-%S},text={input_name},speaker={speaker_id},it={iteration}"
   return get_subdir(get_inference_root_dir(train_dir), subdir_name, create=True)
-
-
-def load_infer_text(file_name: str) -> List[str]:
-  with open(file_name, "r") as f:
-    return f.readlines()
 
 
 def load_infer_symbols_map(symbols_map: str) -> List[str]:
@@ -92,7 +88,7 @@ def save_infer_h_plot(infer_dir: str, sentence_ids: List[int]):
   stack_images_horizontally(paths, path)
 
 
-def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker: str, waveglow: str = "pretrained", ignore_tones: bool = False, ignore_arcs: bool = True, symbols_map: Optional[str] = None, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = 0.5, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050, analysis: bool = True, ipa: bool = True):
+def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveglow: str = "pretrained", custom_checkpoint: Optional[int] = None, sentence_pause_s: float = 0.5, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050, analysis: bool = True):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -100,38 +96,41 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
   init_logger(logger)
   add_console_out_to_logger(logger)
 
-  input_name = get_basename(text)
   checkpoint_path, iteration = get_custom_or_last_checkpoint(
     get_checkpoints_dir(train_dir), custom_checkpoint)
 
-  speakers = load_speakers_json(train_dir)
+  prep_name, custom_taco_hparams_loaded = load_settings(train_dir)
+  prep_dir = get_prepared_dir(base_dir, prep_name)
+  assert os.path.isdir(prep_dir)
+
+  speakers = load_filelist_speakers_json(prep_dir)
   speaker_id = speakers[ds_speaker]
-  accent_id = speakers["thchs,D21"]
-  logger.info(f"Speaker id {speaker_id}, accent_id {accent_id}.")
-  infer_dir = get_infer_dir(train_dir, input_name, iteration, speaker_id)
+  infer_dir = get_infer_dir(train_dir, text_name, iteration, speaker_id)
   add_file_out_to_logger(logger, get_infer_log(infer_dir))
 
   train_dir_wg = get_wg_train_dir(base_dir, waveglow, create=False)
   assert os.path.isdir(train_dir_wg)
   wg_checkpoint_path, _ = get_last_checkpoint(get_checkpoints_dir(train_dir_wg))
+  _, custom_wg_hparams_loaded = load_settings(train_dir_wg)
+
+  text_dir = get_text_dir(prep_dir, text_name, create=False)
+  assert os.path.isdir(text_dir)
+  infer_sents = load_inference_csv(text_dir)
 
   wav, analysis_stack = infer_core(
     taco_path=checkpoint_path,
     waveglow_path=wg_checkpoint_path,
-    conv=load_symbol_converter(train_dir),
-    lines=load_infer_text(text),
+    symbol_id_dict=load_filelist_symbol_converter(prep_dir),
+    accent_id_dict=load_filelist_accents_ids(prep_dir),
     n_speakers=len(speakers),
     speaker_id=speaker_id,
     sentence_pause_s=sentence_pause_s,
     sigma=sigma,
     denoiser_strength=denoiser_strength,
     sampling_rate=sampling_rate,
-    ipa=ipa,
-    ignore_tones=ignore_tones,
-    ignore_arcs=ignore_arcs,
-    subset_id=accent_id,
-    lang=lang,
-    symbols_map=load_infer_symbols_map(symbols_map) if symbols_map else None
+    sentences=infer_sents,
+    custom_taco_hparams=custom_taco_hparams_loaded,
+    custom_wg_hparams=custom_wg_hparams_loaded
   )
 
   logger.info("Saving wav...")
@@ -157,11 +156,8 @@ def infer(base_dir: str, train_name: str, text: str, lang: Language, ds_speaker:
 if __name__ == "__main__":
   infer(
     base_dir="/datasets/models/taco2pt_v5",
-    train_name="ljs_ipa_scratch",
-    text="examples/ipa/north_sven_orig.txt",
-    lang=Language.IPA,
+    train_name="debug",
+    text_name="north",
     ds_speaker="ljs,1",
-    symbols_map="maps/inference/en_ipa.json",
-    ipa=True,
-    analysis=False
+    analysis=True
   )

@@ -18,13 +18,36 @@ class Sentence:
   serialized_accents: str
   # Contains only the symbols which are known
 
+  def get_symbol_ids(self):
+    return deserialize_list(self.serialized_symbols)
+
+  def get_accent_ids(self):
+    return deserialize_list(self.serialized_accents)
+
+  def get_formatted(self, symbol_id_dict: SymbolIdDict, accent_id_dict: AccentsDict):
+    part1 = f"{self.sent_id}: "
+    result = f"{part1}{symbol_id_dict.get_text(self.serialized_symbols)} ({len(self.get_symbol_ids())})\n"
+    result += f"{' ' * len(part1)}{''.join(map(str, self.get_accent_ids()))}\n"
+    accent_ids_list = []
+    for occuring_accent_id in sorted(set(self.get_accent_ids())):
+      accent_ids_list.append(
+        f"{occuring_accent_id} = {accent_id_dict.get_accent(occuring_accent_id)}")
+    result += f"{' ' * len(part1)}{', '.join(accent_ids_list)}"
+    return result
+
 
 class SentenceList(GenericList[Sentence]):
   def get_occuring_symbols(self) -> Set[str]:
     return get_unique_items([text_to_symbols(x.text, x.lang) for x in self.items()])
 
+  def get_formatted(self, symbol_id_dict: SymbolIdDict, accent_id_dict: AccentsDict):
+    result = ""
+    for sentence in self.items():
+      result += sentence.get_formatted(symbol_id_dict, accent_id_dict) + "\n"
+    return result
 
-class InferSentenceList(GenericList[Sentence]):
+
+class InferSentenceList(SentenceList):
   pass
 
 

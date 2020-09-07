@@ -5,3 +5,4 @@ from src.app.pre.text import preprocess_text, text_normalize, text_convert_to_ip
 from src.app.pre.wav import preprocess_wavs, wavs_normalize, wavs_remove_silence, wavs_upsample, load_wav_csv
 from src.app.pre.mapping import try_load_symbols_map, create_weights_map, create_inference_map
 from src.app.pre.tools import remove_silence_plot as wavs_remove_silence_plot
+from src.app.pre.inference import load_inference_csv, get_text_dir

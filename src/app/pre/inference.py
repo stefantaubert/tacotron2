@@ -11,8 +11,8 @@ _inference_csv = "inference.csv"
 _symbols_json = "symbols.json"
 
 
-def _get_text_dir(prep_dir: str, text_name: str):
-  return get_subdir(prep_dir, text_name, create=True)
+def get_text_dir(prep_dir: str, text_name: str, create: bool):
+  return get_subdir(prep_dir, text_name, create)
 
 
 def _load_text_csv(text_dir: str) -> SentenceList:
@@ -60,6 +60,7 @@ def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang:
   if not os.path.isdir(prep_dir):
     print("Please prepare data first.")
   else:
+    print("Adding text...")
     symbol_ids, data = infer_add(
       text=read_text(filepath),
       accent_ids=load_filelist_accents_ids(prep_dir),
@@ -67,7 +68,7 @@ def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang:
       accent=accent,
       replace_unknown_ipa_by=replace_unknown_ipa_by
     )
-    text_dir = _get_text_dir(prep_dir, text_name)
+    text_dir = get_text_dir(prep_dir, text_name, create=True)
     _save_text_csv(text_dir, data)
     _save_text_symbol_converter(text_dir, symbol_ids)
     _accent_template(base_dir, prep_name, text_name)
@@ -76,10 +77,11 @@ def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang:
 
 def normalize_text(base_dir: str, prep_name: str, text_name: str, replace_unknown_ipa_by: str = "_"):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
-  text_dir = _get_text_dir(prep_dir, text_name)
+  text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
     print("Please add text first.")
   else:
+    print("Normalizing text...")
     symbol_ids, updated_sentences = infer_norm(
       sentences=_load_text_csv(text_dir),
       text_symbols=_load_text_symbol_converter(text_dir)
@@ -92,10 +94,11 @@ def normalize_text(base_dir: str, prep_name: str, text_name: str, replace_unknow
 
 def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones: bool = False, ignore_arcs: bool = True, replace_unknown_ipa_by: str = "_"):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
-  text_dir = _get_text_dir(prep_dir, text_name)
+  text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
     print("Please add text first.")
   else:
+    print("Converting text to IPA...")
     symbol_ids, updated_sentences = infer_convert_ipa(
       sentences=_load_text_csv(text_dir),
       text_symbols=_load_text_symbol_converter(text_dir),
@@ -111,10 +114,11 @@ def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones
 
 def accent_apply(base_dir: str, prep_name: str, text_name: str, replace_unknown_ipa_by: str = "_"):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
-  text_dir = _get_text_dir(prep_dir, text_name)
+  text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
     print("Please add text first.")
   else:
+    print("Applying accents...")
     updated_sentences = infer_accents_apply(
       sentences=_load_text_csv(text_dir),
       accented_symbols=_load_accents_csv(text_dir),
@@ -126,7 +130,7 @@ def accent_apply(base_dir: str, prep_name: str, text_name: str, replace_unknown_
 
 def map_text(base_dir: str, prep_name: str, text_name: str, symbols_map: str, replace_unknown_ipa_by: str = "_"):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
-  text_dir = _get_text_dir(prep_dir, text_name)
+  text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
     print("Please add text first.")
   else:
@@ -141,7 +145,7 @@ def map_text(base_dir: str, prep_name: str, text_name: str, symbols_map: str, re
 
 
 def map_to_prep_symbols(base_dir: str, prep_name: str, text_name: str, replace_unknown_ipa_by: str = "_"):
-  prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
+  #prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   # TODO load map
   symbols_map = ""
   map_text(base_dir, prep_name, text_name, symbols_map, replace_unknown_ipa_by)
@@ -149,10 +153,11 @@ def map_to_prep_symbols(base_dir: str, prep_name: str, text_name: str, replace_u
 
 def _accent_template(base_dir: str, prep_name: str, text_name: str):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
-  text_dir = _get_text_dir(prep_dir, text_name)
+  text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
     print("Please add text first.")
   else:
+    print("Updating accent template...")
     accented_symbol_list = infer_accents_template(
       sentences=_load_text_csv(text_dir),
       text_symbols=_load_text_symbol_converter(text_dir),
@@ -163,10 +168,11 @@ def _accent_template(base_dir: str, prep_name: str, text_name: str):
 
 def _prepare_inference(base_dir: str, prep_name: str, text_name: str, replace_unknown_ipa_by: str = "_"):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
-  text_dir = _get_text_dir(prep_dir, text_name)
+  text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
     print("Please add text first.")
   else:
+    print("Updating text for inference...")
     infer_sents = infer_prepare(
       sentences=_load_text_csv(text_dir),
       text_symbols=_load_text_symbol_converter(text_dir),
