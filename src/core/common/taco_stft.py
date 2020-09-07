@@ -5,6 +5,7 @@ from src.core.common.audio import wav_to_float32_tensor
 from src.core.common.stft import STFT
 import tensorflow as tf
 
+
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
   """
   PARAMS
@@ -51,8 +52,8 @@ def create_hparams(hparams_string=None, verbose=False):
 
 class TacotronSTFT(torch.nn.Module):
   def __init__(self, filter_length=1024, hop_length=256, win_length=1024,
-         n_mel_channels=80, sampling_rate=22050, mel_fmin=0.0,
-         mel_fmax=8000.0):
+               n_mel_channels=80, sampling_rate=22050, mel_fmin=0.0,
+               mel_fmax=8000.0):
     super(TacotronSTFT, self).__init__()
     self.n_mel_channels = n_mel_channels
     self.sampling_rate = sampling_rate
@@ -104,7 +105,8 @@ class TacotronSTFT(torch.nn.Module):
     wav_tensor, sr = wav_to_float32_tensor(wav_path)
 
     if sr != self.sampling_rate:
-      raise ValueError("{} {} SR doesn't match target {} SR".format(wav_path, sr, self.sampling_rate))
+      raise ValueError("{} {} SR doesn't match target {} SR".format(
+        wav_path, sr, self.sampling_rate))
 
     return self.get_mel_tensor(wav_tensor)
 

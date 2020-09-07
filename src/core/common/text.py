@@ -1,4 +1,7 @@
 import re
+from src.core.common.adjustments.whitespace import collapse_whitespace
+from src.core.common.adjustments.abbreviations import expand_abbreviations
+from src.core.common.adjustments.numbers import normalize_numbers
 from dragonmapper import hanzi
 from src.core.common.language import Language
 from src.core.common.ipa2symb import extract_from_sentence
@@ -7,8 +10,8 @@ from typing import List, OrderedDict as OrderedDictType, Set, Optional
 from nltk.tokenize import sent_tokenize
 from nltk import download
 import epitran
-from src.core.common.adjustments import expand_abbreviations, normalize_numbers, collapse_whitespace
 from unidecode import unidecode as convert_to_ascii
+
 
 _chn_question_mark = "？"
 _chn_exklamation_mark = "！"
@@ -148,9 +151,9 @@ def split_text(text: str, separators: List[str]) -> List[str]:
   pattern = "|".join(separators)
   sents = re.split(f'({pattern})', text)
   res = []
-  for i in range(len(sents)):
+  for i, sent in enumerate(sents):
     if i % 2 == 0:
-      res.append(sents[i])
+      res.append(sent)
       if i + 1 < len(sents):
         res[-1] += sents[i + 1]
   res = [x.strip() for x in res]

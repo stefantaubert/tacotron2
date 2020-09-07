@@ -2,7 +2,6 @@ import os
 from functools import partial
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.utils import get_subdir
-from src.core.pre import TextData
 
 from src.app.pre.ds import get_ds_dir, load_ds_csv, load_symbols_json
 

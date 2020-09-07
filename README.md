@@ -3,6 +3,7 @@
 ## Applied modifications
 
 I have modified the original tacotron 2 code:
+
 - added multispeaker support
   - in branch `single_speaker_legacy` you find the last working code for the single speaker architecture
 - added support to train on THCHS-30 dataset
@@ -18,15 +19,16 @@ I have modified the original tacotron 2 code:
 - added plotting of symbolspace in 2D and 3D and in a table
 - adjusted paths
 
-# Setup
+## Setup
 
-## Locally with remote Server
+### Locally with remote Server
 
 Serveraddress for example `joedoe@example.com`.
 
-### SSH login
+#### SSH login
 
 Execute locally:
+
 ```bash
 # generate ssh key
 ssh-keygen -f ~/.ssh/abc-key-ecdsa -t ecdsa -b 521
@@ -36,7 +38,7 @@ ssh-copy-id -i ~/.ssh/abc-key-ecdsa joedoe@example.com
 ssh -i ~/.ssh/abc-key-ecdsa joedoe@example.com
 ```
 
-### samba access to get synthesized files
+#### samba access to get synthesized files
 
 ```bash
 sudo apt-get update
@@ -44,37 +46,43 @@ sudo apt-get install samba
 sudo smbpasswd -a user # example set pwd to 123456
 sudo nano /etc/samba/smb.conf
 ```
+
 now add on end:
+
 ```txt
 [joedoe]
 path = /home/joedoe
 valid users = joedoe
 read only = no
 ```
+
 and then:
+
 ```bash
 sudo service smbd restart
 ```
+
 and then you can mount that drive with:
+
 ```bash
 mkdir -p joedoe_home
 sudo mount -t cifs -o user=joedoe,password=123456,uid=$(id -u),gid=$(id -g) //example.com/joedoe joedoe_home
 ```
 
-## Create Google Cloud Platform VM (optional)
+### Create Google Cloud Platform VM (optional)
 
-### Prerequisites
+#### Prerequisites
 
 You need to upgrade your free account to a paid account (you retain your free money).
 For this training you approximately need 100$.
 You also need to inclease your GPU quota at least for the T4 GPU to one.
 You can also use an other GPU if you want, the code is optimized for a GPU with 16GB ram.
 
-### Create VM
+#### Create VM
 
 Create VM with pytorch 1.4 and Cuda 10.1 already installed and configured using *Google Cloud Shell*:
 
-```
+```bash
 export IMAGE_FAMILY="pytorch-1-4-cu101"
 export ZONE="europe-west4-b"
 export INSTANCE_NAME="tacotron2-instance"
@@ -94,14 +102,16 @@ gcloud compute instances create $INSTANCE_NAME \
 - [More information on the parameters](https://cloud.google.com/sdk/gcloud/reference/compute/instances/create)
 
 Install filezilla on your machine to access files:
+
 ```bash
 sudo apt-get install filezilla -y
 # i don't tested if the '-C joedoe' is necessary and if i can use ecdsa
 ssh-keygen -f ~/.ssh/gloud-rsa -t rsa -b 4096 -C joedoe
 ```
+
 and then copy the content of the file `~/.ssh/gloud-rsa.pub` to properties -> SSH of your VM
 
-## Checkout repo
+### Checkout repo
 
 ```bash
 # get link from https://www.anaconda.com/products/individual and then 'Linux Python 3.7 64-Bit (x86) Installer' copy link
@@ -119,19 +129,21 @@ pip install -r requirements.txt
 ```
 
 to be able to run training without being connected with ssh:
+
 ```bash
 sudo apt install screen
 # usage: screen
 ```
 
 check cuda is installed:
+
 ```bash
 nvcc --version
 ```
 
-## IPA synthesis using LJSpeech-1.1 dataset
+### IPA synthesis using LJSpeech-1.1 dataset
 
-### Install flite
+#### Install flite
 
 If you want to train on IPA-Symbols you need to install [flite](https://github.com/festvox/flite) for G2P conversion of English text:
 
@@ -146,33 +158,33 @@ make lex_lookup
 sudo cp lex_lookup /usr/local/bin
 ```
 
-### Automatically download and prepare dataset
+#### Automatically download and prepare dataset
 
 duration: about 1.5h
 
 ```bash
 ```
 
-### Start training
+#### Start training
 
 duration: about 5 days on t4
 
 ```bash
 ```
 
-### Continue training
+#### Continue training
 
 ```bash
 ```
 
-### Synthesize example
+#### Synthesize example
 
 ```bash
 ```
 
-## Filestructure
+### Filestructure
 
-```
+```txt
 $base_dir
 
 ├── pre
@@ -345,22 +357,23 @@ $base_dir
 │  │── ...
 ```
 
-# Maps
+## Maps
 
 Maps can be created with `create_map_template.py`.
 
-## Weight maps
+### Weight maps
 
 These maps are used to map weights from a pretrained model to a new model where the two symbolsets differ.
 
-## Inference maps
+### Inference maps
 
 These maps are used to translate unknown symbols in the text which should be infered to symbols known to the model.
 
-# Notes
+## Notes
 
 Create custom pylint file: `pylint --generate-rcfile > pylintrc`
 Sort imports on save (not really working):
+
 ```json
 {
   "editor.codeActionsOnSave": {
@@ -368,20 +381,31 @@ Sort imports on save (not really working):
   }
 }
 ```
-## Requirements
+
+For custom isort (not working)
+
+```json
+{
+  "python.sortImports.path": "/home/mi/anaconda3/envs/py37/bin/isort"
+}
+```
+
+### Requirements
 
 - `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)
 - `gdown` only required for downloading pretrained waveglow-model
 - `wget` only required for automatically downloading datasets
 - `scikit-image` only for comparing mels for waveglow evaluation
 
-## Configs
+### Configs
 
 I also successfully tryed this configurations:
+
 - Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
 - Cuda 10.2.89, Nvidia driver 440.100, cuDNN not installed with RTX 2070 8GB
 
 to save requirements:
+
 ```bash
 pipreqs .
 ```

@@ -6,9 +6,11 @@ import torch
 from src.core.common.audio import get_sample_count
 from typing import List
 
+
 def concatenate_mels(audios: List[torch.Tensor], sentence_pause_s: float, sampling_rate: int) -> torch.Tensor:
   sentence_pause_samples_count = get_sample_count(sampling_rate, sentence_pause_s)
   return concatenate_mels_core(audios, sentence_pause_samples_count)
+
 
 def concatenate_mels_core(audios: List[torch.Tensor], sentence_pause_samples_count: int = 0) -> torch.Tensor:
   if len(audios) == 1:
@@ -17,8 +19,9 @@ def concatenate_mels_core(audios: List[torch.Tensor], sentence_pause_samples_cou
     dt = audios[0].dtype
     dev = audios[0].device
     size = audios[0].size()
-    sentence_pause_samples = torch.zeros([sentence_pause_samples_count, size[1], size[2]], dtype=dt, device=dev)
-    output = torch.tensor([], dtype=dt, device=dev)
+    sentence_pause_samples = torch.zeros(
+      [sentence_pause_samples_count, size[1], size[2]], dtype=dt, device=dev)
+    output = torch.Tensor([], dtype=dt, device=dev)
     conc = []
     for audio in audios[:-1]:
       conc.append(audio)
@@ -27,10 +30,12 @@ def concatenate_mels_core(audios: List[torch.Tensor], sentence_pause_samples_cou
     output = torch.cat(tuple(conc), dim=0)
     return output
 
+
 def compare_mels(path_a, path_b):
   img_a = imageio.imread(path_a)
   img_b = imageio.imread(path_b)
   return compare_mels_core(img_a, img_b)
+
 
 def compare_mels_core(img_a, img_b):
   #img_b = imageio.imread(path_original_plot)
@@ -38,13 +43,14 @@ def compare_mels_core(img_a, img_b):
   img_a_width = img_a.shape[1]
   img_b_width = img_b.shape[1]
   resize_width = img_a_width if img_a_width < img_b_width else img_b_width
-  img_a = img_a[:,:resize_width]
-  img_b = img_b[:,:resize_width]
+  img_a = img_a[:, :resize_width]
+  img_b = img_b[:, :resize_width]
   #imageio.imsave("/tmp/a.png", img_a)
   #imageio.imsave("/tmp/b.png", img_b)
   score, diff_img = structural_similarity(img_a, img_b, full=True, multichannel=True)
   #imageio.imsave(path_out, diff)
   return score, diff_img
+
 
 def plot_melspec(mel, mel_dim_x=16, mel_dim_y=5, factor=1, title=None):
   height, width = mel.shape
@@ -52,7 +58,7 @@ def plot_melspec(mel, mel_dim_x=16, mel_dim_y=5, factor=1, title=None):
   _, axes = plt.subplots(
     nrows=1,
     ncols=1,
-    figsize=(mel_dim_x*factor*width_factor, mel_dim_y*factor),
+    figsize=(mel_dim_x * factor * width_factor, mel_dim_y * factor),
   )
 
   axes.set_title(title)
