@@ -1,13 +1,15 @@
 import os
 from functools import partial
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.utils import get_subdir
 from src.core.pre import TextData
 
 from src.app.pre.ds import get_ds_dir, load_ds_csv, load_symbols_json
-from src.core.common import SymbolIdDict, SymbolsDict, get_subdir
-from src.core.pre import TextDataList
-from src.core.pre import text_convert_to_ipa as text_convert_to_ipa_core
-from src.core.pre import text_normalize as text_normalize_core
-from src.core.pre import text_preprocess as text_preprocess_core
+
+from src.core.pre.text.pre import SymbolsDict, TextData, TextDataList
+from src.core.pre.text.pre import convert_to_ipa as text_convert_to_ipa_core
+from src.core.pre.text.pre import normalize as text_normalize_core
+from src.core.pre.text.pre import preprocess as text_preprocess_core
 
 _text_data_csv = "data.csv"
 _text_symbols_json = "symbols.json"

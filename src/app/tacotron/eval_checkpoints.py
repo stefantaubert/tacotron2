@@ -1,17 +1,16 @@
 import os
+from src.app.pre.prepare import get_prepared_dir, load_filelist_accents_ids, load_filelist_speakers_json, load_filelist_symbol_converter
 
 from src.app.utils import add_console_out_to_logger, init_logger
 from src.app.io import get_checkpoints_dir, load_valset
 from src.app.tacotron.io import get_train_dir
-from src.core.tacotron import eval_checkpoints as eval_checkpoints_core
-from src.core.tacotron import get_train_logger
+from src.core.tacotron.training import eval_checkpoints as eval_checkpoints_core
+from src.core.tacotron.training import get_train_logger
 from src.app.io import (get_checkpoints_dir, load_valset, load_settings)
-from src.app.pre import (get_prepared_dir, load_filelist_accents_ids,
-                         load_filelist_speakers_json,
-                         load_filelist_symbol_converter)
 
 
-def eval_checkpoints(base_dir: str, train_name: str, select: int, min_it: int, max_it: int):
+
+def eval_checkpoints_main(base_dir: str, train_name: str, select: int, min_it: int, max_it: int):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -39,7 +38,7 @@ def eval_checkpoints(base_dir: str, train_name: str, select: int, min_it: int, m
 
 
 if __name__ == "__main__":
-  eval_checkpoints(
+  eval_checkpoints_main(
     base_dir="/datasets/models/taco2pt_v5",
     train_name="debug",
     select=1,

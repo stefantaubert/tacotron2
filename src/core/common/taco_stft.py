@@ -1,8 +1,4 @@
-import imageio
-import matplotlib.pylab as plt
-import numpy as np
 from librosa.filters import mel as librosa_mel_fn
-from skimage.metrics import structural_similarity
 
 import torch
 from src.core.common.audio import wav_to_float32_tensor
@@ -106,10 +102,10 @@ class TacotronSTFT(torch.nn.Module):
 
   def get_mel_tensor_from_file(self, wav_path: str) -> torch.Tensor:
     wav_tensor, sr = wav_to_float32_tensor(wav_path)
-    
+
     if sr != self.sampling_rate:
       raise ValueError("{} {} SR doesn't match target {} SR".format(wav_path, sr, self.sampling_rate))
-    
+
     return self.get_mel_tensor(wav_tensor)
 
   def get_mel_tensor(self, wav_tensor: torch.Tensor) -> torch.Tensor:

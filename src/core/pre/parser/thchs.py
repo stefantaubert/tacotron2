@@ -1,10 +1,11 @@
 import os
+from src.core.common.language import Language
+from src.core.common.text import text_to_symbols
+from src.core.common.utils import download_tar
 
 from tqdm import tqdm
 
-from src.core.common import download_tar
 from src.core.pre.parser.data import PreDataList, PreData
-from src.core.common import Language, text_to_symbols
 from typing import List, Tuple
 
 __question_particle1 = '吗'
@@ -28,7 +29,7 @@ def parse(dir_path: str) -> PreDataList:
     (train_words, train_wavs),
     (test_words, test_wavs)
   ]
-  
+
   files: List[Tuple[Tuple[str, int, int], PreData]] = []
 
   print("Parsing files...")
@@ -40,7 +41,7 @@ def parse(dir_path: str) -> PreDataList:
     for x in tqdm(res):
       pos = x.find(' ')
       name, chinese = x[:pos], x[pos + 1:]
-      
+
       speaker_name, nr = name.split("_")
       nr = int(nr)
       speaker_name_letter = speaker_name[0]
@@ -54,7 +55,7 @@ def parse(dir_path: str) -> PreDataList:
         print("Not found wav file:", wav_path)
         continue
 
-      # remove "=" from chinese transcription because it is not correct 
+      # remove "=" from chinese transcription because it is not correct
       # occurs only in sentences with nr. 374, e.g. B22_374
       chinese = chinese.replace("= ", '')
       is_question = str.endswith(chinese, __question_particle1) or str.endswith(chinese, __question_particle2)

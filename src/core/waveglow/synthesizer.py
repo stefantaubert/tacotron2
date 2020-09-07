@@ -1,13 +1,13 @@
 # For copyright see LICENCE
 
 import os
+from src.core.common.audio import is_overamp
 from typing import Optional
 
 import torch
 from src.core.waveglow.denoiser import Denoiser
 from src.core.waveglow.hparams import create_hparams
 from src.core.waveglow.train import load_model
-from src.core.common import is_overamp
 import logging
 import numpy as np
 

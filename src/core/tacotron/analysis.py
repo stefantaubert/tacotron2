@@ -1,6 +1,5 @@
-from typing import Optional, List, Dict, Tuple
-from src.core.common import get_custom_or_last_checkpoint, SymbolIdDict
-from src.core.tacotron.training import load_symbol_embedding_weights_from
+from src.core.common.symbol_id_dict import SymbolIdDict
+from typing import List, Dict, Tuple
 from logging import Logger
 import torch
 from sklearn.preprocessing import normalize
@@ -16,7 +15,7 @@ def norm2emb(emb: torch.Tensor) -> np.ndarray:
     word_vector = emb[i].numpy()
     norm2 = normalize(word_vector[:,np.newaxis], axis=0).ravel()
     tmp.append(np.array([norm2]))
-  res = np.concatenate(tmp, axis=0) 
+  res = np.concatenate(tmp, axis=0)
   return res
 
 def get_similarities(emb: np.ndarray) -> Dict[int, List[Tuple[int, float]]]:
@@ -77,7 +76,7 @@ def plot_embeddings(symbols: SymbolIdDict, emb: torch.Tensor, logger: Logger) ->
 
   logger.info(f"Emb size {emb.shape}")
   logger.info(f"Sym len {len(symbols)}")
-  
+
   sims = get_similarities(emb.numpy())
   df = sims_to_csv(sims, symbols)
   all_symbols = symbols.get_all_symbols()

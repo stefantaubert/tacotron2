@@ -1,15 +1,14 @@
 import os
+from src.app.pre.prepare import get_prepared_dir, load_filelist
+from src.core.pre.merge_ds import split_train_test_val
 from typing import Optional
 
 from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
 from src.app.io import (get_checkpoints_dir,
                         get_train_log_file, get_train_logs_dir, load_trainset,
                         load_valset, save_settings, save_testset, save_trainset, load_settings, save_valset)
-from src.app.pre import get_prepared_dir, load_filelist
 from src.app.waveglow.io import get_train_dir
-from src.core.pre import split_train_test_val
-from src.core.waveglow import get_train_logger
-from src.core.waveglow import train as train_core
+from src.core.waveglow.train import train as train_core, get_logger as get_train_logger
 
 
 def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.01, validation_size: float = 0.01, hparams: Optional[str] = None, split_seed: int = 1234):

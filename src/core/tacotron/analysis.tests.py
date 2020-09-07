@@ -1,8 +1,8 @@
 import logging
+from src.core.common.symbol_id_dict import SymbolIdDict
 import numpy as np
 import unittest
 from src.core.tacotron.analysis import norm2emb, get_similarities, sims_to_csv, emb_plot_2d, emb_plot_3d, plot_embeddings
-from src.core.common import SymbolIdDict
 import torch
 
 class UnitTests(unittest.TestCase):

@@ -1,13 +1,15 @@
 import random
 from dataclasses import dataclass
-from src.core.common import AccentsDict
+from src.core.common.speakers_dict import SpeakersDict
+from src.core.common.accents_dict import AccentsDict
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.utils import GenericList, get_unique_items
+from src.core.common.language import Language
 
-from src.core.common import GenericList
 from typing import List, OrderedDict, Tuple, Set
 
 from sklearn.model_selection import train_test_split
 
-from src.core.common import SpeakersDict, SymbolIdDict, Language, get_unique_items
 from src.core.pre.ds import DsData, DsDataList
 from src.core.pre.mel import MelData, MelDataList
 from src.core.pre.text import TextData, TextDataList

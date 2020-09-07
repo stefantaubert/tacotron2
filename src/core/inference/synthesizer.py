@@ -1,7 +1,7 @@
 from typing import List, Optional, Tuple
 
-from src.core.waveglow import Synthesizer as WGSynthesizer
-from src.core.tacotron import Synthesizer as TacoSynthesizer
+from src.core.waveglow.synthesizer import Synthesizer as WGSynthesizer
+from src.core.tacotron.synthesizer import Synthesizer as TacoSynthesizer
 import logging
 import torch
 import numpy as np

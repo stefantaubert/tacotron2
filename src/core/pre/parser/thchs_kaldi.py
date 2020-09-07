@@ -1,13 +1,14 @@
 import glob
 import os
 import shutil
+from src.core.common.language import Language
+from src.core.common.text import text_to_symbols
+from src.core.common.utils import create_parent_folder, download_tar
 import tempfile
 
 from tqdm import tqdm
 
-from src.core.common import create_parent_folder, download_tar
 from src.core.pre.parser.data import PreData, PreDataList
-from src.core.common import Language, text_to_symbols
 
 def download(dir_path: str):
   download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"
@@ -24,7 +25,7 @@ def parse(dir_path: str) -> PreDataList:
   if not os.path.exists(dir_path):
     print("Directory not found:", dir_path)
     raise Exception()
-  
+
   sent_paths = os.path.join(dir_path, "data", "*.trn")
   wav_paths = os.path.join(dir_path, "data", "*.wav")
   sent_files = glob.glob(sent_paths)
@@ -34,7 +35,7 @@ def parse(dir_path: str) -> PreDataList:
   wavs_sents = sorted(tuple(zip(wav_files, sent_files_gen)))
   skipped = [x for x in wavs_sents if x[1] not in sent_files]
   wavs_sents = [x for x in wavs_sents if x[1] in sent_files]
-  
+
   print("Skipped:", len(skipped), "of", len(sent_files_gen))
   #print(skipped)
 
@@ -44,7 +45,7 @@ def parse(dir_path: str) -> PreDataList:
     with open(sent_file, 'r', encoding='utf-8') as f:
       content = f.readlines()
     chn = content[0].strip()
-    # remove "=" from chinese transcription because it is not correct 
+    # remove "=" from chinese transcription because it is not correct
     # occurs only in sentences with nr. 374, e.g. B22_374
     chn = chn.replace("= ", '')
     basename = os.path.basename(wav)[:-4]
@@ -57,7 +58,7 @@ def parse(dir_path: str) -> PreDataList:
     tmp = PreData(basename, speaker, chn, wav, symbols, accents, Language.CHN)
     res.append(tmp)
   print("Done.")
-  
+
   x: PreData
   res.sort(key=lambda x: x.name)
 

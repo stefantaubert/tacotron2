@@ -1,4 +1,4 @@
-from src.core.common import get_subdir
+from src.core.common.utils import get_subdir
 from src.app.io import get_train_root_dir
 
 def get_train_dir(base_dir: str, train_name: str, create: bool):

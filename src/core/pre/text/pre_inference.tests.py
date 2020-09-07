@@ -1,6 +1,5 @@
 import unittest
 from src.core.pre.text.pre_inference import *
-from src.core.common import read_text
 
 
 class UnitTests(unittest.TestCase):

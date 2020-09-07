@@ -1,6 +1,7 @@
+from src.core.common.symbols_map import SymbolsMap
+from src.core.common.symbol_id_dict import SymbolIdDict
 import unittest
 from src.core.tacotron.training import load_symbol_embedding_weights_from, get_uniform_weights, get_mapped_embedding_weights_core
-from src.core.common import SymbolIdDict, SymbolsMap
 from torch import nn
 
 class UnitTests(unittest.TestCase):

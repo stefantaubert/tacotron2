@@ -1,4 +1,7 @@
 import os
+from src.core.common.train import get_custom_or_last_checkpoint
+from src.core.tacotron.training import get_train_logger, load_symbol_embedding_weights_from
+from src.core.common.utils import get_subdir, save_df
 
 import plotly.offline as plt
 from typing import Optional
@@ -6,13 +9,8 @@ from src.app.utils import add_console_out_to_logger, init_logger
 from src.app.io import get_checkpoints_dir
 import pandas as pd
 from src.app.tacotron.io import get_train_dir
-from src.core.common import get_custom_or_last_checkpoint, save_df
-from src.core.tacotron import plot_embeddings as plot_embeddings_core
-from src.core.tacotron import get_train_logger, load_symbol_embedding_weights_from
-from src.app.io import get_train_root_dir
-from src.core.common import get_subdir
+from src.core.tacotron.analysis import plot_embeddings as plot_embeddings_core
 
-from src.app.tacotron.training import load_settings
 
 def get_analysis_root_dir(train_dir: str):
   return get_subdir(train_dir, "analysis", create=True)

@@ -1,10 +1,10 @@
 import os
+from src.core.common.utils import get_parent_dirname, get_subdir, stack_images_vertically
+from src.core.common.mel_plot import compare_mels
 
 import imageio
 
 from src.app.io import get_train_root_dir
-from src.core.common import (compare_mels, get_parent_dirname, get_subdir,
-                             stack_images_vertically)
 
 
 def get_train_dir(base_dir: str, train_name: str, create: bool):

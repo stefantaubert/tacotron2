@@ -1,14 +1,14 @@
 import os
 from functools import partial
-from src.core.pre import WavData
+from src.core.common.utils import get_subdir
 
 from src.app.pre.ds import get_ds_dir, load_ds_csv
-from src.core.common import get_subdir
-from src.core.pre import WavDataList
-from src.core.pre import wavs_normalize as wavs_normalize_core
-from src.core.pre import wavs_preprocess as wavs_preprocess_core
-from src.core.pre import wavs_remove_silence as wavs_remove_silence_core
-from src.core.pre import wavs_upsample as wavs_upsample_core
+
+from src.core.pre.wav import WavData, WavDataList
+from src.core.pre.wav import normalize as wavs_normalize_core
+from src.core.pre.wav import preprocess as wavs_preprocess_core
+from src.core.pre.wav import remove_silence as wavs_remove_silence_core
+from src.core.pre.wav import upsample as wavs_upsample_core
 
 _wav_data_csv = "data.csv"
 

@@ -1,4 +1,8 @@
 import os
+from src.core.common.train import get_custom_or_last_checkpoint, get_last_checkpoint
+from src.app.pre.prepare import get_prepared_dir, load_filelist_accents_ids, load_filelist_speakers_json, load_filelist_symbol_converter
+from src.core.common.mel_plot import plot_melspec
+from src.core.common.utils import get_parent_dirname
 
 import matplotlib.pylab as plt
 
@@ -9,15 +13,9 @@ from src.app.io import (get_checkpoints_dir,
                         save_val_orig_wav, save_val_plot, save_val_wav)
 from src.app.tacotron.io import get_train_dir
 from src.app.tacotron.training import load_settings
-from src.app.waveglow import get_train_dir as get_wg_train_dir
-from src.core.common import (get_custom_or_last_checkpoint,
-                             get_last_checkpoint, get_parent_dirname,
-                             plot_melspec)
-from src.core.inference import get_logger
-from src.core.inference import validate as validate_core
-from typing import Optional, Tuple
-from src.app.pre import (get_prepared_dir, load_filelist, load_filelist_accents_ids,
-                         load_filelist_speakers_json, load_inference_csv, get_text_dir, load_filelist_symbol_converter)
+from src.app.waveglow.training import get_train_dir as get_wg_train_dir
+from src.core.inference.infer import get_logger, validate as validate_core
+from typing import Optional
 
 
 def save_val_pre_postnet_plot(val_dir: str, mel):

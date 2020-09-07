@@ -1,8 +1,8 @@
 import os
+from src.core.common.utils import create_parent_folder
 import gdown
 import shutil
 from src.core.waveglow.converter import convert
-from src.core.common import create_parent_folder
 import sys
 import tempfile
 

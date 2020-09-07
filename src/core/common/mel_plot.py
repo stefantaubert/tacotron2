@@ -1,7 +1,6 @@
 import imageio
 import matplotlib.pylab as plt
 import numpy as np
-from librosa.filters import mel as librosa_mel_fn
 from skimage.metrics import structural_similarity
 import torch
 from src.core.common.audio import get_sample_count
@@ -63,7 +62,7 @@ def plot_melspec(mel, mel_dim_x=16, mel_dim_y=5, factor=1, title=None):
   axes.set_ylabel("Freq. channel")
   axes.imshow(mel, aspect='auto', origin='bottom', interpolation='none')
   return axes
-  
+
 
 if __name__ == "__main__":
   pass

@@ -1,10 +1,12 @@
 from argparse import ArgumentParser
+from src.app.pre.tools import remove_silence_plot
+from src.app.pre.mapping import create_inference_map, create_weights_map
+from src.app.pre.wav import preprocess_wavs, wavs_normalize, wavs_remove_silence, wavs_upsample
+from src.app.pre.text import preprocess_text, text_convert_to_ipa, text_normalize
+from src.app.pre.prepare import prepare_ds
+from src.app.pre.mel import preprocess_mels
+from src.app.pre.ds import preprocess_ljs, preprocess_thchs, preprocess_thchs_kaldi
 
-from src.app import (preprocess_mels, prepare_ds, preprocess_ljs,
-                     preprocess_thchs, preprocess_thchs_kaldi,
-                     text_convert_to_ipa, text_normalize,
-                     preprocess_text, wavs_normalize, preprocess_wavs, wavs_remove_silence_plot,
-                     wavs_remove_silence, wavs_upsample, create_weights_map, create_inference_map)
 from src.cli.utils import parse_tuple_list
 
 
@@ -130,7 +132,7 @@ def init_wavs_remove_silence_plot_parser(parser: ArgumentParser):
                       help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
   parser.add_argument('--buffer_end_ms', type=float,
                       help="amount of factors of chunk_size at the beginning and the end should be reserved", required=True)
-  return wavs_remove_silence_plot
+  return remove_silence_plot
 
 
 def init_create_weights_map_parser(parser: ArgumentParser):

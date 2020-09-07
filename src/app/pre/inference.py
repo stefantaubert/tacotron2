@@ -2,8 +2,12 @@ import os
 from typing import Optional
 
 from src.core.common import get_subdir, read_text, Language, SymbolIdDict, SymbolsMap
-from src.core.pre import Sentence, SentenceList, infer_add, infer_convert_ipa, infer_map, infer_norm, infer_accents_template, infer_accents_apply, AccentedSymbolList, AccentedSymbol, InferSentenceList, infer_prepare
+
 from src.app.pre.prepare import get_prepared_dir, load_filelist_accents_ids, load_filelist_symbol_converter
+
+
+from src.core.pre.text.pre_inference import Sentence, SentenceList, add_text as infer_add, sents_normalize as infer_norm, sents_convert_to_ipa as infer_convert_ipa, sents_map as infer_map, sents_accent_template as infer_accents_template, sents_accent_apply as infer_accents_apply, AccentedSymbolList, AccentedSymbol, InferSentenceList, prepare_for_inference as infer_prepare
+
 
 _text_csv = "text.csv"
 _accents_csv = "accents.csv"

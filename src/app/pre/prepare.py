@@ -1,7 +1,12 @@
 import os
-from src.app.utils import DEFAULT_PADDING_ACCENT, DEFAULT_PADDING_SYMBOL
-from src.core.pre.merge_ds import preprocess
-from src.core.common import AccentsDict
+from src.core.pre.mel import MelDataList
+from src.core.pre.ds import DsDataList
+from src.core.pre.text.pre import TextDataList
+from src.core.pre.wav import WavDataList
+from src.core.common.accents_dict import AccentsDict
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.speakers_dict import SpeakersDict
+from src.core.common.utils import get_subdir
 from typing import List, Tuple, Set
 
 from src.app.pre.ds import get_ds_dir, load_ds_csv, load_speaker_json, load_accents_json
@@ -10,12 +15,7 @@ from src.app.pre.mel import get_mel_dir, load_mel_csv
 from src.app.pre.text import (get_text_dir, load_text_csv,
                               load_text_symbol_converter)
 from src.app.pre.wav import get_wav_dir, load_wav_csv
-from src.core.common import get_subdir, SpeakersDict, SpeakersLogDict, SymbolIdDict, SymbolsDict
-from src.core.pre import (DsData, DsDataList, MelDataList, PreparedData,
-                          PreparedDataList,
-                          TextDataList, WavDataList)
-from src.core.pre import merge_ds as merge_ds_core
-
+from src.core.pre.merge_ds import preprocess as merge_ds_core, PreparedDataList, PreparedData
 
 def _get_prepared_root_dir(base_dir: str, create: bool = False):
   return get_subdir(get_pre_dir(base_dir, create), 'prepared', create)

@@ -1,7 +1,6 @@
-from src.core.common import convert_to_ipa, normalize
-from src.core.common import text_to_symbols
-from src.core.common import SymbolIdDict
-from src.core.common import Language
+from src.core.common.language import Language
+from src.core.common.text import convert_to_ipa, normalize, text_to_symbols
+from src.core.common.symbol_id_dict import SymbolIdDict
 from typing import List, Tuple
 
 

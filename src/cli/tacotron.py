@@ -1,14 +1,17 @@
 from argparse import ArgumentParser
-from src.app import taco_train, taco_continue_train, taco_infer, taco_validate, taco_eval_checkpoints, taco_plot_embeddings
-from src.core.common import Language
-from src.cli.utils import parse_tuple_list
-from typing import Optional, Tuple, List
+from src.app.tacotron.inference import infer
+from src.app.tacotron.validation import validate
+from src.app.tacotron.training import continue_train, train
+from src.app.tacotron.eval_checkpoints import eval_checkpoints_main
+from src.app.tacotron.analysis import plot_embeddings
+from src.core.common.language import Language
+
 
 def init_plot_emb_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--train_name', type=str, required=True)
   parser.add_argument('--custom_checkpoint', type=int, default=0)
-  return taco_plot_embeddings
+  return plot_embeddings
 
 def init_eval_checkpoints_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -17,7 +20,7 @@ def init_eval_checkpoints_parser(parser):
   parser.add_argument('--select', type=int)
   parser.add_argument('--min_it', type=int)
   parser.add_argument('--max_it', type=int)
-  return taco_eval_checkpoints
+  return eval_checkpoints_main
 
 def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -32,13 +35,13 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--weights_train_name', type=str)
   parser.add_argument('--weights_checkpoint', type=int)
   parser.add_argument('--weights_map', type=str)
-  return taco_train
+  return train
 
 def init_continue_train_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--train_name', type=str, required=True)
   parser.add_argument('--hparams', type=str)
-  return taco_continue_train
+  return continue_train
 
 def init_validate_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -51,7 +54,7 @@ def init_validate_parser(parser: ArgumentParser):
   parser.add_argument("--denoiser_strength", default=0.01, type=float, help='Removes model bias.')
   parser.add_argument("--sigma", default=0.666, type=float)
   parser.add_argument('--sampling_rate', type=float, default=22050)
-  return taco_validate
+  return validate
 
 def init_inference_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -72,4 +75,4 @@ def init_inference_parser(parser: ArgumentParser):
   parser.add_argument('--sampling_rate', type=float, default=22050)
   parser.add_argument('--analysis', action='store_true')
   parser.set_defaults(ignore_arcs=True)
-  return taco_infer
+  return infer

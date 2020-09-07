@@ -1,15 +1,12 @@
 #from src.core.pre import text_to_symbols_pipeline
-from src.core.common import AccentsDict
-from src.core.common import deserialize_list
-from src.core.pre import Sentence
-from src.core.pre import InferSentenceList
-from src.core.common import Language, TacotronSTFT, create_hparams, mel_to_numpy
+from src.core.common.audio import concatenate_audios, mel_to_numpy
+from src.core.common.taco_stft import TacotronSTFT, create_hparams
+from src.core.pre.merge_ds import PreparedData
+from src.core.pre.text.pre_inference import InferSentenceList, Sentence
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.accents_dict import AccentsDict
 from typing import List, Optional, Tuple
 import logging
-import torch
-from src.core.common import concatenate_audios, SymbolIdDict
-from src.core.pre import PreparedData
-from tqdm import tqdm
 import numpy as np
 from src.core.inference.synthesizer import Synthesizer
 

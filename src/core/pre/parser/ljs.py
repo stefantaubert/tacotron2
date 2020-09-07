@@ -1,11 +1,12 @@
 import os
 import shutil
+from src.core.common.text import text_to_symbols
+from src.core.common.language import Language
 import tarfile
 
 import wget
 from tqdm import tqdm
 
-from src.core.common import Language, text_to_symbols
 from src.core.pre.parser.data import PreDataList, PreData
 
 

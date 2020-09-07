@@ -1,4 +1,3 @@
-import numpy as np
 import unittest
 from src.core.pre.parser.thchs import parse
 
@@ -13,7 +12,7 @@ class UnitTests(unittest.TestCase):
         speakers.append(x[1])
         data[x[1]] = []
       data[x[1]].append(x[0])
-    
+
     self.assertEqual(data["B15"][0], "B15_250")
     self.assertEqual(data["B15"][-1], "B15_499")
     self.assertEqual(speakers[0], "A2")

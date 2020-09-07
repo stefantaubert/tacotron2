@@ -1,9 +1,11 @@
+from src.core.common.utils import cosine_dist_mels
+from src.core.common.audio import normalize_wav
+from src.core.common.taco_stft import TacotronSTFT
+from src.core.pre.merge_ds import PreparedData
 from typing import Optional
 from src.core.waveglow.synthesizer import Synthesizer
 import torch
-from src.core.common import TacotronSTFT, compare_mels, normalize_wav, cosine_dist_mels
 import logging
-from src.core.pre import PreparedData
 import numpy as np
 
 def get_logger():

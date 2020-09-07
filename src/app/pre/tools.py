@@ -1,15 +1,16 @@
 import os
+from src.core.pre.wav import WavData
+from src.core.common.utils import get_subdir, stack_images_vertically
+from src.core.common.mel_plot import plot_melspec
 import tempfile
 from shutil import copyfile
 from typing import List, Optional
 
 import matplotlib.pylab as plt
 
-from src.app.pre.ds import get_ds_dir, load_ds_csv
+from src.app.pre.ds import get_ds_dir
 from src.app.pre.wav import get_wav_dir, load_wav_csv
-from src.core.common import get_subdir, plot_melspec, stack_images_vertically
-from src.core.pre import WavData
-from src.core.pre import remove_silence_plot as remove_silence_plot_core
+from src.app.pre.tools import remove_silence_plot as remove_silence_plot_core
 
 
 def _save_orig_plot_if_not_exists(dest_dir: str, mel):
@@ -52,8 +53,7 @@ def remove_silence_plot(base_dir: str, ds_name: str, wav_name: str, chunk_size: 
   wav_dir = get_wav_dir(ds_dir, wav_name)
   assert os.path.isdir(wav_dir)
   data = load_wav_csv(wav_dir)
-  entry: WavData
-  if entry_id == None:
+  if entry_id is None:
     entry = data.get_random_entry()
   else:
     entry = data.get_entry(entry_id)

@@ -1,23 +1,20 @@
 import datetime
 import os
 from shutil import copyfile
-from typing import List, Tuple
+from src.core.common.mel_plot import plot_melspec
+from src.core.common.audio import float_to_wav
+from src.core.pre.merge_ds import PreparedData, PreparedDataList
+from src.core.common.utils import get_parent_dirname, get_subdir, parse_json, save_json, stack_images_vertically
+from typing import Tuple
 
 import matplotlib.pylab as plt
 import numpy as np
-from tqdm import tqdm
-from src.core.common import (Language, float_to_wav, get_basename,
-                             get_custom_or_last_checkpoint, get_parent_dirname,
-                             get_subdir, parse_json, plot_melspec, save_json,
-                             stack_images_vertically, SpeakersDict)
-from src.core.pre import PreparedDataList, PreparedData
 
 # region Training
 
 _train_csv = "train.csv"
 _test_csv = "test.csv"
 _val_csv = "validation.csv"
-_speakers_json = "speakers.json"
 _settings_json = "settings.json"
 
 

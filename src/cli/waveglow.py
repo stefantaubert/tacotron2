@@ -1,5 +1,10 @@
 from argparse import ArgumentParser
-from src.app import wg_train, wg_continue_train, wg_infer, wg_validate, wg_dl_pretrained
+from src.app.waveglow.dl import dl_pretrained
+from src.app.waveglow.inference import infer
+from src.app.waveglow.validation import validate
+from src.app.waveglow.training import continue_train, train
+
+
 from src.cli.utils import parse_tuple_list
 from typing import Optional
 
@@ -11,13 +16,13 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--validation_size', type=float, default=0.1)
   parser.add_argument('--split_seed', type=int, default=1234)
   parser.add_argument('--hparams', type=str)
-  return wg_train
+  return train
 
 def init_continue_train_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--train_name', type=str, required=True)
   parser.add_argument('--hparams', type=str)
-  return wg_continue_train
+  return continue_train
 
 def init_validate_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -29,10 +34,10 @@ def init_validate_parser(parser: ArgumentParser):
   parser.add_argument("--denoiser_strength", default=0.00, type=float, help='Removes model bias.')
   parser.add_argument("--sigma", type=float, default=0.666)
   parser.add_argument('--sampling_rate', type=float, default=22050)
-  return wg_validate
+  return _wg_validate
 
 def _wg_validate(base_dir: str, train_name: str, entry_id: Optional[int], ds_speaker: Optional[str], ds: str, custom_checkpoint: Optional[int], sigma: float, denoiser_strength: float, sampling_rate: float):
-  wg_validate(base_dir, train_name, entry_id, parse_tuple_list(ds_speaker), ds, custom_checkpoint, sigma, denoiser_strength, sampling_rate)
+  validate(base_dir, train_name, entry_id, parse_tuple_list(ds_speaker), ds, custom_checkpoint, sigma, denoiser_strength, sampling_rate)
 
 def init_inference_parser(parser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
@@ -42,9 +47,9 @@ def init_inference_parser(parser):
   parser.add_argument('--sigma', type=float, default=0.666)
   parser.add_argument('--denoiser_strength', type=float, default=0.00)
   parser.add_argument('--sampling_rate', type=float, default=22050)
-  return wg_infer
+  return infer
 
 def init_download_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--train_name', type=str, default="pretrained")
-  return wg_dl_pretrained
+  return dl_pretrained

@@ -1,12 +1,12 @@
+from src.core.common.symbols_map import SymbolsMap
+from src.core.common.utils import GenericList, get_unique_items
+from src.core.common.accents_dict import AccentsDict
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.text import deserialize_list, serialize_list, split_sentences, text_to_symbols
+from src.core.common.language import Language
 from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
-from src.core.common.ipa2symb import extract_from_sentence
-from src.core.common import serialize_list
-from src.core.common import AccentsDict
-from src.core.common import GenericList
 from typing import List, Optional, Set, Tuple
-from src.core.common import Language, convert_to_ipa, text_to_symbols, split_sentences, normalize, get_unique_items, deserialize_list, serialize_list, text_to_symbols, convert_to_ipa as text_convert_to_ipa, normalize as text_normalize, get_unique_items, get_counter
 from dataclasses import dataclass
-from src.core.common import SymbolIdDict, SymbolsMap
 
 
 @dataclass()
@@ -202,7 +202,7 @@ def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, k
   for sentence in sentences.items():
     old_text_symbols = text_symbols.get_symbols(sentence.serialized_symbols)
     infer_symbols = old_text_symbols
-    
+
     if known_symbols.has_unknown_symbols(infer_symbols):
       infer_symbols = known_symbols.replace_unknown_symbols_with_pad(infer_symbols)
 

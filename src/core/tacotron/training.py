@@ -1,6 +1,11 @@
 import os
+from src.core.common.symbols_map import SymbolsMap, get_symbols_id_mapping
+from src.core.common.train import get_all_checkpoint_iterations, get_custom_checkpoint, get_last_checkpoint
+from src.core.common.text import deserialize_list
+from src.core.common.taco_stft import TacotronSTFT
+from src.core.pre.merge_ds import PreparedData, PreparedDataList
 from src.core.common.accents_dict import AccentsDict, PADDING_ACCENT
-from src.core.common.symbol_id_dict import PADDING_SYMBOL
+from src.core.common.symbol_id_dict import PADDING_SYMBOL, SymbolIdDict
 import time
 from math import sqrt
 import torch
@@ -9,16 +14,12 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from typing import Tuple, Dict
 from typing import Optional
-from src.core.common import get_custom_checkpoint, get_pytorch_filename, deserialize_list
-from src.core.common import get_last_checkpoint, get_all_checkpoint_iterations
-from src.core.pre import PreparedData, PreparedDataList
 from torch import nn
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger
 from src.core.tacotron.model import Tacotron2, symbol_embeddings_layer_name, speaker_embeddings_layer_name, get_model_symbol_id
 import random
 import logging
-from src.core.common import TacotronSTFT, SymbolIdDict, SymbolsMap, get_symbols_id_mapping
 from typing import List
 
 
@@ -107,10 +108,8 @@ class SymbolsMelCollate():
   """ Zero-pads model inputs and targets based on number of frames per step
   """
 
-  def __init__(self, n_frames_per_step, symbol_padding_id: int, accent_padding_id: int):
+  def __init__(self, n_frames_per_step):
     self.n_frames_per_step = n_frames_per_step
-    self.symbol_padding_id = symbol_padding_id
-    self.accent_padding_id = accent_padding_id
 
   def __call__(self, batch: List[Tuple[torch.IntTensor, torch.IntTensor, torch.Tensor, int]]):
     """Collate's training batch from normalized text and mel-spectrogram
@@ -124,10 +123,12 @@ class SymbolsMelCollate():
     max_input_len = input_lengths[0]
 
     symbols_padded = torch.LongTensor(len(batch), max_input_len)
-    torch.nn.init.constant_(symbols_padded, self.symbol_padding_id)
+    symbol_padding_id = 0 # "_"
+    torch.nn.init.constant_(symbols_padded, symbol_padding_id)
 
     accents_padded = torch.LongTensor(len(batch), max_input_len)
-    torch.nn.init.constant_(accents_padded, self.accent_padding_id)
+    accent_padding_id = 0 # "none"
+    torch.nn.init.constant_(accents_padded, accent_padding_id)
 
     for i, batch_id in enumerate(ids_sorted_decreasing):
       symbols = batch[batch_id][0]
@@ -314,11 +315,7 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   debug_logger.info('Final parsed hparams:')
   debug_logger.info('\n'.join(str(hparams.values()).split(',')))
 
-  collate_fn = SymbolsMelCollate(
-    n_frames_per_step=hparams.n_frames_per_step,
-    symbol_padding_id=0,  # was checked with assert
-    accent_padding_id=0  # was checked with assert
-  )
+  collate_fn = SymbolsMelCollate(n_frames_per_step=hparams.n_frames_per_step)
 
   val_loader = prepare_valloader(hparams, collate_fn, valset)
   train_loader = prepare_trainloader(hparams, collate_fn, trainset)

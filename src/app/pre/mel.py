@@ -1,10 +1,11 @@
 import os
-from src.core.pre import MelData
+from src.core.common.utils import get_subdir
+
+from src.core.pre.mel import MelData, MelDataList
+from src.core.pre.mel import process as mels_preprocess
 
 from src.app.pre.ds import get_ds_dir
 from src.app.pre.wav import get_wav_dir, load_wav_csv
-from src.core.common import get_subdir
-from src.core.pre import (MelDataList, mels_preprocess)
 
 _mel_data_csv = "data.csv"
 

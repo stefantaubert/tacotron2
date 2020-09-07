@@ -1,15 +1,15 @@
 import logging
 import os
 import random
+from src.core.common.train import get_last_checkpoint, get_pytorch_filename
+from src.core.common.audio import get_wav_tensor_segment, wav_to_float32_tensor
+from src.core.common.taco_stft import TacotronSTFT
+from src.core.pre.merge_ds import PreparedDataList
 import time
 
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-from src.core.common import (TacotronSTFT, get_pytorch_filename,
-                             get_last_checkpoint, get_wav_tensor_segment,
-                             wav_to_float32_tensor)
-from src.core.pre import PreparedData, PreparedDataList
 from src.core.waveglow.hparams import create_hparams
 from src.core.waveglow.logger import WaveglowLogger
 from src.core.waveglow.model import WaveGlow, WaveGlowLoss
@@ -36,8 +36,7 @@ class MelLoader(Dataset):
     random.shuffle(data)
 
     wav_paths = {}
-    values: PreparedData
-    for i, values in enumerate(data):
+    for i, values in enumerate(data.items()):
       wav_paths[i] = values.wav_path
     self.wav_paths = wav_paths
 
@@ -246,7 +245,7 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
 
       #if hparams.with_tensorboard and rank == 0:
       logger.add_scalar('training_loss', reduced_loss, i + len(train_loader) * epoch)
-      
+
       if (iteration % hparams.iters_per_checkpoint == 0):
         #if rank == 0:
         save_checkpoint(model, optimizer, hparams.learning_rate, iteration, save_checkpoint_dir)
@@ -325,7 +324,7 @@ def _train(checkpoint_path: str, hparams):
     iteration += 1  # next iteration is iteration + 1
   else:
     debug_logger.info("Starting new model...")
-  
+
   return model, optimizer, learning_rate, iteration
 
 def load_checkpoint(checkpoint_path, model, optimizer):
