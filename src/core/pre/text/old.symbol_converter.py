@@ -1,10 +1,10 @@
 import json
+import os
+from collections import OrderedDict
+from shutil import copyfile
+from typing import List
 
 import numpy as np
-from shutil import copyfile
-from collections import OrderedDict 
-from typing import List
-import os
 
 # padding, used for unknown symbols
 _pad = '_'

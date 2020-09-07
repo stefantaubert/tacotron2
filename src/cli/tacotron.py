@@ -1,9 +1,10 @@
 from argparse import ArgumentParser
-from src.app.tacotron.inference import infer
-from src.app.tacotron.validation import validate
-from src.app.tacotron.training import continue_train, train
-from src.app.tacotron.eval_checkpoints import eval_checkpoints_main
+
 from src.app.tacotron.analysis import plot_embeddings
+from src.app.tacotron.eval_checkpoints import eval_checkpoints_main
+from src.app.tacotron.inference import infer
+from src.app.tacotron.training import continue_train, train
+from src.app.tacotron.validation import validate
 from src.core.common.language import Language
 
 

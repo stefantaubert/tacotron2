@@ -4,12 +4,13 @@ import tempfile
 import unittest
 
 import numpy as np
-from scipy.io.wavfile import read, write
+from scipy.io.wavfile import write
 
 from src.core.common.audio import *
 
+
 class UnitTests(unittest.TestCase):
-  
+
   def test_get_dBFS_min_int_is_zero(self):
     res = get_dBFS(np.array([-32768]), 32768)
 
@@ -23,7 +24,7 @@ class UnitTests(unittest.TestCase):
 
   def test_get_dBFS_int_is_inf(self):
     res = get_dBFS(np.array([0.0]), 32768)
-    
+
     self.assertEqual(-math.inf, res)
 
   def test_get_dBFS_max_float_is_zero(self):
@@ -38,7 +39,7 @@ class UnitTests(unittest.TestCase):
 
   def test_get_dBFS_float_is_inf(self):
     res = get_dBFS(np.array([0.0]), 1.0)
-    
+
     self.assertEqual(-math.inf, res)
 
   def test_detect_silence_float32_chunksize_bigger_wavlength_silence(self):
@@ -144,7 +145,7 @@ class UnitTests(unittest.TestCase):
   def test_ms_to_samples_500ms_22050sr(self):
     sr = 22050
     duration_ms = 500
-    
+
     result = ms_to_samples(duration_ms, sr)
 
     self.assertEqual(sr / 2, result)
@@ -152,7 +153,7 @@ class UnitTests(unittest.TestCase):
   def test_ms_to_samples_1s_22050sr(self):
     sr = 22050
     duration_ms = 1000
-    
+
     result = ms_to_samples(duration_ms, sr)
 
     self.assertEqual(sr, result)
@@ -160,7 +161,7 @@ class UnitTests(unittest.TestCase):
   def test_ms_to_samples_0s_22050sr(self):
     sr = 22050
     duration_ms = 0
-    
+
     result = ms_to_samples(duration_ms, sr)
 
     self.assertEqual(0, result)
@@ -168,7 +169,7 @@ class UnitTests(unittest.TestCase):
   def test_ms_to_samples_1s_0sr(self):
     sr = 0
     duration_ms = 1000
-    
+
     result = ms_to_samples(duration_ms, sr)
 
     self.assertEqual(0, result)
@@ -223,7 +224,7 @@ class UnitTests(unittest.TestCase):
     new_num_samples = int(duration_ms * new_sr / 1000.0)
     audio = np.array(
       [1.0] * old_num_samples +
-      [0] * old_num_samples + 
+      [0] * old_num_samples +
       [-1.0] * old_num_samples
     , dtype=np.float32)
 
@@ -327,7 +328,7 @@ class UnitTests(unittest.TestCase):
 
   def test_normalize_overamp_int16(self):
     audio = np.array([-32768, 0, 32767], dtype=np.int16)
-    
+
     # np.abs(audio) = [-32768, 0, 32767] !!
 
     new_audio = normalize_wav(audio)
@@ -347,21 +348,21 @@ class UnitTests(unittest.TestCase):
 
   def test_is_overamp_max_val_float32_returns_false(self):
     audio = np.array([-1.0, 0, 1.0], dtype=np.float32)
-    
+
     res = is_overamp(audio)
 
     self.assertFalse(res)
 
   def test_is_overamp_float32_tobigmin_returns_true(self):
     audio = np.array([-1.5, 0, 1.0], dtype=np.float32)
-    
+
     res = is_overamp(audio)
 
     self.assertTrue(res)
 
   def test_is_overamp_float32_tobigmax_returns_true(self):
     audio = np.array([-1.0, 0, 1.5], dtype=np.float32)
-    
+
     res = is_overamp(audio)
 
     self.assertTrue(res)
@@ -375,7 +376,7 @@ class UnitTests(unittest.TestCase):
 
   def test_is_overamp_max_val_int16(self):
     audio = np.array([-32768, 0, 32767], dtype=np.int16)
-    
+
     res = is_overamp(audio)
 
     self.assertFalse(res)

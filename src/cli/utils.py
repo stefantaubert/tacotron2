@@ -1,4 +1,5 @@
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
+
 
 def parse_tuple_list(tuple_list: Optional[str] = None) -> Optional[List[Tuple]]:
   """ tuple_list: "a,b;c,d;... """

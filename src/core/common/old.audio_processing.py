@@ -21,4 +21,3 @@
 #     _, angles = stft_fn.transform(signal)
 #     signal = stft_fn.inverse(magnitudes, angles).squeeze(1)
 #   return signal
-

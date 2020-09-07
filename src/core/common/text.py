@@ -1,17 +1,20 @@
 import re
-from src.core.common.adjustments.whitespace import collapse_whitespace
-from src.core.common.adjustments.abbreviations import expand_abbreviations
-from src.core.common.adjustments.numbers import normalize_numbers
-from dragonmapper import hanzi
-from src.core.common.language import Language
-from src.core.common.ipa2symb import extract_from_sentence
 from collections import OrderedDict
-from typing import List, OrderedDict as OrderedDictType, Set, Optional
-from nltk.tokenize import sent_tokenize
-from nltk import download
+from typing import List, Optional
+from typing import OrderedDict as OrderedDictType
+from typing import Set
+
 import epitran
+from dragonmapper import hanzi
+from nltk import download
+from nltk.tokenize import sent_tokenize
 from unidecode import unidecode as convert_to_ascii
 
+from src.core.common.adjustments.abbreviations import expand_abbreviations
+from src.core.common.adjustments.numbers import normalize_numbers
+from src.core.common.adjustments.whitespace import collapse_whitespace
+from src.core.common.ipa2symb import extract_from_sentence
+from src.core.common.language import Language
 
 _chn_question_mark = "？"
 _chn_exklamation_mark = "！"

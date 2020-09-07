@@ -1,5 +1,5 @@
-import unittest
 import sys
+import unittest
 from shutil import copyfile
 
 from src.core.common import *

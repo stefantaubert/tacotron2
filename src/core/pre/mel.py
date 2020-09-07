@@ -4,13 +4,14 @@ output: mel data
 """
 import os
 from dataclasses import dataclass
-from src.core.common.train import get_pytorch_filename
-from src.core.common.taco_stft import TacotronSTFT, create_hparams
-from src.core.pre.wav import WavData, WavDataList
-from src.core.common.utils import GenericList, get_chunk_name
 
 import torch
 from tqdm import tqdm
+
+from src.core.common.taco_stft import TacotronSTFT, create_hparams
+from src.core.common.train import get_pytorch_filename
+from src.core.common.utils import GenericList, get_chunk_name
+from src.core.pre.wav import WavData, WavDataList
 
 
 @dataclass()

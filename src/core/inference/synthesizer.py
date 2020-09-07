@@ -1,10 +1,12 @@
+import logging
 from typing import List, Optional, Tuple
 
-from src.core.waveglow.synthesizer import Synthesizer as WGSynthesizer
-from src.core.tacotron.synthesizer import Synthesizer as TacoSynthesizer
-import logging
-import torch
 import numpy as np
+import torch
+
+from src.core.tacotron.synthesizer import Synthesizer as TacoSynthesizer
+from src.core.waveglow.synthesizer import Synthesizer as WGSynthesizer
+
 
 class Synthesizer():
   def __init__(self, tacotron_path: str, waveglow_path: str, n_symbols: int, n_accents: int, n_speakers: int, custom_taco_hparams: Optional[str], custom_wg_hparams: Optional[str], logger: logging.Logger):

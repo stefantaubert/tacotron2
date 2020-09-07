@@ -1,6 +1,9 @@
 import unittest
-from src.core.common.mel_plot import concatenate_mels_core
+
 import torch
+
+from src.core.common.mel_plot import concatenate_mels_core
+
 
 class UnitTests(unittest.TestCase):
   

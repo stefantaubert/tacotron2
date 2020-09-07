@@ -1,13 +1,16 @@
-from src.core.common.symbol_id_dict import SymbolIdDict
-from typing import List, Dict, Tuple
 from logging import Logger
-import torch
-from sklearn.preprocessing import normalize
+from typing import Dict, List, Tuple
+
 import numpy as np
-from scipy.spatial.distance import cosine
-import plotly.graph_objs as go
-from sklearn.manifold import TSNE
 import pandas as pd
+import plotly.graph_objs as go
+import torch
+from scipy.spatial.distance import cosine
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import normalize
+
+from src.core.common.symbol_id_dict import SymbolIdDict
+
 
 def norm2emb(emb: torch.Tensor) -> np.ndarray:
   tmp = []

@@ -1,12 +1,14 @@
-from src.core.common.symbols_map import SymbolsMap
-from src.core.common.utils import GenericList, get_unique_items
-from src.core.common.accents_dict import AccentsDict
-from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.text import deserialize_list, serialize_list, split_sentences, text_to_symbols
-from src.core.common.language import Language
-from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
-from typing import List, Optional, Set, Tuple
 from dataclasses import dataclass
+from typing import List, Optional, Set, Tuple
+
+from src.core.common.accents_dict import AccentsDict
+from src.core.common.language import Language
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.symbols_map import SymbolsMap
+from src.core.common.text import (deserialize_list, serialize_list,
+                                  split_sentences, text_to_symbols)
+from src.core.common.utils import GenericList, get_unique_items
+from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
 
 
 @dataclass()

@@ -1,20 +1,22 @@
 import datetime
 import os
 from shutil import copyfile
-from src.core.common.train import get_custom_or_last_checkpoint
-from src.core.common.utils import get_basename, get_parent_dirname, get_subdir
-from src.core.common.mel_plot import plot_melspec
 
 import matplotlib.pylab as plt
 import numpy as np
 
-from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
-from src.app.io import (get_checkpoints_dir,
-                        get_infer_log, get_inference_root_dir, load_settings, save_infer_plot,
+from src.app.io import (get_checkpoints_dir, get_infer_log,
+                        get_inference_root_dir, load_settings, save_infer_plot,
                         save_infer_wav)
-from src.core.waveglow.inference import infer as infer_core, validate, get_logger as get_infer_logger
-
+from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
+                           init_logger)
 from src.app.waveglow.io import get_train_dir, save_diff_plot, save_v
+from src.core.common.mel_plot import plot_melspec
+from src.core.common.train import get_custom_or_last_checkpoint
+from src.core.common.utils import get_basename, get_parent_dirname, get_subdir
+from src.core.waveglow.inference import get_logger as get_infer_logger
+from src.core.waveglow.inference import infer as infer_core
+from src.core.waveglow.inference import validate
 
 
 def get_infer_dir(train_dir: str, input_name: str, iteration: int):

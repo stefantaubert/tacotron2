@@ -1,6 +1,10 @@
 import unittest
+
+from src.core.common import (AccentsDict, Language, SpeakersDict,
+                             SpeakersLogDict, SymbolIdDict,
+                             remove_duplicates_list_orderpreserving)
 from src.core.pre.text.pre import *
-from src.core.common import  Language, SpeakersDict, SpeakersLogDict, AccentsDict, SymbolIdDict, remove_duplicates_list_orderpreserving
+
 
 class UnitTests(unittest.TestCase):
   def test_preprocess(self):

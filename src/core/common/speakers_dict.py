@@ -1,5 +1,6 @@
-from src.core.common.utils import parse_json, save_json
 from collections import Counter, OrderedDict
+
+from src.core.common.utils import parse_json, save_json
 
 
 class SpeakersDict(OrderedDict):  # [str, int]

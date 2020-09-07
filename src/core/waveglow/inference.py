@@ -1,12 +1,15 @@
-from src.core.common.utils import cosine_dist_mels
+import logging
+from typing import Optional
+
+import numpy as np
+import torch
+
 from src.core.common.audio import normalize_wav
 from src.core.common.taco_stft import TacotronSTFT
+from src.core.common.utils import cosine_dist_mels
 from src.core.pre.merge_ds import PreparedData
-from typing import Optional
 from src.core.waveglow.synthesizer import Synthesizer
-import torch
-import logging
-import numpy as np
+
 
 def get_logger():
   return logging.getLogger("infer")

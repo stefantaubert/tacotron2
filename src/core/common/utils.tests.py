@@ -1,6 +1,10 @@
 import unittest
-from src.core.common.utils import get_chunk_name, make_same_dim, cosine_dist_mels
+
 import numpy as np
+
+from src.core.common.utils import (cosine_dist_mels, get_chunk_name,
+                                   make_same_dim)
+
 
 class UnitTests(unittest.TestCase):
   

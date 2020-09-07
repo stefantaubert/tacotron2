@@ -3,15 +3,16 @@ calculate wav duration and sampling rate
 """
 
 import os
-from dataclasses import dataclass
 import random
-from src.core.common.taco_stft import TacotronSTFT, create_hparams
-from src.core.common.audio import get_duration_s, normalize_file, remove_silence_file, upsample_file
-from src.core.common.utils import GenericList, get_chunk_name
+from dataclasses import dataclass
 
 from scipy.io.wavfile import read
 from tqdm import tqdm
 
+from src.core.common.audio import (get_duration_s, normalize_file,
+                                   remove_silence_file, upsample_file)
+from src.core.common.taco_stft import TacotronSTFT, create_hparams
+from src.core.common.utils import GenericList, get_chunk_name
 from src.core.pre.ds import DsData, DsDataList
 
 

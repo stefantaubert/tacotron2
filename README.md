@@ -390,12 +390,15 @@ For custom isort (not working)
 }
 ```
 
+For running isort on all files (execute in workspace dir): `isort . -rc`
+
 ### Requirements
 
 - `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)
 - `gdown` only required for downloading pretrained waveglow-model
 - `wget` only required for automatically downloading datasets
 - `scikit-image` only for comparing mels for waveglow evaluation
+- `setuptools==50.3.0` for isort, becaus otherwise the error occurs `"Distutils was imported before Setuptools. This usage is discouraged "`
 
 ### Configs
 

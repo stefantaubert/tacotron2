@@ -1,10 +1,12 @@
+from typing import List
+
 import imageio
 import matplotlib.pylab as plt
 import numpy as np
-from skimage.metrics import structural_similarity
 import torch
+from skimage.metrics import structural_similarity
+
 from src.core.common.audio import get_sample_count
-from typing import List
 
 
 def concatenate_mels(audios: List[torch.Tensor], sentence_pause_s: float, sampling_rate: int) -> torch.Tensor:

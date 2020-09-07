@@ -1,19 +1,21 @@
 import os
 from collections import Counter
 from dataclasses import dataclass
+from typing import List, Tuple
+
 from src.core.common.accents_dict import AccentsDict
-from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
-from src.core.common.utils import GenericList, remove_duplicates_list_orderpreserving
 from src.core.common.language import Language
-from typing import List, OrderedDict, Tuple
-
+from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.utils import (GenericList,
+                                   remove_duplicates_list_orderpreserving)
 from src.core.pre.parser.data import PreData, PreDataList
-
-from src.core.pre.parser.ljs import parse as parse_ljs, download as dl_ljs
-from src.core.pre.parser.thchs import parse as parse_thchs, download as dl_thchs
-from src.core.pre.parser.thchs_kaldi import parse as parse_thchs_kaldi, download as dl_kaldi
-from src.core.pre.parser.data import PreData, PreDataList
+from src.core.pre.parser.ljs import download as dl_ljs
+from src.core.pre.parser.ljs import parse as parse_ljs
+from src.core.pre.parser.thchs import download as dl_thchs
+from src.core.pre.parser.thchs import parse as parse_thchs
+from src.core.pre.parser.thchs_kaldi import download as dl_kaldi
+from src.core.pre.parser.thchs_kaldi import parse as parse_thchs_kaldi
 
 
 @dataclass()

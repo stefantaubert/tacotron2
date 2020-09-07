@@ -1,20 +1,23 @@
 import os
 from typing import Optional
 
-from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
 from src.app.io import (get_checkpoints_dir, get_train_checkpoints_log_file,
-                        get_train_log_file, get_train_logs_dir, load_trainset,
-                        load_valset, save_testset, save_trainset, save_settings, load_settings, save_valset)
-from src.app.pre import (get_prepared_dir, load_filelist, load_filelist_accents_ids,
+                        get_train_log_file, get_train_logs_dir, load_settings,
+                        load_trainset, load_valset, save_settings,
+                        save_testset, save_trainset, save_valset)
+from src.app.pre import (get_prepared_dir, load_filelist,
+                         load_filelist_accents_ids,
                          load_filelist_speakers_json,
-                         load_filelist_symbol_converter)
+                         load_filelist_symbol_converter, try_load_symbols_map)
 from src.app.tacotron.io import get_train_dir
-from src.core.pre import split_train_test_val
-from src.app.pre import try_load_symbols_map
+from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
+                           init_logger, reset_file_log)
 from src.core.common import get_custom_or_last_checkpoint
+from src.core.pre import split_train_test_val
 from src.core.tacotron import continue_train as continue_train_core
-from src.core.tacotron import get_train_logger, get_checkpoints_eval_logger
-from src.core.tacotron import train as train_core, load_symbol_embedding_weights_from, load_symbol_embedding_weights_from
+from src.core.tacotron import (get_checkpoints_eval_logger, get_train_logger,
+                               load_symbol_embedding_weights_from)
+from src.core.tacotron import train as train_core
 
 
 def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, hparams: Optional[str] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, weights_map: Optional[str] = None):

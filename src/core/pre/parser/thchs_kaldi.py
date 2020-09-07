@@ -1,14 +1,15 @@
 import glob
 import os
 import shutil
-from src.core.common.language import Language
-from src.core.common.text import text_to_symbols
-from src.core.common.utils import create_parent_folder, download_tar
 import tempfile
 
 from tqdm import tqdm
 
+from src.core.common.language import Language
+from src.core.common.text import text_to_symbols
+from src.core.common.utils import create_parent_folder, download_tar
 from src.core.pre.parser.data import PreData, PreDataList
+
 
 def download(dir_path: str):
   download_url_kaldi = "http://www.openslr.org/resources/18/data_thchs30.tgz"

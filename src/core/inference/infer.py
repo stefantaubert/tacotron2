@@ -1,14 +1,16 @@
 #from src.core.pre import text_to_symbols_pipeline
+import logging
+from typing import List, Optional, Tuple
+
+import numpy as np
+
+from src.core.common.accents_dict import AccentsDict
 from src.core.common.audio import concatenate_audios, mel_to_numpy
+from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.taco_stft import TacotronSTFT, create_hparams
+from src.core.inference.synthesizer import Synthesizer
 from src.core.pre.merge_ds import PreparedData
 from src.core.pre.text.pre_inference import InferSentenceList, Sentence
-from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.accents_dict import AccentsDict
-from typing import List, Optional, Tuple
-import logging
-import numpy as np
-from src.core.inference.synthesizer import Synthesizer
 
 
 def get_logger():

@@ -1,8 +1,8 @@
 import os
-from src.core.common.train import get_pytorch_filename
 
 from src.app.io import get_checkpoints_dir, save_settings
 from src.app.waveglow.io import get_train_dir
+from src.core.common.train import get_pytorch_filename
 from src.core.waveglow.dl_pretrained import main as dl_pretrained_core
 
 

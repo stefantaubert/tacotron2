@@ -1,5 +1,7 @@
 import os
+
 import torch
+
 
 def convert(source: str, destination: str):
   assert os.path.isfile(source)

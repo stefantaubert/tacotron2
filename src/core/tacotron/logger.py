@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+
 def _save_figure_to_numpy(fig):
   # save it to a numpy array.
   data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')

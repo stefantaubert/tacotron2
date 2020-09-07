@@ -1,15 +1,17 @@
 # For copyright see LICENCE
 
+import logging
 import os
-from src.core.common.audio import is_overamp
 from typing import Optional
 
+import numpy as np
 import torch
+
+from src.core.common.audio import is_overamp
 from src.core.waveglow.denoiser import Denoiser
 from src.core.waveglow.hparams import create_hparams
 from src.core.waveglow.train import load_model
-import logging
-import numpy as np
+
 
 class Synthesizer():
   def __init__(self, checkpoint_path: str, custom_hparams: Optional[str], logger: logging.Logger):

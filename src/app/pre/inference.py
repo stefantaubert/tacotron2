@@ -1,13 +1,25 @@
 import os
 from typing import Optional
 
-from src.core.common import get_subdir, read_text, Language, SymbolIdDict, SymbolsMap
-
-from src.app.pre.prepare import get_prepared_dir, load_filelist_accents_ids, load_filelist_symbol_converter
-
-
-from src.core.pre.text.pre_inference import Sentence, SentenceList, add_text as infer_add, sents_normalize as infer_norm, sents_convert_to_ipa as infer_convert_ipa, sents_map as infer_map, sents_accent_template as infer_accents_template, sents_accent_apply as infer_accents_apply, AccentedSymbolList, AccentedSymbol, InferSentenceList, prepare_for_inference as infer_prepare
-
+from src.app.pre.prepare import (get_prepared_dir, load_filelist_accents_ids,
+                                 load_filelist_symbol_converter)
+from src.core.common import (Language, SymbolIdDict, SymbolsMap, get_subdir,
+                             read_text)
+from src.core.pre.text.pre_inference import (AccentedSymbol,
+                                             AccentedSymbolList,
+                                             InferSentenceList, Sentence,
+                                             SentenceList)
+from src.core.pre.text.pre_inference import add_text as infer_add
+from src.core.pre.text.pre_inference import \
+    prepare_for_inference as infer_prepare
+from src.core.pre.text.pre_inference import \
+    sents_accent_apply as infer_accents_apply
+from src.core.pre.text.pre_inference import \
+    sents_accent_template as infer_accents_template
+from src.core.pre.text.pre_inference import \
+    sents_convert_to_ipa as infer_convert_ipa
+from src.core.pre.text.pre_inference import sents_map as infer_map
+from src.core.pre.text.pre_inference import sents_normalize as infer_norm
 
 _text_csv = "text.csv"
 _accents_csv = "accents.csv"

@@ -1,28 +1,33 @@
 from argparse import ArgumentParser
 
-from src.cli.pre import (init_prepare_ds_parser, init_preprocess_ljs_parser,
+from src.cli.pre import (init_create_inference_map_parser,
+                         init_create_weights_map_parser,
+                         init_prepare_ds_parser, init_preprocess_ljs_parser,
                          init_preprocess_mels_parser,
-                         init_preprocess_text_parser,init_wavs_remove_silence_plot_parser,
+                         init_preprocess_text_parser,
                          init_preprocess_thchs_kaldi_parser,
                          init_preprocess_thchs_parser,
                          init_preprocess_wavs_parser,
                          init_text_convert_to_ipa_parser,
-                         init_text_normalize_parser,init_create_weights_map_parser,
-                         init_wavs_normalize_parser, init_create_inference_map_parser,
+                         init_text_normalize_parser,
+                         init_wavs_normalize_parser,
                          init_wavs_remove_silence_parser,
+                         init_wavs_remove_silence_plot_parser,
                          init_wavs_upsample_parser)
 from src.cli.tacotron import \
     init_continue_train_parser as init_taco_continue_train_parser
+from src.cli.tacotron import \
+    init_eval_checkpoints_parser as init_taco_eval_checkpoints_parser
 from src.cli.tacotron import init_inference_parser as init_taco_infer_parser
+from src.cli.tacotron import init_plot_emb_parser as init_taco_plot_emb_parser
 from src.cli.tacotron import init_train_parser as init_taco_train_parser
 from src.cli.tacotron import init_validate_parser as init_taco_val_parser
-from src.cli.tacotron import init_eval_checkpoints_parser as init_taco_eval_checkpoints_parser
-from src.cli.tacotron import init_plot_emb_parser as init_taco_plot_emb_parser
 from src.cli.waveglow import \
     init_continue_train_parser as init_wg_continue_train_parser
+from src.cli.waveglow import init_download_parser as init_wg_dl_parser
 from src.cli.waveglow import init_inference_parser as init_wg_infer_parser
 from src.cli.waveglow import init_train_parser as init_wg_train_parser
-from src.cli.waveglow import init_validate_parser as init_wg_val_parser, init_download_parser as init_wg_dl_parser
+from src.cli.waveglow import init_validate_parser as init_wg_val_parser
 
 
 def _add_parser_to(subparsers, name: str, init_method):

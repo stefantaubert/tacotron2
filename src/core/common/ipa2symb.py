@@ -1,8 +1,10 @@
-from src.core.common.symbol_id_dict import PADDING_SYMBOL
-from ipapy.ipastring import IPAString
 import re
 import string
 from typing import List
+
+from ipapy.ipastring import IPAString
+
+from src.core.common.symbol_id_dict import PADDING_SYMBOL
 
 _rx = '[{}]'.format(re.escape(string.punctuation))
 
@@ -90,4 +92,3 @@ if __name__ == "__main__":
   # print(res)
   # print(set(res))
   # print(len(set(res)))a
-

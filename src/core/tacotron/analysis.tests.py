@@ -1,9 +1,14 @@
 import logging
-from src.core.common.symbol_id_dict import SymbolIdDict
-import numpy as np
 import unittest
-from src.core.tacotron.analysis import norm2emb, get_similarities, sims_to_csv, emb_plot_2d, emb_plot_3d, plot_embeddings
+
+import numpy as np
 import torch
+
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.tacotron.analysis import (emb_plot_2d, emb_plot_3d,
+                                        get_similarities, norm2emb,
+                                        plot_embeddings, sims_to_csv)
+
 
 class UnitTests(unittest.TestCase):
   def test_norm2emb(self):

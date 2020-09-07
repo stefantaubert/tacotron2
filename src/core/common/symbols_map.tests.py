@@ -1,9 +1,15 @@
 import os
-import unittest
-from src.core.common.symbols_map import SymbolsMap, get_symbols_id_mapping, create_symbols_map, create_inference_map_core, update_map, Language
-from src.core.common.symbol_id_dict import SymbolIdDict
-from torch import nn
 import tempfile
+import unittest
+
+from torch import nn
+
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.symbols_map import (Language, SymbolsMap,
+                                         create_inference_map_core,
+                                         create_symbols_map,
+                                         get_symbols_id_mapping, update_map)
+
 
 class UnitTests(unittest.TestCase):
   

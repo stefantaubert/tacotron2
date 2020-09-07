@@ -1,21 +1,26 @@
 import os
-from src.core.common.train import get_custom_or_last_checkpoint, get_last_checkpoint
-from src.app.pre.prepare import get_prepared_dir, load_filelist_accents_ids, load_filelist_speakers_json, load_filelist_symbol_converter
-from src.core.common.mel_plot import plot_melspec
-from src.core.common.utils import get_parent_dirname
+from typing import Optional
 
 import matplotlib.pylab as plt
 
-from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
-from src.app.io import (get_checkpoints_dir,
-                        get_val_dir, get_val_log, load_valset, save_infer_wav,
-                        save_val_comparison, save_val_orig_plot, load_testset,
+from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log,
+                        load_testset, load_valset, save_infer_wav,
+                        save_val_comparison, save_val_orig_plot,
                         save_val_orig_wav, save_val_plot, save_val_wav)
+from src.app.pre.prepare import (get_prepared_dir, load_filelist_accents_ids,
+                                 load_filelist_speakers_json,
+                                 load_filelist_symbol_converter)
 from src.app.tacotron.io import get_train_dir
 from src.app.tacotron.training import load_settings
+from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
+                           init_logger)
 from src.app.waveglow.training import get_train_dir as get_wg_train_dir
-from src.core.inference.infer import get_logger, validate as validate_core
-from typing import Optional
+from src.core.common.mel_plot import plot_melspec
+from src.core.common.train import (get_custom_or_last_checkpoint,
+                                   get_last_checkpoint)
+from src.core.common.utils import get_parent_dirname
+from src.core.inference.infer import get_logger
+from src.core.inference.infer import validate as validate_core
 
 
 def save_val_pre_postnet_plot(val_dir: str, mel):

@@ -1,27 +1,31 @@
 import datetime
 import os
-from src.app.pre.inference import get_text_dir, load_inference_csv
-from src.app.pre.prepare import get_prepared_dir, load_filelist_accents_ids, load_filelist_speakers_json, load_filelist_symbol_converter
-from src.core.common.train import get_custom_or_last_checkpoint, get_last_checkpoint
-from src.app.tacotron.io import get_train_dir
-from src.core.common.audio import float_to_wav
-from src.core.common.mel_plot import plot_melspec
-from src.core.common.utils import get_parent_dirname, get_subdir, parse_json, stack_images_horizontally, stack_images_vertically
 from typing import List, Optional
 
 import matplotlib.pylab as plt
 import numpy as np
 from tqdm import tqdm
 
-from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
 from src.app.io import (get_checkpoints_dir, get_infer_log,
-                        save_infer_wav, get_inference_root_dir)
+                        get_inference_root_dir, save_infer_wav)
+from src.app.pre.inference import get_text_dir, load_inference_csv
+from src.app.pre.prepare import (get_prepared_dir, load_filelist_accents_ids,
+                                 load_filelist_speakers_json,
+                                 load_filelist_symbol_converter)
+from src.app.tacotron.io import get_train_dir
 from src.app.tacotron.training import load_settings
+from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
+                           init_logger)
 from src.app.waveglow.io import get_train_dir as get_wg_train_dir
+from src.core.common.audio import float_to_wav
+from src.core.common.mel_plot import plot_melspec
+from src.core.common.train import (get_custom_or_last_checkpoint,
+                                   get_last_checkpoint)
+from src.core.common.utils import (get_parent_dirname, get_subdir, parse_json,
+                                   stack_images_horizontally,
+                                   stack_images_vertically)
 from src.core.inference.infer import get_logger
 from src.core.inference.infer import infer as infer_core
-from src.app.tacotron.training import load_settings
-
 
 
 def get_infer_dir(train_dir: str, input_name: str, iteration: int, speaker_id: int):

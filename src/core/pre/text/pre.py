@@ -1,19 +1,19 @@
 from collections import Counter, OrderedDict
 from dataclasses import dataclass
-from src.core.common.accents_dict import AccentsDict
-from src.core.common.symbols_dict import SymbolsDict
-from src.core.common.language import Language
-from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
-from src.core.common.utils import GenericList
 from typing import List
 from typing import OrderedDict as OrderedDictType
 from typing import Tuple
 
 from tqdm import tqdm
 
+from src.core.common.accents_dict import AccentsDict
+from src.core.common.language import Language
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.symbols_dict import SymbolsDict
 from src.core.common.text import deserialize_list, get_counter, serialize_list
+from src.core.common.utils import GenericList
 from src.core.pre.ds import DsData, DsDataList
+from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
 
 
 @dataclass()

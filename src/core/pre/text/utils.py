@@ -1,7 +1,8 @@
-from src.core.common.language import Language
-from src.core.common.text import convert_to_ipa, normalize, text_to_symbols
-from src.core.common.symbol_id_dict import SymbolIdDict
 from typing import List, Tuple
+
+from src.core.common.language import Language
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.text import convert_to_ipa, normalize, text_to_symbols
 
 
 def symbols_normalize(symbols: List[str], lang: Language, accent_ids: List[str]) -> Tuple[List[str], List[int]]:

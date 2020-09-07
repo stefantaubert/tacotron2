@@ -1,21 +1,24 @@
 import os
-from src.app.pre.prepare import get_prepared_dir, load_filelist
-from src.core.pre.merge_ds import split_train_test_val
 from typing import Optional
 
-from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, reset_file_log, init_logger
-from src.app.io import (get_checkpoints_dir,
-                        get_train_log_file, get_train_logs_dir, load_trainset,
-                        load_valset, save_settings, save_testset, save_trainset, load_settings, save_valset)
+from src.app.io import (get_checkpoints_dir, get_train_log_file,
+                        get_train_logs_dir, load_settings, load_trainset,
+                        load_valset, save_settings, save_testset,
+                        save_trainset, save_valset)
+from src.app.pre.prepare import get_prepared_dir, load_filelist
+from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
+                           init_logger, reset_file_log)
 from src.app.waveglow.io import get_train_dir
-from src.core.waveglow.train import train as train_core, get_logger as get_train_logger
+from src.core.pre.merge_ds import split_train_test_val
+from src.core.waveglow.train import get_logger as get_train_logger
+from src.core.waveglow.train import train as train_core
 
 
 def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.01, validation_size: float = 0.01, hparams: Optional[str] = None, split_seed: int = 1234):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   wholeset = load_filelist(prep_dir)
   trainset, testset, valset = split_train_test_val(
-    wholeset, test_size=test_size, val_size=validation_size, seed=split_seed, shuffle=True)
+    wholeset, test_size=test_size, validation_size=validation_size, seed=split_seed, shuffle=True)
   train_dir = get_train_dir(base_dir, train_name, create=True)
   save_trainset(train_dir, trainset)
   save_testset(train_dir, testset)

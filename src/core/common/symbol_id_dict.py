@@ -1,14 +1,13 @@
 import os
 from collections import OrderedDict
 from shutil import copyfile
-from src.core.common.text import get_entries_ids_dict_order
 from typing import List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Union
 
-from src.core.common.utils import (get_basename,
-                                   parse_json, save_json)
-from src.core.common.text import deserialize_list, serialize_list, switch_keys_with_values
+from src.core.common.text import (deserialize_list, get_entries_ids_dict_order,
+                                  serialize_list, switch_keys_with_values)
+from src.core.common.utils import get_basename, parse_json, save_json
 
 # # end of string
 # _eos = '~'

@@ -1,12 +1,12 @@
 import os
-from src.core.common.language import Language
-from src.core.common.text import text_to_symbols
-from src.core.common.utils import download_tar
+from typing import List, Tuple
 
 from tqdm import tqdm
 
-from src.core.pre.parser.data import PreDataList, PreData
-from typing import List, Tuple
+from src.core.common.language import Language
+from src.core.common.text import text_to_symbols
+from src.core.common.utils import download_tar
+from src.core.pre.parser.data import PreData, PreDataList
 
 __question_particle1 = '吗'
 __question_particle2 = '呢'

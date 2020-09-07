@@ -1,8 +1,8 @@
 # For copyright see LICENCE
 
 import torch
-from torch.autograd import Variable
 import torch.nn.functional as F
+from torch.autograd import Variable
 
 
 @torch.jit.script

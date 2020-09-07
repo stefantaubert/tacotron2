@@ -1,6 +1,6 @@
-import unittest
 import sys
 import time
+import unittest
 
 from src.core.common.text import *
 

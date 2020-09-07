@@ -1,19 +1,19 @@
 import json
 import os
+import random
 import tarfile
 from collections import Counter
 from dataclasses import astuple
 from pathlib import Path
-from typing import List, Set, Tuple, Type, TypeVar, Generic, Union
-import random
+from typing import Generic, List, Set, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from tqdm import tqdm
 import wget
 from PIL import Image
 from scipy.spatial.distance import cosine
+from tqdm import tqdm
 
 T = TypeVar('T')
 

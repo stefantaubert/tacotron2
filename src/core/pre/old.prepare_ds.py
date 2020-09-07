@@ -1,21 +1,23 @@
 import argparse
 import os
+from math import sqrt
+from shutil import copyfile
 
+import numpy as np
 import pandas as pd
+import torch
 from sklearn.model_selection import train_test_split
 from torch import nn
-import torch
-from math import sqrt
-import numpy as np
-from src.core.common import parse_json
 
-from src.paths import get_filelist_dir, get_ds_dir, ds_preprocessed_file_name, ds_preprocessed_symbols_name, filelist_symbols_file_name, filelist_file_name, filelist_weights_file_name, train_map_file, filelist_file_log_name
-from src.text.symbol_id_dict import load_from_file, serialize_symbol_ids, deserialize_symbol_ids
-from src.core.common import csv_separator
+from src.core.common import csv_separator, log, parse_json, symbols_str_col
+from src.paths import (ds_preprocessed_file_name, ds_preprocessed_symbols_name,
+                       filelist_file_log_name, filelist_file_name,
+                       filelist_symbols_file_name, filelist_weights_file_name,
+                       get_ds_dir, get_filelist_dir, train_map_file)
 from src.tacotron.hparams import create_hparams
-from src.core.common import log
-from shutil import copyfile
-from src.core.common import symbols_str_col
+from src.text.symbol_id_dict import (deserialize_symbol_ids, load_from_file,
+                                     serialize_symbol_ids)
+
 
 def prepare(base_dir: str, training_dir_path: str, merge_mode: str, pretrained_model_symbols: str, ds_name: str, speaker: str, pretrained_model: str, weight_map_mode: str, hparams):
   log(training_dir_path, "Merging symbols...")

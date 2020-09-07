@@ -1,5 +1,6 @@
 from torch.utils.tensorboard import SummaryWriter
 
+
 class WaveglowLogger(SummaryWriter):
   def __init__(self, logdir):
     super(WaveglowLogger, self).__init__(logdir)
@@ -11,4 +12,3 @@ class WaveglowLogger(SummaryWriter):
 
   def log_validation(self, reduced_loss, model, y_pred, iteration):
     self.add_scalar("validation.loss", reduced_loss, iteration)
-  

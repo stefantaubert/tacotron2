@@ -1,16 +1,17 @@
 import os
-from src.core.common.train import get_custom_or_last_checkpoint
-from src.app.pre.prepare import get_prepared_dir, load_filelist_speakers_json
+from typing import Optional
 
-from src.app.utils import add_console_out_to_logger, add_file_out_to_logger, init_logger
-from src.app.io import (get_checkpoints_dir,
-                        get_val_dir, get_val_log, load_valset, load_testset,
-                        save_val_orig_plot, load_settings,
-                        save_val_orig_wav, save_val_plot, save_val_wav)
+from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log,
+                        load_settings, load_testset, load_valset,
+                        save_val_orig_plot, save_val_orig_wav, save_val_plot,
+                        save_val_wav)
+from src.app.pre.prepare import get_prepared_dir, load_filelist_speakers_json
+from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
+                           init_logger)
 from src.app.waveglow.io import get_train_dir, save_diff_plot, save_v
+from src.core.common.train import get_custom_or_last_checkpoint
 from src.core.waveglow.inference import get_logger as get_infer_logger
 from src.core.waveglow.inference import validate as validate_core
-from typing import Optional
 
 
 def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):

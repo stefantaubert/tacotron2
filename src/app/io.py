@@ -1,14 +1,16 @@
 import datetime
 import os
 from shutil import copyfile
-from src.core.common.mel_plot import plot_melspec
-from src.core.common.audio import float_to_wav
-from src.core.pre.merge_ds import PreparedData, PreparedDataList
-from src.core.common.utils import get_parent_dirname, get_subdir, parse_json, save_json, stack_images_vertically
 from typing import Tuple
 
 import matplotlib.pylab as plt
 import numpy as np
+
+from src.core.common.audio import float_to_wav
+from src.core.common.mel_plot import plot_melspec
+from src.core.common.utils import (get_parent_dirname, get_subdir, parse_json,
+                                   save_json, stack_images_vertically)
+from src.core.pre.merge_ds import PreparedData, PreparedDataList
 
 # region Training
 

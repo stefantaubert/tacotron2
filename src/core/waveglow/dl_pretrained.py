@@ -1,10 +1,13 @@
 import os
-from src.core.common.utils import create_parent_folder
-import gdown
 import shutil
-from src.core.waveglow.converter import convert
 import sys
 import tempfile
+
+import gdown
+
+from src.core.common.utils import create_parent_folder
+from src.core.waveglow.converter import convert
+
 
 def main(destination: str, auto_convert: bool = True, keep_orig: bool = False):
   if not os.path.exists(destination):

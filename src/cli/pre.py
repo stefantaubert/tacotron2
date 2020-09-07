@@ -1,12 +1,15 @@
 from argparse import ArgumentParser
-from src.app.pre.tools import remove_silence_plot
-from src.app.pre.mapping import create_inference_map, create_weights_map
-from src.app.pre.wav import preprocess_wavs, wavs_normalize, wavs_remove_silence, wavs_upsample
-from src.app.pre.text import preprocess_text, text_convert_to_ipa, text_normalize
-from src.app.pre.prepare import prepare_ds
-from src.app.pre.mel import preprocess_mels
-from src.app.pre.ds import preprocess_ljs, preprocess_thchs, preprocess_thchs_kaldi
 
+from src.app.pre.ds import (preprocess_ljs, preprocess_thchs,
+                            preprocess_thchs_kaldi)
+from src.app.pre.mapping import create_inference_map, create_weights_map
+from src.app.pre.mel import preprocess_mels
+from src.app.pre.prepare import prepare_ds
+from src.app.pre.text import (preprocess_text, text_convert_to_ipa,
+                              text_normalize)
+from src.app.pre.tools import remove_silence_plot
+from src.app.pre.wav import (preprocess_wavs, wavs_normalize,
+                             wavs_remove_silence, wavs_upsample)
 from src.cli.utils import parse_tuple_list
 
 

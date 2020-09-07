@@ -1,12 +1,12 @@
 from argparse import ArgumentParser
+from typing import Optional
+
 from src.app.waveglow.dl import dl_pretrained
 from src.app.waveglow.inference import infer
-from src.app.waveglow.validation import validate
 from src.app.waveglow.training import continue_train, train
-
-
+from src.app.waveglow.validation import validate
 from src.cli.utils import parse_tuple_list
-from typing import Optional
+
 
 def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--base_dir', type=str, help='base directory', required=True)

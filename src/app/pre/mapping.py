@@ -1,7 +1,11 @@
 import os
-from src.app.pre.prepare import get_prepared_dir, load_filelist_symbol_converter
-from src.core.common import create_weights_map as create_weights_map_core, SymbolsMap, create_inference_map as create_inference_map_core, Language
 from typing import List, Optional
+
+from src.app.pre.prepare import (get_prepared_dir,
+                                 load_filelist_symbol_converter)
+from src.core.common import Language, SymbolsMap
+from src.core.common import create_inference_map as create_inference_map_core
+from src.core.common import create_weights_map as create_weights_map_core
 
 
 def try_load_symbols_map(symbols_map_path: str) -> Optional[SymbolsMap]:

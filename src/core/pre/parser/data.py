@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from src.core.common.utils import GenericList
-from src.core.common.language import Language
 from typing import List
+
+from src.core.common.language import Language
+from src.core.common.utils import GenericList
 
 
 @dataclass()

@@ -1,4 +1,5 @@
 import unittest
+
 from src.core.common.symbol_id_dict import *
 
 

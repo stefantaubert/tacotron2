@@ -1,13 +1,11 @@
 import random
 from math import inf, log10
-
 from typing import List, Tuple
+
 import numpy as np
+import torch
 from resampy import resample as resamply_resample
 from scipy.io.wavfile import read, write
-
-import torch
-
 
 float32_64_min_wav = -1.0
 float32_64_max_wav = 1.0

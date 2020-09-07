@@ -1,9 +1,10 @@
-from collections import OrderedDict
 from typing import List
-from typing import OrderedDict as OrderedDictType, Tuple, List, Set, Optional, Union
-from src.core.common.utils import parse_json, save_json
-from src.core.common.text import get_entries_ids_dict_order, serialize_list, deserialize_list
+from typing import OrderedDict as OrderedDictType
+from typing import Set, Union
 
+from src.core.common.text import (deserialize_list, get_entries_ids_dict_order,
+                                  serialize_list)
+from src.core.common.utils import parse_json, save_json
 
 PADDING_ACCENT = "none"
 

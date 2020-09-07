@@ -128,4 +128,3 @@
 
 #     # Update loss scale for next iteration
 #     loss_scaler.update_scale(has_overflow)
-

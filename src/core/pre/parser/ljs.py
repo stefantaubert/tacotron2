@@ -1,13 +1,13 @@
 import os
 import shutil
-from src.core.common.text import text_to_symbols
-from src.core.common.language import Language
 import tarfile
 
 import wget
 from tqdm import tqdm
 
-from src.core.pre.parser.data import PreDataList, PreData
+from src.core.common.language import Language
+from src.core.common.text import text_to_symbols
+from src.core.pre.parser.data import PreData, PreDataList
 
 
 def download(dir_path: str):

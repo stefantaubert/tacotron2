@@ -1,19 +1,20 @@
 import logging
 import os
 import random
-from src.core.common.train import get_last_checkpoint, get_pytorch_filename
-from src.core.common.audio import get_wav_tensor_segment, wav_to_float32_tensor
-from src.core.common.taco_stft import TacotronSTFT
-from src.core.pre.merge_ds import PreparedDataList
 import time
 
+import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
+from src.core.common.audio import get_wav_tensor_segment, wav_to_float32_tensor
+from src.core.common.taco_stft import TacotronSTFT
+from src.core.common.train import get_last_checkpoint, get_pytorch_filename
+from src.core.pre.merge_ds import PreparedDataList
 from src.core.waveglow.hparams import create_hparams
 from src.core.waveglow.logger import WaveglowLogger
 from src.core.waveglow.model import WaveGlow, WaveGlowLoss
-import torch
+
 
 def get_logger():
   return logging.getLogger("wg-train")

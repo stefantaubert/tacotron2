@@ -1,11 +1,12 @@
-from typing import List, Optional
-import numpy as np
+import logging
 import os
+from typing import List, Optional
 
+import numpy as np
 import torch
+
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.training import load_model
-import logging
 
 
 class Synthesizer():

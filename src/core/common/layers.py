@@ -33,4 +33,3 @@ class ConvNorm(torch.nn.Module):
   def forward(self, signal):
     conv_signal = self.conv(signal)
     return conv_signal
-

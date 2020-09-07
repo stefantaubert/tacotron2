@@ -1,6 +1,7 @@
-from typing import List
-from src.core.common.utils import parse_json, save_json
 from collections import Counter, OrderedDict
+
+from src.core.common.utils import parse_json, save_json
+
 
 class SymbolsDict(OrderedDict): # Tuple[str, int]
   def __init__(self, *args, **kwargs):
@@ -8,7 +9,7 @@ class SymbolsDict(OrderedDict): # Tuple[str, int]
 
   def save(self, file_path: str):
     save_json(file_path, self)
-  
+
   @classmethod
   def load(cls, file_path: str):
     data = parse_json(file_path)

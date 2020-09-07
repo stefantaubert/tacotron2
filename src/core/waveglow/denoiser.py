@@ -1,5 +1,6 @@
-from src.core.common.stft import STFT
 import torch
+
+from src.core.common.stft import STFT
 
 
 class Denoiser(torch.nn.Module):

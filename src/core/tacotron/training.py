@@ -1,26 +1,29 @@
+import logging
 import os
-from src.core.common.symbols_map import SymbolsMap, get_symbols_id_mapping
-from src.core.common.train import get_all_checkpoint_iterations, get_custom_checkpoint, get_last_checkpoint
-from src.core.common.text import deserialize_list
-from src.core.common.taco_stft import TacotronSTFT
-from src.core.pre.merge_ds import PreparedData, PreparedDataList
-from src.core.common.accents_dict import AccentsDict, PADDING_ACCENT
-from src.core.common.symbol_id_dict import PADDING_SYMBOL, SymbolIdDict
+import random
 import time
 from math import sqrt
-import torch
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
+import torch
+from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
-from typing import Tuple, Dict
-from typing import Optional
-from torch import nn
+
+from src.core.common.accents_dict import PADDING_ACCENT, AccentsDict
+from src.core.common.symbol_id_dict import PADDING_SYMBOL, SymbolIdDict
+from src.core.common.symbols_map import SymbolsMap, get_symbols_id_mapping
+from src.core.common.taco_stft import TacotronSTFT
+from src.core.common.text import deserialize_list
+from src.core.common.train import (get_all_checkpoint_iterations,
+                                   get_custom_checkpoint, get_last_checkpoint)
+from src.core.pre.merge_ds import PreparedData, PreparedDataList
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger
-from src.core.tacotron.model import Tacotron2, symbol_embeddings_layer_name, speaker_embeddings_layer_name, get_model_symbol_id
-import random
-import logging
-from typing import List
+from src.core.tacotron.model import (Tacotron2, get_model_symbol_id,
+                                     speaker_embeddings_layer_name,
+                                     symbol_embeddings_layer_name)
 
 
 def get_train_logger():
