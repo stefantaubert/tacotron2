@@ -392,6 +392,14 @@ For custom isort (not working)
 
 For running isort on all files (execute in workspace dir): `isort . -rc`
 
+Following setting to prevent that autoimports do not include "src." prefix:
+
+```json
+{
+  "python.analysis.autoSearchPaths": false,
+}
+```
+
 ### Requirements
 
 - `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)

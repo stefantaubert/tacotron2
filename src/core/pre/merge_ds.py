@@ -11,7 +11,7 @@ from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.utils import GenericList, get_unique_items
 from src.core.pre.ds import DsData, DsDataList
 from src.core.pre.mel import MelData, MelDataList
-from src.core.pre.text import TextData, TextDataList
+from src.core.pre.text.pre import TextData, TextDataList
 from src.core.pre.wav import WavData, WavDataList
 
 

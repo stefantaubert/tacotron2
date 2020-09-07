@@ -52,18 +52,6 @@ def save_df(dataframe: pd.DataFrame, path: str):
   dataframe.to_csv(path, header=None, index=None, sep=CSV_SEPERATOR)
 
 
-# def save_csv(data: list, path: str):
-#   data = [astuple(xi) for xi in data]
-#   df = pd.DataFrame(data)
-#   save_df(df, path)
-
-
-# def load_csv(path: str, dc_type) -> list:
-#   data = pd.read_csv(path, header=None, sep=CSV_SEPERATOR)
-#   data_loaded = [dc_type(*xi) for xi in data.values]
-#   return data_loaded
-
-
 def get_sorted_set(unsorted_set: Set[T]) -> List[T]:
   res: List[T] = list(sorted(list(unsorted_set)))
   return res
