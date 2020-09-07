@@ -392,7 +392,7 @@ For custom isort (not working)
 
 For running isort on all files (execute in workspace dir): `isort . -rc`
 
-Following setting to prevent that autoimports do not include "src." prefix:
+Following setting to prevent that autoimports do not include "src." prefix [see](https://github.com/microsoft/pylance-release):
 
 ```json
 {
