@@ -53,11 +53,11 @@ class UnitTests(unittest.TestCase):
     emb = torch.ones(size=(2,3))
     torch.nn.init.zeros_(emb[0])
     sims = get_similarities(emb)
-    symbols = SymbolIdDict.init_from_symbols({"_", "~"})
+    symbols = SymbolIdDict.init_from_symbols({"2", "1"})
     res = sims_to_csv(sims, symbols)
     self.assertEqual(2, len(res.index))
-    self.assertListEqual(['_', '<=>', '~', 'nan'], list(res.values[0]))
-    self.assertListEqual(['~', '<=>', '_', 'nan'], list(res.values[1]))
+    self.assertListEqual(['2', '<=>', '1', 'nan'], list(res.values[0]))
+    self.assertListEqual(['1', '<=>', '2', 'nan'], list(res.values[1]))
 
   def test_emb_plot_2d(self):
     emb = torch.ones(size=(2,3))

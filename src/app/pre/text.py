@@ -93,10 +93,10 @@ def text_normalize(base_dir: str, ds_name: str, orig_text_name: str, dest_text_n
   _text_op(base_dir, ds_name, orig_text_name, dest_text_name, operation)
 
 
-def text_convert_to_ipa(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: str, ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str):
+def text_convert_to_ipa(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: str, ignore_tones: bool, ignore_arcs: bool):
   print("Converting text to IPA...")
   operation = partial(text_convert_to_ipa_core, ignore_tones=ignore_tones,
-                      ignore_arcs=ignore_arcs, replace_unknown_ipa_by=replace_unknown_ipa_by)
+                      ignore_arcs=ignore_arcs)
   _text_op(base_dir, ds_name, orig_text_name, dest_text_name, operation)
 
 
@@ -120,8 +120,7 @@ if __name__ == "__main__":
     orig_text_name="en_norm",
     dest_text_name="ipa_norm",
     ignore_tones=True,
-    ignore_arcs=True,
-    replace_unknown_ipa_by="_"
+    ignore_arcs=True
   )
 
   preprocess_text(
@@ -136,6 +135,5 @@ if __name__ == "__main__":
     orig_text_name="chn",
     dest_text_name="ipa",
     ignore_tones=False,
-    ignore_arcs=True,
-    replace_unknown_ipa_by="_"
+    ignore_arcs=True
   )

@@ -2,7 +2,10 @@ from collections import OrderedDict
 from typing import List
 from typing import OrderedDict as OrderedDictType, Tuple, List, Set, Optional, Union
 from src.core.common.utils import parse_json, save_json
-from src.core.common.text import get_entries_ids_dict, serialize_list, deserialize_list
+from src.core.common.text import get_entries_ids_dict_order, serialize_list, deserialize_list
+
+
+PADDING_ACCENT = "none"
 
 
 class AccentsDict():
@@ -53,5 +56,13 @@ class AccentsDict():
 
   @classmethod
   def init_from_accents(cls, accents: Set[str]):
-    ids_to_accents = get_entries_ids_dict(accents)
+    unique_entries = list(sorted(accents))
+    ids_to_accents = get_entries_ids_dict_order(unique_entries)
+    return cls(ids_to_accents)
+
+  @classmethod
+  def init_from_accents_with_pad(cls, accents: Set[str], pad_accent: str = PADDING_ACCENT):
+    unique_entries = list(sorted(accents - set(pad_accent)))
+    final_accents = list(pad_accent) + unique_entries
+    ids_to_accents = get_entries_ids_dict_order(final_accents)
     return cls(ids_to_accents)

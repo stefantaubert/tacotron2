@@ -1,4 +1,6 @@
 import os
+from src.core.common.accents_dict import AccentsDict, PADDING_ACCENT
+from src.core.common.symbol_id_dict import PADDING_SYMBOL
 import time
 from math import sqrt
 import torch
@@ -105,8 +107,10 @@ class SymbolsMelCollate():
   """ Zero-pads model inputs and targets based on number of frames per step
   """
 
-  def __init__(self, n_frames_per_step):
+  def __init__(self, n_frames_per_step, symbol_padding_id: int, accent_padding_id: int):
     self.n_frames_per_step = n_frames_per_step
+    self.symbol_padding_id = symbol_padding_id
+    self.accent_padding_id = accent_padding_id
 
   def __call__(self, batch: List[Tuple[torch.IntTensor, torch.IntTensor, torch.Tensor, int]]):
     """Collate's training batch from normalized text and mel-spectrogram
@@ -120,10 +124,10 @@ class SymbolsMelCollate():
     max_input_len = input_lengths[0]
 
     symbols_padded = torch.LongTensor(len(batch), max_input_len)
-    symbols_padded.zero_()  # big bug! need a symbol ~
+    torch.nn.init.constant_(symbols_padded, self.symbol_padding_id)
 
     accents_padded = torch.LongTensor(len(batch), max_input_len)
-    accents_padded.zero_()  # big bug! need a accent ~
+    torch.nn.init.constant_(accents_padded, self.accent_padding_id)
 
     for i, batch_id in enumerate(ids_sorted_decreasing):
       symbols = batch[batch_id][0]
@@ -310,7 +314,12 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   debug_logger.info('Final parsed hparams:')
   debug_logger.info('\n'.join(str(hparams.values()).split(',')))
 
-  collate_fn = SymbolsMelCollate(hparams.n_frames_per_step)
+  collate_fn = SymbolsMelCollate(
+    n_frames_per_step=hparams.n_frames_per_step,
+    symbol_padding_id=0,  # was checked with assert
+    accent_padding_id=0  # was checked with assert
+  )
+
   val_loader = prepare_valloader(hparams, collate_fn, valset)
   train_loader = prepare_trainloader(hparams, collate_fn, trainset)
 
@@ -430,9 +439,12 @@ def continue_train(custom_hparams: str, n_symbols: int, n_speakers: int, n_accen
              iteration, model, optimizer, learning_rate)
 
 
-def train(warm_start_model_path: str, custom_hparams: str, logdir: str, symbol_ids: SymbolIdDict, n_speakers: int, n_accents: int, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, trained_weights: Optional[torch.Tensor], symbols_map: Optional[SymbolsMap], trained_symbols_conv: Optional[SymbolIdDict]):
+def train(warm_start_model_path: str, custom_hparams: str, logdir: str, symbol_ids: SymbolIdDict, n_speakers: int, accent_ids: AccentsDict, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, trained_weights: Optional[torch.Tensor], symbols_map: Optional[SymbolsMap], trained_symbols_conv: Optional[SymbolIdDict]):
+  assert symbol_ids.get_id(PADDING_SYMBOL) == 0
+  assert accent_ids.get_id(PADDING_ACCENT) == 0
+
   n_symbols = len(symbol_ids)
-  hparams = create_hparams(n_speakers, n_symbols, n_accents, custom_hparams)
+  hparams = create_hparams(n_speakers, n_symbols, accent_ids, custom_hparams)
 
   mapped_emb_weights = None
   if trained_weights is not None:

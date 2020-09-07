@@ -17,7 +17,7 @@ def init_logger(logger: logging.Logger):
 
   # take it from the above logger (root)
   logger.setLevel(logging.DEBUG)
-  
+
   for h in logger.handlers:
     logger.removeHandler(h)
 
@@ -27,7 +27,7 @@ def add_console_out_to_logger(logger: logging.Logger):
   console_handler.setFormatter(formatter)
   logger.addHandler(console_handler)
   logger.debug("init console logger")
-  
+
 def add_file_out_to_logger(logger: logging.Logger, log_file_path: str):
   fh = logging.FileHandler(log_file_path)
   fh.setLevel(logging.INFO)

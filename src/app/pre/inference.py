@@ -55,7 +55,7 @@ def _save_text_symbol_converter(text_dir: str, data: SymbolIdDict):
   data.save(path)
 
 
-def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang: Language, accent: Optional[str] = None, replace_unknown_ipa_by: Optional[str] = "_"):
+def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang: Language, accent: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   if not os.path.isdir(prep_dir):
     print("Please prepare data first.")
@@ -65,17 +65,16 @@ def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang:
       text=read_text(filepath),
       accent_ids=load_filelist_accents_ids(prep_dir),
       lang=lang,
-      accent=accent,
-      replace_unknown_ipa_by=replace_unknown_ipa_by
+      accent=accent
     )
     text_dir = get_text_dir(prep_dir, text_name, create=True)
     _save_text_csv(text_dir, data)
     _save_text_symbol_converter(text_dir, symbol_ids)
     _accent_template(base_dir, prep_name, text_name)
-    _prepare_inference(base_dir, prep_name, text_name, replace_unknown_ipa_by)
+    _prepare_inference(base_dir, prep_name, text_name)
 
 
-def normalize_text(base_dir: str, prep_name: str, text_name: str, replace_unknown_ipa_by: str = "_"):
+def normalize_text(base_dir: str, prep_name: str, text_name: str):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
@@ -89,10 +88,10 @@ def normalize_text(base_dir: str, prep_name: str, text_name: str, replace_unknow
     _save_text_csv(text_dir, updated_sentences)
     _save_text_symbol_converter(text_dir, symbol_ids)
     _accent_template(base_dir, prep_name, text_name)
-    _prepare_inference(base_dir, prep_name, text_name, replace_unknown_ipa_by)
+    _prepare_inference(base_dir, prep_name, text_name)
 
 
-def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones: bool = False, ignore_arcs: bool = True, replace_unknown_ipa_by: str = "_"):
+def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones: bool = False, ignore_arcs: bool = True):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
@@ -103,16 +102,15 @@ def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones
       sentences=_load_text_csv(text_dir),
       text_symbols=_load_text_symbol_converter(text_dir),
       ignore_tones=ignore_tones,
-      ignore_arcs=ignore_arcs,
-      replace_unknown_ipa_by=replace_unknown_ipa_by
+      ignore_arcs=ignore_arcs
     )
     _save_text_csv(text_dir, updated_sentences)
     _save_text_symbol_converter(text_dir, symbol_ids)
     _accent_template(base_dir, prep_name, text_name)
-    _prepare_inference(base_dir, prep_name, text_name, replace_unknown_ipa_by)
+    _prepare_inference(base_dir, prep_name, text_name)
 
 
-def accent_apply(base_dir: str, prep_name: str, text_name: str, replace_unknown_ipa_by: str = "_"):
+def accent_apply(base_dir: str, prep_name: str, text_name: str):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
@@ -125,10 +123,10 @@ def accent_apply(base_dir: str, prep_name: str, text_name: str, replace_unknown_
       accent_ids=load_filelist_accents_ids(prep_dir),
     )
     _save_text_csv(text_dir, updated_sentences)
-    _prepare_inference(base_dir, prep_name, text_name, replace_unknown_ipa_by)
+    _prepare_inference(base_dir, prep_name, text_name)
 
 
-def map_text(base_dir: str, prep_name: str, text_name: str, symbols_map: str, replace_unknown_ipa_by: str = "_"):
+def map_text(base_dir: str, prep_name: str, text_name: str, symbols_map: str):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
@@ -141,14 +139,14 @@ def map_text(base_dir: str, prep_name: str, text_name: str, symbols_map: str, re
     _save_text_csv(text_dir, updated_sentences)
     _save_text_symbol_converter(text_dir, symbol_ids)
     _accent_template(base_dir, prep_name, text_name)
-    _prepare_inference(base_dir, prep_name, text_name, replace_unknown_ipa_by)
+    _prepare_inference(base_dir, prep_name, text_name)
 
 
-def map_to_prep_symbols(base_dir: str, prep_name: str, text_name: str, replace_unknown_ipa_by: str = "_"):
+def map_to_prep_symbols(base_dir: str, prep_name: str, text_name: str):
   #prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   # TODO load map
   symbols_map = ""
-  map_text(base_dir, prep_name, text_name, symbols_map, replace_unknown_ipa_by)
+  map_text(base_dir, prep_name, text_name, symbols_map)
 
 
 def _accent_template(base_dir: str, prep_name: str, text_name: str):
@@ -166,7 +164,7 @@ def _accent_template(base_dir: str, prep_name: str, text_name: str):
     _save_accents_csv(text_dir, accented_symbol_list)
 
 
-def _prepare_inference(base_dir: str, prep_name: str, text_name: str, replace_unknown_ipa_by: str = "_"):
+def _prepare_inference(base_dir: str, prep_name: str, text_name: str):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
@@ -176,8 +174,7 @@ def _prepare_inference(base_dir: str, prep_name: str, text_name: str, replace_un
     infer_sents = infer_prepare(
       sentences=_load_text_csv(text_dir),
       text_symbols=_load_text_symbol_converter(text_dir),
-      known_symbols=load_filelist_symbol_converter(prep_dir),
-      replace_unknown_ipa_by=replace_unknown_ipa_by
+      known_symbols=load_filelist_symbol_converter(prep_dir)
     )
     _save_inference_csv(text_dir, infer_sents)
 

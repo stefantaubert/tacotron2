@@ -20,7 +20,7 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("1,0", result[0].serialized_symbol_ids)
     self.assertEqual("0,1", result[0].serialized_accent_ids)
     self.assertEqual("ba", result[0].text)
-  
+
   def test_normalize(self):
     data = TextDataList([
       TextData(5, "  b ", "0,0,1,0", "7,7,7,7", Language.ENG)
@@ -45,7 +45,7 @@ class UnitTests(unittest.TestCase):
     ])
     symbol_ids = SymbolIdDict.init_from_symbols({" ", "b", "c"})
 
-    result, conv, symbols_dict = convert_to_ipa(data, symbol_ids, ignore_tones=False, ignore_arcs=False, replace_unknown_ipa_by="_")
+    result, conv, symbols_dict = convert_to_ipa(data, symbol_ids, ignore_tones=False, ignore_arcs=False)
 
     self.assertEqual(2, len(conv))
     self.assertEqual(1, len(result))

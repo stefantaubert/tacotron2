@@ -14,7 +14,7 @@ class UnitTests(unittest.TestCase):
   #   print(sents)
   #   #sents = sents_map(sents, symbols_map=SymbolsMap.from_tuples([("o", "b"), ("a", ".")]))
   #   print(sents)
-  #   sents = sents_convert_to_ipa(sents, ignore_tones=True, ignore_arcs=True, replace_unknown_by="_")
+  #   sents = sents_convert_to_ipa(sents, ignore_tones=True, ignore_arcs=True)
   #   print(sents)
 
   def test_get_formatted(self):

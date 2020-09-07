@@ -1,4 +1,5 @@
 import os
+from src.app.utils import DEFAULT_PADDING_ACCENT, DEFAULT_PADDING_SYMBOL
 from src.core.pre.merge_ds import preprocess
 from src.core.common import AccentsDict
 from typing import List, Tuple, Set
@@ -70,7 +71,7 @@ def save_filelist_accents_ids(prep_dir: str, data: AccentsDict):
   data.save(path)
 
 
-def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]], include_symbols: Set[str] = { "_" }):
+def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]]):
   print(f"Preparing dataset: {prep_name}...")
   prep_dir = get_prepared_dir(base_dir, prep_name)
   if os.path.isdir(prep_dir):
@@ -98,9 +99,8 @@ def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]]
       )
 
     data, symbol_ids, accent_ids, speakers_id_dict = merge_ds_core(
-      datasets,
-      ds_speakers,
-      include_symbols
+      datasets=datasets,
+      ds_speakers=ds_speakers
     )
 
     os.makedirs(prep_dir)

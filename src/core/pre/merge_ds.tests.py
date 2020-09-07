@@ -224,8 +224,8 @@ class UnitTests(unittest.TestCase):
     res, conv = merge_prepared_data(prep_list)
 
     self.assertEqual(6, len(conv))
-    self.assertEqual("_", conv.get_symbol(0))
-    self.assertEqual("~", conv.get_symbol(1))
+    self.assertEqual("todo", conv.get_symbol(0))
+    self.assertEqual("todo", conv.get_symbol(1))
     self.assertEqual("a", conv.get_symbol(2))
     self.assertEqual("b", conv.get_symbol(3))
     self.assertEqual("c", conv.get_symbol(4))

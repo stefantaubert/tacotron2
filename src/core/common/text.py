@@ -31,7 +31,12 @@ def serialize_list(symbol_ids: List[int]) -> str:
 
 def get_entries_ids_dict(symbols: Set[str]) -> OrderedDictType[str, int]:
   unique_symbols = list(sorted(set(symbols)))
-  res = OrderedDict([(s, i) for i, s in enumerate(unique_symbols)])
+  return get_entries_ids_dict_order(unique_symbols)
+
+
+def get_entries_ids_dict_order(symbols: List[str]) -> OrderedDictType[str, int]:
+  assert len(symbols) == len(set(symbols))
+  res = OrderedDict([(s, i) for i, s in enumerate(symbols)])
   return res
 
 
@@ -120,7 +125,7 @@ def split_sentences(text: str, lang: Language) -> List[str]:
     assert False
 
 
-def text_to_symbols(text: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, replace_unknown_ipa_by: Optional[str] = None) -> List[str]:
+def text_to_symbols(text: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None) -> List[str]:
   if lang == Language.ENG:
     symbols = list(text)
   elif lang == Language.GER:
@@ -131,8 +136,7 @@ def text_to_symbols(text: str, lang: Language, ignore_tones: Optional[bool] = No
     symbols = extract_from_sentence(
       text,
       ignore_tones=ignore_tones,
-      ignore_arcs=ignore_arcs,
-      replace_unknown_ipa_by=replace_unknown_ipa_by
+      ignore_arcs=ignore_arcs
     )
   else:
     assert False

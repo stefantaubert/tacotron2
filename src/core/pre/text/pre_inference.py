@@ -62,7 +62,7 @@ class AccentedSymbolList(GenericList[AccentedSymbol]):
   pass
 
 
-def add_text(text: str, lang: Language, accent_ids: AccentsDict, accent: Optional[str], replace_unknown_ipa_by: Optional[str]) -> Tuple[SymbolIdDict, SentenceList]:
+def add_text(text: str, lang: Language, accent_ids: AccentsDict, accent: Optional[str]) -> Tuple[SymbolIdDict, SentenceList]:
   res = SentenceList()
   sents = split_sentences(text, lang)
   accent_id = accent_ids.get_id(accent) if accent is not None else 0
@@ -70,8 +70,7 @@ def add_text(text: str, lang: Language, accent_ids: AccentsDict, accent: Optiona
     sent,
     lang=lang,
     ignore_tones=False,
-    ignore_arcs=False,
-    replace_unknown_ipa_by=replace_unknown_ipa_by
+    ignore_arcs=False
   ) for sent in sents]
   symbols = SymbolIdDict.init_from_symbols(get_unique_items(sents_symbols))
   for i, sent_symbols in enumerate(sents_symbols):
@@ -109,7 +108,7 @@ def update_symbols_and_text(sentences: SentenceList, sents_new_symbols: List[Lis
   return symbols, sentences
 
 
-def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str) -> Tuple[SymbolIdDict, SentenceList]:
+def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool) -> Tuple[SymbolIdDict, SentenceList]:
 
   sents_new_symbols = []
   for sentence in sentences.items(True):
@@ -118,8 +117,7 @@ def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ig
       lang=sentence.lang,
       accent_ids=deserialize_list(sentence.serialized_accents),
       ignore_arcs=ignore_arcs,
-      ignore_tones=ignore_tones,
-      replace_unknown_ipa_by=replace_unknown_ipa_by
+      ignore_tones=ignore_tones
     )
     sentence.lang = Language.IPA
     sentence.serialized_accents = serialize_list(new_accent_ids)
@@ -146,8 +144,7 @@ def sents_map(sentences: SentenceList, symbols_map: SymbolsMap) -> Tuple[SymbolI
         new_sent_text,
         lang=sentence.lang,
         ignore_tones=False,
-        ignore_arcs=False,
-        replace_unknown_ipa_by=""
+        ignore_arcs=False
       )
       if len(accent_ids) > 0:
         new_accent_ids = [accent_ids[0]] * len(new_symbols)
@@ -200,12 +197,15 @@ def sents_accent_apply(sentences: SentenceList, accented_symbols: AccentedSymbol
   return sentences
 
 
-def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, known_symbols: SymbolIdDict, replace_unknown_ipa_by: str) -> InferSentenceList:
+def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, known_symbols: SymbolIdDict) -> InferSentenceList:
   result = InferSentenceList()
   for sentence in sentences.items():
     old_text_symbols = text_symbols.get_symbols(sentence.serialized_symbols)
-    infer_symbols = known_symbols.replace_unknown_symbols(
-      old_text_symbols, replace_with_known_symbol=replace_unknown_ipa_by)
+    infer_symbols = old_text_symbols
+    
+    if known_symbols.has_unknown_symbols(infer_symbols):
+      infer_symbols = known_symbols.replace_unknown_symbols_with_pad(infer_symbols)
+
     infer_sentence = Sentence(
       sent_id=sentence.sent_id,
       lang=sentence.lang,
@@ -213,6 +213,7 @@ def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, k
       serialized_symbols=known_symbols.get_serialized_ids(infer_symbols),
       text=SymbolIdDict.symbols_to_str(infer_symbols)
     )
+
     result.append(infer_sentence)
     # Maybe add info if something was unknown
   return result

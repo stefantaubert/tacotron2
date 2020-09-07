@@ -60,7 +60,7 @@ class PreparedDataList(GenericList[PreparedData]):
     self.sort(key=PreparedDataList.get_key_for_sorting_after_entry_id, reverse=False)
 
 
-def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDataList, MelDataList, List[str], SymbolIdDict, AccentsDict]], ds_speakers: List[Tuple[str, str]], include_symbols: Set[str] = {}) -> Tuple[PreparedDataList, SymbolIdDict, AccentsDict, SpeakersDict]:
+def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDataList, MelDataList, List[str], SymbolIdDict, AccentsDict]], ds_speakers: List[Tuple[str, str]]) -> Tuple[PreparedDataList, SymbolIdDict, AccentsDict, SpeakersDict]:
   speakers_dict = {k: v[4] for k, v in datasets.items()}
   expanded_ds_speakers = expand_speakers(speakers_dict, ds_speakers)
   ds_speakers_list, speakers_id_dict = get_speakers(expanded_ds_speakers)
@@ -72,10 +72,10 @@ def preprocess(datasets: OrderedDict[str, Tuple[DsDataList, TextDataList, WavDat
     prep = get_prepared_data(ds_name, ds_data, speaker_names, text_data, wav_data, mel_data)
     ds_prepared_data.append((prep, conv, accents))
 
-  all_symbols = get_unique_items([conv.get_all_symbols() for _, conv, _ in ds_prepared_data]).union(include_symbols)
-  final_conv = SymbolIdDict.init_from_symbols(all_symbols)
+  all_symbols = get_unique_items([conv.get_all_symbols() for _, conv, _ in ds_prepared_data])
+  final_conv = SymbolIdDict.init_from_symbols_with_pad(all_symbols)
   all_accents = get_unique_items([accents.get_all_accents() for _, _, accents in ds_prepared_data])
-  final_accents = AccentsDict.init_from_accents(all_accents)
+  final_accents = AccentsDict.init_from_accents_with_pad(all_accents)
   whole = merge_prepared_data(ds_prepared_data, final_conv, final_accents)
   return whole, final_conv, final_accents, speakers_id_dict
 

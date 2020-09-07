@@ -25,7 +25,7 @@ class TextDataList(GenericList[TextData]):
   pass
 
 
-def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
+def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
   processed_data: List[Tuple[int, List[str], List[int], Language]] = []
 
   values: TextData
@@ -35,8 +35,7 @@ def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_to
       lang=values.lang,
       accent_ids=deserialize_list(values.serialized_accent_ids),
       ignore_arcs=ignore_arcs,
-      ignore_tones=ignore_tones,
-      replace_unknown_ipa_by=replace_unknown_ipa_by
+      ignore_tones=ignore_tones
     )
     processed_data.append((values.entry_id, new_symbols, new_accent_ids, Language.IPA))
 

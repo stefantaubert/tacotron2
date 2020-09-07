@@ -28,8 +28,7 @@ def prepare_thchs():
     orig_text_name="chn",
     dest_text_name="ipa",
     ignore_tones=False,
-    ignore_arcs=True,
-    replace_unknown_ipa_by="_"
+    ignore_arcs=True
   )
 
   preprocess_wavs(
@@ -116,8 +115,7 @@ def prepare_ljs():
     orig_text_name="en_norm",
     dest_text_name="ipa_norm",
     ignore_tones=True,
-    ignore_arcs=True,
-    replace_unknown_ipa_by="_"
+    ignore_arcs=True
   )
 
   preprocess_wavs(

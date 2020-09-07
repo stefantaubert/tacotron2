@@ -82,18 +82,17 @@ def update_map(old_map: SymbolsMap, new_map: SymbolsMap) -> bool:
   return False
 
 
-def create_inference_map(model_symb_conv: SymbolIdDict, corpora: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, replace_unknown_ipa_by: Optional[str] = None, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
+def create_inference_map(model_symb_conv: SymbolIdDict, corpora: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
   model_symbs = model_symb_conv.get_all_symbols()
-  return create_inference_map_core(model_symbs, corpora, lang, ignore_tones, ignore_arcs, replace_unknown_ipa_by, existing_map, logger)
+  return create_inference_map_core(model_symbs, corpora, lang, ignore_tones, ignore_arcs, existing_map, logger)
 
 
-def create_inference_map_core(model_symbols: set, corpora: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, replace_unknown_ipa_by: Optional[str] = None, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
+def create_inference_map_core(model_symbols: set, corpora: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
   raw_dest_symbols = text_to_symbols(
     corpora,
     lang=lang,
     ignore_arcs=ignore_arcs,
-    ignore_tones=ignore_tones,
-    replace_unknown_ipa_by=replace_unknown_ipa_by
+    ignore_tones=ignore_tones
   )
 
   dest_symbols = set(raw_dest_symbols)

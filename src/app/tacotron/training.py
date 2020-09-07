@@ -68,7 +68,7 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
     logdir=logs_dir,
     symbol_ids=load_filelist_symbol_converter(prep_dir),
     n_speakers=len(load_filelist_speakers_json(prep_dir)),
-    n_accents=len(load_filelist_accents_ids(prep_dir)),
+    accent_ids=load_filelist_accents_ids(prep_dir),
     trainset=trainset,
     valset=valset,
     save_checkpoint_dir=get_checkpoints_dir(train_dir),

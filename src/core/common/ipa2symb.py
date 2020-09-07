@@ -1,5 +1,5 @@
+from src.core.common.symbol_id_dict import PADDING_SYMBOL
 from ipapy.ipastring import IPAString
-from ipapy.ipachar import IPAChar, IPADiacritic
 import re
 import string
 from typing import List
@@ -8,14 +8,14 @@ _rx = '[{}]'.format(re.escape(string.punctuation))
 
 _arc = '͡'
 
-def extract_from_sentence(ipa_sentence: str, ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str):
+def extract_from_sentence(ipa_sentence: str, ignore_tones: bool, ignore_arcs: bool):
   res = []
   tmp: List[str] = []
 
   for c in ipa_sentence:
     if c in string.punctuation or c in string.whitespace:
       if len(tmp) > 0:
-        raw_word_symbols = _extract_symbols(tmp, ignore_tones, ignore_arcs, replace_unknown_ipa_by)
+        raw_word_symbols = _extract_symbols(tmp, ignore_tones, ignore_arcs)
         res.extend(raw_word_symbols)
         tmp.clear()
       res.append(c)
@@ -23,12 +23,12 @@ def extract_from_sentence(ipa_sentence: str, ignore_tones: bool, ignore_arcs: bo
       tmp.append(c)
 
   if len(tmp):
-    raw_word_symbols = _extract_symbols(tmp, ignore_tones, ignore_arcs, replace_unknown_ipa_by)
+    raw_word_symbols = _extract_symbols(tmp, ignore_tones, ignore_arcs)
     res.extend(raw_word_symbols)
     tmp.clear()
   return res
 
-def _extract_symbols(input_symbols: List[str], ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str) -> List[str]:
+def _extract_symbols(input_symbols: List[str], ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str = PADDING_SYMBOL) -> List[str]:
   symbols: List[str] = []
   input_word = ''.join(input_symbols)
   try:
@@ -70,7 +70,7 @@ if __name__ == "__main__":
   y = epi.transliterate("At Müller's execution there was great competition for front seats,")
   #y += " ɡɹât͡ʃi"
   y += "？"
-  res = extract_from_sentence(y, ignore_tones=True, ignore_arcs=True, replace_unknown_ipa_by="_")
+  res = extract_from_sentence(y, ignore_tones=True, ignore_arcs=True)
   print(res)
 
   #y = u"ˈprɪnɪŋ, ɪn ðə ˈoʊnli sɛns wɪθ wɪʧ wi ər æt ˈprɛzənt kənˈsərnd, ˈdɪfərz frəm moʊst ɪf nɑt frəm ɔl ðə ɑrts ənd kræfts ˌrɛprɪˈzɛnɪd ɪn ðə ˌɛksəˈbɪʃən."

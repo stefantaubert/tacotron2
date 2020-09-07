@@ -50,7 +50,7 @@ def create_weights_map(base_dir: str, dest_prep_name: str, orig_prep_name: str, 
   _save_weights_symbols(dest_dir, dest_prep_name, orig_prep_name, symbols)
 
 
-def create_inference_map(base_dir: str, prep_name: str, corpora: str, lang: Language = Language.IPA, ignore_tones: Optional[bool] = False, ignore_arcs: Optional[bool] = True, replace_unknown_ipa_by: Optional[str] = "_", existing_map: Optional[str] = None, dest_dir: str = "maps/inference"):
+def create_inference_map(base_dir: str, prep_name: str, corpora: str, lang: Language = Language.IPA, ignore_tones: Optional[bool] = False, ignore_arcs: Optional[bool] = True, existing_map: Optional[str] = None, dest_dir: str = "maps/inference"):
   assert os.path.isfile(corpora)
   prep_dir = get_prepared_dir(base_dir, prep_name)
   assert os.path.isdir(prep_dir)
@@ -77,6 +77,5 @@ if __name__ == "__main__":
       prep_name="thchs",
       corpora="examples/ipa/corpora.txt",
       existing_map="maps/inference/chn_v1.json",
-      replace_unknown_ipa_by="_",
       lang=Language.IPA
     )

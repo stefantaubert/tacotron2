@@ -67,16 +67,14 @@ def _get_all_speakers(l: PreDataList) -> Tuple[SpeakersDict, SpeakersLogDict]:
 
 def _get_all_accents(l: PreDataList) -> AccentsDict:
   accents = set()
-  x: PreData
-  for x in l:
+  for x in l.items():
     accents = accents.union(set(x.accents))
   return AccentsDict.init_from_accents(accents)
 
 
 def _get_symbols_id_dict(l: PreDataList) -> SymbolIdDict:
   symbols = set()
-  x: PreData
-  for x in l:
+  for x in l.items():
     symbols = symbols.union(set(x.symbols))
   return SymbolIdDict.init_from_symbols(symbols)
 

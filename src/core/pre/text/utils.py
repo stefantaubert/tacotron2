@@ -23,13 +23,12 @@ def symbols_normalize(symbols: List[str], lang: Language, accent_ids: List[str])
   return new_symbols, new_accent_ids
 
 
-def symbols_convert_to_ipa(symbols: List[str], lang: Language, accent_ids: List[str], ignore_tones: bool, ignore_arcs: bool, replace_unknown_ipa_by: str) -> Tuple[List[str], List[int]]:
+def symbols_convert_to_ipa(symbols: List[str], lang: Language, accent_ids: List[str], ignore_tones: bool, ignore_arcs: bool) -> Tuple[List[str], List[int]]:
   assert len(symbols) == len(accent_ids)
   if lang != Language.IPA:
     orig_text = SymbolIdDict.symbols_to_str(symbols)
     ipa = convert_to_ipa(orig_text, lang)
-    new_symbols: List[str] = text_to_symbols(
-      ipa, Language.IPA, ignore_tones, ignore_arcs, replace_unknown_ipa_by=replace_unknown_ipa_by)
+    new_symbols: List[str] = text_to_symbols(ipa, Language.IPA, ignore_tones, ignore_arcs)
     if len(accent_ids) > 0:
       new_accent_ids = [accent_ids[0]] * len(new_symbols)
     else:

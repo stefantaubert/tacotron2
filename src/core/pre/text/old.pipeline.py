@@ -15,7 +15,7 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
       epi = epitran.Epitran('eng-Latn')
     elif lang == Language.GER:
       epi = epitran.Epitran('deu-Latn')
-  
+
   if lang == Language.ENG or lang == Language.GER:
     download('punkt', quiet=True)
 
@@ -56,10 +56,10 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
     for s in sentences:
       cleaned_sent = normalize_text(s)
       cleaned_sents.append(cleaned_sent)
-    
+
     debug_logger.debug("Input normalized")
     debug_logger.debug(cleaned_sents)
-   
+
     accented_sents = []
     for s in cleaned_sents:
       ### TODO include rules in next step under if block
@@ -71,9 +71,9 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
 
   debug_logger.debug("Accented sents")
   debug_logger.debug(accented_sents)
- 
+
   if symbols_map:
-    ipa_mapping = { k: extract_from_sentence(v, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs, replace_unknown_ipa_by="_") for k, v in symbols_map.items() }
+    ipa_mapping = { k: extract_from_sentence(v, ignore_tones=ignore_tones, ignore_arcs=ignore_arcs) for k, v in symbols_map.items() }
 
   #print('\n'.join(sentences))
   seq_sents = []
@@ -99,14 +99,14 @@ def process_input_text(lines: List[str], ipa: bool, ignore_tones: bool, ignore_a
           mapped_symbols.append(sy)
     else:
       mapped_symbols = symbols
-    
+
     #unknown_symbols = unknown_symbols.union(conv.get_unknown_symbols(mapped_symbols))
     seq_sents_text.append(''.join(mapped_symbols))
     if subset_id != None:
       debug_logger.info(f"Using accent: {subset_id}")
       #symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True, subset_id_if_multiple=subset_id) #TODO: experiment if pad yes no
       symbol_ids = conv.get_ids(mapped_symbols) #TODO: experiment if pad yes no
-    else:  
+    else:
       #symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True) #TODO: experiment if pad yes no
       symbol_ids = conv.get_ids(mapped_symbols) #TODO: experiment if pad yes no
       symbol_ids = conv.symbols_to_ids(mapped_symbols, add_eos=True, replace_unknown_with_pad=True, subset_id_if_multiple=subset_id) #TODO: experiment if pad yes no

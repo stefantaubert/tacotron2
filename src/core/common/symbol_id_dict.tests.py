@@ -1,8 +1,9 @@
 import unittest
 from src.core.common.symbol_id_dict import *
 
+
 class UnitTests(unittest.TestCase):
-  
+
   def test_init_from_symbols_adds_no_symbols(self):
     res = SymbolIdDict.init_from_symbols({"a", "b", "c"})
 
@@ -28,6 +29,27 @@ class UnitTests(unittest.TestCase):
     res = symbol_ids.get_text([0, 1, 1])
 
     self.assertEqual("abb", res)
+
+  def test_init_from_symbols_with_pad_uses_pad_const(self):
+    res = SymbolIdDict.init_from_symbols_with_pad({"b", "a"})
+
+    self.assertEqual(PADDING_SYMBOL, res.get_symbol(0))
+    self.assertEqual("a", res.get_symbol(1))
+    self.assertEqual("b", res.get_symbol(2))
+
+  def test_init_from_symbols_with_pad_has_pad_at_idx_zero(self):
+    res = SymbolIdDict.init_from_symbols_with_pad({"b", "a"}, "x")
+
+    self.assertEqual("x", res.get_symbol(0))
+    self.assertEqual("a", res.get_symbol(1))
+    self.assertEqual("b", res.get_symbol(2))
+
+  def test_init_from_symbols_with_pad_ignores_existing_pad(self):
+    res = SymbolIdDict.init_from_symbols_with_pad({"b", "a", "x"}, "x")
+
+    self.assertEqual("x", res.get_symbol(0))
+    self.assertEqual("a", res.get_symbol(1))
+    self.assertEqual("b", res.get_symbol(2))
 
 
 if __name__ == '__main__':

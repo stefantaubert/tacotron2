@@ -1,19 +1,21 @@
 import os
 from collections import OrderedDict
 from shutil import copyfile
+from src.core.common.text import get_entries_ids_dict_order
 from typing import List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Union
 
-from src.core.common import (deserialize_list, get_basename,
-                             get_entries_ids_dict, parse_json, save_json,
-                             serialize_list, switch_keys_with_values)
-
-# # padding, used for unknown symbols
-# _pad = '_'
+from src.core.common.utils import (get_basename,
+                                   parse_json, save_json)
+from src.core.common.text import deserialize_list, serialize_list, switch_keys_with_values
 
 # # end of string
 # _eos = '~'
+
+# padding, used for unknown symbols and in training for no symbols
+PADDING_SYMBOL = "_"
+
 
 class SymbolIdDict():
   def __init__(self, ids_to_symbols: OrderedDictType[int, str]):
@@ -56,19 +58,21 @@ class SymbolIdDict():
   def save(self, file_path: str):
     save_json(file_path, self._ids_to_symbols)
 
-  def replace_unknown_symbols(self, symbols: List[str], replace_with_known_symbol: Optional[str] = None) -> List[str]:
-    assert replace_with_known_symbol is None or replace_with_known_symbol in self._ids_to_symbols.keys()
+  def replace_unknown_symbols_with_pad(self, symbols: List[str], pad_symbol: Optional[str] = PADDING_SYMBOL) -> List[str]:
+    assert pad_symbol in self._ids_to_symbols.keys()
     result = []
     for symbol in symbols:
       if symbol in self._ids_to_symbols.keys():
         result.append(symbol)
-      elif replace_with_known_symbol is not None:
-        result.append(replace_with_known_symbol)
+      else:
+        result.append(pad_symbol)
     return result
 
-  def get_unknown_symbols(self, symbols: List[str]):
-    unknown_symbols = {x for x in symbols if not self.symbol_exists(x)}
-    return unknown_symbols
+  def has_unknown_symbols(self, symbols: List[str]) -> bool:
+    for symbol in symbols:
+      if not self.symbol_exists(symbol):
+        return True
+    return False
 
   def get_ids(self, symbols: List[str]) -> List[int]:
     # TODO: on all refs replace unknown first
@@ -98,7 +102,7 @@ class SymbolIdDict():
   @classmethod
   def load_from_file(cls, filepath: str):
     loaded = parse_json(filepath)
-    loaded = OrderedDict([(k, v) for k, v in loaded.items()])
+    loaded = OrderedDict(loaded.items())
     values = list(loaded.values())
     assert len(values) > 0
     is_v2 = isinstance(values[0], list)
@@ -112,13 +116,20 @@ class SymbolIdDict():
       res = cls(ids_to_symbols)
       res.save(filepath)
       return res
-    else:
-      ids_to_symbols = loaded
-      return cls(ids_to_symbols)
+    ids_to_symbols = loaded
+    return cls(ids_to_symbols)
 
   @classmethod
   def init_from_symbols(cls, symbols: Set[str]):
-    ids_to_symbols = get_entries_ids_dict(symbols)
+    unique_entries = list(sorted(symbols))
+    ids_to_symbols = get_entries_ids_dict_order(unique_entries)
+    return cls(ids_to_symbols)
+
+  @classmethod
+  def init_from_symbols_with_pad(cls, symbols: Set[str], pad_symbol: str = PADDING_SYMBOL):
+    unique_entries = list(sorted(symbols - set(pad_symbol)))
+    final_symbols = list(pad_symbol) + unique_entries
+    ids_to_symbols = get_entries_ids_dict_order(final_symbols)
     return cls(ids_to_symbols)
 
 # if __name__ == "__main__":
