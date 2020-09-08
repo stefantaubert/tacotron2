@@ -17,13 +17,19 @@ from src.core.common.symbols_map import SymbolsMap, get_symbols_id_mapping
 from src.core.common.taco_stft import TacotronSTFT
 from src.core.common.text import deserialize_list
 from src.core.common.train import (get_all_checkpoint_iterations,
-                                   get_custom_checkpoint, get_last_checkpoint, get_pytorch_filename)
+                                   get_custom_checkpoint, get_last_checkpoint,
+                                   get_pytorch_filename)
 from src.core.pre.merge_ds import PreparedData, PreparedDataList
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger
-from src.core.tacotron.model import (Tacotron2, get_model_symbol_id,
-                                     speaker_embeddings_layer_name,
-                                     symbol_embeddings_layer_name)
+from src.core.tacotron.model import (SPEAKER_EMBEDDINGS_LAYER_NAME,
+                                     SYMBOL_EMBEDDINGS_LAYER_NAME, Tacotron2,
+                                     get_model_symbol_id, get_model_symbol_ids,
+                                     get_model_symbols_count,
+                                     get_uniform_weights)
+
+PADDING_SYMBOL_ID = 0
+PADDING_ACCENT_ID = 0
 
 
 def get_train_logger():
@@ -61,17 +67,13 @@ class SymbolsMelLoader(Dataset):
     for i, values in enumerate(tqdm(data.items())):
       symbol_ids = deserialize_list(values.serialized_symbol_ids)
       accent_ids = deserialize_list(values.serialized_accent_ids)
-      assert len(symbol_ids) == len(accent_ids)
 
-      model_symbol_ids = []
-      symbol_accent_ids = zip(symbol_ids, accent_ids)
-      for symbol_id, accent_id in symbol_accent_ids:
-        model_symbol_id = get_model_symbol_id(
-          symbol_id, accent_id, hparams.n_symbols, hparams.accents_use_own_symbols)
-        model_symbol_ids.append(model_symbol_id)
+      model_symbol_ids = get_model_symbol_ids(
+        symbol_ids, accent_ids, hparams.n_symbols, hparams.accents_use_own_symbols)
 
       symbols_tensor = torch.IntTensor(model_symbol_ids)
       accents_tensor = torch.IntTensor(accent_ids)
+
       if hparams.use_saved_mels:
         self.data[i] = (symbols_tensor, accents_tensor, values.mel_path, values.speaker_id)
       else:
@@ -126,12 +128,10 @@ class SymbolsMelCollate():
     max_input_len = input_lengths[0]
 
     symbols_padded = torch.LongTensor(len(batch), max_input_len)
-    symbol_padding_id = 0 # PADDING_SYMBOL
-    torch.nn.init.constant_(symbols_padded, symbol_padding_id)
+    torch.nn.init.constant_(symbols_padded, PADDING_SYMBOL_ID)
 
     accents_padded = torch.LongTensor(len(batch), max_input_len)
-    accent_padding_id = 0 # PADDING_ACCENT
-    torch.nn.init.constant_(accents_padded, accent_padding_id)
+    torch.nn.init.constant_(accents_padded, PADDING_ACCENT_ID)
 
     for i, batch_id in enumerate(ids_sorted_decreasing):
       symbols = batch[batch_id][0]
@@ -330,7 +330,7 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   criterion = Tacotron2Loss()
 
   debug_logger.debug("Modelweights:")
-  debug_logger.debug(str(model.state_dict()[symbol_embeddings_layer_name]))
+  debug_logger.debug(str(model.state_dict()[SYMBOL_EMBEDDINGS_LAYER_NAME]))
 
   model.train()
   # is_overflow = False
@@ -440,11 +440,10 @@ def continue_train(custom_hparams: str, n_symbols: int, n_speakers: int, n_accen
 
 
 def train(warm_start_model_path: str, custom_hparams: str, logdir: str, symbol_ids: SymbolIdDict, n_speakers: int, accent_ids: AccentsDict, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, trained_weights: Optional[torch.Tensor], symbols_map: Optional[SymbolsMap], trained_symbols_conv: Optional[SymbolIdDict]):
-  assert symbol_ids.get_id(PADDING_SYMBOL) == 0
-  assert accent_ids.get_id(PADDING_ACCENT) == 0
+  assert symbol_ids.get_id(PADDING_SYMBOL) == PADDING_SYMBOL_ID
+  assert accent_ids.get_id(PADDING_ACCENT) == PADDING_ACCENT_ID
 
-  n_symbols = len(symbol_ids)
-  hparams = create_hparams(n_speakers, n_symbols, accent_ids, custom_hparams)
+  hparams = create_hparams(n_speakers, len(symbol_ids), len(accent_ids), custom_hparams)
 
   mapped_emb_weights = None
   if trained_weights is not None:
@@ -453,7 +452,8 @@ def train(warm_start_model_path: str, custom_hparams: str, logdir: str, symbol_i
       model_symbols=symbol_ids,
       trained_weights=trained_weights,
       trained_symbols=trained_symbols_conv,
-      symbols_mapping=symbols_map
+      symbols_mapping=symbols_map,
+      hparams=hparams
     )
 
   model, optimizer, learning_rate, iteration = _train(
@@ -517,7 +517,8 @@ def _train(warm_start_model_path: str, mapped_emb_weights: torch.Tensor, checkpo
 
     if mapped_emb_weights is not None:
       debug_logger.info("Loading pretrained, mapped embeddings...")
-      init_symbol_embedding_weights(model, mapped_emb_weights)
+      model.embedding.weight = nn.Parameter(mapped_emb_weights)
+      #init_symbol_embedding_weights(model, mapped_emb_weights)
 
   return model, optimizer, learning_rate, iteration
 
@@ -563,18 +564,19 @@ def warm_start_model(checkpoint_path: str, model: str, ignore_layers: List[str])
   model_state_dict = load_checkpoint_dict(checkpoint_path)[0]
   # The default value from HParams is [""], an empty list was not working.
   ignore_layers.extend([
-    symbol_embeddings_layer_name,
-    speaker_embeddings_layer_name
+    SYMBOL_EMBEDDINGS_LAYER_NAME,
+    SPEAKER_EMBEDDINGS_LAYER_NAME
   ])
   model_dict = {k: v for k, v in model_state_dict.items() if k not in ignore_layers}
   _update_model_state_dict(model, model_dict)
 
 
-def init_symbol_embedding_weights(model: Tacotron2, emb_weights: torch.Tensor):
-  update = {
-    symbol_embeddings_layer_name: emb_weights
-  }
-  _update_model_state_dict(model, update)
+# def init_symbol_embedding_weights(model: Tacotron2, emb_weights: torch.Tensor):
+#   model.embedding.weight == nn.Parameter(emb_weights)
+#   # update = {
+#   #   SYMBOL_EMBEDDINGS_LAYER_NAME: emb_weights
+#   # }
+#   # _update_model_state_dict(model, update)
 
 
 def _update_model_state_dict(model: Tacotron2, updates: dict):
@@ -589,17 +591,9 @@ def log_checkpoint_score(iteration: int, gradloss: float, trainloss: float, vall
   checkpoint_logger.info(msg)
 
 
-def get_uniform_weights(n_symbols: int, emb_dim: int) -> torch.Tensor:
-  weight = torch.zeros(size=(n_symbols, emb_dim))
-  std = sqrt(2.0 / (n_symbols + emb_dim))
-  val = sqrt(3.0) * std  # uniform bounds for std
-  nn.init.uniform_(weight, -val, val)
-  return weight
-
-
 def load_symbol_embedding_weights_from(model_path: str) -> torch.Tensor:
   model_state_dict = load_checkpoint_dict(model_path)[0]
-  pretrained_weights = model_state_dict[symbol_embeddings_layer_name]
+  pretrained_weights = model_state_dict[SYMBOL_EMBEDDINGS_LAYER_NAME]
   return pretrained_weights
 
 # def load_weights(weights_path: str):
@@ -609,14 +603,18 @@ def load_symbol_embedding_weights_from(model_path: str) -> torch.Tensor:
 #   return weights
 
 
-def get_mapped_embedding_weights(model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
-  model_weights = get_uniform_weights(len(model_symbols), trained_weights.shape[1])
-  return get_mapped_embedding_weights_core(model_weights, model_symbols, trained_weights, trained_symbols, symbols_mapping)
+def get_mapped_embedding_weights(model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, hparams, symbols_mapping: Optional[SymbolsMap]) -> torch.Tensor:
+  model_symbols_count = get_model_symbols_count(
+    hparams.n_symbols,
+    hparams.n_accents,
+    hparams.accents_use_own_symbols
+  )
+
+  model_weights = get_uniform_weights(model_symbols_count, trained_weights.shape[1])
+  return get_mapped_embedding_weights_core(model_weights, model_symbols, trained_weights, trained_symbols, symbols_mapping, hparams)
 
 
-def get_mapped_embedding_weights_core(model_weights: torch.Tensor, model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, symbols_mapping: Optional[SymbolsMap] = None) -> torch.Tensor:
-  assert model_weights.shape[0] == len(model_symbols)
-
+def get_mapped_embedding_weights_core(model_weights: torch.Tensor, model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, symbols_mapping: Optional[SymbolsMap], hparams) -> torch.Tensor:
   symbols_match_not_model = trained_weights.shape[0] != len(trained_symbols)
   if symbols_match_not_model:
     debug_logger.exception(
@@ -624,11 +622,22 @@ def get_mapped_embedding_weights_core(model_weights: torch.Tensor, model_symbols
     raise Exception()
 
   mapping = get_symbols_id_mapping(model_symbols, trained_symbols, symbols_mapping, debug_logger)
-  for map_to_symbol_id, map_from_symbol_id in mapping.items():
-    assert 0 <= map_to_symbol_id < model_weights.shape[0]
-    assert 0 <= map_from_symbol_id < trained_weights.shape[0]
+  for accent_id in range(hparams.n_accents):
+    for map_to_symbol_id, map_from_symbol_id in mapping.items():
+      assert 0 <= map_from_symbol_id < trained_weights.shape[0]
 
-    model_weights[map_to_symbol_id] = trained_weights[map_from_symbol_id]
+      map_to_model_id = get_model_symbol_id(
+        map_to_symbol_id,
+        accent_id,
+        hparams.n_symbols,
+        hparams.accents_use_own_symbols
+      )
+
+      assert 0 <= map_to_model_id < model_weights.shape[0]
+      model_weights[map_to_model_id] = trained_weights[map_from_symbol_id]
+
+    if not hparams.accents_use_own_symbols:
+      break
 
   return model_weights
 
@@ -641,7 +650,7 @@ def _filter_checkpoints(iterations: List[int], select: int, min_it: int, max_it:
   if not max_it:
     max_it = max(iterations)
   process_checkpoints = [checkpoint for checkpoint in iterations if checkpoint %
-                         select == 0 and checkpoint >= min_it and checkpoint <= max_it]
+                         select == 0 and min_it <= checkpoint <= max_it]
 
   return process_checkpoints
 

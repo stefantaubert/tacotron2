@@ -149,7 +149,6 @@ def get_symbols_id_mapping(dest_symbols: SymbolIdDict, orig_symbols: SymbolIdDic
     assert dest_symbols.symbol_exists(map_to_symbol)
     assert orig_symbols.symbol_exists(map_from_symbol)
     map_from_symbol_id = orig_symbols.get_id(map_from_symbol)
-    # TODO: do i have to include the accents here?
     map_to_symbol_id = dest_symbols.get_id(map_to_symbol)
     logger.info(
       f"Mapped symbol '{map_from_symbol}' ({map_from_symbol_id}) to symbol '{map_to_symbol}' ({map_to_symbol_id})")

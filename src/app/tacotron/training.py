@@ -123,7 +123,7 @@ if __name__ == "__main__":
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       prep_name="thchs_ljs",
-      hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1"
+      hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,accents_use_own_symbols=True"
     )
   elif mode == 2:
     train(

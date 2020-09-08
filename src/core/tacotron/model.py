@@ -7,12 +7,79 @@ from torch import nn
 from torch.autograd import Variable
 from torch.nn import functional as F
 
-from src.core.common.audio import int16_max_wav
+from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.layers import ConvNorm, LinearNorm
 from src.core.common.utils import get_mask_from_lengths, to_gpu
 
-symbol_embeddings_layer_name = "embedding.weight"
-speaker_embeddings_layer_name = "speakers_embedding.weight"
+SYMBOL_EMBEDDINGS_LAYER_NAME = "embedding.weight"
+SPEAKER_EMBEDDINGS_LAYER_NAME = "speakers_embedding.weight"
+SHARED_SYMBOLS = [PADDING_SYMBOL]
+SHARED_SYMBOLS_COUNT = len(SHARED_SYMBOLS)
+
+
+def get_model_symbol_ids(symbol_ids: List[int], accent_ids: List[int], n_symbols: int,
+                         accents_use_own_symbols: bool,
+                         shared_symbol_count: int = SHARED_SYMBOLS_COUNT) -> List[int]:
+  assert len(symbol_ids) == len(accent_ids)
+  model_symbol_ids = [
+    get_model_symbol_id(
+      symbol_id,
+      accent_id,
+      n_symbols,
+      accents_use_own_symbols,
+      shared_symbol_count
+    ) for symbol_id, accent_id in zip(symbol_ids, accent_ids)
+  ]
+
+  return model_symbol_ids
+
+
+def get_model_symbols_count(n_symbols: int, n_accents: int, accents_use_own_symbols: bool,
+                            shared_symbol_count: int = SHARED_SYMBOLS_COUNT) -> int:
+  assert n_symbols >= shared_symbol_count
+
+  if accents_use_own_symbols:
+    return shared_symbol_count + (n_symbols - shared_symbol_count) * n_accents
+
+  return n_symbols
+
+
+def get_model_symbol_id(symbol_id: int, accent_id: int, n_symbols: int,
+                        accents_use_own_symbols: bool,
+                        shared_symbol_count: int = SHARED_SYMBOLS_COUNT) -> int:
+  assert n_symbols >= shared_symbol_count
+  assert symbol_id < n_symbols
+  assert accent_id >= 0
+  assert symbol_id >= 0
+
+  if accents_use_own_symbols:
+    is_shared_symbol = symbol_id < shared_symbol_count
+    if is_shared_symbol:
+      return symbol_id
+
+    return symbol_id + (n_symbols - shared_symbol_count) * accent_id
+
+  return symbol_id
+
+
+def get_symbol_id(model_symbol_id: int, n_symbols: int, accents_use_own_symbols: bool,
+                  shared_symbol_count: int = SHARED_SYMBOLS_COUNT) -> int:
+  assert n_symbols >= shared_symbol_count
+  assert model_symbol_id >= 0
+
+  if accents_use_own_symbols:
+    is_shared_symbol = model_symbol_id < shared_symbol_count
+    if is_shared_symbol:
+      return model_symbol_id
+
+    n_symbols_wo_pad = n_symbols - shared_symbol_count
+    if n_symbols_wo_pad == 1:
+      # if it is not shared it must be the symbol left
+      return n_symbols - 1
+
+    return model_symbol_id % n_symbols_wo_pad
+
+  return model_symbol_id
 
 
 class LocationLayer(nn.Module):
@@ -498,7 +565,8 @@ class Decoder(nn.Module):
 
       if torch.sigmoid(gate_output.data) > self.gate_threshold:
         break
-      elif len(mel_outputs) == self.max_decoder_steps:
+
+      if len(mel_outputs) == self.max_decoder_steps:
         self.logger.warn("Reached max decoder steps.")
         break
 
@@ -507,37 +575,38 @@ class Decoder(nn.Module):
     return self.parse_decoder_outputs(mel_outputs, gate_outputs, alignments)
 
 
-def get_model_symbols_count(n_symbols: int, n_accents: int, accents_use_own_symbols: bool) -> int16_max_wav:
-  if accents_use_own_symbols:
-    return n_symbols * n_accents
-  return n_symbols
-
-
-def get_model_symbol_id(symbol_id: int, accent_id: int, n_symbols: int, accents_use_own_symbols: bool) -> int:
-  if accents_use_own_symbols:
-    return n_symbols * accent_id + symbol_id
-  return symbol_id
-
-
-def get_symbol_id(model_symbol_id: int, n_symbols: int, accents_use_own_symbols: bool) -> int:
-  if accents_use_own_symbols:
-    return model_symbol_id % n_symbols
-  return model_symbol_id
+def get_uniform_weights(model_symbols_count: int, emb_dim: int) -> torch.Tensor:
+  weight = torch.zeros(size=(model_symbols_count, emb_dim))
+  std = sqrt(2.0 / (model_symbols_count + emb_dim))
+  val = sqrt(3.0) * std  # uniform bounds for std
+  nn.init.uniform_(weight, -val, val)
+  return weight
 
 
 class Tacotron2(nn.Module):
   def __init__(self, hparams, logger: Logger):
     super(Tacotron2, self).__init__()
+    model_symbols_count = get_model_symbols_count(
+      hparams.n_symbols,
+      hparams.n_accents,
+      hparams.accents_use_own_symbols
+    )
+
+    if hparams.accents_use_own_symbols:
+      logger.info(
+        f"All {hparams.n_accents} accent(s) use an own symbolset. The number of total symbols increased from {hparams.n_symbols} to {model_symbols_count}.")
+    else:
+      logger.info(
+        f"All {hparams.n_accents} accent(s) share the same symbolset. The number of total symbols is {model_symbols_count}.")
+
     self.logger = logger
     self.mask_padding = hparams.mask_padding
     self.n_mel_channels = hparams.n_mel_channels
     # TODO rename to symbol_embeddings but it will destroy all previous trained models
-    model_n_symbols = get_model_symbols_count(
-      hparams.n_symbols, hparams.n_accents, hparams.accents_use_own_symbols)
-    self.embedding = nn.Embedding(model_n_symbols, hparams.symbols_embedding_dim)
-    std = sqrt(2.0 / (model_n_symbols + hparams.symbols_embedding_dim))
-    val = sqrt(3.0) * std  # uniform bounds for std
-    self.embedding.weight.data.uniform_(-val, val)
+
+    self.embedding = nn.Embedding(model_symbols_count, hparams.symbols_embedding_dim)
+    symbol_emb_weights = get_uniform_weights(model_symbols_count, hparams.symbols_embedding_dim)
+    self.embedding.weight = nn.Parameter(symbol_emb_weights)
 
     self.speakers_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
     torch.nn.init.xavier_uniform_(self.speakers_embedding.weight)
