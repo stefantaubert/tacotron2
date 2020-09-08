@@ -16,10 +16,6 @@ from src.core.common.adjustments.whitespace import collapse_whitespace
 from src.core.common.ipa2symb import extract_from_sentence
 from src.core.common.language import Language
 
-_chn_question_mark = "？"
-_chn_exklamation_mark = "！"
-_chn_full_stop = "。"
-
 _epitran_cache = {}
 
 
@@ -182,7 +178,7 @@ def split_ipa_text(text: str) -> List[str]:
 
 
 def split_chn_text(text: str) -> List[str]:
-  separators = [r"\？", r"\！", r"\。"]
+  separators = [r"？", r"！", r"。"]
   return split_text(text, separators)
 
 

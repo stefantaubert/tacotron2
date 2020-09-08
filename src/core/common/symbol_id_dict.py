@@ -5,15 +5,10 @@ from typing import List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Union
 
+from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.text import (deserialize_list, get_entries_ids_dict_order,
                                   serialize_list, switch_keys_with_values)
 from src.core.common.utils import get_basename, parse_json, save_json
-
-# # end of string
-# _eos = '~'
-
-# padding, used for unknown symbols and in training for no symbols
-PADDING_SYMBOL = "_"
 
 
 class SymbolIdDict():
@@ -126,8 +121,8 @@ class SymbolIdDict():
 
   @classmethod
   def init_from_symbols_with_pad(cls, symbols: Set[str], pad_symbol: str = PADDING_SYMBOL):
-    unique_entries = list(sorted(symbols - set(pad_symbol)))
-    final_symbols = list(pad_symbol) + unique_entries
+    unique_entries = list(sorted(symbols - {pad_symbol}))
+    final_symbols = [pad_symbol] + unique_entries
     ids_to_symbols = get_entries_ids_dict_order(final_symbols)
     return cls(ids_to_symbols)
 

@@ -3,9 +3,9 @@ from typing import List, Optional
 
 from src.app.pre.prepare import (get_prepared_dir,
                                  load_filelist_symbol_converter)
-from src.core.common import Language, SymbolsMap
-from src.core.common import create_inference_map as create_inference_map_core
-from src.core.common import create_weights_map as create_weights_map_core
+from src.core.common.language import Language
+from src.core.common.symbols_map import (SymbolsMap, create_inference_map,
+                                         create_weights_map)
 
 
 def try_load_symbols_map(symbols_map_path: str) -> Optional[SymbolsMap]:
@@ -41,7 +41,7 @@ def _read_corpora(path: str) -> str:
   return content
 
 
-def create_weights_map(base_dir: str, dest_prep_name: str, orig_prep_name: str, existing_map: Optional[str] = None, dest_dir: str = "maps/weights"):
+def create_weights_map_main(base_dir: str, dest_prep_name: str, orig_prep_name: str, existing_map: Optional[str] = None, dest_dir: str = "maps/weights"):
   dest_prep_dir = get_prepared_dir(base_dir, dest_prep_name)
   assert os.path.isdir(dest_prep_dir)
   orig_prep_dir = get_prepared_dir(base_dir, orig_prep_name)
@@ -49,19 +49,19 @@ def create_weights_map(base_dir: str, dest_prep_name: str, orig_prep_name: str, 
   dest_conv = load_filelist_symbol_converter(dest_prep_dir)
   orig_conv = load_filelist_symbol_converter(orig_prep_dir)
   existing_map = try_load_symbols_map(existing_map)
-  weights_map, symbols = create_weights_map_core(orig_conv, dest_conv, existing_map=existing_map)
+  weights_map, symbols = create_weights_map(orig_conv, dest_conv, existing_map=existing_map)
   _save_weights_map(dest_dir, dest_prep_name, orig_prep_name, weights_map)
   _save_weights_symbols(dest_dir, dest_prep_name, orig_prep_name, symbols)
 
 
-def create_inference_map(base_dir: str, prep_name: str, corpora: str, lang: Language = Language.IPA, ignore_tones: Optional[bool] = False, ignore_arcs: Optional[bool] = True, existing_map: Optional[str] = None, dest_dir: str = "maps/inference"):
+def create_inference_map_main(base_dir: str, prep_name: str, corpora: str, lang: Language = Language.IPA, ignore_tones: Optional[bool] = False, ignore_arcs: Optional[bool] = True, existing_map: Optional[str] = None, dest_dir: str = "maps/inference"):
   assert os.path.isfile(corpora)
   prep_dir = get_prepared_dir(base_dir, prep_name)
   assert os.path.isdir(prep_dir)
   model_conv = load_filelist_symbol_converter(prep_dir)
   corpora_content = _read_corpora(corpora)
   existing_map = try_load_symbols_map(existing_map)
-  infer_map, symbols = create_inference_map_core(
+  infer_map, symbols = create_inference_map(
     model_conv, corpora_content, lang, ignore_tones, ignore_arcs, existing_map=existing_map)
   _save_infer_map(dest_dir, prep_name, infer_map)
   _save_infer_symbols(dest_dir, prep_name, symbols)
@@ -70,13 +70,13 @@ def create_inference_map(base_dir: str, prep_name: str, corpora: str, lang: Lang
 if __name__ == "__main__":
   mode = 2
   if mode == 1:
-    create_weights_map(
+    create_weights_map_main(
       base_dir="/datasets/models/taco2pt_v5",
       dest_prep_name="thchs",
       orig_prep_name="thchs",
     )
   elif mode == 2:
-    create_inference_map(
+    create_inference_map_main(
       base_dir="/datasets/models/taco2pt_v5",
       prep_name="thchs",
       corpora="examples/ipa/corpora.txt",

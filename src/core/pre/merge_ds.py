@@ -152,7 +152,7 @@ def merge_prepared_data(prep_list: List[Tuple[PreparedDataList, SymbolIdDict, Ac
 
 
 def split_prepared_data_train_test_val(prep: PreparedDataList, test_size: float,
-                                       val_size: float, seed: int,
+                                       validation_size: float, seed: int,
                                        shuffle: bool) -> Tuple[PreparedDataList,
                                                                PreparedDataList, PreparedDataList]:
   speaker_data = {}
@@ -164,7 +164,7 @@ def split_prepared_data_train_test_val(prep: PreparedDataList, test_size: float,
   train, test, val = [], [], []
   for _, data in speaker_data.items():
     speaker_train, speaker_test, speaker_val = split_train_test_val(
-      data, test_size, val_size, seed, shuffle=shuffle)
+      data, test_size, validation_size, seed, shuffle=shuffle)
     train.extend(speaker_train)
     test.extend(speaker_test)
     val.extend(speaker_val)

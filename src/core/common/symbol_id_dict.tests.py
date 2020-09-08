@@ -39,16 +39,16 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("b", res.get_symbol(2))
 
   def test_init_from_symbols_with_pad_has_pad_at_idx_zero(self):
-    res = SymbolIdDict.init_from_symbols_with_pad({"b", "a"}, "x")
+    res = SymbolIdDict.init_from_symbols_with_pad({"b", "a"}, "xx")
 
-    self.assertEqual("x", res.get_symbol(0))
+    self.assertEqual("xx", res.get_symbol(0))
     self.assertEqual("a", res.get_symbol(1))
     self.assertEqual("b", res.get_symbol(2))
 
   def test_init_from_symbols_with_pad_ignores_existing_pad(self):
-    res = SymbolIdDict.init_from_symbols_with_pad({"b", "a", "x"}, "x")
+    res = SymbolIdDict.init_from_symbols_with_pad({"b", "a", "xx"}, "xx")
 
-    self.assertEqual("x", res.get_symbol(0))
+    self.assertEqual("xx", res.get_symbol(0))
     self.assertEqual("a", res.get_symbol(1))
     self.assertEqual("b", res.get_symbol(2))
 

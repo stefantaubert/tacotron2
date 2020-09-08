@@ -1,4 +1,4 @@
-from logging import Logger, getLogger
+from logging import Logger
 from math import sqrt
 from typing import List, Tuple
 
@@ -268,7 +268,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-  def __init__(self, hparams, logger: Logger = getLogger()):
+  def __init__(self, hparams, logger: Logger):
     super(Decoder, self).__init__()
     self.logger = logger
     self.n_mel_channels = hparams.n_mel_channels
@@ -526,7 +526,7 @@ def get_symbol_id(model_symbol_id: int, n_symbols: int, accents_use_own_symbols:
 
 
 class Tacotron2(nn.Module):
-  def __init__(self, hparams, logger: Logger = getLogger()):
+  def __init__(self, hparams, logger: Logger):
     super(Tacotron2, self).__init__()
     self.logger = logger
     self.mask_padding = hparams.mask_padding

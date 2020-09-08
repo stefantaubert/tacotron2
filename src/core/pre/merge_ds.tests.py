@@ -334,7 +334,7 @@ class UnitTests(unittest.TestCase):
       self.get_dummy_prep_data(i=11),
     ])
 
-    train, test, val = split_prepared_data_train_test_val(data, test_size=1/6, val_size=2/6, seed=0, shuffle=False)
+    train, test, val = split_prepared_data_train_test_val(data, test_size=1/6, validation_size=2/6, seed=0, shuffle=False)
 
     self.assertEqual(2, len(test))
     self.assertEqual(4, len(val))

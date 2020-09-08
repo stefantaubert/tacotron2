@@ -15,9 +15,9 @@ from PIL import Image
 from scipy.spatial.distance import cosine
 from tqdm import tqdm
 
-T = TypeVar('T')
+from src.core.common.globals import CSV_SEPERATOR
 
-CSV_SEPERATOR = '\t'
+T = TypeVar('T')
 
 
 class GenericList(list, Generic[T]):

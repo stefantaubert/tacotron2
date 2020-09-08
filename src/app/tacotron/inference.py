@@ -107,6 +107,11 @@ def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveg
   prep_dir = get_prepared_dir(base_dir, prep_name)
   assert os.path.isdir(prep_dir)
 
+  text_dir = get_text_dir(prep_dir, text_name, create=False)
+  if not os.path.isdir(text_dir):
+    logger.error(f"The text '{ text_name }' doesn't exist.")
+    assert False
+
   speakers = load_filelist_speakers_json(prep_dir)
   speaker_id = speakers[ds_speaker]
   infer_dir = get_infer_dir(train_dir, text_name, iteration, speaker_id)
@@ -117,8 +122,6 @@ def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveg
   wg_checkpoint_path, _ = get_last_checkpoint(get_checkpoints_dir(train_dir_wg))
   _, custom_wg_hparams_loaded = load_settings(train_dir_wg)
 
-  text_dir = get_text_dir(prep_dir, text_name, create=False)
-  assert os.path.isdir(text_dir)
   infer_sents = load_inference_csv(text_dir)
 
   wav, analysis_stack = infer_core(

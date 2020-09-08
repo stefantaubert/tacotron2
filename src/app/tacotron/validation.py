@@ -4,9 +4,9 @@ from typing import Optional
 import matplotlib.pylab as plt
 
 from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log,
-                        load_testset, load_valset, save_infer_wav,
-                        save_val_comparison, save_val_orig_plot,
-                        save_val_orig_wav, save_val_plot, save_val_wav)
+                        load_testset, load_valset, save_val_comparison,
+                        save_val_orig_plot, save_val_orig_wav, save_val_plot,
+                        save_val_wav)
 from src.app.pre.prepare import (get_prepared_dir, load_filelist_accents_ids,
                                  load_filelist_speakers_json,
                                  load_filelist_symbol_converter)

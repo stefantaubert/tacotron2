@@ -14,7 +14,7 @@ from src.app.tacotron.io import get_train_dir
 from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
                            init_logger, reset_file_log)
 from src.core.common.train import get_custom_or_last_checkpoint
-from src.core.pre.merge_ds import split_train_test_val
+from src.core.pre.merge_ds import split_prepared_data_train_test_val
 from src.core.tacotron.training import continue_train as continue_train_core
 from src.core.tacotron.training import (get_checkpoints_eval_logger,
                                         get_train_logger,
@@ -25,7 +25,7 @@ from src.core.tacotron.training import train as train_core
 def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, hparams: Optional[str] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, weights_map: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   wholeset = load_filelist(prep_dir)
-  trainset, testset, valset = split_train_test_val(
+  trainset, testset, valset = split_prepared_data_train_test_val(
     wholeset, test_size=test_size, validation_size=validation_size, seed=split_seed, shuffle=True)
   train_dir = get_train_dir(base_dir, train_name, create=True)
   save_trainset(train_dir, trainset)

@@ -3,8 +3,10 @@ from typing import Optional
 
 from src.app.pre.prepare import (get_prepared_dir, load_filelist_accents_ids,
                                  load_filelist_symbol_converter)
-from src.core.common import (Language, SymbolIdDict, SymbolsMap, get_subdir,
-                             read_text)
+from src.core.common.language import Language
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.symbols_map import SymbolsMap
+from src.core.common.utils import get_subdir, read_text
 from src.core.pre.text.pre_inference import (AccentedSymbol,
                                              AccentedSymbolList,
                                              InferSentenceList, Sentence,

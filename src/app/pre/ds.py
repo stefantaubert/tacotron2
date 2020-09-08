@@ -1,10 +1,12 @@
 import os
 
 from src.app.pre.io import get_pre_dir
-from src.core.common import (AccentsDict, SpeakersDict, SpeakersLogDict,
-                             SymbolIdDict, get_subdir)
-from src.core.pre import (DsData, DsDataList, PreparedDataList, ljs_preprocess,
-                          thchs_kaldi_preprocess, thchs_preprocess)
+from src.core.common.accents_dict import AccentsDict
+from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
+from src.core.common.symbol_id_dict import SymbolIdDict
+from src.core.common.utils import get_subdir
+from src.core.pre.ds import (DsData, DsDataList, ljs_preprocess,
+                             thchs_kaldi_preprocess, thchs_preprocess)
 
 # don't do preprocessing here because inconsistent with mels because it is not always usefull to calc mels instand
 # from src.app.pre.text import preprocess_text

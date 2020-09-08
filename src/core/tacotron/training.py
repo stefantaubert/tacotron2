@@ -17,7 +17,7 @@ from src.core.common.symbols_map import SymbolsMap, get_symbols_id_mapping
 from src.core.common.taco_stft import TacotronSTFT
 from src.core.common.text import deserialize_list
 from src.core.common.train import (get_all_checkpoint_iterations,
-                                   get_custom_checkpoint, get_last_checkpoint)
+                                   get_custom_checkpoint, get_last_checkpoint, get_pytorch_filename)
 from src.core.pre.merge_ds import PreparedData, PreparedDataList
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger
@@ -126,11 +126,11 @@ class SymbolsMelCollate():
     max_input_len = input_lengths[0]
 
     symbols_padded = torch.LongTensor(len(batch), max_input_len)
-    symbol_padding_id = 0 # "_"
+    symbol_padding_id = 0 # PADDING_SYMBOL
     torch.nn.init.constant_(symbols_padded, symbol_padding_id)
 
     accents_padded = torch.LongTensor(len(batch), max_input_len)
-    accent_padding_id = 0 # "none"
+    accent_padding_id = 0 # PADDING_ACCENT
     torch.nn.init.constant_(accents_padded, accent_padding_id)
 
     for i, batch_id in enumerate(ids_sorted_decreasing):

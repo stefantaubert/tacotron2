@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 from src.app.pre.ds import (preprocess_ljs, preprocess_thchs,
                             preprocess_thchs_kaldi)
-from src.app.pre.mapping import create_inference_map, create_weights_map
+from src.app.pre.mapping import create_inference_map_main, create_weights_map_main
 from src.app.pre.mel import preprocess_mels
 from src.app.pre.prepare import prepare_ds
 from src.app.pre.text import (preprocess_text, text_convert_to_ipa,
@@ -50,13 +50,12 @@ def init_prepare_ds_parser(parser: ArgumentParser):
   parser.add_argument('--prep_name', type=str, required=True)
   parser.add_argument('--ds_speakers', type=str, required=True)
   parser.add_argument('--ds_text_audio', type=str, required=True)
-  parser.add_argument('--speakers_as_accents', action="store_true")
   return _prepare_ds_cli
 
 
-def _prepare_ds_cli(base_dir: str, prep_name: str, ds_speakers: str, ds_text_audio: str, speakers_as_accents: bool):
+def _prepare_ds_cli(base_dir: str, prep_name: str, ds_speakers: str, ds_text_audio: str):
   prepare_ds(base_dir=base_dir, prep_name=prep_name, ds_speakers=parse_tuple_list(
-    ds_speakers), ds_text_audio=parse_tuple_list(ds_text_audio), speakers_as_accents=speakers_as_accents)
+    ds_speakers), ds_text_audio=parse_tuple_list(ds_text_audio))
 
 
 def init_preprocess_text_parser(parser: ArgumentParser):
@@ -144,7 +143,7 @@ def init_create_weights_map_parser(parser: ArgumentParser):
   parser.add_argument('--dest_prep_name', type=str, required=True)
   parser.add_argument('--existing_map', type=str)
   parser.add_argument('--dest_dir', type=str, default="maps/weights")
-  return create_weights_map
+  return create_weights_map_main
 
 
 def init_create_inference_map_parser(parser: ArgumentParser):
@@ -156,4 +155,4 @@ def init_create_inference_map_parser(parser: ArgumentParser):
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--existing_map', type=str)
   parser.add_argument('--dest_dir', type=str, default="maps/inference")
-  return create_inference_map
+  return create_inference_map_main
