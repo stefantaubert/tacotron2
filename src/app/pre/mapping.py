@@ -1,11 +1,55 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Set
 
-from src.app.pre.prepare import (get_prepared_dir,
+from src.app.pre.io import get_text_dir, load_text_symbol_converter
+from src.app.pre.prepare import (get_available_text_names, get_prepared_dir,
                                  load_filelist_symbol_converter)
-from src.core.common.language import Language
-from src.core.common.symbols_map import (SymbolsMap, create_inference_map,
-                                         create_weights_map)
+from src.app.utils import add_console_out_to_logger, init_logger
+from src.core.common.symbols_map import SymbolsMap, create_or_update_map
+
+INFER_MAP_NAME = "inference_map.json"
+INFER_MAP_SYMB_NAME = "inference_map.symbols"
+
+
+def get_all_symbols(prep_dir: str) -> Set[str]:
+  all_text_names = get_available_text_names(prep_dir)
+  all_symbols: Set[str] = set()
+  for text_name in all_text_names:
+    text_dir = get_text_dir(prep_dir, text_name, create=False)
+    text_symbol_ids = load_text_symbol_converter(text_dir)
+    all_symbols |= text_symbol_ids.get_all_symbols()
+
+  return all_symbols
+
+
+def save_infer_map(prep_dir: str, infer_map: SymbolsMap):
+  path = os.path.join(prep_dir, INFER_MAP_NAME)
+  infer_map.save(path)
+
+
+def load_infer_map(prep_dir: str) -> SymbolsMap:
+  path = os.path.join(prep_dir, INFER_MAP_NAME)
+  return SymbolsMap.load(path)
+
+
+def infer_map_exists(prep_dir: str) -> bool:
+  path = os.path.join(prep_dir, INFER_MAP_NAME)
+  return os.path.isfile(path)
+
+
+def save_weights_map(prep_dir: str, orig_prep_name: str, weights_map: SymbolsMap):
+  path = os.path.join(prep_dir, f"{orig_prep_name}.json")
+  weights_map.save(path)
+
+
+def load_weights_map(prep_dir: str, orig_prep_name: str) -> SymbolsMap:
+  path = os.path.join(prep_dir, f"{orig_prep_name}.json")
+  return SymbolsMap.load(path)
+
+
+def weights_map_exists(prep_dir: str, orig_prep_name: str) -> bool:
+  path = os.path.join(prep_dir, f"{orig_prep_name}.json")
+  return os.path.isfile(path)
 
 
 def try_load_symbols_map(symbols_map_path: str) -> Optional[SymbolsMap]:
@@ -13,73 +57,86 @@ def try_load_symbols_map(symbols_map_path: str) -> Optional[SymbolsMap]:
   return symbols_map
 
 
-def _save_weights_map(dest_dir: str, dest_prep_name: str, orig_prep_name: str, weights_map: SymbolsMap):
-  path = os.path.join(dest_dir, f"{dest_prep_name}_{orig_prep_name}.json")
-  weights_map.save(path)
+def save_infer_symbols(prep_dir: str, symbols: List[str]):
+  path = os.path.join(prep_dir, INFER_MAP_SYMB_NAME)
+  save_symbols(path, symbols)
 
 
-def _save_infer_map(dest_dir: str, prep_name: str, infer_map: SymbolsMap):
-  path = os.path.join(dest_dir, f"{prep_name}.json")
-  infer_map.save(path)
+def save_weights_symbols(prep_dir: str, weights_prep_name: str, symbols: List[str]):
+  path = os.path.join(prep_dir, f"{weights_prep_name}.symbols")
+  save_symbols(path, symbols)
 
 
-def _save_infer_symbols(dest_dir: str, prep_name: str, symbols: List[str]):
-  path = os.path.join(dest_dir, f"{prep_name}.symbols")
+def save_symbols(path: str, symbols: List[str]):
   with open(path, 'w', encoding='utf-8') as f:
     f.write('\n'.join([f"\"{x}\"" for x in symbols]))
 
 
-def _save_weights_symbols(dest_dir: str, dest_prep_name: str, orig_prep_name: str, symbols: List[str]):
-  path = os.path.join(dest_dir, f"{dest_prep_name}_{orig_prep_name}.symbols")
-  with open(path, 'w', encoding='utf-8') as f:
-    f.write('\n'.join([f"\"{x}\"" for x in symbols]))
-
-
-def _read_corpora(path: str) -> str:
-  with open(path, 'r', encoding='utf-8') as f:
-    content = ''.join(f.readlines())
-  return content
-
-
-def create_weights_map_main(base_dir: str, dest_prep_name: str, orig_prep_name: str, existing_map: Optional[str] = None, dest_dir: str = "maps/weights"):
-  dest_prep_dir = get_prepared_dir(base_dir, dest_prep_name)
-  assert os.path.isdir(dest_prep_dir)
-  orig_prep_dir = get_prepared_dir(base_dir, orig_prep_name)
-  assert os.path.isdir(orig_prep_dir)
-  dest_conv = load_filelist_symbol_converter(dest_prep_dir)
-  orig_conv = load_filelist_symbol_converter(orig_prep_dir)
-  existing_map = try_load_symbols_map(existing_map)
-  weights_map, symbols = create_weights_map(orig_conv, dest_conv, existing_map=existing_map)
-  _save_weights_map(dest_dir, dest_prep_name, orig_prep_name, weights_map)
-  _save_weights_symbols(dest_dir, dest_prep_name, orig_prep_name, symbols)
-
-
-def create_inference_map_main(base_dir: str, prep_name: str, corpora: str, lang: Language = Language.IPA, ignore_tones: Optional[bool] = False, ignore_arcs: Optional[bool] = True, existing_map: Optional[str] = None, dest_dir: str = "maps/inference"):
-  assert os.path.isfile(corpora)
+def create_or_update_weights_map(base_dir: str, prep_name: str, weights_prep_name: str, template_map: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   assert os.path.isdir(prep_dir)
-  model_conv = load_filelist_symbol_converter(prep_dir)
-  corpora_content = _read_corpora(corpora)
-  existing_map = try_load_symbols_map(existing_map)
-  infer_map, symbols = create_inference_map(
-    model_conv, corpora_content, lang, ignore_tones, ignore_arcs, existing_map=existing_map)
-  _save_infer_map(dest_dir, prep_name, infer_map)
-  _save_infer_symbols(dest_dir, prep_name, symbols)
+  orig_prep_dir = get_prepared_dir(base_dir, weights_prep_name)
+  assert os.path.isdir(orig_prep_dir)
+
+  logger = init_logger()
+  add_console_out_to_logger(logger)
+  logger.info(f"Creating/updating weights map for {weights_prep_name}...")
+
+  if template_map is not None:
+    existing_map = SymbolsMap.load(template_map)
+  elif weights_map_exists(prep_dir, weights_prep_name):
+    existing_map = load_weights_map(prep_dir, weights_prep_name)
+  else:
+    existing_map = None
+
+  weights_map, symbols = create_or_update_map(
+    orig=load_filelist_symbol_converter(orig_prep_dir).get_all_symbols(),
+    dest=load_filelist_symbol_converter(prep_dir).get_all_symbols(),
+    existing_map=existing_map,
+    logger=logger
+  )
+
+  save_weights_map(prep_dir, weights_prep_name, weights_map)
+  save_weights_symbols(prep_dir, weights_prep_name, symbols)
+
+
+def create_or_update_inference_map(base_dir: str, prep_name: str, template_map: Optional[str] = None):
+  logger = init_logger()
+  add_console_out_to_logger(logger)
+  logger.info("Creating/updating inference map...")
+  prep_dir = get_prepared_dir(base_dir, prep_name)
+  assert os.path.isdir(prep_dir)
+
+  all_symbols = get_all_symbols(prep_dir)
+
+  if template_map is not None:
+    existing_map = SymbolsMap.load(template_map)
+  elif infer_map_exists(prep_dir):
+    existing_map = load_infer_map(prep_dir)
+  else:
+    existing_map = None
+
+  infer_map, symbols = create_or_update_map(
+    orig=load_filelist_symbol_converter(prep_dir).get_all_symbols(),
+    dest=all_symbols,
+    existing_map=existing_map,
+    logger=logger
+  )
+
+  save_infer_map(prep_dir, infer_map)
+  save_infer_symbols(prep_dir, symbols)
 
 
 if __name__ == "__main__":
   mode = 2
   if mode == 1:
-    create_weights_map_main(
-      base_dir="/datasets/models/taco2pt_v5",
-      dest_prep_name="thchs",
-      orig_prep_name="thchs",
-    )
-  elif mode == 2:
-    create_inference_map_main(
+    create_or_update_weights_map(
       base_dir="/datasets/models/taco2pt_v5",
       prep_name="thchs",
-      corpora="examples/ipa/corpora.txt",
-      existing_map="maps/inference/chn_v1.json",
-      lang=Language.IPA
+      weights_prep_name="thchs"
+    )
+  elif mode == 2:
+    create_or_update_inference_map(
+      base_dir="/datasets/models/taco2pt_v5",
+      prep_name="thchs_ljs"
     )

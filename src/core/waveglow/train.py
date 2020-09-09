@@ -1,7 +1,7 @@
-import logging
 import os
 import random
 import time
+from logging import Logger
 
 import torch
 from torch.utils.data import DataLoader, Dataset
@@ -16,21 +16,18 @@ from src.core.waveglow.logger import WaveglowLogger
 from src.core.waveglow.model import WaveGlow, WaveGlowLoss
 
 
-def get_logger():
-  return logging.getLogger("wg-train")
-
-debug_logger = get_logger()
-
 class MelLoader(Dataset):
   """
   This is the main class that calculates the spectrogram and returns the
   spectrogram, audio pair.
   """
-  def __init__(self, prepare_ds_data: PreparedDataList, hparams):
+
+  def __init__(self, prepare_ds_data: PreparedDataList, hparams, logger: Logger):
     self.taco_stft = TacotronSTFT.fromhparams(hparams)
     self.segment_length: int = hparams.segment_length
     self.sampling_rate: int = hparams.sampling_rate
     self.cache_wavs: bool = hparams.cache_wavs
+    self._logger = logger
 
     data = prepare_ds_data
     random.seed(hparams.seed)
@@ -42,17 +39,18 @@ class MelLoader(Dataset):
     self.wav_paths = wav_paths
 
     if hparams.cache_wavs:
-      debug_logger.info("Loading wavs into memory...")
+      self._logger.info("Loading wavs into memory...")
       cache = {}
       for i, wav_path in tqdm(wav_paths.items()):
         cache[i] = self._load_wav_tensor(wav_path)
-      debug_logger.info("Done")
+      self._logger.info("Done")
       self.cache = cache
 
   def _load_wav_tensor(self, wav_path: str):
     wav_tensor, sr = wav_to_float32_tensor(wav_path)
     if sr != self.sampling_rate:
-      raise ValueError("{} {} SR doesn't match target {} SR".format(wav_path, sr, self.sampling_rate))
+      self._logger.exception(f"{wav_path} {sr} SR doesn't match target {self.sampling_rate} SR")
+      raise ValueError()
     return wav_tensor
 
   def __getitem__(self, index):
@@ -72,20 +70,24 @@ class MelLoader(Dataset):
 # from torch.utils.data.distributed import DistributedSampler
 # #=====END:   ADDED FOR DISTRIBUTED======
 
+
 def load_model(hparams):
   model = WaveGlow(hparams)
   model = model.cuda()
 
   return model
 
-def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDataList):
-  debug_logger.info(f"Duration trainset {trainset.get_total_duration_s() / 60:.2f}min / {trainset.get_total_duration_s() / 60 / 60:.2f}h")
-  debug_logger.info(f"Duration valset {valset.get_total_duration_s() / 60:.2f}min / {valset.get_total_duration_s() / 60 / 60:.2f}h")
 
-  trn = MelLoader(trainset, hparams)
+def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDataList, logger: Logger):
+  logger.info(
+    f"Duration trainset {trainset.get_total_duration_s() / 60:.2f}min / {trainset.get_total_duration_s() / 60 / 60:.2f}h")
+  logger.info(
+    f"Duration valset {valset.get_total_duration_s() / 60:.2f}min / {valset.get_total_duration_s() / 60 / 60:.2f}h")
+
+  trn = MelLoader(trainset, hparams, logger)
 
   train_sampler = None
-  shuffle = False # maybe set to true bc taco is also true
+  shuffle = False  # maybe set to true bc taco is also true
 
   # # =====START: ADDED FOR DISTRIBUTED======
   # train_sampler = DistributedSampler(trn) if n_gpus > 1 else None
@@ -100,7 +102,7 @@ def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDat
     drop_last=True
   )
 
-  val = MelLoader(valset, hparams)
+  val = MelLoader(valset, hparams, logger)
   val_sampler = None
 
   val_loader = DataLoader(
@@ -115,7 +117,7 @@ def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDat
   return train_loader, val_loader
 
 
-def validate_core(model, criterion, val_loader: DataLoader):
+def validate_core(model, criterion, val_loader: DataLoader, logger: Logger):
   """Handles all the validation scoring and printing"""
   model.eval()
   with torch.no_grad():
@@ -124,7 +126,7 @@ def validate_core(model, criterion, val_loader: DataLoader):
     #   val_sampler = DistributedSampler(valset)
 
     val_loss = 0.0
-    debug_logger.info("Validating...")
+    logger.info("Validating...")
     for batch in tqdm(val_loader):
       x = model.parse_batch(batch)
       y_pred = model(x)
@@ -140,15 +142,16 @@ def validate_core(model, criterion, val_loader: DataLoader):
   model.train()
   return avg_val_loss, model, y_pred
 
-def validate(model, criterion, val_loader, iteration, logger: WaveglowLogger):
-  val_loss, model, y_pred = validate_core(model, criterion, val_loader)
+
+def validate(model, criterion, val_loader, iteration, logger: WaveglowLogger, debug_logger: Logger):
+  val_loss, model, y_pred = validate_core(model, criterion, val_loader, debug_logger)
   debug_logger.info("Validation loss {}: {:9f}".format(iteration, val_loss))
   logger.log_validation(val_loss, model, y_pred, iteration)
 
   return val_loss
 
 
-def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, iteration: int, model, optimizer, learning_rate):
+def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, iteration: int, model, optimizer, learning_rate, debug_logger: Logger):
   complete_start = time.time()
   logger = WaveglowLogger(logdir)
 
@@ -178,14 +181,13 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   #   init_distributed(rank, n_gpus, group_name, **dist_config)
   # #=====END:   ADDED FOR DISTRIBUTED======
 
-
   criterion = WaveGlowLoss(
     sigma=hparams.sigma
   )
 
-  train_loader, val_loader = prepare_dataloaders(hparams, trainset, valset)
+  train_loader, val_loader = prepare_dataloaders(hparams, trainset, valset, debug_logger)
 
-  if not len(train_loader):
+  if len(train_loader) == 0:
     debug_logger.error("Not enough trainingdata.")
     return False
 
@@ -196,7 +198,7 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   #     os.chmod(output_directory, 0o775)
   #   print("output directory", output_directory)
 
-  #if hparams.with_tensorboard and rank == 0:
+  # if hparams.with_tensorboard and rank == 0:
 
   model.train()
 
@@ -244,13 +246,14 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
       ))
       logger.log_training(reduced_loss, learning_rate, duration, iteration)
 
-      #if hparams.with_tensorboard and rank == 0:
+      # if hparams.with_tensorboard and rank == 0:
       logger.add_scalar('training_loss', reduced_loss, i + len(train_loader) * epoch)
 
       if (iteration % hparams.iters_per_checkpoint == 0):
-        #if rank == 0:
-        save_checkpoint(model, optimizer, hparams.learning_rate, iteration, save_checkpoint_dir)
-        validate(model, criterion, val_loader, iteration, logger)
+        # if rank == 0:
+        save_checkpoint(model, optimizer, hparams.learning_rate,
+                        iteration, save_checkpoint_dir, debug_logger)
+        validate(model, criterion, val_loader, iteration, logger, debug_logger)
 
       iteration += 1
 
@@ -260,17 +263,19 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   debug_logger.info('Duration: {:.2f}min'.format(duration_m))
 
 
-def train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, continue_train: bool):
+def train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, continue_train: bool, debug_logger: Logger):
   hp = create_hparams(custom_hparams)
 
   last_checkpoint_path = ""
   if continue_train:
     last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
 
-  model, optimizer, learning_rate, iteration = _train(last_checkpoint_path, hp)
-  train_core(hp, logdir, trainset, valset, save_checkpoint_dir, iteration, model, optimizer, learning_rate)
+  model, optimizer, learning_rate, iteration = _train(last_checkpoint_path, hp, debug_logger)
+  train_core(hp, logdir, trainset, valset, save_checkpoint_dir,
+             iteration, model, optimizer, learning_rate, debug_logger)
 
-def _train(checkpoint_path: str, hparams):
+
+def _train(checkpoint_path: str, hparams, debug_logger: Logger):
   """Training and validation logging results to tensorboard and stdout
 
   Params
@@ -295,7 +300,7 @@ def _train(checkpoint_path: str, hparams):
   # n_gpus = torch.cuda.device_count() # 'number of gpus'
   # if n_gpus > 1:
   #   raise Exception("More than one GPU is currently not supported.")
-  #group_name = "group_name" # 'Distributed group name'
+  # group_name = "group_name" # 'Distributed group name'
   # if n_gpus > 1:
   #   if args.group_name == '':
   #     print("WARNING: Multiple GPUs detected but no distributed group set")
@@ -318,7 +323,8 @@ def _train(checkpoint_path: str, hparams):
   # Load checkpoint if one exists
   iteration = 0
   if checkpoint_path:
-    model, optimizer, _learning_rate, iteration = load_checkpoint(checkpoint_path, model, optimizer)
+    model, optimizer, _learning_rate, iteration = load_checkpoint(
+      checkpoint_path, model, optimizer, debug_logger)
 
     # if hparams.use_saved_learning_rate:
     #   learning_rate = _learning_rate
@@ -328,7 +334,8 @@ def _train(checkpoint_path: str, hparams):
 
   return model, optimizer, learning_rate, iteration
 
-def load_checkpoint(checkpoint_path, model, optimizer):
+
+def load_checkpoint(checkpoint_path, model, optimizer, debug_logger: Logger):
   assert os.path.isfile(checkpoint_path)
   debug_logger.info("Loading checkpoint '{}'".format(checkpoint_path))
   checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
@@ -339,9 +346,11 @@ def load_checkpoint(checkpoint_path, model, optimizer):
   debug_logger.info("Loaded checkpoint '{}' from iteration {}".format(checkpoint_path, iteration))
   return model, optimizer, learning_rate, iteration
 
-def save_checkpoint(model, optimizer, learning_rate, iteration, parent_dir):
+
+def save_checkpoint(model, optimizer, learning_rate, iteration, parent_dir, debug_logger: Logger):
   filepath = os.path.join(parent_dir, get_pytorch_filename(iteration))
-  debug_logger.info("Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
+  debug_logger.info(
+    "Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
   torch.save(
     {
       'iteration': iteration,

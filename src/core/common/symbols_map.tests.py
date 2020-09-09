@@ -1,18 +1,21 @@
 import os
 import tempfile
+from logging import getLogger
 import unittest
 
 from torch import nn
 
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.symbols_map import (Language, SymbolsMap,
-                                         create_inference_map_core,
+                                         create_inference_map,
                                          create_symbols_map,
-                                         get_symbols_id_mapping, update_map)
+                                         get_symbols_id_mapping, take_selection_of_map, update_map)
 
+test_logger = getLogger("Tests")
 
 class UnitTests(unittest.TestCase):
-  
+
+
   def test_from_two_sets(self):
     m = SymbolsMap.from_two_sets({"a", "b"}, {"b", "c"})
 
@@ -47,7 +50,7 @@ class UnitTests(unittest.TestCase):
     ])
 
     res = update_map(old_map, new_map)
-    
+
     self.assertEqual(1, len(new_map))
     self.assertEqual("b", new_map["b"])
     self.assertTrue(res)
@@ -128,7 +131,7 @@ class UnitTests(unittest.TestCase):
     orig_symbols = {"b", "c"}
     corpora = "abc d\n \te"
 
-    symbols_id_map, symbols = create_inference_map_core(orig_symbols, corpora, lang=Language.ENG)
+    symbols_id_map, symbols = create_inference_map(orig_symbols, corpora, lang=Language.ENG)
 
     self.assertEqual(8, len(symbols_id_map))
     self.assertEqual("b", symbols_id_map["b"])
@@ -145,7 +148,7 @@ class UnitTests(unittest.TestCase):
     orig_symbols = {"ŋ", "ɔ", " "}
     corpora = "ɛəŋ m\n \tɔ"
 
-    symbols_id_map, symbols = create_inference_map_core(orig_symbols, corpora, lang=Language.ENG, ignore_arcs=True, ignore_tones=True)
+    symbols_id_map, symbols = create_inference_map(orig_symbols, corpora, lang=Language.ENG, ignore_arcs=True, ignore_tones=True)
 
     self.assertEqual(8, len(symbols_id_map))
     self.assertEqual(symbols_id_map["ŋ"], "ŋ")
@@ -161,27 +164,28 @@ class UnitTests(unittest.TestCase):
   def test_create_symbols_map_without_map(self):
     dest_symbols = {"b", "c"}
     orig_symbols = {"a", "b"}
+    symb_map = SymbolsMap.from_two_sets(orig_symbols, dest_symbols)
 
-    symbols_id_map = create_symbols_map(dest_symbols, orig_symbols)
+    symb_map.filter(dest_symbols, orig_symbols, test_logger)
 
-    self.assertEqual(1, len(symbols_id_map))
-    self.assertEqual(symbols_id_map["b"], "b")
+    self.assertEqual(1, len(symb_map))
+    self.assertEqual(symb_map["b"], "b")
 
   def test_create_symbols_map_with_map(self):
     dest_symbols = {"b", "c", "d"}
     orig_symbols = {"a", "b"}
-    
+
     symbols_map = SymbolsMap.from_tuples([
       ("b", "a"),
       ("c", "b"),
       ("x", "y"),
     ])
 
-    symbols_id_map = create_symbols_map(dest_symbols, orig_symbols, symbols_map)
+    symbols_map.filter(dest_symbols, orig_symbols, test_logger)
 
-    self.assertEqual(2, len(symbols_id_map))
-    self.assertEqual(symbols_id_map["b"], "a")
-    self.assertEqual(symbols_id_map["c"], "b")
+    self.assertEqual(2, len(symbols_map))
+    self.assertEqual(symbols_map["b"], "a")
+    self.assertEqual(symbols_map["c"], "b")
 
   def test_get_symbols_id_mapping_without_map(self):
     model_conv = SymbolIdDict.init_from_symbols({"b", "c"})

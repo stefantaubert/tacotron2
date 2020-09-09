@@ -199,14 +199,16 @@ def sents_accent_apply(sentences: SentenceList, accented_symbols: AccentedSymbol
   return sentences
 
 
-def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, known_symbols: SymbolIdDict) -> InferSentenceList:
+def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, known_symbols: SymbolIdDict) -> Tuple[InferSentenceList, bool]:
   result = InferSentenceList()
+  unknown_symbols_exist = False
   for sentence in sentences.items():
     old_text_symbols = text_symbols.get_symbols(sentence.serialized_symbols)
     infer_symbols = old_text_symbols
 
     if known_symbols.has_unknown_symbols(infer_symbols):
       infer_symbols = known_symbols.replace_unknown_symbols_with_pad(infer_symbols)
+      unknown_symbols_exist = True
 
     infer_sentence = Sentence(
       sent_id=sentence.sent_id,
@@ -218,4 +220,4 @@ def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, k
 
     result.append(infer_sentence)
     # Maybe add info if something was unknown
-  return result
+  return result, unknown_symbols_exist

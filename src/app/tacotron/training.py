@@ -78,7 +78,7 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
     valset=valset,
     save_checkpoint_dir=get_checkpoints_dir(train_dir),
     trained_weights=weights,
-    symbols_map=weights_map,
+    custom_mapping=weights_map,
     trained_symbols_conv=weights_model_symbols_conv
   )
 

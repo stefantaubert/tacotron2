@@ -2,7 +2,7 @@ import logging
 from collections import OrderedDict
 from typing import List, Optional
 from typing import OrderedDict as OrderedDictType
-from typing import Tuple
+from typing import Set, Tuple
 
 from src.core.common.language import Language
 from src.core.common.symbol_id_dict import SymbolIdDict
@@ -36,12 +36,6 @@ class SymbolsMap(OrderedDict):
     data = parse_json(file_path)
     return cls(data)
 
-  def has_empty_mapping(self) -> bool:
-    for value in self.values():
-      if value == "":
-        return True
-    return False
-
   def apply_to_symbols(self, symbols: List[str]):
     res = []
     for symbol in symbols:
@@ -51,6 +45,37 @@ class SymbolsMap(OrderedDict):
         res.append(symbol)
     return res
 
+  def get_symbols_without_mapping(self) -> Set[str]:
+    result = [map_to for map_to, map_from in self.items() if map_from == ""]
+    return result
+
+  def filter(self, dest_symbols: set, orig_symbols: set, logger: logging.Logger):
+    for map_to_symbol, map_from_symbol in self.items():
+      if map_to_symbol not in dest_symbols:
+        logger.info(
+          f"Symbol '{map_to_symbol}' doesn't exist in destination symbol set. Ignoring mapping from '{map_from_symbol}'.")
+        self.pop(map_to_symbol)
+      elif map_from_symbol not in orig_symbols:
+        logger.info(
+          f"Symbol '{map_from_symbol}' doesn't exist in original symbol set. Ignoring mapping to '{map_to_symbol}'.")
+        self.pop(map_to_symbol)
+      else:
+        #result[map_to_symbol] = map_from_symbol
+        logger.info(
+          f"Keeped mapping of symbol '{map_from_symbol}' to symbol '{map_to_symbol}'.")
+
+  def try_fix_symbols_without_mapping(self, old_map: OrderedDict):
+    """returns True, if a new key was added"""
+    for to_symbol, from_symbol in self.items():
+      if from_symbol == "" and to_symbol in old_map and old_map[to_symbol] != "":
+        self[to_symbol] = old_map[to_symbol]
+
+  def has_new_to_mappings(self, old_map: OrderedDict) -> bool:
+    for new_key in self.keys():
+      if new_key not in old_map.keys():
+        return True
+    return False
+
 
 def sort_map_after_map_from_symbol(symb_map: SymbolsMap):
   new_map = SymbolsMap(
@@ -58,36 +83,7 @@ def sort_map_after_map_from_symbol(symb_map: SymbolsMap):
   return new_map
 
 
-def create_weights_map(orig_conv: SymbolIdDict, dest_conv: SymbolIdDict, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
-  orig = orig_conv.get_all_symbols()
-  dest = dest_conv.get_all_symbols()
-  weights_map = SymbolsMap.from_two_sets(orig, dest)
-  if existing_map:
-    # The usecase is, when thchs map without tones exist and I want to create a map for thchs with tones.
-    new_keys = update_map(old_map=existing_map, new_map=weights_map)
-    if not new_keys:
-      logger.info("There were no new symbols in the destination symbol set.")
-  weights_map = sort_map_after_map_from_symbol(weights_map)
-  return weights_map, get_sorted_set(orig)
-
-
-def update_map(old_map: SymbolsMap, new_map: SymbolsMap) -> bool:
-  """returns True, if a new key was added"""
-  for to_symbol, from_symbol in new_map.items():
-    if from_symbol == "" and to_symbol in old_map and old_map[to_symbol] != "":
-      new_map[to_symbol] = old_map[to_symbol]
-  for new_key in new_map.keys():
-    if new_key not in old_map.keys():
-      return True
-  return False
-
-
-def create_inference_map(model_symb_conv: SymbolIdDict, corpora: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
-  model_symbs = model_symb_conv.get_all_symbols()
-  return create_inference_map_core(model_symbs, corpora, lang, ignore_tones, ignore_arcs, existing_map, logger)
-
-
-def create_inference_map_core(model_symbols: set, corpora: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None, existing_map: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> Tuple[SymbolsMap, List[str]]:
+def create_inference_map(model_symbols: set, corpora: str, lang: Language, ignore_tones: Optional[bool], ignore_arcs: Optional[bool], existing_map: Optional[SymbolsMap], logger: logging.Logger) -> Tuple[SymbolsMap, List[str]]:
   raw_dest_symbols = text_to_symbols(
     corpora,
     lang=lang,
@@ -95,61 +91,40 @@ def create_inference_map_core(model_symbols: set, corpora: str, lang: Language, 
     ignore_tones=ignore_tones
   )
 
-  dest_symbols = set(raw_dest_symbols)
-  infer_map = SymbolsMap.from_two_sets(model_symbols, dest_symbols)
+  dest = set(raw_dest_symbols)
+  return create_or_update_map(model_symbols, dest, existing_map, logger)
+
+
+def create_or_update_map(orig: Set[str], dest: Set[str], existing_map: Optional[SymbolsMap], logger: logging.Logger) -> Tuple[SymbolsMap, List[str]]:
+  dest_map = SymbolsMap.from_two_sets(orig, dest)
   if existing_map:
-    new_keys = update_map(old_map=existing_map, new_map=infer_map)
-    if not new_keys:
-      logger.info("There were no new symbols in the corpora.")
-  infer_map = sort_map_after_map_from_symbol(infer_map)
-  return infer_map, get_sorted_set(model_symbols)
+    # The usecase is, when thchs map without tones exist and I want to create a map for thchs with tones.
+    dest_map.try_fix_symbols_without_mapping(existing_map)
+    if not dest_map.has_new_to_mappings(existing_map):
+      logger.info("There were no new symbols in the destination symbol set.")
+  dest_map = sort_map_after_map_from_symbol(dest_map)
+  return dest_map, get_sorted_set(orig)
 
 
-def create_symbols_map(dest_symbols: set, orig_symbols: set, symbols_mapping: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> SymbolsMap:
-  result = SymbolsMap()
-  if not symbols_mapping:
+def get_map(dest_symbols: Set[str], orig_symbols: Set[str], symbols_mapping: Optional[SymbolsMap], logger: logging.Logger) -> SymbolsMap:
+  if symbols_mapping is None:
     symbols_mapping = SymbolsMap.from_two_sets(orig_symbols, dest_symbols)
-    logger.info(
-      f"intersecting symbols {orig_symbols.intersection(dest_symbols)}")
-  not_mapped = set()
-  for map_to_symbol, map_from_symbol in symbols_mapping.items():
-    if map_to_symbol not in dest_symbols:
-      logger.info(
-        f"Symbol '{map_to_symbol}' doesn't exist in destination symbol set. Ignoring mapping from '{map_from_symbol}'.")
-    elif not map_from_symbol:
-      logger.info(f"Symbol '{map_to_symbol}' has no mapping assigned.")
-      not_mapped.add(map_to_symbol)
-    elif map_from_symbol not in orig_symbols:
-      logger.info(
-        f"Symbol '{map_from_symbol}' doesn't exist in original symbol set. Ignoring mapping to '{map_to_symbol}'.")
-      not_mapped.add(map_to_symbol)
-    else:
-      result[map_to_symbol] = map_from_symbol
-      logger.info(
-        f"Mapped symbol '{map_from_symbol}' to symbol '{map_to_symbol}'")
-
-  unmapped_symbols = dest_symbols.difference(
-    set(symbols_mapping.keys())).union(not_mapped)
-  if len(unmapped_symbols):
-    logger.info(f"Symbols without initialized mapping: {unmapped_symbols}")
   else:
-    logger.info("All symbols were mapped.")
+    symbols_mapping.filter(dest_symbols, orig_symbols, logger)
 
-  return result
+  return symbols_mapping
 
 
-def get_symbols_id_mapping(dest_symbols: SymbolIdDict, orig_symbols: SymbolIdDict, symbols_mapping: Optional[SymbolsMap] = None, logger: logging.Logger = logging.getLogger()) -> OrderedDictType[int, int]:
-  map_from = orig_symbols.get_all_symbols()
-  map_to = dest_symbols.get_all_symbols()
-  symbols_map = create_symbols_map(map_to, map_from, symbols_mapping, logger)
-
+def symbols_map_to_symbols_ids_map(dest_symbols: SymbolIdDict, orig_symbols: SymbolIdDict, symbols_mapping: SymbolsMap, logger: logging.Logger) -> OrderedDictType[int, int]:
   result: OrderedDictType[int, int] = OrderedDict()
 
-  for map_to_symbol, map_from_symbol in symbols_map.items():
+  for map_to_symbol, map_from_symbol in symbols_mapping.items():
     assert dest_symbols.symbol_exists(map_to_symbol)
     assert orig_symbols.symbol_exists(map_from_symbol)
+
     map_from_symbol_id = orig_symbols.get_id(map_from_symbol)
     map_to_symbol_id = dest_symbols.get_id(map_to_symbol)
+    result[map_to_symbol_id] = map_from_symbol_id
     logger.info(
       f"Mapped symbol '{map_from_symbol}' ({map_from_symbol_id}) to symbol '{map_to_symbol}' ({map_to_symbol_id})")
 

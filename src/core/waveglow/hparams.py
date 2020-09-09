@@ -3,7 +3,7 @@ from typing import Optional
 import tensorflow as tf
 
 
-def create_hparams(hparams_string: Optional[str], verbose: bool = False):
+def create_hparams(hparams_string: Optional[str], verbose: bool = False) -> tf.contrib.training.HParams:
   """Create model hyperparameters. Parse nondefault from given string."""
 
   hparams = tf.contrib.training.HParams(

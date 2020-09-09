@@ -6,11 +6,11 @@ from typing import List, Optional
 import matplotlib.pylab as plt
 
 from src.app.pre.ds import get_ds_dir
-from src.app.pre.tools import remove_silence_plot as remove_silence_plot_core
 from src.app.pre.wav import get_wav_dir, load_wav_csv
 from src.core.common.mel_plot import plot_melspec
 from src.core.common.utils import get_subdir, stack_images_vertically
 from src.core.pre.wav import WavData
+from src.core.pre.wav import remove_silence_plot as remove_silence_plot_core
 
 
 def _save_orig_plot_if_not_exists(dest_dir: str, mel):
@@ -27,7 +27,7 @@ def _save_orig_wav_if_not_exists(dest_dir: str, orig_path: str):
     copyfile(orig_path, path)
 
 
-def _save_trimmed_plot_temp(dest_dir: str, mel):
+def _save_trimmed_plot_temp(mel):
   path = tempfile.mktemp(suffix=".png")
   plot_melspec(mel, title="Trimmed")
   plt.savefig(path, bbox_inches='tight')
@@ -77,7 +77,7 @@ def remove_silence_plot(base_dir: str, ds_name: str, wav_name: str, chunk_size: 
 
   _save_orig_wav_if_not_exists(dest_dir, entry.wav)
   orig = _save_orig_plot_if_not_exists(dest_dir, mel_orig)
-  trimmed = _save_trimmed_plot_temp(dest_dir, mel_trimmed)
+  trimmed = _save_trimmed_plot_temp(mel_trimmed)
   resulting_path = _save_comparison(dest_dir, dest_name, [orig, trimmed])
   os.remove(trimmed)
 

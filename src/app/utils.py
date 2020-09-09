@@ -7,7 +7,11 @@ formatter = logging.Formatter(
 )
 
 
-def init_logger(logger: logging.Logger):
+def get_default_logger():
+  return logging.getLogger("default")
+
+
+def init_logger(logger: logging.Logger = get_default_logger()):
   root_logger = logging.getLogger()
   root_logger.setLevel(logging.DEBUG)
   # disable is required (don't know why) because otherwise DEBUG messages would be ignored!
@@ -22,8 +26,10 @@ def init_logger(logger: logging.Logger):
   for h in logger.handlers:
     logger.removeHandler(h)
 
+  return logger
 
-def add_console_out_to_logger(logger: logging.Logger):
+
+def add_console_out_to_logger(logger: logging.Logger = get_default_logger()):
   console_handler = logging.StreamHandler()
   console_handler.setLevel(logging.NOTSET)
   console_handler.setFormatter(formatter)
@@ -31,7 +37,7 @@ def add_console_out_to_logger(logger: logging.Logger):
   logger.debug("init console logger")
 
 
-def add_file_out_to_logger(logger: logging.Logger, log_file_path: str):
+def add_file_out_to_logger(logger: logging.Logger = get_default_logger(), log_file_path: str = "/tmp/log.txt"):
   fh = logging.FileHandler(log_file_path)
   fh.setLevel(logging.INFO)
   fh.setFormatter(formatter)

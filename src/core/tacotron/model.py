@@ -1,6 +1,6 @@
 from logging import Logger
 from math import sqrt
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 from torch import nn
@@ -440,7 +440,7 @@ class Decoder(nn.Module):
     decoder_inputs = decoder_inputs.transpose(0, 1)
     return decoder_inputs
 
-  def parse_decoder_outputs(self, mel_outputs, gate_outputs, alignments):
+  def parse_decoder_outputs(self, mel_outputs, gate_outputs, alignments) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """ Prepares decoder outputs for output
     PARAMS
     ------
@@ -504,7 +504,7 @@ class Decoder(nn.Module):
     gate_prediction = self.gate_layer(decoder_hidden_attention_context)
     return decoder_output, gate_prediction, self.attention_weights
 
-  def forward(self, memory, decoder_inputs, memory_lengths):
+  def forward(self, memory, decoder_inputs, memory_lengths) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """ Decoder forward pass for training
     PARAMS
     ------
@@ -538,7 +538,7 @@ class Decoder(nn.Module):
 
     return self.parse_decoder_outputs(mel_outputs, gate_outputs, alignments)
 
-  def inference(self, memory):
+  def inference(self, memory) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """ Decoder inference
     PARAMS
     ------
@@ -574,6 +574,15 @@ class Decoder(nn.Module):
 
     return self.parse_decoder_outputs(mel_outputs, gate_outputs, alignments)
 
+def get_symbol_weights(hparams) -> torch.Tensor:
+  model_symbols_count = get_model_symbols_count(
+    hparams.n_symbols,
+    hparams.n_accents,
+    hparams.accents_use_own_symbols
+  )
+
+  model_weights = get_uniform_weights(model_symbols_count, hparams.symbols_embedding_dim)
+  return model_weights
 
 def get_uniform_weights(model_symbols_count: int, emb_dim: int) -> torch.Tensor:
   weight = torch.zeros(size=(model_symbols_count, emb_dim))
@@ -582,6 +591,13 @@ def get_uniform_weights(model_symbols_count: int, emb_dim: int) -> torch.Tensor:
   nn.init.uniform_(weight, -val, val)
   return weight
 
+def update_weights(emb: nn.Embedding, weights: torch.Tensor) -> None:
+  emb.weight = nn.Parameter(weights)
+
+def weights_to_embedding(weights: torch.Tensor) -> nn.Embedding:
+  embedding = nn.Embedding(weights.shape[0], weights.shape[1])
+  update_weights(embedding, weights)
+  return embedding
 
 class Tacotron2(nn.Module):
   def __init__(self, hparams, logger: Logger):
@@ -602,11 +618,10 @@ class Tacotron2(nn.Module):
     self.logger = logger
     self.mask_padding = hparams.mask_padding
     self.n_mel_channels = hparams.n_mel_channels
-    # TODO rename to symbol_embeddings but it will destroy all previous trained models
 
-    self.embedding = nn.Embedding(model_symbols_count, hparams.symbols_embedding_dim)
-    symbol_emb_weights = get_uniform_weights(model_symbols_count, hparams.symbols_embedding_dim)
-    self.embedding.weight = nn.Parameter(symbol_emb_weights)
+    # TODO rename to symbol_embeddings but it will destroy all previous trained models
+    symbol_emb_weights = get_symbol_weights(hparams)
+    self.embedding = weights_to_embedding(symbol_emb_weights)
 
     self.speakers_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
     torch.nn.init.xavier_uniform_(self.speakers_embedding.weight)
@@ -638,7 +653,7 @@ class Tacotron2(nn.Module):
     y = (mel_padded, gate_padded)
     return x, y
 
-  def forward(self, inputs: Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor, torch.FloatTensor, torch.LongTensor, torch.LongTensor, torch.LongTensor]):
+  def forward(self, inputs: Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor, torch.FloatTensor, torch.LongTensor, torch.LongTensor, torch.LongTensor]) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     text_inputs, accent_inputs, text_lengths, mels, max_len, output_lengths, speaker_ids = inputs
     text_lengths, output_lengths = text_lengths.data, output_lengths.data
 
@@ -649,7 +664,7 @@ class Tacotron2(nn.Module):
     encoder_outputs = self.encoder(
       x=embedded_inputs,
       input_lengths=text_lengths
-    )
+    )  # [20, 133, 512]
 
     # Extract speaker embeddings
     # From [20] to [20, 1]
@@ -659,14 +674,8 @@ class Tacotron2(nn.Module):
     # copies the values from one speaker to all max_len dimension arrays
     embedded_speakers = embedded_speakers.expand(-1, max_len, -1)
 
-    outputs = []
-    # [20, 133, 512]
-    outputs.append(encoder_outputs)
-    # [20, 133, 16]
-    outputs.append(embedded_speakers)
-    # [20, 133, 528]
     # concatenate symbol and speaker embeddings (-1 means last dimension)
-    merged_outputs = torch.cat(outputs, -1)
+    merged_outputs = torch.cat([encoder_outputs, embedded_speakers], -1)
 
     mel_outputs, gate_outputs, alignments = self.decoder(
       memory=merged_outputs,
@@ -677,21 +686,18 @@ class Tacotron2(nn.Module):
     mel_outputs_postnet = self.postnet(mel_outputs)
     mel_outputs_postnet = mel_outputs + mel_outputs_postnet
 
-    return self.parse_output([mel_outputs, mel_outputs_postnet, gate_outputs, alignments], output_lengths)
-
-  def parse_output(self, outputs, output_lengths=None) -> List[torch.Tensor]:
-    if self.mask_padding and output_lengths is not None:
+    if self.mask_padding:
       mask = ~get_mask_from_lengths(output_lengths)
       mask = mask.expand(self.n_mel_channels, mask.size(0), mask.size(1))
       mask = mask.permute(1, 0, 2)
 
-      outputs[0].data.masked_fill_(mask, 0.0)
-      outputs[1].data.masked_fill_(mask, 0.0)
-      outputs[2].data.masked_fill_(mask[:, 0, :], 1e3)  # gate energies
+      mel_outputs.data.masked_fill_(mask, 0.0)
+      mel_outputs_postnet.data.masked_fill_(mask, 0.0)
+      gate_outputs.data.masked_fill_(mask[:, 0, :], 1e3)  # gate energies
 
-    return outputs
+    return mel_outputs, mel_outputs_postnet, gate_outputs, alignments
 
-  def inference(self, inputs: torch.LongTensor, accents: torch.LongTensor, speaker_id: torch.LongTensor) -> List[torch.Tensor]:
+  def inference(self, inputs: torch.LongTensor, accents: torch.LongTensor, speaker_id: torch.LongTensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     embedded_inputs = self.embedding(inputs).transpose(1, 2)
     encoder_outputs = self.encoder.inference(embedded_inputs)
 
@@ -702,14 +708,11 @@ class Tacotron2(nn.Module):
     embedded_speaker = self.speakers_embedding(input=speaker_id)
     embedded_speaker = embedded_speaker.expand(-1, encoder_outputs.shape[1], -1)
 
-    outputs = []
-    outputs.append(encoder_outputs)
-    outputs.append(embedded_speaker)
-    merged_outputs = torch.cat(outputs, -1)
+    merged_outputs = torch.cat([encoder_outputs, embedded_speaker], -1)
 
     mel_outputs, gate_outputs, alignments = self.decoder.inference(merged_outputs)
 
     mel_outputs_postnet = self.postnet(mel_outputs)
     mel_outputs_postnet = mel_outputs + mel_outputs_postnet
 
-    return self.parse_output([mel_outputs, mel_outputs_postnet, gate_outputs, alignments])
+    return mel_outputs, mel_outputs_postnet, gate_outputs, alignments

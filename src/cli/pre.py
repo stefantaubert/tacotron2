@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 from src.app.pre.ds import (preprocess_ljs, preprocess_thchs,
                             preprocess_thchs_kaldi)
-from src.app.pre.mapping import create_inference_map_main, create_weights_map_main
+from src.app.pre.mapping import create_or_update_inference_map, create_or_update_weights_map
 from src.app.pre.mel import preprocess_mels
 from src.app.pre.prepare import prepare_ds
 from src.app.pre.text import (preprocess_text, text_convert_to_ipa,
@@ -143,7 +143,7 @@ def init_create_weights_map_parser(parser: ArgumentParser):
   parser.add_argument('--dest_prep_name', type=str, required=True)
   parser.add_argument('--existing_map', type=str)
   parser.add_argument('--dest_dir', type=str, default="maps/weights")
-  return create_weights_map_main
+  return create_or_update_weights_map
 
 
 def init_create_inference_map_parser(parser: ArgumentParser):
@@ -155,4 +155,4 @@ def init_create_inference_map_parser(parser: ArgumentParser):
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--existing_map', type=str)
   parser.add_argument('--dest_dir', type=str, default="maps/inference")
-  return create_inference_map_main
+  return create_or_update_inference_map

@@ -43,7 +43,7 @@ class Synthesizer():
       audio = self.model.infer(mel, sigma=sigma)
       if denoiser_strength > 0:
         assert self.denoiser
-        audio = self.denoiser.forward(audio, strength=denoiser_strength)
+        audio = self.denoiser(audio, strength=denoiser_strength)
     audio = audio.squeeze()
     audio = audio.cpu()
     audio_np: np.ndarray = audio.numpy()

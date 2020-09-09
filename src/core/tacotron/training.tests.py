@@ -4,7 +4,7 @@ from torch import nn
 
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.symbols_map import SymbolsMap
-from src.core.tacotron.training import (get_mapped_embedding_weights_core,
+from src.core.tacotron.training import (get_mapped_symbol_weights,
                                         get_uniform_weights,
                                         load_symbol_embedding_weights_from)
 
@@ -33,7 +33,7 @@ class UnitTests(unittest.TestCase):
     trained_embeddings.weight[trained_symbols.get_id("a")] = 3
     trained_embeddings.weight[trained_symbols.get_id("b")] = 4
 
-    mapped_emb_weights = get_mapped_embedding_weights_core(
+    mapped_emb_weights = get_mapped_symbol_weights(
       model_weights=model_embeddings.weight,
       model_symbols=model_conv,
       trained_weights=trained_embeddings.weight,
@@ -60,12 +60,12 @@ class UnitTests(unittest.TestCase):
       ("x", "y"),
     ])
 
-    mapped_emb_weights = get_mapped_embedding_weights_core(
+    mapped_emb_weights = get_mapped_symbol_weights(
       model_weights=model_embeddings.weight,
       model_symbols=model_conv,
       trained_weights=trained_embeddings.weight,
       trained_symbols=trained_symbols,
-      symbols_mapping=symbols_map
+      custom_mapping=symbols_map
     )
 
     self.assertEqual(0, mapped_emb_weights[model_conv.get_id("1")][0].item())
