@@ -22,7 +22,7 @@ from src.core.tacotron.training import (get_checkpoints_eval_logger,
 from src.core.tacotron.training import train as train_core
 
 
-def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, hparams: Optional[str] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, weights_map: Optional[str] = None):
+def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, custom_hparams: Optional[str] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, weights_map: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   wholeset = load_filelist(prep_dir)
   trainset, testset, valset = split_prepared_data_train_test_val(
@@ -44,7 +44,7 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
   add_file_out_to_logger(get_train_logger(), log_file)
   add_file_out_to_logger(get_checkpoints_eval_logger(), checkpoints_log_file)
 
-  save_settings(train_dir, prep_name, hparams)
+  save_settings(train_dir, prep_name, custom_hparams)
 
   if weights_train_name:
     weights_train_dir = get_train_dir(base_dir, weights_train_name, False)
@@ -69,7 +69,7 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
 
   train_core(
     warm_start_model_path=warm_start_model_path,
-    custom_hparams=hparams,
+    custom_hparams=custom_hparams,
     logdir=logs_dir,
     symbol_ids=load_filelist_symbol_converter(prep_dir),
     n_speakers=len(load_filelist_speakers_json(prep_dir)),
@@ -83,7 +83,7 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
   )
 
 
-def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None):
+def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[str] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -105,7 +105,7 @@ def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None
   add_file_out_to_logger(get_checkpoints_eval_logger(), checkpoints_log_file)
 
   continue_train_core(
-    custom_hparams=hparams if hparams is not None else custom_hparams_loaded,
+    custom_hparams=custom_hparams if custom_hparams is not None else custom_hparams_loaded,
     logdir=logs_dir,
     n_symbols=len(symbols_conv),
     n_speakers=len(speakers),
@@ -123,7 +123,7 @@ if __name__ == "__main__":
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       prep_name="thchs_ljs",
-      hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,accents_use_own_symbols=True"
+      custom_hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,accents_use_own_symbols=True"
     )
   elif mode == 2:
     train(
@@ -132,7 +132,7 @@ if __name__ == "__main__":
       prep_name="thchs_ipa",
       warm_start_train_name="ljs_ipa_scratch",
       weights_train_name="ljs_ipa_scratch",
-      hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
+      custom_hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
     )
   elif mode == 3:
     train(
@@ -142,13 +142,13 @@ if __name__ == "__main__":
       warm_start_train_name="ljs_ipa_scratch",
       weights_train_name="ljs_ipa_scratch",
       weights_map="maps/weights/thchs_ipa_ljs_ipa.json",
-      hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
+      custom_hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
     )
   elif mode == 4:
     continue_train(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
-      hparams="batch_size=17,iters_per_checkpoint=100,epochs_per_checkpoint=1,cache_mels=True,use_saved_mels=True"
+      custom_hparams="batch_size=17,iters_per_checkpoint=100,epochs_per_checkpoint=1,cache_mels=True,use_saved_mels=True"
     )
   elif mode == 5:
     train(
@@ -158,5 +158,5 @@ if __name__ == "__main__":
       warm_start_train_name="ljs_ipa_scratch",
       weights_train_name="ljs_ipa_scratch",
       weights_map="maps/weights/thchs_ipa_acc_ljs_ipa.json",
-      hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
+      custom_hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
     )

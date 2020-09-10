@@ -1,19 +1,19 @@
 # Init
 ## Capslock
 source /datasets/code/tacotron2/configs/envs/caps.sh
-export train_name="ljs_ipa_scratch"
+export train_name="ljs_ipa_warm"
 export prep_name="ljs_ipa"
 export batch_size=26
 
 ## GCP
 source /home/stefan_taubert/tacotron2/configs/envs/gcp.sh
-export train_name="ljs_ipa_scratch"
+export train_name="ljs_ipa_warm"
 export prep_name="ljs_ipa"
 export batch_size=52
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/phil.sh
-export train_name="ljs_ipa_scratch"
+export train_name="ljs_ipa_warm"
 export prep_name="ljs_ipa"
 export batch_size=26
 
@@ -22,7 +22,8 @@ python -m src.cli.runner tacotron-train \
   --train_name=$train_name \
   --prep_name=$prep_name \
   --test_size=0.001 \
-  --validation_size=0.01 \
+  --validation_size=0.1 \
+  --warm_start_train_name="ljs_ipa_scratch" \
   --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=500,epochs=1000"
 
 # Inference

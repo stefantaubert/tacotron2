@@ -46,23 +46,33 @@ class SymbolsMap(OrderedDict):
     return res
 
   def get_symbols_without_mapping(self) -> Set[str]:
-    result = [map_to for map_to, map_from in self.items() if map_from == ""]
+    result = {map_to for map_to, map_from in self.items() if map_from == ""}
     return result
 
   def filter(self, dest_symbols: set, orig_symbols: set, logger: logging.Logger):
+    remove_keys = []
     for map_to_symbol, map_from_symbol in self.items():
       if map_to_symbol not in dest_symbols:
         logger.info(
           f"Symbol '{map_to_symbol}' doesn't exist in destination symbol set. Ignoring mapping from '{map_from_symbol}'.")
-        self.pop(map_to_symbol)
+        remove_keys.append(map_to_symbol)
       elif map_from_symbol not in orig_symbols:
         logger.info(
           f"Symbol '{map_from_symbol}' doesn't exist in original symbol set. Ignoring mapping to '{map_to_symbol}'.")
-        self.pop(map_to_symbol)
+        remove_keys.append(map_to_symbol)
       else:
         #result[map_to_symbol] = map_from_symbol
         logger.info(
           f"Keeped mapping of symbol '{map_from_symbol}' to symbol '{map_to_symbol}'.")
+
+    for k in remove_keys:
+      self.pop(k)
+
+  def update_mappings(self, new_map: OrderedDict):
+    """returns True, if a new key was added"""
+    for to_symbol, from_symbol in new_map.items():
+      if to_symbol in self.keys() and from_symbol != "":
+        self[to_symbol] = from_symbol
 
   def try_fix_symbols_without_mapping(self, old_map: OrderedDict):
     """returns True, if a new key was added"""
@@ -83,25 +93,19 @@ def sort_map_after_map_from_symbol(symb_map: SymbolsMap):
   return new_map
 
 
-def create_inference_map(model_symbols: set, corpora: str, lang: Language, ignore_tones: Optional[bool], ignore_arcs: Optional[bool], existing_map: Optional[SymbolsMap], logger: logging.Logger) -> Tuple[SymbolsMap, List[str]]:
-  raw_dest_symbols = text_to_symbols(
-    corpora,
-    lang=lang,
-    ignore_arcs=ignore_arcs,
-    ignore_tones=ignore_tones
-  )
-
-  dest = set(raw_dest_symbols)
-  return create_or_update_map(model_symbols, dest, existing_map, logger)
-
-
-def create_or_update_map(orig: Set[str], dest: Set[str], existing_map: Optional[SymbolsMap], logger: logging.Logger) -> Tuple[SymbolsMap, List[str]]:
+def create_or_update_map(orig: Set[str], dest: Set[str], existing_map: Optional[SymbolsMap], template_map: Optional[SymbolsMap], logger: logging.Logger) -> Tuple[SymbolsMap, List[str]]:
+  # TODO: maybe add parameter to keep existing (for inference)
   dest_map = SymbolsMap.from_two_sets(orig, dest)
   if existing_map:
+    dest_map.update_mappings(existing_map)
+
+  if template_map:
     # The usecase is, when thchs map without tones exist and I want to create a map for thchs with tones.
-    dest_map.try_fix_symbols_without_mapping(existing_map)
-    if not dest_map.has_new_to_mappings(existing_map):
-      logger.info("There were no new symbols in the destination symbol set.")
+    dest_map.update_mappings(template_map)
+    # dest_map.try_fix_symbols_without_mapping(template_map)
+
+  # if not dest_map.has_new_to_mappings(existing_map):
+  #   logger.info("There were no new symbols in the destination symbol set.")
   dest_map = sort_map_after_map_from_symbol(dest_map)
   return dest_map, get_sorted_set(orig)
 

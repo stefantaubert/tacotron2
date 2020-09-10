@@ -69,13 +69,11 @@ class SymbolIdDict():
     return False
 
   def get_ids(self, symbols: List[str]) -> List[int]:
-    # TODO: on all refs replace unknown first
     ids = [self.get_id(symbol) for symbol in symbols]
     return ids
 
   def get_serialized_ids(self, symbols: List[str]) -> str:
-    ids = self.get_ids(symbols)
-    return SymbolIdDict.serialize_symbol_ids(ids)
+    return serialize_list(self.get_ids(symbols))
 
   def get_symbols(self, symbol_ids: Union[str, List[int]]) -> List[str]:
     if isinstance(symbol_ids, str):

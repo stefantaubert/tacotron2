@@ -96,7 +96,7 @@ def normalize(text: str, lang: Language) -> str:
   elif lang == Language.CHN:
     return normalize_chn(text)
   elif lang == Language.IPA:
-    return normalize_ipa
+    return normalize_ipa(text)
   else:
     assert False
 

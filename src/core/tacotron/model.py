@@ -574,6 +574,7 @@ class Decoder(nn.Module):
 
     return self.parse_decoder_outputs(mel_outputs, gate_outputs, alignments)
 
+
 def get_symbol_weights(hparams) -> torch.Tensor:
   model_symbols_count = get_model_symbols_count(
     hparams.n_symbols,
@@ -584,20 +585,25 @@ def get_symbol_weights(hparams) -> torch.Tensor:
   model_weights = get_uniform_weights(model_symbols_count, hparams.symbols_embedding_dim)
   return model_weights
 
+
 def get_uniform_weights(model_symbols_count: int, emb_dim: int) -> torch.Tensor:
-  weight = torch.zeros(size=(model_symbols_count, emb_dim))
+  # TODO check cuda is correct here
+  weight = torch.zeros(size=(model_symbols_count, emb_dim), device="cuda")
   std = sqrt(2.0 / (model_symbols_count + emb_dim))
   val = sqrt(3.0) * std  # uniform bounds for std
   nn.init.uniform_(weight, -val, val)
   return weight
 
+
 def update_weights(emb: nn.Embedding, weights: torch.Tensor) -> None:
   emb.weight = nn.Parameter(weights)
+
 
 def weights_to_embedding(weights: torch.Tensor) -> nn.Embedding:
   embedding = nn.Embedding(weights.shape[0], weights.shape[1])
   update_weights(embedding, weights)
   return embedding
+
 
 class Tacotron2(nn.Module):
   def __init__(self, hparams, logger: Logger):
@@ -622,6 +628,7 @@ class Tacotron2(nn.Module):
     # TODO rename to symbol_embeddings but it will destroy all previous trained models
     symbol_emb_weights = get_symbol_weights(hparams)
     self.embedding = weights_to_embedding(symbol_emb_weights)
+    logger.debug(f"is cuda: {self.embedding.weight.is_cuda}")
 
     self.speakers_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
     torch.nn.init.xavier_uniform_(self.speakers_embedding.weight)

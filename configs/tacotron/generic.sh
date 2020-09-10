@@ -1,19 +1,14 @@
 # Continue training
-python -m src.cli.runner tacotron-continue-train \
-  --base_dir="$base_dir" \
-  --train_name=$train_name \
-  --hparams=$hparams
+python -m src.cli.runner tacotron-continue-train --train_name=$train_name
 
 # Create Weights Map
 python -m src.cli.runner create-weights-map \
-  --base_dir=$base_dir \
   --orig_prep_name="thchs_ipa" \
   --dest_prep_name="ljs_ipa" \
   --existing_map="maps/weights/en_chn_v1.json"
 
 # Update Inference Map
 python -m src.cli.runner create-inference-map \
-  --base_dir=$base_dir \
   --prep_name=$prep_name \
   --corpora="examples/ipa/corpora.txt" \
   --is_ipa \
@@ -22,19 +17,15 @@ python -m src.cli.runner create-inference-map \
   --existing_map="maps/inference/$prep_name.json"
 
 # Plot Embeddings
-python -m src.cli.runner tacotron-plot-embeddings \
-  --base_dir=$base_dir \
-  --train_name=$train_name
+python -m src.cli.runner tacotron-plot-embeddings --train_name=$train_name
 
 # Validate
 python -m src.cli.runner tacotron-validate \
-  --base_dir=$base_dir \
   --train_name=$train_name
 #  --waveglow="scratch"
 
 # Validate checkpoints
 python -m src.cli.runner tacotron-eval-checkpoints \
-  --base_dir=$base_dir \
   --train_name=$train_name \
   --custom_hparams=$hparams \
   --select=2000 \

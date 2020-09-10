@@ -2,6 +2,7 @@ import json
 import os
 import random
 import tarfile
+import unicodedata
 from collections import Counter
 from dataclasses import astuple
 from pathlib import Path
@@ -18,6 +19,11 @@ from tqdm import tqdm
 from src.core.common.globals import CSV_SEPERATOR
 
 T = TypeVar('T')
+
+
+def console_out_len(text: str):
+  res = len([c for c in text if unicodedata.combining(c) == 0])
+  return res
 
 
 class GenericList(list, Generic[T]):

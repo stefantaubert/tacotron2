@@ -1,6 +1,5 @@
 # Download pretrained waveglow model
-python -m src.cli.runner waveglow-dl \
-  --base_dir=$base_dir
+python -m src.cli.runner waveglow-dl
 
 ## Open Tensorboard
 # if you get an error message, try: `pip uninstall tensorboard-plugin-wit`

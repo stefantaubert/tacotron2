@@ -5,7 +5,11 @@ export PYTHONPATH=$code_dir
 conda activate py37
 
 datasets_dir="/datasets"
-export base_dir="$datasets_dir/models/taco2pt_v4"
+# required
+export base_dir="$datasets_dir/models/taco2pt_v5"
 
+# optional
 export ljs_data="$datasets_dir/LJSpeech-1.1"
+
+# optional
 export thchs_data="$datasets_dir/thchs_wav"

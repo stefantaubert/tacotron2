@@ -1,4 +1,5 @@
 import os
+from cgitb import strong
 from typing import List, Optional, Set
 
 from src.app.pre.io import get_text_dir, load_text_symbol_converter
@@ -18,18 +19,21 @@ def get_all_symbols(prep_dir: str) -> Set[str]:
     text_dir = get_text_dir(prep_dir, text_name, create=False)
     text_symbol_ids = load_text_symbol_converter(text_dir)
     all_symbols |= text_symbol_ids.get_all_symbols()
+    if "A" in all_symbols:
+      pass
 
   return all_symbols
 
 
 def save_infer_map(prep_dir: str, infer_map: SymbolsMap):
-  path = os.path.join(prep_dir, INFER_MAP_NAME)
-  infer_map.save(path)
+  infer_map.save(get_infer_map_path(prep_dir))
 
+def get_infer_map_path(prep_dir: str) -> str:
+  path = os.path.join(prep_dir, INFER_MAP_NAME)
+  return path
 
 def load_infer_map(prep_dir: str) -> SymbolsMap:
-  path = os.path.join(prep_dir, INFER_MAP_NAME)
-  return SymbolsMap.load(path)
+  return SymbolsMap.load(get_infer_map_path(prep_dir))
 
 
 def infer_map_exists(prep_dir: str) -> bool:
@@ -83,8 +87,11 @@ def create_or_update_weights_map(base_dir: str, prep_name: str, weights_prep_nam
   logger.info(f"Creating/updating weights map for {weights_prep_name}...")
 
   if template_map is not None:
-    existing_map = SymbolsMap.load(template_map)
-  elif weights_map_exists(prep_dir, weights_prep_name):
+    _template_map = SymbolsMap.load(template_map)
+  else:
+    _template_map = None
+
+  if weights_map_exists(prep_dir, weights_prep_name):
     existing_map = load_weights_map(prep_dir, weights_prep_name)
   else:
     existing_map = None
@@ -93,6 +100,7 @@ def create_or_update_weights_map(base_dir: str, prep_name: str, weights_prep_nam
     orig=load_filelist_symbol_converter(orig_prep_dir).get_all_symbols(),
     dest=load_filelist_symbol_converter(prep_dir).get_all_symbols(),
     existing_map=existing_map,
+    template_map=_template_map,
     logger=logger
   )
 
@@ -110,8 +118,11 @@ def create_or_update_inference_map(base_dir: str, prep_name: str, template_map: 
   all_symbols = get_all_symbols(prep_dir)
 
   if template_map is not None:
-    existing_map = SymbolsMap.load(template_map)
-  elif infer_map_exists(prep_dir):
+    _template_map = SymbolsMap.load(template_map)
+  else:
+    _template_map = None
+
+  if infer_map_exists(prep_dir):
     existing_map = load_infer_map(prep_dir)
   else:
     existing_map = None
@@ -120,6 +131,7 @@ def create_or_update_inference_map(base_dir: str, prep_name: str, template_map: 
     orig=load_filelist_symbol_converter(prep_dir).get_all_symbols(),
     dest=all_symbols,
     existing_map=existing_map,
+    template_map=_template_map,
     logger=logger
   )
 
@@ -138,5 +150,6 @@ if __name__ == "__main__":
   elif mode == 2:
     create_or_update_inference_map(
       base_dir="/datasets/models/taco2pt_v5",
-      prep_name="thchs_ljs"
+      prep_name="ljs_ipa",
+      template_map="maps/weights/thchs_ipa_ljs_ipa.json"
     )

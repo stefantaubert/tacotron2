@@ -28,7 +28,6 @@ export epochs=1000
 
 # Create Weights Map
 python -m src.cli.runner create-weights-map \
-  --base_dir=$base_dir \
   --orig_prep_name="ljs_ipa" \
   --dest_prep_name=$prep_name \
   --existing_map="maps/weights/"$prep_name"_ljs_ipa.json"
@@ -36,12 +35,11 @@ python -m src.cli.runner create-weights-map \
 # Training
 export hparams="batch_size=$batch_size,iters_per_checkpoint=$iters_per_checkpoint,epochs_per_checkpoint=$epochs_per_checkpoint,epochs=$epochs"
 python -m src.cli.runner tacotron-train \
-  --base_dir="$base_dir" \
   --train_name=$train_name \
   --prep_name=$prep_name \
   --test_size=0.001 \
   --validation_size=0.01 \
-  --hparams=$hparams \
+  --custom_hparams=$hparams \
   --warm_start_train_name="ljs_ipa_scratch" \
   --weights_train_name="ljs_ipa_scratch" \
   --weights_map="maps/weights/"$prep_name"_ljs_ipa.json"

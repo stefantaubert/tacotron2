@@ -3,7 +3,6 @@ import os
 import random
 import time
 from collections import OrderedDict
-from math import sqrt
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -15,7 +14,6 @@ from tqdm import tqdm
 from src.core.common.accents_dict import PADDING_ACCENT, AccentsDict
 from src.core.common.symbol_id_dict import PADDING_SYMBOL, SymbolIdDict
 from src.core.common.symbols_map import (SymbolsMap, get_map,
-                                         get_symbols_id_mapping,
                                          symbols_map_to_symbols_ids_map)
 from src.core.common.taco_stft import TacotronSTFT
 from src.core.common.text import deserialize_list
@@ -29,9 +27,7 @@ from src.core.tacotron.logger import Tacotron2Logger
 from src.core.tacotron.model import (SPEAKER_EMBEDDINGS_LAYER_NAME,
                                      SYMBOL_EMBEDDINGS_LAYER_NAME, Tacotron2,
                                      get_model_symbol_id, get_model_symbol_ids,
-                                     get_model_symbols_count,
-                                     get_symbol_weights, get_uniform_weights,
-                                     update_weights)
+                                     get_symbol_weights, update_weights)
 
 PADDING_SYMBOL_ID = 0
 PADDING_ACCENT_ID = 0
@@ -343,6 +339,7 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   criterion = Tacotron2Loss()
 
   debug_logger.debug("Modelweights:")
+  debug_logger.debug(f"is cuda: {model.embedding.weight.is_cuda}")
   debug_logger.debug(str(model.state_dict()[SYMBOL_EMBEDDINGS_LAYER_NAME]))
 
   model.train()
@@ -628,7 +625,7 @@ def symbols_ids_map_to_model_symbols_ids_map(symbols_id_map: OrderedDictType[int
         accents_use_own_symbols
       )
 
-      res[map_to_model_id] = res[map_from_symbol_id]
+      res[map_to_model_id] = symbols_id_map[map_from_symbol_id]
 
     if not accents_use_own_symbols:
       break

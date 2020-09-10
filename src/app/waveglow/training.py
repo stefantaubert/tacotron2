@@ -13,7 +13,7 @@ from src.core.pre.merge_ds import split_prepared_data_train_test_val
 from src.core.waveglow.train import train as train_core
 
 
-def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.01, validation_size: float = 0.01, hparams: Optional[str] = None, split_seed: int = 1234):
+def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.01, validation_size: float = 0.01, custom_hparams: Optional[str] = None, split_seed: int = 1234):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   wholeset = load_filelist(prep_dir)
   trainset, testset, valset = split_prepared_data_train_test_val(
@@ -31,10 +31,10 @@ def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.0
   add_file_out_to_logger(logger, log_file)
   # todo log map & args
 
-  save_settings(train_dir, prep_name, hparams)
+  save_settings(train_dir, prep_name, custom_hparams)
 
   train_core(
-    custom_hparams=hparams,
+    custom_hparams=custom_hparams,
     logdir=logs_dir,
     trainset=trainset,
     valset=valset,
@@ -44,7 +44,7 @@ def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.0
   )
 
 
-def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None):
+def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[str] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -57,7 +57,7 @@ def continue_train(base_dir: str, train_name: str, hparams: Optional[str] = None
   _, custom_hparams_loaded = load_settings(train_dir)
 
   train_core(
-    custom_hparams=hparams if hparams is not None else custom_hparams_loaded,
+    custom_hparams=custom_hparams if custom_hparams is not None else custom_hparams_loaded,
     logdir=logs_dir,
     trainset=load_trainset(train_dir),
     valset=load_valset(train_dir),
@@ -74,11 +74,11 @@ if __name__ == "__main__":
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       prep_name="thchs_ljs",
-      hparams="batch_size=4,iters_per_checkpoint=50,cache_wavs=False"
+      custom_hparams="batch_size=4,iters_per_checkpoint=50,cache_wavs=False"
     )
   elif mode == 2:
     continue_train(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
-      hparams="batch_size=4,iters_per_checkpoint=50,cache_wavs=False"
+      custom_hparams="batch_size=4,iters_per_checkpoint=50,cache_wavs=False"
     )

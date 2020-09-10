@@ -2,7 +2,11 @@ from argparse import ArgumentParser
 
 from src.app.pre.ds import (preprocess_ljs, preprocess_thchs,
                             preprocess_thchs_kaldi)
-from src.app.pre.mapping import create_or_update_inference_map, create_or_update_weights_map
+from src.app.pre.inference import (accent_apply, accent_set, add_text,
+                                   ipa_convert_text, map_text,
+                                   map_to_prep_symbols, normalize_text)
+from src.app.pre.mapping import (create_or_update_inference_map,
+                                 create_or_update_weights_map)
 from src.app.pre.mel import preprocess_mels
 from src.app.pre.prepare import prepare_ds
 from src.app.pre.text import (preprocess_text, text_convert_to_ipa,
@@ -11,12 +15,12 @@ from src.app.pre.tools import remove_silence_plot
 from src.app.pre.wav import (preprocess_wavs, wavs_normalize,
                              wavs_remove_silence, wavs_upsample)
 from src.cli.utils import parse_tuple_list
+from src.core.common.language import Language
 
 
 def init_preprocess_thchs_parser(parser: ArgumentParser):
   parser.add_argument('--path', type=str, required=True, help='THCHS dataset directory')
   parser.add_argument('--auto_dl', action="store_true")
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True, default='thchs')
   return preprocess_thchs
 
@@ -24,7 +28,6 @@ def init_preprocess_thchs_parser(parser: ArgumentParser):
 def init_preprocess_ljs_parser(parser: ArgumentParser):
   parser.add_argument('--path', type=str, required=True, help='LJS dataset directory')
   parser.add_argument('--auto_dl', action="store_true")
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True, default='ljs')
   return preprocess_ljs
 
@@ -32,13 +35,11 @@ def init_preprocess_ljs_parser(parser: ArgumentParser):
 def init_preprocess_thchs_kaldi_parser(parser: ArgumentParser):
   parser.add_argument('--path', type=str, required=True, help='THCHS dataset directory')
   parser.add_argument('--auto_dl', action="store_true")
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True, default='thchs_kaldi')
   return preprocess_thchs_kaldi
 
 
 def init_preprocess_mels_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--wav_name', type=str, required=True)
   parser.add_argument('--custom_hparams', type=str)
@@ -46,7 +47,6 @@ def init_preprocess_mels_parser(parser: ArgumentParser):
 
 
 def init_prepare_ds_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--prep_name', type=str, required=True)
   parser.add_argument('--ds_speakers', type=str, required=True)
   parser.add_argument('--ds_text_audio', type=str, required=True)
@@ -59,14 +59,12 @@ def _prepare_ds_cli(base_dir: str, prep_name: str, ds_speakers: str, ds_text_aud
 
 
 def init_preprocess_text_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--text_name', type=str, required=True)
   return preprocess_text
 
 
 def init_text_normalize_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--orig_text_name', type=str, required=True)
   parser.add_argument('--dest_text_name', type=str, required=True)
@@ -74,7 +72,6 @@ def init_text_normalize_parser(parser: ArgumentParser):
 
 
 def init_text_convert_to_ipa_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--orig_text_name', type=str, required=True)
   parser.add_argument('--dest_text_name', type=str, required=True)
@@ -84,14 +81,12 @@ def init_text_convert_to_ipa_parser(parser: ArgumentParser):
 
 
 def init_preprocess_wavs_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--wav_name', type=str, required=True)
   return preprocess_wavs
 
 
 def init_wavs_normalize_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--orig_wav_name', type=str, required=True)
   parser.add_argument('--dest_wav_name', type=str, required=True)
@@ -99,7 +94,6 @@ def init_wavs_normalize_parser(parser: ArgumentParser):
 
 
 def init_wavs_upsample_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--orig_wav_name', type=str, required=True)
   parser.add_argument('--dest_wav_name', type=str, required=True)
@@ -108,7 +102,6 @@ def init_wavs_upsample_parser(parser: ArgumentParser):
 
 
 def init_wavs_remove_silence_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--orig_wav_name', type=str, required=True)
   parser.add_argument('--dest_wav_name', type=str, required=True)
@@ -123,7 +116,6 @@ def init_wavs_remove_silence_parser(parser: ArgumentParser):
 
 
 def init_wavs_remove_silence_plot_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--wav_name', type=str, required=True)
   parser.add_argument('--chunk_size', type=int, required=True)
@@ -137,22 +129,65 @@ def init_wavs_remove_silence_plot_parser(parser: ArgumentParser):
   return remove_silence_plot
 
 
-def init_create_weights_map_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
-  parser.add_argument('--orig_prep_name', type=str, required=True)
-  parser.add_argument('--dest_prep_name', type=str, required=True)
-  parser.add_argument('--existing_map', type=str)
-  parser.add_argument('--dest_dir', type=str, default="maps/weights")
+def init_create_or_update_weights_map_parser(parser: ArgumentParser):
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--weights_prep_name', type=str, required=True)
+  parser.add_argument('--template_map', type=str)
   return create_or_update_weights_map
 
 
-def init_create_inference_map_parser(parser: ArgumentParser):
-  parser.add_argument('--base_dir', type=str, help='base directory', required=True)
+def init_create_or_update_inference_map_parser(parser: ArgumentParser):
   parser.add_argument('--prep_name', type=str, required=True)
-  parser.add_argument('--corpora', type=str, required=True)
-  parser.add_argument('--is_ipa', action='store_true')
-  parser.add_argument('--ignore_tones', action='store_true')
-  parser.add_argument('--ignore_arcs', action='store_true')
-  parser.add_argument('--existing_map', type=str)
-  parser.add_argument('--dest_dir', type=str, default="maps/inference")
+  parser.add_argument('--template_map', type=str)
   return create_or_update_inference_map
+
+
+def init_add_text_parser(parser: ArgumentParser):
+  parser.add_argument('--filepath', type=str, required=True)
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  parser.add_argument('--lang', choices=Language, type=Language.__getitem__, required=True)
+  return add_text
+
+
+def init_normalize_text_parser(parser: ArgumentParser):
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  return normalize_text
+
+
+def init_convert_to_ipa_text_parser(parser: ArgumentParser):
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  parser.add_argument('--ignore_tones', action='store_true')
+  #parser.add_argument('--ignore_arcs', action='store_true')
+  parser.set_defaults(ignore_arcs=True)
+  return ipa_convert_text
+
+
+def init_accent_apply_text_parser(parser: ArgumentParser):
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  return accent_apply
+
+
+def init_accent_set_text_parser(parser: ArgumentParser):
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  parser.add_argument('--accent', type=str, required=True)
+  return accent_set
+
+
+def init_map_text_parser(parser: ArgumentParser):
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  parser.add_argument('--symbols_map_path', type=str, required=True)
+  parser.set_defaults(ignore_arcs=True)
+  return map_text
+
+
+def init_map_to_prep_symbols_parser(parser: ArgumentParser):
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  parser.set_defaults(ignore_arcs=True)
+  return map_to_prep_symbols
