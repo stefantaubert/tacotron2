@@ -1,6 +1,10 @@
 from argparse import ArgumentParser
 
 from src.app.tacotron.analysis import plot_embeddings
+from src.app.tacotron.defaults import (DEFAULT_DENOISER_STRENGTH,
+                                       DEFAULT_SAMPLING_RATE,
+                                       DEFAULT_SENTENCE_PAUSE_S, DEFAULT_SIGMA,
+                                       DEFAULT_WAVEGLOW)
 from src.app.tacotron.eval_checkpoints import eval_checkpoints_main
 from src.app.tacotron.inference import infer
 from src.app.tacotron.training import continue_train, train
@@ -49,11 +53,12 @@ def init_validate_parser(parser: ArgumentParser):
   parser.add_argument('--ds_speaker', type=str, help="ds_name,speaker_name")
   parser.add_argument('--ds', type=str, help="Choose if validation- or testset should be taken.",
                       choices=["val", "test"], default="val")
-  parser.add_argument('--waveglow', type=str, help="Waveglow train_name", default="pretrained")
+  parser.add_argument('--waveglow', type=str, help="Waveglow train_name", default=DEFAULT_WAVEGLOW)
   parser.add_argument('--custom_checkpoint', type=int)
-  parser.add_argument("--denoiser_strength", default=0.01, type=float, help='Removes model bias.')
-  parser.add_argument("--sigma", default=0.666, type=float)
-  parser.add_argument('--sampling_rate', type=float, default=22050)
+  parser.add_argument("--denoiser_strength", default=DEFAULT_DENOISER_STRENGTH,
+                      type=float, help='Removes model bias.')
+  parser.add_argument("--sigma", default=DEFAULT_SIGMA, type=float)
+  parser.add_argument('--sampling_rate', type=float, default=DEFAULT_SAMPLING_RATE)
   return validate
 
 
@@ -61,11 +66,20 @@ def init_inference_parser(parser: ArgumentParser):
   parser.add_argument('--train_name', type=str, required=True)
   parser.add_argument('--text_name', type=str, required=True)
   parser.add_argument('--ds_speaker', type=str, help="ds_name,speaker_name", required=True)
-  parser.add_argument('--waveglow', type=str, help="Waveglow train_name", default="pretrained")
+  parser.add_argument('--waveglow', type=str, help="Waveglow train_name", default=DEFAULT_WAVEGLOW)
   parser.add_argument('--custom_checkpoint', type=int)
-  parser.add_argument('--sentence_pause_s', type=float, default=0.5)
-  parser.add_argument('--sigma', type=float, default=0.666)
-  parser.add_argument('--denoiser_strength', type=float, default=0.01)
-  parser.add_argument('--sampling_rate', type=float, default=22050)
+  parser.add_argument('--sentence_pause_s', type=float, default=DEFAULT_SENTENCE_PAUSE_S)
+  parser.add_argument(
+    '--sigma',
+    type=float,
+    default=DEFAULT_SIGMA
+  )
+
+  parser.add_argument(
+    '--denoiser_strength',
+    type=float,
+    default=DEFAULT_DENOISER_STRENGTH
+  )
+  parser.add_argument('--sampling_rate', type=float, default=DEFAULT_SAMPLING_RATE)
   parser.add_argument('--analysis', action='store_true')
   return infer

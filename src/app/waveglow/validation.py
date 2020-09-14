@@ -14,7 +14,7 @@ from src.core.waveglow.inference import get_logger as get_infer_logger
 from src.core.waveglow.inference import validate as validate_core
 
 
-def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
+def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.00, sampling_rate: float = 22050):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -67,8 +67,21 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
 
 
 if __name__ == "__main__":
+  
   validate(
     base_dir="/datasets/models/taco2pt_v5",
     train_name="pretrained",
+    entry_id=865
+  )
+
+  validate(
+    base_dir="/datasets/models/taco2pt_v5",
+    train_name="pretrained_v2",
+    entry_id=865
+  )
+
+  validate(
+    base_dir="/datasets/models/taco2pt_v5",
+    train_name="pretrained_v3",
     entry_id=865
   )

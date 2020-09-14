@@ -10,6 +10,9 @@ from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log,
 from src.app.pre.prepare import (get_prepared_dir, load_filelist_accents_ids,
                                  load_filelist_speakers_json,
                                  load_filelist_symbol_converter)
+from src.app.tacotron.defaults import (DEFAULT_DENOISER_STRENGTH,
+                                       DEFAULT_SAMPLING_RATE, DEFAULT_SIGMA,
+                                       DEFAULT_WAVEGLOW)
 from src.app.tacotron.io import get_train_dir
 from src.app.tacotron.training import load_settings
 from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
@@ -37,7 +40,7 @@ def save_val_alignments_sentence_plot(val_dir: str, mel):
   plt.savefig(path, bbox_inches='tight')
 
 
-def validate(base_dir: str, train_name: str, waveglow: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
+def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = 0, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sampling_rate: float = DEFAULT_SAMPLING_RATE):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -104,7 +107,6 @@ if __name__ == "__main__":
   validate(
     base_dir="/datasets/models/taco2pt_v5",
     train_name="debug",
-    waveglow="pretrained",
   )
 
   # validate(

@@ -36,7 +36,7 @@ def save_infer_orig_wav(infer_dir: str, wav_path_orig: str):
   copyfile(wav_path_orig, path)
 
 
-def infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050):
+def infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.00, sampling_rate: float = 22050):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 

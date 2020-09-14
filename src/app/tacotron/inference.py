@@ -12,6 +12,10 @@ from src.app.pre.inference import get_text_dir, load_inference_csv
 from src.app.pre.prepare import (get_prepared_dir, load_filelist_accents_ids,
                                  load_filelist_speakers_json,
                                  load_filelist_symbol_converter)
+from src.app.tacotron.defaults import (DEFAULT_DENOISER_STRENGTH,
+                                       DEFAULT_SAMPLING_RATE,
+                                       DEFAULT_SENTENCE_PAUSE_S, DEFAULT_SIGMA,
+                                       DEFAULT_WAVEGLOW)
 from src.app.tacotron.io import get_train_dir
 from src.app.tacotron.training import load_settings
 from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
@@ -92,7 +96,7 @@ def save_infer_h_plot(infer_dir: str, sentence_ids: List[int]):
   stack_images_horizontally(paths, path)
 
 
-def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveglow: str = "pretrained", custom_checkpoint: Optional[int] = None, sentence_pause_s: float = 0.5, sigma: float = 0.666, denoiser_strength: float = 0.01, sampling_rate: float = 22050, analysis: bool = True):
+def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveglow: str = DEFAULT_WAVEGLOW, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = DEFAULT_SENTENCE_PAUSE_S, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sampling_rate: float = DEFAULT_SAMPLING_RATE, analysis: bool = True):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 

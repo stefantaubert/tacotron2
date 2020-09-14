@@ -20,8 +20,7 @@ python -m src.cli.runner create-inference-map \
 python -m src.cli.runner tacotron-plot-embeddings --train_name=$train_name
 
 # Validate
-python -m src.cli.runner tacotron-validate \
-  --train_name=$train_name
+python -m src.cli.runner tacotron-validate --train_name=$train_name
 #  --waveglow="scratch"
 
 # Validate checkpoints
