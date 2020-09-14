@@ -1,7 +1,7 @@
 import datetime
 import os
 from shutil import copyfile
-from typing import Tuple
+from typing import Optional, Tuple
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -76,7 +76,7 @@ def load_settings(train_dir: str) -> Tuple[str, str]:
   return res["prep_name"], res["custom_hparams"]
 
 
-def save_settings(train_dir: str, prep_name: str, custom_hparams: str):
+def save_settings(train_dir: str, prep_name: Optional[str], custom_hparams: Optional[str]):
   settings = {
     "prep_name": prep_name,
     "custom_hparams": custom_hparams

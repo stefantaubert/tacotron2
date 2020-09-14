@@ -180,7 +180,7 @@ def stack_images_horizontally(list_im: List[str], out_path: str):
   new_im.save(out_path)
 
 
-def create_parent_folder(file: str):
+def create_parent_folder(file: str) -> str:
   path = Path(file)
   os.makedirs(path.parent, exist_ok=True)
   return path.parent

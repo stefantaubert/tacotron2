@@ -21,6 +21,15 @@ I have modified the original tacotron 2 code:
 
 ## Setup
 
+### Change Console Encoding to display IPA chars
+
+Check with `locale` which setting you have and if `en_US.UTF-8` is not in the values of `LANG` or `LC_*` then change them:
+
+```sh
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+```
+
 ### Locally with remote Server
 
 Serveraddress for example `joedoe@example.com`.
