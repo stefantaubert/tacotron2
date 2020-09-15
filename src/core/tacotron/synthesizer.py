@@ -5,31 +5,31 @@ from typing import List, Optional
 import numpy as np
 import torch
 
-from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.model import get_model_symbol_ids
-from src.core.tacotron.training import load_model
+from src.core.tacotron.training import load_checkpoint, load_model
 
 
 class Synthesizer():
-  def __init__(self, checkpoint_path: str, n_symbols: int, n_accents: int, n_speakers: int, custom_hparams: Optional[str], logger: logging.Logger):
+  def __init__(self, checkpoint_path: str, custom_hparams: Optional[str], logger: logging.Logger):
     super().__init__()
     assert os.path.isfile(checkpoint_path)
     self._logger = logger
-    self._logger.info(f"Loading tacotron model from: {checkpoint_path}")
-    self._logger.info(f'Loaded {n_symbols} symbols')
-    self._logger.info(f'Loaded {n_accents} accents')
-    self._logger.info(f'Loaded {n_speakers} speaker(s)')
 
-    # Load model from checkpoint
-    checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-    model_state_dict = checkpoint_dict['state_dict']
+    checkpoint = load_checkpoint(checkpoint_path, logger)
 
-    hparams = create_hparams(n_speakers, n_symbols, n_accents, custom_hparams)
+    self.accents = checkpoint.accents
+    self.symbols = checkpoint.symbols
+    self.speakers = checkpoint.speakers
 
-    model = load_model(hparams, logger)
-    model.load_state_dict(model_state_dict)
+    hparams = checkpoint.hparams
+    # todo apply custom_hparams
 
-    model = model.cuda()
+    model = load_model(
+      hparams=hparams,
+      state_dict=checkpoint.state_dict,
+      logger=logger
+    )
+
     model = model.eval()
 
     self.hparams = hparams
@@ -48,6 +48,12 @@ class Synthesizer():
     return symbols_tensor
 
   def infer(self, symbol_ids: List[int], accent_ids: List[int], speaker_id: int):
+    for symbol_id in symbol_ids:
+      assert self.symbols.id_exists(symbol_id)
+    for accent_id in accent_ids:
+      assert self.accents.id_exists(accent_id)
+    assert self.speakers.id_exists(speaker_id)
+
     symbols_tensor = self._get_model_symbols_tensor(symbol_ids, accent_ids)
 
     accents_tensor = np.array([accent_ids])

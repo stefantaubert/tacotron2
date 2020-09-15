@@ -10,6 +10,9 @@ class SpeakersDict(OrderedDict):  # [str, int]
   def get_speakers(self):
     return list(self.keys())
 
+  def id_exists(self, speaker_id: int) -> bool:
+    return speaker_id in self.values()
+
   @classmethod
   def load(cls, file_path: str):
     data = parse_json(file_path)

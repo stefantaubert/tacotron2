@@ -35,3 +35,6 @@ python -m src.cli.runner tacotron-eval-checkpoints \
 # example error message: `ValueError: Not a TBLoader or TBPlugin subclass: <class 'tensorboard_plugin_wit.wit_plugin_loader.WhatIfToolPluginLoader'>`
 # see: https://github.com/tensorflow/tensorboard/issues/3549
 tensorboard --logdir=$base_dir/tacotron/$train_name/logs
+
+## Debugging
+tensorboard --logdir=$base_dir/tacotron/debug/logs

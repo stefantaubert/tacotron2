@@ -36,7 +36,10 @@ class SymbolIdDict():
     assert symbol_id in self._symbols_to_ids.keys()
     return self._symbols_to_ids[symbol_id]
 
-  def symbol_exists(self, symbol: str):
+  def id_exists(self, symbol_id: int) -> bool:
+    return symbol_id in self._ids_to_symbols.values()
+
+  def symbol_exists(self, symbol: str) -> bool:
     return symbol in self._ids_to_symbols.keys()
 
   def get_id(self, symbol: str):

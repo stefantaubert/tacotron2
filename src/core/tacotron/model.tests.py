@@ -1,7 +1,8 @@
 import unittest
 
 from src.core.tacotron.model import (SHARED_SYMBOLS_COUNT, get_model_symbol_id,
-                                     get_model_symbols_count, get_symbol_id)
+                                     get_model_symbols_count, get_symbol_id,
+                                     get_uniform_weights)
 
 
 class UnitTests(unittest.TestCase):
@@ -458,6 +459,12 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(5, res)
 
   # endregion
+
+  def test_get_uniform_weights(self):
+    res = get_uniform_weights(5, 100)
+    self.assertNotEqual(0, res[0][0])
+    self.assertEqual(5, res.shape[0])
+    self.assertEqual(100, res.shape[1])
 
 
 if __name__ == '__main__':

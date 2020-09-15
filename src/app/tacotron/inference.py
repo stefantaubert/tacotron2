@@ -131,9 +131,6 @@ def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveg
   wav, analysis_stack = infer_core(
     taco_path=checkpoint_path,
     waveglow_path=wg_checkpoint_path,
-    symbol_id_dict=load_filelist_symbol_converter(prep_dir),
-    accent_id_dict=load_filelist_accents_ids(prep_dir),
-    n_speakers=len(speakers),
     speaker_id=speaker_id,
     sentence_pause_s=sentence_pause_s,
     sigma=sigma,

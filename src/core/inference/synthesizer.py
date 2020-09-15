@@ -9,15 +9,12 @@ from src.core.waveglow.synthesizer import Synthesizer as WGSynthesizer
 
 
 class Synthesizer():
-  def __init__(self, tacotron_path: str, waveglow_path: str, n_symbols: int, n_accents: int, n_speakers: int, custom_taco_hparams: Optional[str], custom_wg_hparams: Optional[str], logger: logging.Logger):
+  def __init__(self, tacotron_path: str, waveglow_path: str, custom_taco_hparams: Optional[str], custom_wg_hparams: Optional[str], logger: logging.Logger):
     super().__init__()
     self._logger = logger
 
-    self._taco_synt = TacoSynthesizer(
+    self.taco_synt = TacoSynthesizer(
       checkpoint_path=tacotron_path,
-      n_speakers=n_speakers,
-      n_accents=n_accents,
-      n_symbols=n_symbols,
       custom_hparams=custom_taco_hparams,
       logger=logger
     )
@@ -29,7 +26,7 @@ class Synthesizer():
     )
 
   def infer(self, symbol_ids: List[int], accent_ids: List[int], speaker_id: int, sigma: float, denoiser_strength: float) -> Tuple[Tuple[torch.Tensor, torch.Tensor, torch.Tensor], np.ndarray]:
-    mel_outputs, mel_outputs_postnet, alignments = self._taco_synt.infer(
+    mel_outputs, mel_outputs_postnet, alignments = self.taco_synt.infer(
       symbol_ids=symbol_ids,
       accent_ids=accent_ids,
       speaker_id=speaker_id

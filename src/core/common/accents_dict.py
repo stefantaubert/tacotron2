@@ -16,6 +16,9 @@ class AccentsDict():
   def save(self, file_path: str):
     save_json(file_path, self._ids_to_accents)
 
+  def id_exists(self, symbol_id: int) -> bool:
+    return symbol_id in self._ids_to_accents.values()
+
   def get_id(self, accent: str) -> int:
     assert accent in self._ids_to_accents.keys()
     return self._ids_to_accents[accent]

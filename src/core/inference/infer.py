@@ -4,9 +4,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from src.core.common.accents_dict import AccentsDict
 from src.core.common.audio import concatenate_audios, mel_to_numpy
-from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.taco_stft import TacotronSTFT, create_hparams
 from src.core.inference.synthesizer import Synthesizer
 from src.core.pre.merge_ds import PreparedData
@@ -20,15 +18,12 @@ def get_logger():
 _logger = get_logger()
 
 
-def infer(taco_path: str, waveglow_path: str, symbol_id_dict: SymbolIdDict, accent_id_dict: AccentsDict, n_speakers: int, speaker_id: int, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: int, sentences: InferSentenceList, custom_taco_hparams: Optional[str] = None, custom_wg_hparams: Optional[str] = None) -> Tuple[np.ndarray, List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]]]:
+def infer(taco_path: str, waveglow_path: str, speaker_id: int, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: int, sentences: InferSentenceList, custom_taco_hparams: Optional[str] = None, custom_wg_hparams: Optional[str] = None) -> Tuple[np.ndarray, List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]]]:
   _logger.info("Inferring...")
 
   return _infer_core(
     taco_path=taco_path,
     waveglow_path=waveglow_path,
-    symbol_id_dict=symbol_id_dict,
-    accent_id_dict=accent_id_dict,
-    n_speakers=n_speakers,
     speaker_id=speaker_id,
     sentence_pause_s=sentence_pause_s,
     sigma=sigma,
@@ -40,7 +35,7 @@ def infer(taco_path: str, waveglow_path: str, symbol_id_dict: SymbolIdDict, acce
   )
 
 
-def validate(entry: PreparedData, taco_path: str, waveglow_path: str, denoiser_strength: float, sigma: float, symbol_id_dict: SymbolIdDict, accent_id_dict: AccentsDict, n_speakers: int, custom_taco_hparams: Optional[str] = None, custom_wg_hparams: Optional[str] = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def validate(entry: PreparedData, taco_path: str, waveglow_path: str, denoiser_strength: float, sigma: float, custom_taco_hparams: Optional[str] = None, custom_wg_hparams: Optional[str] = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
   _logger.info("Validating...")
 
   hparams = create_hparams()
@@ -58,9 +53,6 @@ def validate(entry: PreparedData, taco_path: str, waveglow_path: str, denoiser_s
   output, result = _infer_core(
     taco_path=taco_path,
     waveglow_path=waveglow_path,
-    symbol_id_dict=symbol_id_dict,
-    accent_id_dict=accent_id_dict,
-    n_speakers=n_speakers,
     speaker_id=entry.speaker_id,
     sentence_pause_s=0,
     sigma=sigma,
@@ -75,21 +67,21 @@ def validate(entry: PreparedData, taco_path: str, waveglow_path: str, denoiser_s
   return output, mel_outputs, mel_outputs_postnet, alignments, orig_mel
 
 
-def _infer_core(taco_path: str, waveglow_path: str, symbol_id_dict: SymbolIdDict, accent_id_dict: AccentsDict, n_speakers: int, speaker_id: int, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: int, sentences: InferSentenceList, custom_taco_hparams: Optional[str] = None, custom_wg_hparams: Optional[str] = None) -> Tuple[np.ndarray, List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]]]:
+def _infer_core(taco_path: str, waveglow_path: str, speaker_id: int, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: int, sentences: InferSentenceList, custom_taco_hparams: Optional[str] = None, custom_wg_hparams: Optional[str] = None) -> Tuple[np.ndarray, List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]]]:
   _logger.debug(f"Selected speaker id: {speaker_id}")
 
   synth = Synthesizer(
     taco_path,
     waveglow_path,
-    n_symbols=len(symbol_id_dict),
-    n_accents=len(accent_id_dict),
-    n_speakers=n_speakers,
     logger=_logger,
     custom_taco_hparams=custom_taco_hparams,
     custom_wg_hparams=custom_wg_hparams
   )
 
   result: List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]] = list()
+
+  symbol_id_dict = synth.taco_synt.symbols
+  accent_id_dict = synth.taco_synt.accents
 
   # Speed is: 1min inference for 3min wav result
   for sentence in sentences.items(True):
