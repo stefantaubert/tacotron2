@@ -60,6 +60,7 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
       get_checkpoints_dir(weights_train_dir), weights_checkpoint)
     weights_prep_name, _ = load_settings(weights_train_dir)
     weights_prep_dir = get_prepared_dir(base_dir, weights_prep_name)
+    # todo load from model
     weights_model_symbols_conv = load_filelist_symbol_converter(weights_prep_dir)
     weights = load_symbol_embedding_weights_from(weights_checkpoint_path)
     weights_map = try_load_symbols_map(weights_map)

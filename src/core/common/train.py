@@ -1,12 +1,22 @@
 import os
 from dataclasses import dataclass
 from math import floor
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import tensorflow as tf
 
 PYTORCH_EXT = ".pt"
 
 
-def get_pytorch_filename(name: str) -> str:
+def hp_raw(hparams) -> Dict[str, Any]:
+  return hparams.values()
+
+
+def hp_from_raw(raw: Dict[str, Any]) -> tf.contrib.training.HParams:
+  return tf.contrib.training.HParams(**raw)
+
+
+def get_pytorch_filename(name: Union[str, int]) -> str:
   return f"{name}{PYTORCH_EXT}"
 
 

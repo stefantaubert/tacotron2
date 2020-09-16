@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from src.core.tacotron.model import get_model_symbol_ids
-from src.core.tacotron.training import load_checkpoint, load_model
+from src.core.tacotron.training import Checkpoint, load_model
 
 
 class Synthesizer():
@@ -15,13 +15,13 @@ class Synthesizer():
     assert os.path.isfile(checkpoint_path)
     self._logger = logger
 
-    checkpoint = load_checkpoint(checkpoint_path, logger)
+    checkpoint = Checkpoint.load(checkpoint_path, logger)
 
-    self.accents = checkpoint.accents
-    self.symbols = checkpoint.symbols
-    self.speakers = checkpoint.speakers
+    self.accents = checkpoint.get_accents()
+    self.symbols = checkpoint.get_symbols()
+    self.speakers = checkpoint.get_speakers()
+    hparams = checkpoint.get_hparams()
 
-    hparams = checkpoint.hparams
     # todo apply custom_hparams
 
     model = load_model(

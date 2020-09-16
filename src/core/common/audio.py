@@ -221,6 +221,7 @@ def normalize_wav(wav):
     wav = wav_float.astype(orig_dtype)
 
   assert np.max(np.abs(wav)) == max_possible_value or np.max(np.abs(wav)) == 0
+  assert not is_overamp(wav)
 
   return wav
 
@@ -231,6 +232,7 @@ def wav_to_float32(path: str) -> Tuple[np.float, int]:
   return wav, sampling_rate
 
 
+# TODO: does not really work that check
 def is_overamp(wav: np.ndarray) -> bool:
   lowest_value = get_min_value(wav.dtype)
   highest_value = get_max_value(wav.dtype)

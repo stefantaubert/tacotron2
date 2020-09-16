@@ -187,7 +187,8 @@ class WaveGlow(torch.nn.Module):
       self.WN.append(WN_res)
     self.n_remaining_channels = n_remaining_channels  # Useful during inference
 
-  def parse_batch(self, batch):
+  @staticmethod
+  def parse_batch(batch):
     mel, audio = batch
     mel = torch.autograd.Variable(mel.cuda())
     audio = torch.autograd.Variable(audio.cuda())

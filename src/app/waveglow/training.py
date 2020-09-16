@@ -10,6 +10,7 @@ from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
                            init_logger, reset_file_log)
 from src.app.waveglow.io import get_train_dir
 from src.core.pre.merge_ds import split_prepared_data_train_test_val
+from src.core.waveglow.train import continue_train as continue_train_core
 from src.core.waveglow.train import train as train_core
 
 
@@ -29,7 +30,6 @@ def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.0
   log_file = get_train_log_file(logs_dir)
   reset_file_log(log_file)
   add_file_out_to_logger(logger, log_file)
-  # todo log map & args
 
   save_settings(train_dir, prep_name, custom_hparams)
 
@@ -39,7 +39,6 @@ def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.0
     trainset=trainset,
     valset=valset,
     save_checkpoint_dir=get_checkpoints_dir(train_dir),
-    continue_train=False,
     debug_logger=logger
   )
 
@@ -54,21 +53,18 @@ def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[str]
   log_file = get_train_log_file(logs_dir)
   add_file_out_to_logger(logger, log_file)
 
-  _, custom_hparams_loaded = load_settings(train_dir)
-
-  train_core(
-    custom_hparams=custom_hparams if custom_hparams is not None else custom_hparams_loaded,
+  continue_train_core(
+    custom_hparams=custom_hparams,
     logdir=logs_dir,
     trainset=load_trainset(train_dir),
     valset=load_valset(train_dir),
     save_checkpoint_dir=get_checkpoints_dir(train_dir),
-    continue_train=True,
     debug_logger=logger
   )
 
 
 if __name__ == "__main__":
-  mode = 1
+  mode = 2
   if mode == 1:
     train(
       base_dir="/datasets/models/taco2pt_v5",

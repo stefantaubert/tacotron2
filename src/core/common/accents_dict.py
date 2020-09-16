@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import List
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Union
@@ -9,12 +10,19 @@ from src.core.common.utils import parse_json, save_json
 
 
 class AccentsDict():
-  def __init__(self, ids_to_accents: OrderedDictType[int, str]):
+  def __init__(self, ids_to_accents: OrderedDictType[str, int]):
     super().__init__()
     self._ids_to_accents = ids_to_accents
 
   def save(self, file_path: str):
     save_json(file_path, self._ids_to_accents)
+
+  @classmethod
+  def from_raw(cls, raw: OrderedDictType[str, int]):
+    return cls(raw)
+
+  def raw(self) -> OrderedDictType[str, int]:
+    return self._ids_to_accents
 
   def id_exists(self, symbol_id: int) -> bool:
     return symbol_id in self._ids_to_accents.values()
@@ -55,17 +63,18 @@ class AccentsDict():
   @classmethod
   def load(cls, file_path: str):
     data = parse_json(file_path)
-    return cls(data)
+    loaded = OrderedDict(data.items())
+    return cls.from_raw(loaded)
 
   @classmethod
   def init_from_accents(cls, accents: Set[str]):
     unique_entries = list(sorted(accents))
     ids_to_accents = get_entries_ids_dict_order(unique_entries)
-    return cls(ids_to_accents)
+    return cls.from_raw(ids_to_accents)
 
   @classmethod
   def init_from_accents_with_pad(cls, accents: Set[str], pad_accent: str = PADDING_ACCENT):
     unique_entries = list(sorted(accents - {pad_accent}))
     final_accents = [pad_accent] + unique_entries
     ids_to_accents = get_entries_ids_dict_order(final_accents)
-    return cls(ids_to_accents)
+    return cls.from_raw(ids_to_accents)

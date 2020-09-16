@@ -6,7 +6,9 @@ from collections import OrderedDict
 from dataclasses import asdict, dataclass
 from logging import Logger
 from math import floor
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Optional
+from typing import OrderedDict as OrderedDictType
+from typing import Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -29,9 +31,8 @@ from src.core.common.train import (SaveIterationSettings, check_save_it,
                                    get_continue_epoch, get_custom_checkpoint,
                                    get_formatted_current_total,
                                    get_last_checkpoint, get_pytorch_filename,
-                                   skip_batch)
+                                   hp_from_raw, hp_raw, skip_batch)
 from src.core.pre.merge_ds import PreparedData, PreparedDataList
-from src.core.pre.text.pre import OrderedDictType
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger
 from src.core.tacotron.model import (SPEAKER_EMBEDDINGS_LAYER_NAME,
@@ -48,9 +49,39 @@ class Checkpoint():
   learning_rate: float
   iteration: int
   hparams: tf.contrib.training.HParams
-  speakers: SpeakersDict
-  symbols: SymbolIdDict
-  accents: AccentsDict
+  speakers: OrderedDictType[str, int]
+  symbols: OrderedDictType[str, int]
+  accents: OrderedDictType[str, int]
+
+  def get_symbols(self) -> SymbolIdDict:
+    return SymbolIdDict.from_raw(self.symbols)
+
+  def get_accents(self) -> AccentsDict:
+    return AccentsDict.from_raw(self.accents)
+
+  def get_speakers(self) -> SpeakersDict:
+    return SpeakersDict.from_raw(self.speakers)
+
+  def get_hparams(self) -> tf.contrib.training.HParams:
+    return hp_from_raw(self.hparams)
+
+  def save(self, checkpoint_path: str, logger: Logger):
+    logger.info(f"Saving model at iteration {self.iteration}...")
+    checkpoint_dict = asdict(self)
+    torch.save(checkpoint_dict, checkpoint_path)
+    logger.info(f"Saved model to '{checkpoint_path}'.")
+
+  @classmethod
+  def load(cls, checkpoint_path: str, logger: Logger):
+    assert os.path.isfile(checkpoint_path)
+    logger.info(f"Loading tacotron model '{checkpoint_path}'...")
+    checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
+    result = cls(**checkpoint_dict)
+    logger.info(f"Loaded model at iteration {result.iteration}.")
+    logger.info(f'Including {len(result.symbols)} symbols.')
+    logger.info(f'Including {len(result.accents)} accents.')
+    logger.info(f'Including {len(result.speakers)} speaker(s).')
+    return result
 
 
 def get_train_logger():
@@ -372,11 +403,13 @@ def continue_train(custom_hparams: str, logdir: str, trainset: PreparedDataList,
   debug_logger.info("Continuing training...")
   last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
 
-  checkpoint = load_checkpoint(last_checkpoint_path, debug_logger)
-  hparams = checkpoint.hparams
-  symbol_ids = checkpoint.symbols
-  accent_ids = checkpoint.accents
-  speakers = checkpoint.speakers
+  checkpoint = Checkpoint.load(last_checkpoint_path, debug_logger)
+
+  accents = checkpoint.get_accents()
+  symbols = checkpoint.get_symbols()
+  speakers = checkpoint.get_speakers()
+  hparams = checkpoint.get_hparams()
+
   # todo apply custom hparams!
   # assert hparams.batch_size == custom.batch_size
 
@@ -387,8 +420,8 @@ def continue_train(custom_hparams: str, logdir: str, trainset: PreparedDataList,
     valset=valset,
     save_checkpoint_dir=save_checkpoint_dir,
     speakers=speakers,
-    accents=accent_ids,
-    symbols=symbol_ids,
+    accents=accents,
+    symbols=symbols,
     pretrained_weights=None,
     warm_start_states=None,
     checkpoint=checkpoint,
@@ -466,13 +499,20 @@ def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDat
   continue_epoch = get_continue_epoch(iteration, batch_iterations)
   for epoch in range(continue_epoch, hparams.epochs):
     next_batch_iteration = get_continue_batch_iteration(iteration, batch_iterations)
+    skip_bar = None
+    if next_batch_iteration > 0:
+      debug_logger.debug(f"Current batch is {next_batch_iteration} of {batch_iterations}")
+      debug_logger.debug("Skipping batches...")
+      skip_bar = tqdm(total=next_batch_iteration)
     for batch_iteration, batch in enumerate(train_loader):
       need_to_skip_batch = skip_batch(
         batch_iteration=batch_iteration,
         continue_batch_iteration=next_batch_iteration
       )
       if need_to_skip_batch:
-        debug_logger.debug(f"Skipped batch {batch_iteration + 1}.")
+        assert skip_bar is not None
+        skip_bar.update(1)
+        #debug_logger.debug(f"Skipped batch {batch_iteration + 1}/{next_batch_iteration + 1}.")
         continue
       # debug_logger.debug(f"Current batch: {batch[0][0]}")
 
@@ -535,15 +575,15 @@ def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDat
           optimizer=optimizer.state_dict(),
           learning_rate=learning_rate,
           iteration=iteration,
-          hparams=hparams,
-          symbols=symbols,
-          accents=accents,
-          speakers=speakers
+          hparams=hp_raw(hparams),
+          symbols=symbols.raw(),
+          accents=accents.raw(),
+          speakers=speakers.raw()
         )
 
         checkpoint_path = os.path.join(
           save_checkpoint_dir, get_pytorch_filename(iteration))
-        save_checkpoint(checkpoint_path, checkpoint)
+        checkpoint.save(checkpoint_path, debug_logger)
 
         valloss = validate(model, criterion, val_loader, iteration, logger)
         # if rank == 0:
@@ -603,25 +643,6 @@ def model_and_optimizer_from_checkpoint(checkpoint: Checkpoint, updated_hparams)
   return model, optimizer, learning_rate, checkpoint.iteration
 
 
-def save_checkpoint(checkpoint_path: str, checkpoint: Checkpoint):
-  debug_logger.info(f"Saving model at iteration {checkpoint.iteration}...")
-  checkpoint_dict = asdict(checkpoint)
-  torch.save(checkpoint_dict, checkpoint_path)
-  debug_logger.info(f"Saved model to '{checkpoint_path}'.")
-
-
-def load_checkpoint(checkpoint_path: str, logger: Logger) -> Checkpoint:
-  assert os.path.isfile(checkpoint_path)
-  logger.info(f"Loading tacotron model '{checkpoint_path}'...")
-  checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-  checkpoint = Checkpoint(**checkpoint_dict)
-  logger.info(f"Loaded model at iteration {checkpoint.iteration}.")
-  logger.info(f'Including {len(checkpoint.symbols)} symbols.')
-  logger.info(f'Including {len(checkpoint.accents)} accents.')
-  logger.info(f'Including {len(checkpoint.speakers)} speaker(s).')
-  return checkpoint
-
-
 def warm_start_model(model: Tacotron2, warm_start_states: dict, ignore_layers: List[str]):
   debug_logger.info("Loading states from pretrained model...")
   # The default value from HParams is [""], an empty list was not working.
@@ -647,12 +668,12 @@ def log_checkpoint_score(iteration: int, gradloss: float, trainloss: float, vall
 
 
 def load_state_dict_from(model_path: str) -> dict:
-  warm_start_states = load_checkpoint(model_path, debug_logger).state_dict
+  warm_start_states = Checkpoint.load(model_path, debug_logger).state_dict
   return warm_start_states
 
 
 def load_symbol_embedding_weights_from(model_path: str) -> torch.Tensor:
-  model_state_dict = load_checkpoint(model_path, debug_logger).state_dict
+  model_state_dict = Checkpoint.load(model_path, debug_logger).state_dict
   pretrained_weights = model_state_dict[SYMBOL_EMBEDDINGS_LAYER_NAME]
   return pretrained_weights
 
@@ -759,8 +780,8 @@ def eval_checkpoints(custom_hparams: Optional[str], checkpoint_dir: str, select:
     torch.manual_seed(hparams.seed)
     torch.cuda.manual_seed(hparams.seed)
     full_checkpoint_path, _ = get_custom_checkpoint(checkpoint_dir, checkpoint_iteration)
-    checkpoint_loaded = load_checkpoint(full_checkpoint_path, debug_logger)
-    model = load_model(hparams, checkpoint_loaded.state_dict, debug_logger)
+    state_dict = Checkpoint.load(full_checkpoint_path, debug_logger).state_dict
+    model = load_model(hparams, state_dict, debug_logger)
     val_loss, _ = validate_core(model, criterion, val_loader)
     result.append((checkpoint_iteration, val_loss))
     debug_logger.info(f"Validation loss {checkpoint_iteration}: {val_loss:9f}")

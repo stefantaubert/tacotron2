@@ -67,18 +67,18 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
 
 
 if __name__ == "__main__":
-  
-  validate(
-    base_dir="/datasets/models/taco2pt_v5",
-    train_name="pretrained",
-    entry_id=865
-  )
 
-  validate(
-    base_dir="/datasets/models/taco2pt_v5",
-    train_name="pretrained_v2",
-    entry_id=865
-  )
+  # validate(
+  #   base_dir="/datasets/models/taco2pt_v5",
+  #   train_name="pretrained",
+  #   entry_id=865
+  # )
+
+  # validate(
+  #   base_dir="/datasets/models/taco2pt_v5",
+  #   train_name="pretrained_v2",
+  #   entry_id=865
+  # )
 
   validate(
     base_dir="/datasets/models/taco2pt_v5",

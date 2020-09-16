@@ -12,7 +12,7 @@ from src.core.common.utils import get_basename, parse_json, save_json
 
 
 class SymbolIdDict():
-  def __init__(self, ids_to_symbols: OrderedDictType[int, str]):
+  def __init__(self, ids_to_symbols: OrderedDictType[str, int]):
     super().__init__()
     self._ids_to_symbols = ids_to_symbols
     self._symbols_to_ids = switch_keys_with_values(ids_to_symbols)
@@ -28,6 +28,13 @@ class SymbolIdDict():
   @staticmethod
   def serialize_symbol_ids(symbol_ids: list):
     return serialize_list(symbol_ids)
+
+  @classmethod
+  def from_raw(cls, raw: OrderedDictType[str, int]):
+    return cls(raw)
+
+  def raw(self) -> OrderedDictType[str, int]:
+    return self._ids_to_symbols
 
   def __len__(self):
     return len(self._ids_to_symbols)
@@ -108,11 +115,11 @@ class SymbolIdDict():
       file_name = get_basename(filepath)
       backup_path = os.path.join(os.path.dirname(filepath), f"{file_name}.v2.json")
       copyfile(filepath, backup_path)
-      res = cls(ids_to_symbols)
+      res = cls.from_raw(ids_to_symbols)
       res.save(filepath)
       return res
     ids_to_symbols = loaded
-    return cls(ids_to_symbols)
+    return cls.from_raw(ids_to_symbols)
 
   @classmethod
   def init_from_symbols(cls, symbols: Set[str]):

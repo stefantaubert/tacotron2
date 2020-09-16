@@ -43,8 +43,8 @@ def dl_pretrained(base_dir: str, train_name: str = "pretrained_v3", prep_name: O
 
 if __name__ == "__main__":
   dl_pretrained(
-    version=1,
-    train_name="pretrained_v1",
+    version=3,
+    train_name="pretrained_v3",
     base_dir="/datasets/models/taco2pt_v5",
     prep_name="ljs_ipa",
   )

@@ -12,8 +12,8 @@ def create_hparams(n_speakers: int, n_symbols: int, n_accents: int,
     # Experiment Parameters    #
     ################################
     epochs=500,
-    iters_per_checkpoint=1000, # 0 if no saving, 1 for each and so on...
-    epochs_per_checkpoint=1, # 0 if no saving, 1 for each and so on...
+    iters_per_checkpoint=1000,  # 0 if no saving, 1 for each and so on...
+    epochs_per_checkpoint=1,  # 0 if no saving, 1 for each and so on...
     seed=1234,
     dynamic_loss_scaling=True,
     fp16_run=False,
@@ -22,7 +22,7 @@ def create_hparams(n_speakers: int, n_symbols: int, n_accents: int,
     dist_url="tcp://localhost:54321",
     cudnn_enabled=True,
     cudnn_benchmark=False,
-    ignore_layers=[""], # [""] -> to define that it is a list
+    ignore_layers=[""],  # [""] -> to define that it is a list
 
     ################################
     # Data Parameters       #
@@ -36,7 +36,7 @@ def create_hparams(n_speakers: int, n_symbols: int, n_accents: int,
     ################################
     n_mel_channels=80,
     sampling_rate=22050,
-    ## next 5 occure in mel calculation only
+    # next 5 occure in mel calculation only
     filter_length=1024,
     hop_length=256,
     win_length=1024,

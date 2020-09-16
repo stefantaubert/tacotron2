@@ -1,19 +1,56 @@
 import os
 import random
 import time
+from dataclasses import asdict, dataclass
 from logging import Logger
+from typing import Any, List, Optional, Tuple
 
+import numpy as np
+import tensorflow as tf
 import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from src.core.common.audio import get_wav_tensor_segment, wav_to_float32_tensor
 from src.core.common.taco_stft import TacotronSTFT
-from src.core.common.train import get_last_checkpoint, get_pytorch_filename
+from src.core.common.train import (SaveIterationSettings, check_save_it,
+                                   get_continue_batch_iteration,
+                                   get_continue_epoch,
+                                   get_formatted_current_total,
+                                   get_last_checkpoint, get_pytorch_filename,
+                                   hp_from_raw, hp_raw, skip_batch)
 from src.core.pre.merge_ds import PreparedDataList
 from src.core.waveglow.hparams import create_hparams
 from src.core.waveglow.logger import WaveglowLogger
 from src.core.waveglow.model import WaveGlow, WaveGlowLoss
+
+
+@dataclass
+class Checkpoint():
+  # Renaming of any of these fields will destroy previous models!
+  state_dict: dict
+  optimizer: dict
+  learning_rate: float
+  iteration: int
+  hparams: tf.contrib.training.HParams
+
+  def get_hparams(self) -> tf.contrib.training.HParams:
+    return hp_from_raw(self.hparams)
+
+  def save(self, checkpoint_path: str, logger: Logger):
+    logger.info(f"Saving model at iteration {self.iteration}...")
+    checkpoint_dict = asdict(self)
+    torch.save(checkpoint_dict, checkpoint_path)
+    logger.info(f"Saved model to '{checkpoint_path}'.")
+
+  @classmethod
+  def load(cls, checkpoint_path: str, logger: Logger):
+    assert os.path.isfile(checkpoint_path)
+    logger.info(f"Loading tacotron model '{checkpoint_path}'...")
+    checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
+    result = cls(**checkpoint_dict)
+    logger.info(f"Loaded model at iteration {result.iteration}.")
+    return result
 
 
 class MelLoader(Dataset):
@@ -71,9 +108,12 @@ class MelLoader(Dataset):
 # #=====END:   ADDED FOR DISTRIBUTED======
 
 
-def load_model(hparams):
+def load_model(hparams, state_dict: Optional[dict]):
   model = WaveGlow(hparams)
   model = model.cuda()
+
+  if state_dict is not None:
+    model.load_state_dict(state_dict)
 
   return model
 
@@ -151,9 +191,70 @@ def validate(model, criterion, val_loader, iteration, logger: WaveglowLogger, de
   return val_loss
 
 
-def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, iteration: int, model, optimizer, learning_rate, debug_logger: Logger):
+def continue_train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger):
+  debug_logger.info("Continuing training...")
+  last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
+
+  _train(
+    custom_hparams=custom_hparams,
+    logdir=logdir,
+    trainset=trainset,
+    valset=valset,
+    save_checkpoint_dir=save_checkpoint_dir,
+    checkpoint=Checkpoint.load(last_checkpoint_path, debug_logger),
+    debug_logger=debug_logger
+  )
+
+
+def train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger):
+  debug_logger.info("Starting new training...")
+
+  _train(
+    custom_hparams=custom_hparams,
+    logdir=logdir,
+    trainset=trainset,
+    valset=valset,
+    save_checkpoint_dir=save_checkpoint_dir,
+    checkpoint=None,
+    debug_logger=debug_logger
+  )
+
+
+def _train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, checkpoint: Optional[Checkpoint], debug_logger: Logger):
   complete_start = time.time()
   logger = WaveglowLogger(logdir)
+
+  # if hparams.distributed_run:
+  #   init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
+
+  # rank = 0 # 'rank of current gpu'
+  # n_gpus = torch.cuda.device_count() # 'number of gpus'
+  # if n_gpus > 1:
+  #   raise Exception("More than one GPU is currently not supported.")
+  # group_name = "group_name" # 'Distributed group name'
+  # if n_gpus > 1:
+  #   if args.group_name == '':
+  #     print("WARNING: Multiple GPUs detected but no distributed group set")
+  #     print("Only running 1 GPU.  Use distributed.py for multiple GPUs")
+  #     n_gpus = 1
+  # if n_gpus == 1 and args.rank != 0:
+  #   raise Exception("Doing single GPU training on rank > 0")
+
+  # if hparams.fp16_run:
+  #   from apex import amp
+  #   model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
+
+  # if hparams.distributed_run:
+  #   model = apply_gradient_allreduce(model)
+
+  if checkpoint is not None:
+    model, optimizer, iteration, hparams = model_and_optimizer_from_checkpoint(
+      checkpoint,
+      custom_hparams,
+      debug_logger
+    )
+  else:
+    model, optimizer, iteration, hparams = model_and_optimizer_fresh(custom_hparams, debug_logger)
 
   debug_logger.info('Final parsed hparams:')
   debug_logger.info('\n'.join(str(hparams.values()).split(',')))
@@ -162,7 +263,8 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
   debug_logger.info("cuDNN Enabled: {}".format(torch.backends.cudnn.enabled))
   debug_logger.info("cuDNN Benchmark: {}".format(torch.backends.cudnn.benchmark))
 
-  model = load_model(hparams)
+  torch.backends.cudnn.enabled = True
+  torch.backends.cudnn.benchmark = False
 
   torch.manual_seed(hparams.seed)
   torch.cuda.manual_seed(hparams.seed)
@@ -185,11 +287,17 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
     sigma=hparams.sigma
   )
 
-  train_loader, val_loader = prepare_dataloaders(hparams, trainset, valset, debug_logger)
+  train_loader, val_loader = prepare_dataloaders(
+    hparams,
+    trainset,
+    valset,
+    debug_logger
+  )
 
-  if len(train_loader) == 0:
+  batch_iterations = len(train_loader)
+  if batch_iterations == 0:
     debug_logger.error("Not enough trainingdata.")
-    return False
+    raise Exception()
 
   # Get shared output_directory ready
   # if rank == 0:
@@ -202,18 +310,48 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
 
   model.train()
 
-  total_its = hparams.epochs * len(train_loader)
   train_start = time.perf_counter()
-  epoch_offset = max(0, int(iteration / len(train_loader)))
-  # ================ MAIN TRAINING LOOP! ===================
-  for epoch in range(epoch_offset, hparams.epochs):
-    debug_logger.info("Epoch: {}".format(epoch))
-    for i, batch in enumerate(train_loader):
-      start = time.perf_counter()
+  start = train_start
+
+  save_it_settings = SaveIterationSettings(
+    epochs=hparams.epochs,
+    batch_iterations=batch_iterations,
+    save_first_iteration=True,
+    save_last_iteration=True,
+    iters_per_checkpoint=hparams.iters_per_checkpoint,
+    epochs_per_checkpoint=hparams.epochs_per_checkpoint
+  )
+
+  # total_its = hparams.epochs * len(train_loader)
+  # epoch_offset = max(0, int(iteration / len(train_loader)))
+  # # ================ MAIN TRAINING LOOP! ===================
+  # for epoch in range(epoch_offset, hparams.epochs):
+  #   debug_logger.info("Epoch: {}".format(epoch))
+  #   for i, batch in enumerate(train_loader):
+  batch_durations: List[float] = []
+
+  continue_epoch = get_continue_epoch(iteration, batch_iterations)
+  for epoch in range(continue_epoch, hparams.epochs):
+    next_batch_iteration = get_continue_batch_iteration(iteration, batch_iterations)
+    skip_bar = None
+    if next_batch_iteration > 0:
+      debug_logger.debug(f"Current batch is {next_batch_iteration} of {batch_iterations}")
+      debug_logger.debug("Skipping batches...")
+      skip_bar = tqdm(total=next_batch_iteration)
+    for batch_iteration, batch in enumerate(train_loader):
+      need_to_skip_batch = skip_batch(
+        batch_iteration=batch_iteration,
+        continue_batch_iteration=next_batch_iteration
+      )
+      if need_to_skip_batch:
+        assert skip_bar is not None
+        skip_bar.update(1)
+        #debug_logger.debug(f"Skipped batch {batch_iteration + 1}/{next_batch_iteration + 1}.")
+        continue
+      # debug_logger.debug(f"Current batch: {batch[0][0]}")
 
       model.zero_grad()
-
-      x = model.parse_batch(batch)
+      x = WaveGlow.parse_batch(batch)
       y_pred = model(x)
 
       loss = criterion(y_pred)
@@ -232,131 +370,82 @@ def train_core(hparams, logdir: str, trainset: PreparedDataList, valset: Prepare
 
       optimizer.step()
 
-      duration = time.perf_counter() - start
-      debug_logger.info("Epoch: {}/{} | Iteration: {}/{} | Total iteration: {}/{} | Train loss: {:.9f} | Duration: {:.2f}s/it | Total Duration: {:.2f}h".format(
-        str(epoch).zfill(len(str(hparams.epochs))),
-        hparams.epochs,
-        str(i).zfill(len(str(len(train_loader) - 1))),
-        len(train_loader) - 1,
-        str(iteration).zfill(len(str(total_its))),
-        total_its,
-        reduced_loss,
-        duration,
-        (time.perf_counter() - train_start) / 60 / 60
-      ))
-      logger.log_training(reduced_loss, learning_rate, duration, iteration)
-
-      # if hparams.with_tensorboard and rank == 0:
-      logger.add_scalar('training_loss', reduced_loss, i + len(train_loader) * epoch)
-
-      if (iteration % hparams.iters_per_checkpoint == 0):
-        # if rank == 0:
-        save_checkpoint(model, optimizer, hparams.learning_rate,
-                        iteration, save_checkpoint_dir, debug_logger)
-        validate(model, criterion, val_loader, iteration, logger, debug_logger)
-
       iteration += 1
 
-  debug_logger.info('Finished training.')
+      end = time.perf_counter()
+      duration = end - start
+      start = end
+
+      batch_durations.append(duration)
+      debug_logger.info(" | ".join([
+        f"Epoch: {get_formatted_current_total(epoch + 1, hparams.epochs)}",
+        f"Iteration: {get_formatted_current_total(batch_iteration + 1, batch_iterations)}",
+        f"Total iteration: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)}",
+        f"Train loss: {reduced_loss:.6f}",
+        f"Duration: {duration:.2f}s/it",
+        f"Avg. duration: {np.mean(batch_durations):.2f}s/it",
+        f"Total Duration: {(time.perf_counter() - train_start) / 60 / 60:.2f}h"
+      ]))
+
+      logger.log_training(reduced_loss, hparams.learning_rate, duration, iteration)
+
+      # if hparams.with_tensorboard and rank == 0:
+      logger.add_scalar('training_loss', reduced_loss, iteration)
+
+      # if rank == 0:
+      save_it = check_save_it(epoch, iteration, save_it_settings)
+      if save_it:
+        checkpoint = Checkpoint(
+          state_dict=model.state_dict(),
+          optimizer=optimizer.state_dict(),
+          learning_rate=hparams.learning_rate,
+          iteration=iteration,
+          hparams=hp_raw(hparams),
+        )
+
+        checkpoint_path = os.path.join(
+          save_checkpoint_dir, get_pytorch_filename(iteration))
+        checkpoint.save(checkpoint_path, debug_logger)
+
+        validate(model, criterion, val_loader, iteration, logger, debug_logger)
+
   duration_s = time.time() - complete_start
-  duration_m = duration_s / 60
-  debug_logger.info('Duration: {:.2f}min'.format(duration_m))
+  debug_logger.info(f'Finished training. Total duration: {duration_s / 60:.2f}min')
 
 
-def train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, continue_train: bool, debug_logger: Logger):
-  hp = create_hparams(custom_hparams)
+def load_optimizer(model: WaveGlow, state_dict: Optional[dict], hparams):
+  # warn: use saved learning rate is ignored here
 
-  last_checkpoint_path = ""
-  if continue_train:
-    last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
-
-  model, optimizer, learning_rate, iteration = _train(last_checkpoint_path, hp, debug_logger)
-  train_core(hp, logdir, trainset, valset, save_checkpoint_dir,
-             iteration, model, optimizer, learning_rate, debug_logger)
-
-
-def _train(checkpoint_path: str, hparams, debug_logger: Logger):
-  """Training and validation logging results to tensorboard and stdout
-
-  Params
-  ------
-  output_directory (string): directory to save checkpoints
-  log_directory (string) directory to save tensorboard logs
-  checkpoint_path(string): checkpoint path
-  n_gpus (int): number of gpus
-  rank (int): rank of current gpu
-  hparams (object): comma separated list of "name=value" pairs.
-  """
-  # if hparams.distributed_run:
-  #   init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
-
-  torch.backends.cudnn.enabled = True
-  torch.backends.cudnn.benchmark = False
-
-  torch.manual_seed(hparams.seed)
-  torch.cuda.manual_seed(hparams.seed)
-
-  # rank = 0 # 'rank of current gpu'
-  # n_gpus = torch.cuda.device_count() # 'number of gpus'
-  # if n_gpus > 1:
-  #   raise Exception("More than one GPU is currently not supported.")
-  # group_name = "group_name" # 'Distributed group name'
-  # if n_gpus > 1:
-  #   if args.group_name == '':
-  #     print("WARNING: Multiple GPUs detected but no distributed group set")
-  #     print("Only running 1 GPU.  Use distributed.py for multiple GPUs")
-  #     n_gpus = 1
-  # if n_gpus == 1 and args.rank != 0:
-  #   raise Exception("Doing single GPU training on rank > 0")
-
-  model = load_model(hparams)
-  learning_rate = hparams.learning_rate
-  optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-  # if hparams.fp16_run:
-  #   from apex import amp
-  #   model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
-
-  # if hparams.distributed_run:
-  #   model = apply_gradient_allreduce(model)
-
-  # Load checkpoint if one exists
-  iteration = 0
-  if checkpoint_path:
-    model, optimizer, _learning_rate, iteration = load_checkpoint(
-      checkpoint_path, model, optimizer, debug_logger)
-
-    # if hparams.use_saved_learning_rate:
-    #   learning_rate = _learning_rate
-    iteration += 1  # next iteration is iteration + 1
-  else:
-    debug_logger.info("Starting new model...")
-
-  return model, optimizer, learning_rate, iteration
-
-
-def load_checkpoint(checkpoint_path, model, optimizer, debug_logger: Logger):
-  assert os.path.isfile(checkpoint_path)
-  debug_logger.info("Loading checkpoint '{}'".format(checkpoint_path))
-  checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-  model.load_state_dict(checkpoint_dict['state_dict'])
-  optimizer.load_state_dict(checkpoint_dict['optimizer'])
-  learning_rate = checkpoint_dict['learning_rate']
-  iteration = checkpoint_dict['iteration']
-  debug_logger.info("Loaded checkpoint '{}' from iteration {}".format(checkpoint_path, iteration))
-  return model, optimizer, learning_rate, iteration
-
-
-def save_checkpoint(model, optimizer, learning_rate, iteration, parent_dir, debug_logger: Logger):
-  filepath = os.path.join(parent_dir, get_pytorch_filename(iteration))
-  debug_logger.info(
-    "Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
-  torch.save(
-    {
-      'iteration': iteration,
-      'state_dict': model.state_dict(),
-      'optimizer': optimizer.state_dict(),
-      'learning_rate': learning_rate
-    },
-    filepath
+  optimizer = torch.optim.Adam(
+    params=model.parameters(),
+    lr=hparams.learning_rate,
   )
+
+  if state_dict is not None:
+    optimizer.load_state_dict(state_dict)
+
+  return optimizer
+
+
+def model_and_optimizer_fresh(custom_hparams: str, debug_logger: Logger):
+  debug_logger.info("Starting new model...")
+
+  hparams = create_hparams(custom_hparams)
+  model = load_model(hparams, None)
+  optimizer = load_optimizer(model, None, hparams)
+  current_iteration = 0
+
+  return model, optimizer, current_iteration, hparams
+
+
+def model_and_optimizer_from_checkpoint(checkpoint: Checkpoint, custom_hparams: str, debug_logger: Logger) -> Tuple[WaveGlow, Any, int]:
+  debug_logger.info("Continuing training from checkpoint...")
+
+  updated_hparams = checkpoint.get_hparams()
+  # todo apply custom_hparams
+  # assert hparams.batch_size == custom.batch_size
+
+  model = load_model(updated_hparams, checkpoint.state_dict)
+  optimizer = load_optimizer(model, checkpoint.optimizer, updated_hparams)
+
+  return model, optimizer, checkpoint.iteration, updated_hparams

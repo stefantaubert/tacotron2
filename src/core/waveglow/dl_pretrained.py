@@ -7,15 +7,14 @@ from src.core.common.utils import create_parent_folder
 
 
 def dl_wg(destination: str, version: int):
-  if not os.path.exists(destination):
-    if version == 1:
-      _dl_v1(destination)
-    elif version == 2:
-      _dl_v2(destination)
-    elif version == 3:
-      _dl_v3(destination)
-    else:
-      assert False
+  if version == 1:
+    _dl_v1(destination)
+  elif version == 2:
+    _dl_v2(destination)
+  elif version == 3:
+    _dl_v3(destination)
+  else:
+    assert False
 
 
 def _dl_v3(destination: str):

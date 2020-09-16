@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import sys
@@ -5,6 +6,9 @@ import tempfile
 
 import torch
 
+from src.core.common.train import hp_raw
+from src.core.waveglow.hparams import create_hparams
+from src.core.waveglow.train import Checkpoint
 
 
 def convert_glow(origin: str, destination: str, keep_orig: bool = False):
@@ -25,21 +29,35 @@ def _convert_core(source: str, destination: str):
   sys.path.append("src/core/waveglow/converter/")
   checkpoint_dict = torch.load(source, map_location='cpu')
 
-  res = {}
+  hp = create_hparams(None)
+
+  iteration = 1
   if "iteration" in checkpoint_dict.keys():
-    res["iteration"] = checkpoint_dict["iteration"]
+    iteration = checkpoint_dict["iteration"]
 
+  optimizer = dict()
   if "optimizer" in checkpoint_dict.keys():
-    res["optimizer"] = checkpoint_dict["optimizer"]
+    optimizer = checkpoint_dict["optimizer"]
 
+  learning_rate = hp.learning_rate
   if "learning_rate" in checkpoint_dict.keys():
-    res["learning_rate"] = checkpoint_dict["learning_rate"]
+    learning_rate = checkpoint_dict["learning_rate"]
 
+  state_dict = dict()
   if "model" in checkpoint_dict.keys():
     model = checkpoint_dict["model"]
-    res["state_dict"] = model.state_dict()
+    state_dict = model.state_dict()
 
-  torch.save(res, destination)
+  res = Checkpoint(
+    hparams=hp_raw(hp),
+    iteration=iteration,
+    learning_rate=learning_rate,
+    optimizer=optimizer,
+    state_dict=state_dict
+  )
+
+  res.save(destination, logging.getLogger())
+
   print("Successfully converted. Output:", destination)
 
 
@@ -49,8 +67,8 @@ if __name__ == "__main__":
     destination="/datasets/tmp/wg_v3/v3_conv.pt"
   )
 
-  convert_glow(
-    origin='/datasets/tmp/wg_v3/v3.pt',
-    destination='/datasets/tmp/wg_v3/v3_conv.pt',
-    keep_orig=True
-  )
+  # convert_glow(
+  #   origin='/datasets/tmp/wg_v3/v3.pt',
+  #   destination='/datasets/tmp/wg_v3/v3_conv.pt',
+  #   keep_orig=True
+  # )

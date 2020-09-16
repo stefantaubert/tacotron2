@@ -7,7 +7,7 @@ from typing import Optional
 import numpy as np
 import torch
 
-from src.core.common.audio import is_overamp
+from src.core.common.audio import is_overamp, normalize_wav
 from src.core.waveglow.denoiser import Denoiser
 from src.core.waveglow.hparams import create_hparams
 from src.core.waveglow.train import load_model
@@ -24,8 +24,7 @@ class Synthesizer():
     model_state_dict = checkpoint_dict['state_dict']
     # TODO pass waveglow hparams in tacotron with arguments (only required if used non default hparams)
     hparams = create_hparams(custom_hparams)
-    model = load_model(hparams)
-    model.load_state_dict(model_state_dict)
+    model = load_model(hparams, model_state_dict)
 
     model = model.remove_weightnorm(model)
     model = model.cuda()
@@ -49,6 +48,8 @@ class Synthesizer():
     audio_np: np.ndarray = audio.numpy()
 
     if is_overamp(audio_np):
-      self._logger.warn("Waveglow output is overamplified.")
+      self._logger.warn("Waveglow output was overamplified.")
 
-    return audio_np
+    audio_np_normalized = normalize_wav(audio_np)
+
+    return audio_np_normalized

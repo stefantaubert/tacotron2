@@ -13,6 +13,7 @@ def create_hparams(hparams_string: Optional[str], verbose: bool = False) -> tf.c
     fp16_run=False,
     epochs=100000,
     iters_per_checkpoint=2000,
+    epochs_per_checkpoint=1,
     seed=1234,
     # is not usefull
     cache_wavs=False,
