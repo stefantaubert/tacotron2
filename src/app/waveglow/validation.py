@@ -2,25 +2,18 @@ import os
 from typing import Optional
 
 from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log,
-                        load_settings, load_testset, load_valset,
-                        save_val_orig_plot, save_val_orig_wav, save_val_plot,
-                        save_val_wav)
-from src.app.pre.prepare import get_prepared_dir, load_filelist_speakers_json
-from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
-                           init_logger)
+                        load_testset, load_valset, save_val_orig_plot,
+                        save_val_orig_wav, save_val_plot, save_val_wav)
+from src.app.utils import prepare_logger
 from src.app.waveglow.io import get_train_dir, save_diff_plot, save_v
 from src.core.common.train import get_custom_or_last_checkpoint
-from src.core.waveglow.inference import get_logger as get_infer_logger
-from src.core.waveglow.inference import validate as validate_core
+from src.core.waveglow.inference import infer
+from src.core.waveglow.train import CheckpointWaveglow
 
 
-def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.00, sampling_rate: float = 22050):
+def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.00):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
-
-  logger = get_infer_logger()
-  init_logger(logger)
-  add_console_out_to_logger(logger)
 
   if ds == "val":
     data = load_valset(train_dir)
@@ -29,33 +22,27 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
   else:
     assert False
 
-  prep_name, custom_hparams_loaded = load_settings(train_dir)
-
-  if entry_id:
-    entry = data.get_entry(entry_id)
-  elif ds_speaker:
-    prep_dir = get_prepared_dir(base_dir, prep_name)
-    assert os.path.isdir(prep_dir)
-    speakers = load_filelist_speakers_json(prep_dir)
-    speaker_id = speakers[ds_speaker]
-    entry = data.get_random_entry_ds_speaker(speaker_id)
-  else:
-    entry = data.get_random_entry()
+  entry = data.get_for_validation(entry_id, ds_speaker)
 
   checkpoint_path, iteration = get_custom_or_last_checkpoint(
     get_checkpoints_dir(train_dir), custom_checkpoint)
   val_dir = get_val_dir(train_dir, entry, iteration)
-  add_file_out_to_logger(logger, get_val_log(val_dir))
 
-  wav, wav_mel, orig_mel = validate_core(
-    entry=entry,
+  logger = prepare_logger(get_val_log(val_dir))
+  logger.info(f"Validating {entry.wav_path}...")
+
+  checkpoint = CheckpointWaveglow.load(checkpoint_path, logger)
+
+  wav, wav_sr, wav_mel, orig_mel = infer(
+    wav_path=entry.wav_path,
     denoiser_strength=denoiser_strength,
     sigma=sigma,
-    checkpoint_path=checkpoint_path,
-    custom_hparams=custom_hparams_loaded,
+    checkpoint=checkpoint,
+    custom_hparams=None,
+    logger=logger
   )
 
-  save_val_wav(val_dir, sampling_rate, wav)
+  save_val_wav(val_dir, wav_sr, wav)
   save_val_plot(val_dir, wav_mel)
   save_val_orig_wav(val_dir, entry.wav_path)
   save_val_orig_plot(val_dir, orig_mel)

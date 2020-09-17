@@ -26,13 +26,13 @@ from src.core.waveglow.model import WaveGlow, WaveGlowLoss
 
 
 @dataclass
-class Checkpoint():
+class CheckpointWaveglow():
   # Renaming of any of these fields will destroy previous models!
   state_dict: dict
   optimizer: dict
   learning_rate: float
   iteration: int
-  hparams: tf.contrib.training.HParams
+  hparams: dict
 
   def get_hparams(self) -> tf.contrib.training.HParams:
     return hp_from_raw(self.hparams)
@@ -46,7 +46,7 @@ class Checkpoint():
   @classmethod
   def load(cls, checkpoint_path: str, logger: Logger):
     assert os.path.isfile(checkpoint_path)
-    logger.info(f"Loading tacotron model '{checkpoint_path}'...")
+    logger.info(f"Loading waveglow model '{checkpoint_path}'...")
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
     result = cls(**checkpoint_dict)
     logger.info(f"Loaded model at iteration {result.iteration}.")
@@ -201,7 +201,7 @@ def continue_train(custom_hparams: str, logdir: str, trainset: PreparedDataList,
     trainset=trainset,
     valset=valset,
     save_checkpoint_dir=save_checkpoint_dir,
-    checkpoint=Checkpoint.load(last_checkpoint_path, debug_logger),
+    checkpoint=CheckpointWaveglow.load(last_checkpoint_path, debug_logger),
     debug_logger=debug_logger
   )
 
@@ -220,7 +220,7 @@ def train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: 
   )
 
 
-def _train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, checkpoint: Optional[Checkpoint], debug_logger: Logger):
+def _train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, checkpoint: Optional[CheckpointWaveglow], debug_logger: Logger):
   complete_start = time.time()
   logger = WaveglowLogger(logdir)
 
@@ -395,7 +395,7 @@ def _train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset:
       # if rank == 0:
       save_it = check_save_it(epoch, iteration, save_it_settings)
       if save_it:
-        checkpoint = Checkpoint(
+        checkpoint = CheckpointWaveglow(
           state_dict=model.state_dict(),
           optimizer=optimizer.state_dict(),
           learning_rate=hparams.learning_rate,
@@ -438,7 +438,7 @@ def model_and_optimizer_fresh(custom_hparams: str, debug_logger: Logger):
   return model, optimizer, current_iteration, hparams
 
 
-def model_and_optimizer_from_checkpoint(checkpoint: Checkpoint, custom_hparams: str, debug_logger: Logger) -> Tuple[WaveGlow, Any, int]:
+def model_and_optimizer_from_checkpoint(checkpoint: CheckpointWaveglow, custom_hparams: str, debug_logger: Logger) -> Tuple[WaveGlow, Any, int]:
   debug_logger.info("Continuing training from checkpoint...")
 
   updated_hparams = checkpoint.get_hparams()

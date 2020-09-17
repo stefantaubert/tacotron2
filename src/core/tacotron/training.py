@@ -5,8 +5,7 @@ import time
 from collections import OrderedDict
 from dataclasses import asdict, dataclass
 from logging import Logger
-from math import floor
-from typing import Any, Dict, Iterable, Iterator, List, Optional
+from typing import Any, Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Tuple
 
@@ -27,11 +26,11 @@ from src.core.common.text import deserialize_list
 from src.core.common.train import (SaveIterationSettings, check_save_it,
                                    filter_checkpoints,
                                    get_all_checkpoint_iterations,
+                                   get_checkpoint,
                                    get_continue_batch_iteration,
-                                   get_continue_epoch, get_custom_checkpoint,
-                                   get_formatted_current_total,
-                                   get_last_checkpoint, get_pytorch_filename,
-                                   hp_from_raw, hp_raw, skip_batch)
+                                   get_continue_epoch,
+                                   get_formatted_current_total, hp_from_raw,
+                                   hp_raw, skip_batch)
 from src.core.pre.merge_ds import PreparedData, PreparedDataList
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger
@@ -42,13 +41,13 @@ from src.core.tacotron.model import (SPEAKER_EMBEDDINGS_LAYER_NAME,
 
 
 @dataclass
-class Checkpoint():
+class CheckpointTacotron():
   # Renaming of any of these fields will destroy previous models!
   state_dict: dict
   optimizer: dict
   learning_rate: float
   iteration: int
-  hparams: tf.contrib.training.HParams
+  hparams: dict
   speakers: OrderedDictType[str, int]
   symbols: OrderedDictType[str, int]
   accents: OrderedDictType[str, int]
@@ -71,6 +70,10 @@ class Checkpoint():
     torch.save(checkpoint_dict, checkpoint_path)
     logger.info(f"Saved model to '{checkpoint_path}'.")
 
+  def get_symbol_embedding_weights(self) -> torch.Tensor:
+    pretrained_weights = self.state_dict[SYMBOL_EMBEDDINGS_LAYER_NAME]
+    return pretrained_weights
+
   @classmethod
   def load(cls, checkpoint_path: str, logger: Logger):
     assert os.path.isfile(checkpoint_path)
@@ -84,19 +87,6 @@ class Checkpoint():
     return result
 
 
-def get_train_logger():
-  return logging.getLogger("taco-train")
-
-
-def get_checkpoints_eval_logger():
-  return logging.getLogger("taco-train-checkpoints")
-
-
-debug_logger = get_train_logger()
-
-checkpoint_logger = get_checkpoints_eval_logger()
-
-
 class SymbolsMelLoader(Dataset):
   """
     1) loads audio,text pairs
@@ -104,7 +94,7 @@ class SymbolsMelLoader(Dataset):
     3) computes mel-spectrograms from audio files.
   """
 
-  def __init__(self, prepare_ds_ms_data: PreparedDataList, hparams):
+  def __init__(self, prepare_ds_ms_data: PreparedDataList, hparams, logger: Logger):
     data = prepare_ds_ms_data
 
     random.seed(hparams.seed)
@@ -113,7 +103,7 @@ class SymbolsMelLoader(Dataset):
     if not hparams.use_saved_mels:
       self.mel_parser = TacotronSTFT.fromhparams(hparams)
 
-    debug_logger.info("Reading files...")
+    logger.info("Reading files...")
     self.data: Dict[int, Tuple[torch.IntTensor, torch.IntTensor, str, int]] = {}
     values: PreparedData
     for i, values in enumerate(tqdm(data.items())):
@@ -132,7 +122,7 @@ class SymbolsMelLoader(Dataset):
         self.data[i] = (symbols_tensor, accents_tensor, values.wav_path, values.speaker_id)
 
     if hparams.use_saved_mels and hparams.cache_mels:
-      debug_logger.info("Loading mels into memory...")
+      logger.info("Loading mels into memory...")
       self.cache: Dict[int, torch.Tensor] = {}
       vals: tuple
       for i, vals in tqdm(self.data.items()):
@@ -277,11 +267,11 @@ class Tacotron2Loss(nn.Module):
     return mel_loss + gate_loss
 
 
-def prepare_valloader(hparams, collate_fn: SymbolsMelCollate, valset: PreparedDataList) -> DataLoader:
-  debug_logger.info(
+def prepare_valloader(hparams, collate_fn: SymbolsMelCollate, valset: PreparedDataList, logger: Logger) -> DataLoader:
+  logger.info(
     f"Duration valset {valset.get_total_duration_s() / 60:.2f}min / {valset.get_total_duration_s() / 60 / 60:.2f}h")
 
-  val = SymbolsMelLoader(valset, hparams)
+  val = SymbolsMelLoader(valset, hparams, logger)
   val_sampler = None
 
   # if distributed_run:
@@ -300,12 +290,12 @@ def prepare_valloader(hparams, collate_fn: SymbolsMelCollate, valset: PreparedDa
   return val_loader
 
 
-def prepare_trainloader(hparams, collate_fn: SymbolsMelCollate, trainset: PreparedDataList) -> DataLoader:
+def prepare_trainloader(hparams, collate_fn: SymbolsMelCollate, trainset: PreparedDataList, logger: Logger) -> DataLoader:
   # Get data, data loaders and collate function ready
-  debug_logger.info(
+  logger.info(
     f"Duration trainset {trainset.get_total_duration_s() / 60:.2f}min / {trainset.get_total_duration_s() / 60 / 60:.2f}h")
 
-  trn = SymbolsMelLoader(trainset, hparams)
+  trn = SymbolsMelLoader(trainset, hparams, logger)
 
   train_sampler = None
   shuffle = True
@@ -364,50 +354,47 @@ def validate_core(model: Tacotron2, criterion: nn.Module, val_loader: DataLoader
   return avg_val_loss, res
 
 
-def validate(model: Tacotron2, criterion: nn.Module, val_loader: DataLoader, iteration: int, logger: Tacotron2Logger):
-
-  debug_logger.debug("Validating...")
+def validate(model: Tacotron2, criterion: nn.Module, val_loader: DataLoader, iteration: int, taco_logger: Tacotron2Logger, logger: Logger):
+  logger.debug("Validating...")
   avg_val_loss, res = validate_core(model, criterion, val_loader)
-  debug_logger.info(f"Validation loss {iteration}: {avg_val_loss:9f}")
+  logger.info(f"Validation loss {iteration}: {avg_val_loss:9f}")
 
-  debug_logger.debug("Logging to tensorboard...")
+  logger.debug("Logging to tensorboard...")
   log_only_last_validation_batch = True
   if log_only_last_validation_batch:
-    logger.log_validation(*res[-1], iteration)
+    taco_logger.log_validation(*res[-1], iteration)
   else:
     for entry in tqdm(res):
-      logger.log_validation(*entry, iteration)
-  debug_logger.debug("Finished.")
+      taco_logger.log_validation(*entry, iteration)
+  logger.debug("Finished.")
 
   return avg_val_loss
 
 
-def train(warm_start_states: str, hparams, logdir: str, symbol_ids: SymbolIdDict, speakers: SpeakersDict, accent_ids: AccentsDict, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, pretrained_weights: Optional[torch.Tensor]):
-  debug_logger.info("Starting new training...")
+def train(warm_model: Optional[CheckpointTacotron], custom_hparams: Optional[str], taco_logger: Tacotron2Logger, symbols: SymbolIdDict, speakers: SpeakersDict, accents: AccentsDict, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, weights_checkpoint: Optional[CheckpointTacotron], weights_map: Optional[SymbolsMap], logger: Logger, checkpoint_logger: Logger):
+  logger.info("Starting new training...")
+  hparams = create_hparams(len(speakers), len(symbols), len(accents), custom_hparams)
+
   _train(
     hparams=hparams,
-    logdir=logdir,
+    taco_logger=taco_logger,
     trainset=trainset,
     valset=valset,
-    save_checkpoint_dir=save_checkpoint_dir,
+    save_callback=save_callback,
     speakers=speakers,
-    accents=accent_ids,
-    symbols=symbol_ids,
-    pretrained_weights=pretrained_weights,
-    warm_start_states=warm_start_states,
+    accents=accents,
+    symbols=symbols,
+    weights_checkpoint=weights_checkpoint,
+    weights_map=weights_map,
+    warm_model=warm_model,
     checkpoint=None,
+    logger=logger,
+    checkpoint_logger=checkpoint_logger
   )
 
 
-def continue_train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str):
-  debug_logger.info("Continuing training...")
-  last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
-
-  checkpoint = Checkpoint.load(last_checkpoint_path, debug_logger)
-
-  accents = checkpoint.get_accents()
-  symbols = checkpoint.get_symbols()
-  speakers = checkpoint.get_speakers()
+def continue_train(checkpoint: CheckpointTacotron, custom_hparams: str, taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, logger: Logger, checkpoint_logger: Logger):
+  logger.info("Continuing training...")
   hparams = checkpoint.get_hparams()
 
   # todo apply custom hparams!
@@ -415,20 +402,23 @@ def continue_train(custom_hparams: str, logdir: str, trainset: PreparedDataList,
 
   _train(
     hparams=hparams,
-    logdir=logdir,
+    taco_logger=taco_logger,
     trainset=trainset,
     valset=valset,
-    save_checkpoint_dir=save_checkpoint_dir,
-    speakers=speakers,
-    accents=accents,
-    symbols=symbols,
-    pretrained_weights=None,
-    warm_start_states=None,
+    save_callback=save_callback,
+    speakers=checkpoint.get_speakers(),
+    accents=checkpoint.get_accents(),
+    symbols=checkpoint.get_symbols(),
+    weights_checkpoint=None,
+    weights_map=None,
+    warm_model=None,
     checkpoint=checkpoint,
+    logger=logger,
+    checkpoint_logger=checkpoint_logger
   )
 
 
-def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, speakers: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict, checkpoint: Optional[Checkpoint], warm_start_states: Optional[dict], pretrained_weights: Optional[torch.Tensor]):
+def _train(hparams, taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, speakers: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict, checkpoint: Optional[CheckpointTacotron], warm_model: Optional[CheckpointTacotron], weights_checkpoint: Optional[CheckpointTacotron], weights_map: SymbolsMap, logger: Logger, checkpoint_logger: Logger):
   """Training and validation logging results to tensorboard and stdout
   Params
   ------
@@ -442,8 +432,8 @@ def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDat
 
   complete_start = time.time()
 
-  debug_logger.info('Final parsed hparams:')
-  debug_logger.info('\n'.join(str(hparams.values()).split(',')))
+  logger.info('Final parsed hparams:')
+  logger.info('\n'.join(str(hparams.values()).split(',')))
 
   torch.manual_seed(hparams.seed)
   torch.cuda.manual_seed(hparams.seed)
@@ -452,19 +442,28 @@ def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDat
 
   if checkpoint is not None:
     model, optimizer, learning_rate, iteration = model_and_optimizer_from_checkpoint(
-      checkpoint, hparams)
+      checkpoint, hparams, logger)
   else:
-    model, optimizer, learning_rate, iteration = model_and_optimizer_fresh(hparams)
+    model, optimizer, learning_rate, iteration = model_and_optimizer_fresh(hparams, logger)
 
-    if warm_start_states is not None:
-      warm_start_model(model, warm_start_states, hparams.ignore_layers)
+    if warm_model is not None:
+      warm_start_model(model, warm_model.state_dict, hparams.ignore_layers, logger)
 
-    if pretrained_weights is not None:
+    if weights_checkpoint is not None:
+      pretrained_weights = get_mapped_symbol_weights(
+        model_symbols=symbols,
+        trained_weights=weights_checkpoint.get_symbol_embedding_weights(),
+        trained_symbols=weights_checkpoint.get_symbols(),
+        custom_mapping=weights_map,
+        hparams=hparams,
+        logger=logger
+      )
+
       update_weights(model.embedding, pretrained_weights)
 
-  debug_logger.debug("Modelweights:")
-  debug_logger.debug(f"is cuda: {model.embedding.weight.is_cuda}")
-  debug_logger.debug(str(model.state_dict()[SYMBOL_EMBEDDINGS_LAYER_NAME]))
+  logger.debug("Modelweights:")
+  logger.debug(f"is cuda: {model.embedding.weight.is_cuda}")
+  logger.debug(str(model.state_dict()[SYMBOL_EMBEDDINGS_LAYER_NAME]))
 
   collate_fn = SymbolsMelCollate(
     n_frames_per_step=hparams.n_frames_per_step,
@@ -472,12 +471,12 @@ def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDat
     padding_accent_id=accents.get_id(PADDING_ACCENT)
   )
 
-  val_loader = prepare_valloader(hparams, collate_fn, valset)
-  train_loader = prepare_trainloader(hparams, collate_fn, trainset)
+  val_loader = prepare_valloader(hparams, collate_fn, valset, logger)
+  train_loader = prepare_trainloader(hparams, collate_fn, trainset, logger)
 
   batch_iterations = len(train_loader)
   if batch_iterations == 0:
-    debug_logger.error("Not enough trainingdata.")
+    logger.error("Not enough trainingdata.")
     raise Exception()
 
   save_it_settings = SaveIterationSettings(
@@ -490,7 +489,6 @@ def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDat
   )
 
   criterion = Tacotron2Loss()
-  logger = Tacotron2Logger(logdir)
   batch_durations: List[float] = []
 
   train_start = time.perf_counter()
@@ -501,8 +499,8 @@ def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDat
     next_batch_iteration = get_continue_batch_iteration(iteration, batch_iterations)
     skip_bar = None
     if next_batch_iteration > 0:
-      debug_logger.debug(f"Current batch is {next_batch_iteration} of {batch_iterations}")
-      debug_logger.debug("Skipping batches...")
+      logger.debug(f"Current batch is {next_batch_iteration} of {batch_iterations}")
+      logger.debug("Skipping batches...")
       skip_bar = tqdm(total=next_batch_iteration)
     for batch_iteration, batch in enumerate(train_loader):
       need_to_skip_batch = skip_batch(
@@ -554,7 +552,7 @@ def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDat
       start = end
 
       batch_durations.append(duration)
-      debug_logger.info(" | ".join([
+      logger.info(" | ".join([
         f"Epoch: {get_formatted_current_total(epoch + 1, hparams.epochs)}",
         f"Iteration: {get_formatted_current_total(batch_iteration + 1, batch_iterations)}",
         f"Total iteration: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)}",
@@ -565,12 +563,12 @@ def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDat
         f"Total Duration: {(time.perf_counter() - train_start) / 60 / 60:.2f}h"
       ]))
 
-      logger.log_training(reduced_loss, grad_norm, learning_rate,
-                          duration, iteration)
+      taco_logger.log_training(reduced_loss, grad_norm, learning_rate,
+                               duration, iteration)
 
       save_it = check_save_it(epoch, iteration, save_it_settings)
       if save_it:
-        checkpoint = Checkpoint(
+        checkpoint = CheckpointTacotron(
           state_dict=model.state_dict(),
           optimizer=optimizer.state_dict(),
           learning_rate=learning_rate,
@@ -581,27 +579,25 @@ def _train(hparams, logdir: str, trainset: PreparedDataList, valset: PreparedDat
           speakers=speakers.raw()
         )
 
-        checkpoint_path = os.path.join(
-          save_checkpoint_dir, get_pytorch_filename(iteration))
-        checkpoint.save(checkpoint_path, debug_logger)
+        save_callback(checkpoint)
 
-        valloss = validate(model, criterion, val_loader, iteration, logger)
+        valloss = validate(model, criterion, val_loader, iteration, taco_logger, logger)
         # if rank == 0:
         log_checkpoint_score(iteration, grad_norm,
-                             reduced_loss, valloss, epoch, batch_iteration)
+                             reduced_loss, valloss, epoch, batch_iteration, checkpoint_logger)
 
   duration_s = time.time() - complete_start
-  debug_logger.info(f'Finished training. Total duration: {duration_s / 60:.2f}min')
+  logger.info(f'Finished training. Total duration: {duration_s / 60:.2f}min')
 
 
-def update_symbol_embeddings(model: Tacotron2, weights: torch.Tensor):
-  debug_logger.info("Loading pretrained mapped embeddings...")
+def update_symbol_embeddings(model: Tacotron2, weights: torch.Tensor, logger: Logger):
+  logger.info("Loading pretrained mapped embeddings...")
   update_weights(model.embedding, weights)
 
 
-def model_and_optimizer_fresh(hparams):
-  debug_logger.info("Starting new model...")
-  model = load_model(hparams, None, debug_logger)
+def model_and_optimizer_fresh(hparams, logger: Logger):
+  logger.info("Starting new model...")
+  model = load_model(hparams, None, logger)
 
   # if hparams.distributed_run:
   #   init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
@@ -624,13 +620,13 @@ def model_and_optimizer_fresh(hparams):
   return model, optimizer, hparams.learning_rate, current_iteration
 
 
-def model_and_optimizer_from_checkpoint(checkpoint: Checkpoint, updated_hparams):
-  debug_logger.info("Continuing training from checkpoint...")
+def model_and_optimizer_from_checkpoint(checkpoint: CheckpointTacotron, updated_hparams, logger: Logger):
+  logger.info("Continuing training from checkpoint...")
   learning_rate: float = updated_hparams.learning_rate
   if updated_hparams.use_saved_learning_rate:
     learning_rate = checkpoint.learning_rate
 
-  model = load_model(updated_hparams, checkpoint.state_dict, debug_logger)
+  model = load_model(updated_hparams, checkpoint.state_dict, logger)
 
   # warn: use saved learning rate is ignored here
   optimizer = torch.optim.Adam(
@@ -643,8 +639,8 @@ def model_and_optimizer_from_checkpoint(checkpoint: Checkpoint, updated_hparams)
   return model, optimizer, learning_rate, checkpoint.iteration
 
 
-def warm_start_model(model: Tacotron2, warm_start_states: dict, ignore_layers: List[str]):
-  debug_logger.info("Loading states from pretrained model...")
+def warm_start_model(model: Tacotron2, warm_start_states: dict, ignore_layers: List[str], logger: Logger):
+  logger.info("Loading states from pretrained model...")
   # The default value from HParams is [""], an empty list was not working.
   ignore_layers.extend([
     SYMBOL_EMBEDDINGS_LAYER_NAME,
@@ -661,21 +657,10 @@ def _update_model_state_dict(model: Tacotron2, updates: dict):
   model.load_state_dict(dummy_dict)
 
 
-def log_checkpoint_score(iteration: int, gradloss: float, trainloss: float, valloss: float, epoch: int, i: int):
+def log_checkpoint_score(iteration: int, gradloss: float, trainloss: float, valloss: float, epoch: int, i: int, checkpoint_logger: Logger):
   loss_avg = (trainloss + valloss) / 2
   msg = f"{iteration}\tepoch-{epoch}\tit-{i}\tgradloss-{gradloss:.6f}\ttrainloss-{trainloss:.6f}\tvalidationloss-{valloss:.6f}\tavg-train-val-{loss_avg:.6f}"
   checkpoint_logger.info(msg)
-
-
-def load_state_dict_from(model_path: str) -> dict:
-  warm_start_states = Checkpoint.load(model_path, debug_logger).state_dict
-  return warm_start_states
-
-
-def load_symbol_embedding_weights_from(model_path: str) -> torch.Tensor:
-  model_state_dict = Checkpoint.load(model_path, debug_logger).state_dict
-  pretrained_weights = model_state_dict[SYMBOL_EMBEDDINGS_LAYER_NAME]
-  return pretrained_weights
 
 
 def symbols_ids_map_to_model_symbols_ids_map(symbols_id_map: OrderedDictType[int, int], n_accents: int, n_symbols: int, accents_use_own_symbols: bool) -> OrderedDictType[int, int]:
@@ -699,19 +684,19 @@ def symbols_ids_map_to_model_symbols_ids_map(symbols_id_map: OrderedDictType[int
   return res
 
 
-def map_weights(model_symbols_id_map: OrderedDictType[int, int], model_weights, trained_weights):
+def map_weights(model_symbols_id_map: OrderedDictType[int, int], model_weights, trained_weights, logger: Logger):
   for map_to_model_symbol_id, map_from_symbol_id in model_symbols_id_map.items():
     assert 0 <= map_to_model_symbol_id < model_weights.shape[0]
     assert 0 <= map_from_symbol_id < trained_weights.shape[0]
 
-    debug_logger.debug(f"Mapped {map_from_symbol_id} to {map_to_model_symbol_id}.")
+    logger.debug(f"Mapped {map_from_symbol_id} to {map_to_model_symbol_id}.")
     model_weights[map_to_model_symbol_id] = trained_weights[map_from_symbol_id]
 
 
-def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, custom_mapping: Optional[SymbolsMap], hparams) -> torch.Tensor:
+def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, custom_mapping: Optional[SymbolsMap], hparams, logger: Logger) -> torch.Tensor:
   symbols_match_not_model = trained_weights.shape[0] != len(trained_symbols)
   if symbols_match_not_model:
-    debug_logger.exception(
+    logger.exception(
       f"Weights mapping: symbol space from pretrained model ({trained_weights.shape[0]}) did not match amount of symbols ({len(trained_symbols)}).")
     raise Exception()
 
@@ -719,14 +704,14 @@ def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: torc
     dest_symbols=model_symbols.get_all_symbols(),
     orig_symbols=trained_symbols.get_all_symbols(),
     symbols_mapping=custom_mapping,
-    logger=debug_logger
+    logger=logger
   )
 
   symbols_id_map = symbols_map_to_symbols_ids_map(
     dest_symbols=model_symbols,
     orig_symbols=trained_symbols,
     symbols_mapping=symbols_map,
-    logger=debug_logger
+    logger=logger
   )
 
   model_symbols_id_map = symbols_ids_map_to_model_symbols_ids_map(
@@ -741,28 +726,29 @@ def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: torc
   map_weights(
     model_symbols_id_map=model_symbols_id_map,
     model_weights=model_weights,
-    trained_weights=trained_weights
+    trained_weights=trained_weights,
+    logger=logger
   )
 
   symbols_wo_mapping = symbols_map.get_symbols_without_mapping()
   not_existing_symbols = model_symbols.get_all_symbols() - symbols_map.keys()
   no_mapping = symbols_wo_mapping | not_existing_symbols
   if len(no_mapping) > 0:
-    debug_logger.warning(f"Following symbols were not mapped: {no_mapping}")
+    logger.warning(f"Following symbols were not mapped: {no_mapping}")
   else:
-    debug_logger.info("All symbols were mapped.")
+    logger.info("All symbols were mapped.")
 
   return model_weights
 
 
-def eval_checkpoints(custom_hparams: Optional[str], checkpoint_dir: str, select: int, min_it: int, max_it: int, n_symbols: int, n_accents: int, n_speakers: int, valset: PreparedDataList):
+def eval_checkpoints(custom_hparams: Optional[str], checkpoint_dir: str, select: int, min_it: int, max_it: int, n_symbols: int, n_accents: int, n_speakers: int, valset: PreparedDataList, logger: Logger):
   its = get_all_checkpoint_iterations(checkpoint_dir)
-  debug_logger.info(f"Available iterations {its}")
+  logger.info(f"Available iterations {its}")
   filtered_its = filter_checkpoints(its, select, min_it, max_it)
   if len(filtered_its) > 0:
-    debug_logger.info(f"Selected iterations: {filtered_its}")
+    logger.info(f"Selected iterations: {filtered_its}")
   else:
-    debug_logger.info("None selected. Exiting.")
+    logger.info("None selected. Exiting.")
     return
 
   hparams = create_hparams(n_speakers, n_symbols, n_accents, custom_hparams)
@@ -771,31 +757,33 @@ def eval_checkpoints(custom_hparams: Optional[str], checkpoint_dir: str, select:
     hparams.n_frames_per_step,
     padding_symbol_id=0,  # TODO: refactor
     padding_accent_id=0  # TODO: refactor
+    # padding_symbol_id=symbols.get_id(PADDING_SYMBOL),
+    # padding_accent_id=accents.get_id(PADDING_ACCENT)
   )
-  val_loader = prepare_valloader(hparams, collate_fn, valset)
+  val_loader = prepare_valloader(hparams, collate_fn, valset, logger)
 
   result = []
   for checkpoint_iteration in tqdm(filtered_its):
     criterion = Tacotron2Loss()
     torch.manual_seed(hparams.seed)
     torch.cuda.manual_seed(hparams.seed)
-    full_checkpoint_path, _ = get_custom_checkpoint(checkpoint_dir, checkpoint_iteration)
-    state_dict = Checkpoint.load(full_checkpoint_path, debug_logger).state_dict
-    model = load_model(hparams, state_dict, debug_logger)
+    full_checkpoint_path, _ = get_checkpoint(checkpoint_dir, checkpoint_iteration)
+    state_dict = CheckpointTacotron.load(full_checkpoint_path, logger).state_dict
+    model = load_model(hparams, state_dict, logger)
     val_loss, _ = validate_core(model, criterion, val_loader)
     result.append((checkpoint_iteration, val_loss))
-    debug_logger.info(f"Validation loss {checkpoint_iteration}: {val_loss:9f}")
+    logger.info(f"Validation loss {checkpoint_iteration}: {val_loss:9f}")
 
-  debug_logger.info("Result...")
-  debug_logger.info("Sorted after checkpoints:")
+  logger.info("Result...")
+  logger.info("Sorted after checkpoints:")
 
   result.sort()
   for cp, loss in result:
-    debug_logger.info(f"Validation loss {cp}: {loss:9f}")
+    logger.info(f"Validation loss {cp}: {loss:9f}")
 
   result = [(b, a) for a, b in result]
   result.sort()
 
-  debug_logger.info("Sorted after scores:")
+  logger.info("Sorted after scores:")
   for loss, cp in result:
-    debug_logger.info(f"Validation loss {cp}: {loss:9f}")
+    logger.info(f"Validation loss {cp}: {loss:9f}")

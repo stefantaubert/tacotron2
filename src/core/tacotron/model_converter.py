@@ -7,7 +7,7 @@ from src.core.common.speakers_dict import SpeakersDict
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.train import get_pytorch_filename, hp_raw
 from src.core.tacotron.hparams import create_hparams
-from src.core.tacotron.training import Checkpoint
+from src.core.tacotron.training import CheckpointTacotron
 
 
 def convert_v1_to_v2_model(old_model_path: str, custom_hparams: str, speakers: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict):
@@ -19,7 +19,7 @@ def convert_v1_to_v2_model(old_model_path: str, custom_hparams: str, speakers: S
     hparams_string=custom_hparams
   )
 
-  chp = Checkpoint(
+  chp = CheckpointTacotron(
     state_dict=checkpoint_dict["state_dict"],
     optimizer=checkpoint_dict["optimizer"],
     learning_rate=checkpoint_dict["learning_rate"],

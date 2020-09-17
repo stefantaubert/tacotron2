@@ -58,7 +58,6 @@ def init_validate_parser(parser: ArgumentParser):
   parser.add_argument("--denoiser_strength", default=DEFAULT_DENOISER_STRENGTH,
                       type=float, help='Removes model bias.')
   parser.add_argument("--sigma", default=DEFAULT_SIGMA, type=float)
-  parser.add_argument('--sampling_rate', type=float, default=DEFAULT_SAMPLING_RATE)
   return validate
 
 
@@ -74,12 +73,10 @@ def init_inference_parser(parser: ArgumentParser):
     type=float,
     default=DEFAULT_SIGMA
   )
-
   parser.add_argument(
     '--denoiser_strength',
     type=float,
     default=DEFAULT_DENOISER_STRENGTH
   )
-  parser.add_argument('--sampling_rate', type=float, default=DEFAULT_SAMPLING_RATE)
   parser.add_argument('--analysis', action='store_true')
   return infer

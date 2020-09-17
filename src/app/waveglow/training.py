@@ -2,12 +2,11 @@ import os
 from typing import Optional
 
 from src.app.io import (get_checkpoints_dir, get_train_log_file,
-                        get_train_logs_dir, load_settings, load_trainset,
-                        load_valset, save_settings, save_testset,
-                        save_trainset, save_valset)
+                        get_train_logs_dir, load_trainset, load_valset,
+                        save_prep_name, save_testset, save_trainset,
+                        save_valset)
 from src.app.pre.prepare import get_prepared_dir, load_filelist
-from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
-                           init_logger, reset_file_log)
+from src.app.utils import prepare_logger
 from src.app.waveglow.io import get_train_dir
 from src.core.pre.merge_ds import split_prepared_data_train_test_val
 from src.core.waveglow.train import continue_train as continue_train_core
@@ -24,14 +23,10 @@ def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.0
   save_testset(train_dir, testset)
   save_valset(train_dir, valset)
 
-  logger = init_logger()
-  add_console_out_to_logger(logger)
   logs_dir = get_train_logs_dir(train_dir)
-  log_file = get_train_log_file(logs_dir)
-  reset_file_log(log_file)
-  add_file_out_to_logger(logger, log_file)
+  logger = prepare_logger(get_train_log_file(logs_dir), reset=True)
 
-  save_settings(train_dir, prep_name, custom_hparams)
+  save_prep_name(train_dir, prep_name)
 
   train_core(
     custom_hparams=custom_hparams,
@@ -47,11 +42,8 @@ def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[str]
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
-  logger = init_logger()
-  add_console_out_to_logger(logger)
   logs_dir = get_train_logs_dir(train_dir)
-  log_file = get_train_log_file(logs_dir)
-  add_file_out_to_logger(logger, log_file)
+  logger = prepare_logger(get_train_log_file(logs_dir))
 
   continue_train_core(
     custom_hparams=custom_hparams,

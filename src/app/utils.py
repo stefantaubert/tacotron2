@@ -1,5 +1,7 @@
 import logging
 import os
+from logging import Logger
+from typing import Optional
 
 formatter = logging.Formatter(
   '[%(asctime)s.%(msecs)03d] (%(levelname)s) %(message)s',
@@ -9,6 +11,16 @@ formatter = logging.Formatter(
 
 def get_default_logger():
   return logging.getLogger("default")
+
+
+def prepare_logger(log_file_path: Optional[str] = None, reset: bool = False, logger: Logger = get_default_logger()):
+  init_logger(logger)
+  add_console_out_to_logger(logger)
+  if log_file_path is not None:
+    if reset:
+      reset_file_log(log_file_path)
+    add_file_out_to_logger(logger, log_file_path)
+  return logger
 
 
 def init_logger(logger: logging.Logger = get_default_logger()):
@@ -42,7 +54,7 @@ def add_file_out_to_logger(logger: logging.Logger = get_default_logger(), log_fi
   fh.setLevel(logging.INFO)
   fh.setFormatter(formatter)
   logger.addHandler(fh)
-  logger.debug(f"init fh logger to {log_file_path}")
+  logger.debug(f"init logger to {log_file_path}")
 
 
 def reset_file_log(log_file_path: str):

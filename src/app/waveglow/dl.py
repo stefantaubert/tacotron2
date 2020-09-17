@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from src.app.io import (get_checkpoints_dir, save_settings, save_testset,
+from src.app.io import (get_checkpoints_dir, save_prep_name, save_testset,
                         save_valset)
 from src.app.pre.prepare import get_prepared_dir, load_filelist
 from src.app.waveglow.io import get_train_dir
@@ -38,7 +38,7 @@ def dl_pretrained(base_dir: str, train_name: str = "pretrained_v3", prep_name: O
     wholeset = load_filelist(prep_dir)
     save_testset(train_dir, wholeset)
     save_valset(train_dir, wholeset)
-  save_settings(train_dir, prep_name=prep_name, custom_hparams=None)
+  save_prep_name(train_dir, prep_name=prep_name)
 
 
 if __name__ == "__main__":

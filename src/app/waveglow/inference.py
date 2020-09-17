@@ -6,20 +6,19 @@ import matplotlib.pylab as plt
 import numpy as np
 
 from src.app.io import (get_checkpoints_dir, get_infer_log,
-                        get_inference_root_dir, load_settings, save_infer_plot,
+                        get_inference_root_dir, save_infer_plot,
                         save_infer_wav)
-from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
-                           init_logger)
+from src.app.utils import prepare_logger
 from src.app.waveglow.io import get_train_dir, save_diff_plot, save_v
 from src.core.common.mel_plot import plot_melspec
 from src.core.common.train import get_custom_or_last_checkpoint
 from src.core.common.utils import get_basename, get_parent_dirname, get_subdir
-from src.core.waveglow.inference import get_logger as get_infer_logger
 from src.core.waveglow.inference import infer as infer_core
-from src.core.waveglow.inference import validate
+from src.core.waveglow.train import CheckpointWaveglow
 
 
-def get_infer_dir(train_dir: str, input_name: str, iteration: int):
+def get_infer_dir(train_dir: str, wav_path: str, iteration: int):
+  input_name = get_basename(wav_path)
   subdir_name = f"{datetime.datetime.now():%Y-%m-%d,%H-%M-%S},wav={input_name},it={iteration}"
   return get_subdir(get_inference_root_dir(train_dir), subdir_name, create=True)
 
@@ -36,37 +35,37 @@ def save_infer_orig_wav(infer_dir: str, wav_path_orig: str):
   copyfile(wav_path_orig, path)
 
 
-def infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.00, sampling_rate: float = 22050):
+def infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.00):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
-  init_logger(get_infer_logger())
-  input_name = get_basename(wav_path)
   checkpoint_path, iteration = get_custom_or_last_checkpoint(
     get_checkpoints_dir(train_dir), custom_checkpoint)
-  infer_dir = get_infer_dir(train_dir, input_name, iteration)
-  add_console_out_to_logger(get_infer_logger())
-  add_file_out_to_logger(get_infer_logger(), get_infer_log(infer_dir))
+  infer_dir = get_infer_dir(train_dir, wav_path, iteration)
 
-  _, custom_hparams_loaded = load_settings(train_dir)
+  logger = prepare_logger(get_infer_log(infer_dir))
+  logger.info(f"Inferring {wav_path}...")
 
-  wav, wav_mel, orig_mel = infer_core(
+  checkpoint = CheckpointWaveglow.load(checkpoint_path, logger)
+
+  wav, wav_sr, wav_mel, orig_mel = infer_core(
     wav_path=wav_path,
     denoiser_strength=denoiser_strength,
     sigma=sigma,
-    checkpoint_path=checkpoint_path,
-    custom_hparams=custom_hparams_loaded
+    checkpoint=checkpoint,
+    custom_hparams=None,
+    logger=logger
   )
 
-  save_infer_wav(infer_dir, sampling_rate, wav)
+  save_infer_wav(infer_dir, wav_sr, wav)
   save_infer_plot(infer_dir, wav_mel)
   save_infer_orig_wav(infer_dir, wav_path)
   save_infer_orig_plot(infer_dir, orig_mel)
   score = save_diff_plot(infer_dir)
   save_v(infer_dir)
 
-  get_infer_logger().info(f"Imagescore: {score*100}%")
-  get_infer_logger().info(f"Saved output to: {infer_dir}")
+  logger.info(f"Imagescore: {score*100}%")
+  logger.info(f"Saved output to: {infer_dir}")
 
 
 if __name__ == "__main__":

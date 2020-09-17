@@ -1,6 +1,6 @@
 import random
 from dataclasses import dataclass
-from typing import List, OrderedDict, Set, Tuple
+from typing import List, Optional, OrderedDict, Set, Tuple
 
 from sklearn.model_selection import train_test_split
 
@@ -34,6 +34,8 @@ class PreparedData:
   def get_speaker_name(self):
     return str(self.speaker_name)
 
+  def get_ds_speaker(self):
+    return get_ds_speaker(self.ds_name, self.speaker_name)
 
 class PreparedDataList(GenericList[PreparedData]):
   def get_total_duration_s(self):
@@ -41,14 +43,23 @@ class PreparedDataList(GenericList[PreparedData]):
     total_duration = sum(durations)
     return total_duration
 
+  def get_for_validation(self, entry_id: Optional[int], ds_speaker: Optional[str]) -> PreparedData:
+    if entry_id:
+      return self.get_entry(entry_id)
+
+    if ds_speaker:
+      return self.get_random_entry_ds_speaker(ds_speaker)
+
+    return self.get_random_entry()
+
   def get_entry(self, i: int) -> PreparedData:
     for entry in self.items():
       if entry.i == i:
         return entry
     assert False
 
-  def get_random_entry_ds_speaker(self, speaker_id: int) -> PreparedData:
-    relevant_entries = [x for x in self.items() if x.speaker_id == speaker_id]
+  def get_random_entry_ds_speaker(self, ds_speaker: str) -> PreparedData:
+    relevant_entries = [x for x in self.items() if x.get_ds_speaker() == ds_speaker]
     assert len(relevant_entries) > 0
     entry = random.choice(relevant_entries)
     return entry
@@ -232,11 +243,13 @@ def get_speakers(ds_speakers: Tuple[str, str]) -> Tuple[OrderedDict[str, List[Tu
     if ds_name not in res:
       res[ds_name] = []
     res[ds_name].append((speaker_name, counter))
-    speakers_dict[f"{ds_name},{speaker_name}"] = counter
+    speakers_dict[get_ds_speaker(ds_name, speaker_name)] = counter
     counter += 1
 
   return res, speakers_dict
 
+def get_ds_speaker(ds_name: str, speaker_name: str) -> str:
+  return f"{ds_name},{speaker_name}"
 
 def expand_speakers(speakers_dict: OrderedDict[str, List[str]], ds_speakers: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
   # expand all

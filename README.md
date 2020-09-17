@@ -339,10 +339,17 @@ $base_dir
 │  │  ├── logs
 │  │  │  └── log.txt
 │  │  ├── inference
-│  │  │  ├── 2020-06-18_11-11-03_democritus_A11_500
-│  │  │  │  ├── 2020-06-17_18-11-03_democritus_A11_500.txt
-│  │  │  │  ├── 2020-06-17_18-11-03_democritus_A11_500.png
-│  │  │  │  └── 2020-06-17_18-11-03_democritus_A11_500.wav
+│  │  │  ├── 2020-09-16,16-46-41,text=ipa-north_sven_orig,speaker=0,it=29380
+│  │  │  │  ├── 2020-09-16,16-46-41,text=ipa-north_sven_orig,speaker=0,it=29380.txt
+│  │  │  │  ├── 2020-09-16,16-46-41,text=ipa-north_sven_orig,speaker=0,it=29380_v.png
+│  │  │  │  ├── 2020-09-16,16-46-41,text=ipa-north_sven_orig,speaker=0,it=29380_h.png
+│  │  │  │  ├── 2020-09-16,16-46-41,text=ipa-north_sven_orig,speaker=0,it=29380_v_pre.png
+│  │  │  │  ├── 2020-09-16,16-46-41,text=ipa-north_sven_orig,speaker=0,it=29380_v_alignments.png
+│  │  │  │  ├── 2020-09-16,16-46-41,text=ipa-north_sven_orig,speaker=0,it=29380.wav
+│  │  │  │  ├── 1_v_pre.png
+│  │  │  │  ├── 1_v_alignments.png
+│  │  │  │  ├── 1.wav
+│  │  │  │  ├── ...
 │  │  │  ├── ...
 │  │  ├── validation
 │  │  │  ├── 2020-07-14_11-43-47_D11_906_50_9

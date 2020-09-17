@@ -41,6 +41,7 @@ def get_last_checkpoint(checkpoint_dir: str) -> Tuple[str, int]:
 
 
 def get_all_checkpoint_iterations(checkpoint_dir: str) -> List[int]:
+  assert os.path.isdir(checkpoint_dir)
   _, _, filenames = next(os.walk(checkpoint_dir))
   checkpoints_str = [get_pytorch_basename(x)
                      for x in filenames if is_pytorch_file(x)]
@@ -48,16 +49,16 @@ def get_all_checkpoint_iterations(checkpoint_dir: str) -> List[int]:
   return checkpoints
 
 
-def get_custom_checkpoint(checkpoint_dir: str, custom_iteration: int) -> Tuple[str, int]:
+def get_checkpoint(checkpoint_dir: str, iteration: int) -> Tuple[str, int]:
   checkpoint_path = os.path.join(
-    checkpoint_dir, get_pytorch_filename(custom_iteration))
+    checkpoint_dir, get_pytorch_filename(iteration))
   if not os.path.isfile(checkpoint_path):
-    raise Exception(f"Checkpoint with iteration {custom_iteration} not found!")
-  return checkpoint_path, custom_iteration
+    raise Exception(f"Checkpoint with iteration {iteration} not found!")
+  return checkpoint_path, iteration
 
 
-def get_custom_or_last_checkpoint(checkpoint_dir: str, custom_iteration: int) -> Tuple[str, int]:
-  return get_custom_checkpoint(checkpoint_dir, custom_iteration) if custom_iteration else get_last_checkpoint(checkpoint_dir)
+def get_custom_or_last_checkpoint(checkpoint_dir: str, custom_iteration: Optional[int]) -> Tuple[str, int]:
+  return get_checkpoint(checkpoint_dir, custom_iteration) if custom_iteration is not None else get_last_checkpoint(checkpoint_dir)
 
 
 def get_formatted_current_total(current: int, total: int) -> str:

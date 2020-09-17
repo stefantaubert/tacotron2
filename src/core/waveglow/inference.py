@@ -1,33 +1,20 @@
-import logging
+from logging import Logger
 from typing import Optional
 
 import torch
 
 from src.core.common.taco_stft import TacotronSTFT
 from src.core.common.utils import cosine_dist_mels
-from src.core.pre.merge_ds import PreparedData
 from src.core.waveglow.synthesizer import Synthesizer
+from src.core.waveglow.train import CheckpointWaveglow
 
 
-def get_logger():
-  return logging.getLogger("infer")
-
-
-_logger = get_logger()
-
-
-def validate(entry: PreparedData, custom_hparams: Optional[str], denoiser_strength: float, sigma: float, checkpoint_path: str):
-  _logger.info(f"Validating {entry.wav_path}...")
-  return infer_core(entry.wav_path, custom_hparams, denoiser_strength, sigma, checkpoint_path)
-
-
-def infer(wav_path: str, custom_hparams: Optional[str], denoiser_strength: float, sigma: float, checkpoint_path: str):
-  _logger.info(f"Inferring {wav_path}...")
-  return infer_core(wav_path, custom_hparams, denoiser_strength, sigma, checkpoint_path)
-
-
-def infer_core(wav_path: str, custom_hparams: Optional[str], denoiser_strength: float, sigma: float, checkpoint_path: str):
-  synth = Synthesizer(checkpoint_path, custom_hparams, _logger)
+def infer(wav_path: str, checkpoint: CheckpointWaveglow, custom_hparams: Optional[str], denoiser_strength: float, sigma: float, logger: Logger):
+  synth = Synthesizer(
+    checkpoint=checkpoint,
+    custom_hparams=custom_hparams,
+    logger=logger
+  )
 
   # if is_fp16:
   #   from apex import amp
@@ -50,7 +37,7 @@ def infer_core(wav_path: str, custom_hparams: Optional[str], denoiser_strength: 
   pred_np = mel_pred.numpy()
 
   score = cosine_dist_mels(orig_np, pred_np)
-  _logger.info(f"Cosine similarity is: {score*100}%")
+  logger.info(f"Cosine similarity is: {score*100}%")
 
   #score, diff_img = compare_mels(a, b)
-  return audio, mel_pred, mel
+  return audio, synth.hparams.sampling_rate, pred_np, orig_np

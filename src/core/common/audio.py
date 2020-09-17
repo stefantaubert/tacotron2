@@ -105,14 +105,11 @@ def remove_silence_file(
   return new_duration
 
 
-def float_to_wav(wav, path, dtype=np.int16, normalize=True, sample_rate=22050):
+def float_to_wav(wav, path, dtype=np.int16, sample_rate=22050):
   # denoiser_out is float64
   # waveglow_out is float32
 
   wav = convert_wav(wav, dtype)
-
-  if normalize:
-    wav = normalize_wav(wav)
 
   write(filename=path, rate=sample_rate, data=wav)
 

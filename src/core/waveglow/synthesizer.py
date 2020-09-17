@@ -1,7 +1,6 @@
 # For copyright see LICENCE
 
 import logging
-import os
 from typing import Optional
 
 import numpy as np
@@ -9,25 +8,19 @@ import torch
 
 from src.core.common.audio import is_overamp, normalize_wav
 from src.core.waveglow.denoiser import Denoiser
-from src.core.waveglow.hparams import create_hparams
-from src.core.waveglow.train import load_model
+from src.core.waveglow.train import CheckpointWaveglow, load_model
 
 
 class Synthesizer():
-  def __init__(self, checkpoint_path: str, custom_hparams: Optional[str], logger: logging.Logger):
+  def __init__(self, checkpoint: CheckpointWaveglow, custom_hparams: Optional[str], logger: logging.Logger):
     super().__init__()
-    assert os.path.isfile(checkpoint_path)
     self._logger = logger
-    self._logger.info(f"Loading waveglow model from: {checkpoint_path}")
 
-    checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-    model_state_dict = checkpoint_dict['state_dict']
-    # TODO pass waveglow hparams in tacotron with arguments (only required if used non default hparams)
-    hparams = create_hparams(custom_hparams)
-    model = load_model(hparams, model_state_dict)
+    hparams = checkpoint.get_hparams()
+    # todo: update hparams with custom
 
+    model = load_model(hparams, checkpoint.state_dict)
     model = model.remove_weightnorm(model)
-    model = model.cuda()
     model = model.eval()
 
     denoiser = Denoiser(model)

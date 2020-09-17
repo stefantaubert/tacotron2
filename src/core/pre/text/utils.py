@@ -7,7 +7,7 @@ from src.core.common.text import convert_to_ipa, normalize, text_to_symbols
 
 def symbols_normalize(symbols: List[str], lang: Language, accent_ids: List[str]) -> Tuple[List[str], List[int]]:
   assert len(symbols) == len(accent_ids)
-  orig_text = SymbolIdDict.symbols_to_str(symbols)
+  orig_text = SymbolIdDict.symbols_to_text(symbols)
   text = normalize(orig_text, lang)
   new_symbols: List[str] = text_to_symbols(text, lang)
   if lang != Language.IPA:
@@ -26,7 +26,7 @@ def symbols_normalize(symbols: List[str], lang: Language, accent_ids: List[str])
 def symbols_convert_to_ipa(symbols: List[str], lang: Language, accent_ids: List[str], ignore_tones: bool, ignore_arcs: bool) -> Tuple[List[str], List[int]]:
   assert len(symbols) == len(accent_ids)
   # Note: do also for ipa symbols to have possibility to remove arcs and tones
-  orig_text = SymbolIdDict.symbols_to_str(symbols)
+  orig_text = SymbolIdDict.symbols_to_text(symbols)
   ipa = convert_to_ipa(orig_text, lang)
   new_symbols: List[str] = text_to_symbols(ipa, Language.IPA, ignore_tones, ignore_arcs)
   if len(accent_ids) > 0:

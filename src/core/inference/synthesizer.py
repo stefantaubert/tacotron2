@@ -1,35 +1,60 @@
 import logging
+from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
 import numpy as np
-import torch
 
+from src.core.common.audio import concatenate_audios, mel_to_numpy
+from src.core.pre.text.pre_inference import (InferSentence, InferSentenceList,
+                                             Sentence)
 from src.core.tacotron.synthesizer import Synthesizer as TacoSynthesizer
+from src.core.tacotron.training import CheckpointTacotron
 from src.core.waveglow.synthesizer import Synthesizer as WGSynthesizer
+from src.core.waveglow.train import CheckpointWaveglow
+
+
+@dataclass
+class InferenceResult():
+  sentence: Sentence
+  wav: np.ndarray
+  sampling_rate: int
+  mel_outputs: np.ndarray
+  mel_outputs_postnet: np.ndarray
+  gate_outputs: np.ndarray
+  alignments: np.ndarray
 
 
 class Synthesizer():
-  def __init__(self, tacotron_path: str, waveglow_path: str, custom_taco_hparams: Optional[str], custom_wg_hparams: Optional[str], logger: logging.Logger):
+  def __init__(self, tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, custom_taco_hparams: Optional[str], custom_wg_hparams: Optional[str], logger: logging.Logger):
     super().__init__()
     self._logger = logger
 
-    self.taco_synt = TacoSynthesizer(
-      checkpoint_path=tacotron_path,
+    self._taco_synt = TacoSynthesizer(
+      checkpoint=tacotron_checkpoint,
       custom_hparams=custom_taco_hparams,
       logger=logger
     )
 
     self._wg_synt = WGSynthesizer(
-      checkpoint_path=waveglow_path,
+      checkpoint=waveglow_checkpoint,
       custom_hparams=custom_wg_hparams,
       logger=logger
     )
 
-  def infer(self, symbol_ids: List[int], accent_ids: List[int], speaker_id: int, sigma: float, denoiser_strength: float) -> Tuple[Tuple[torch.Tensor, torch.Tensor, torch.Tensor], np.ndarray]:
-    mel_outputs, mel_outputs_postnet, alignments = self.taco_synt.infer(
-      symbol_ids=symbol_ids,
-      accent_ids=accent_ids,
-      speaker_id=speaker_id
+    assert self._wg_synt.hparams.sampling_rate == self._taco_synt.hparams.sampling_rate
+
+  def _concatenate_wavs(self, result: List[InferenceResult], sentence_pause_s: float):
+    wavs = [res.wav for res in result]
+    if len(wavs) > 1:
+      self._logger.info("Concatening audios...")
+    output = concatenate_audios(wavs, sentence_pause_s, self._taco_synt.hparams.sampling_rate)
+    return output
+
+  def _infer_sentence(self, sentence: InferSentence, speaker: str, sigma: float, denoiser_strength: float):
+    mel_outputs, mel_outputs_postnet, gate_outputs, alignments = self._taco_synt.infer(
+      symbols=sentence.symbols,
+      accents=sentence.accents,
+      speaker=speaker
     )
 
     synthesized_sentence = self._wg_synt.infer(
@@ -38,4 +63,30 @@ class Synthesizer():
       denoiser_strength=denoiser_strength
     )
 
-    return ((mel_outputs, mel_outputs_postnet, alignments), synthesized_sentence)
+    infer_res = InferenceResult(
+      sentence=sentence,
+      wav=synthesized_sentence,
+      sampling_rate=self._taco_synt.hparams.sampling_rate,
+      mel_outputs=mel_to_numpy(mel_outputs),
+      mel_outputs_postnet=mel_to_numpy(mel_outputs_postnet),
+      gate_outputs=mel_to_numpy(gate_outputs),
+      alignments=mel_to_numpy(alignments),
+    )
+    return infer_res
+
+  def infer(self, sentences: InferSentenceList, speaker: str, sigma: float, denoiser_strength: float, sentence_pause_s: float) -> Tuple[np.ndarray, List[InferenceResult]]:
+    self._logger.debug(f"Selected speaker: {speaker}")
+
+    result: List[InferenceResult] = list()
+
+    accent_id_dict = self._taco_synt.accents
+
+    # Speed is: 1min inference for 3min wav result
+    for sentence in sentences.items(True):
+      self._logger.info(f"\n{sentence.get_formatted(accent_id_dict)}")
+      infer_res = self._infer_sentence(sentence, speaker, sigma, denoiser_strength)
+      result.append(infer_res)
+
+    output = self._concatenate_wavs(result, sentence_pause_s)
+
+    return output, result

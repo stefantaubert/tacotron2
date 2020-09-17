@@ -82,7 +82,7 @@ def _prepare_data(processed_data: List[Tuple[int, List[str], List[int], Language
 
   for entry_id, symbols, accent_ids, lang in processed_data:
     assert len(accent_ids) == len(symbols)
-    text = SymbolIdDict.symbols_to_str(symbols)
+    text = SymbolIdDict.symbols_to_text(symbols)
     serialized_symbol_ids = conv.get_serialized_ids(symbols)
     serialized_accent_ids = serialize_list(accent_ids)
     data = TextData(entry_id, text, serialized_symbol_ids, serialized_accent_ids, lang)

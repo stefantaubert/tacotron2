@@ -8,7 +8,7 @@ import torch
 
 from src.core.common.train import hp_raw
 from src.core.waveglow.hparams import create_hparams
-from src.core.waveglow.train import Checkpoint
+from src.core.waveglow.train import CheckpointWaveglow
 
 
 def convert_glow(origin: str, destination: str, keep_orig: bool = False):
@@ -48,7 +48,7 @@ def _convert_core(source: str, destination: str):
     model = checkpoint_dict["model"]
     state_dict = model.state_dict()
 
-  res = Checkpoint(
+  res = CheckpointWaveglow(
     hparams=hp_raw(hp),
     iteration=iteration,
     learning_rate=learning_rate,

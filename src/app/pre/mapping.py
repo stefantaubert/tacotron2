@@ -1,10 +1,9 @@
 import os
-from cgitb import strong
 from typing import List, Optional, Set
 
 from src.app.pre.io import get_text_dir, load_text_symbol_converter
 from src.app.pre.prepare import (get_available_text_names, get_prepared_dir,
-                                 load_filelist_symbol_converter)
+                                 load_prep_symbol_converter)
 from src.app.utils import add_console_out_to_logger, init_logger
 from src.core.common.symbols_map import SymbolsMap, create_or_update_map
 
@@ -97,8 +96,8 @@ def create_or_update_weights_map(base_dir: str, prep_name: str, weights_prep_nam
     existing_map = None
 
   weights_map, symbols = create_or_update_map(
-    orig=load_filelist_symbol_converter(orig_prep_dir).get_all_symbols(),
-    dest=load_filelist_symbol_converter(prep_dir).get_all_symbols(),
+    orig=load_prep_symbol_converter(orig_prep_dir).get_all_symbols(),
+    dest=load_prep_symbol_converter(prep_dir).get_all_symbols(),
     existing_map=existing_map,
     template_map=_template_map,
     logger=logger
@@ -128,7 +127,7 @@ def create_or_update_inference_map(base_dir: str, prep_name: str, template_map: 
     existing_map = None
 
   infer_map, symbols = create_or_update_map(
-    orig=load_filelist_symbol_converter(prep_dir).get_all_symbols(),
+    orig=load_prep_symbol_converter(prep_dir).get_all_symbols(),
     dest=all_symbols,
     existing_map=existing_map,
     template_map=_template_map,

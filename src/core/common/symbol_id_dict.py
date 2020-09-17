@@ -18,7 +18,7 @@ class SymbolIdDict():
     self._symbols_to_ids = switch_keys_with_values(ids_to_symbols)
 
   @staticmethod
-  def symbols_to_str(symbols: List[str]) -> str:
+  def symbols_to_text(symbols: List[str]) -> str:
     return ''.join(symbols)
 
   @staticmethod
@@ -99,7 +99,7 @@ class SymbolIdDict():
 
   def get_text(self, symbol_ids: Union[str, List[int]]) -> str:
     symbols = self.get_symbols(symbol_ids)
-    return SymbolIdDict.symbols_to_str(symbols)
+    return SymbolIdDict.symbols_to_text(symbols)
 
   @classmethod
   def load_from_file(cls, filepath: str):

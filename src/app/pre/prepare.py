@@ -50,32 +50,32 @@ def save_filelist(prep_dir: str, result: PreparedDataList):
   result.save(path)
 
 
-def load_filelist_speakers_json(prep_dir: str) -> SpeakersDict:
+def load_prep_speakers_json(prep_dir: str) -> SpeakersDict:
   path = os.path.join(prep_dir, _prepared_speakers_json)
   return SpeakersDict.load(path)
 
 
-def save_filelist_speakers_json(prep_dir: str, speakers: SpeakersDict):
+def save_prep_speakers_json(prep_dir: str, speakers: SpeakersDict):
   path = os.path.join(prep_dir, _prepared_speakers_json)
   speakers.save(path)
 
 
-def load_filelist_symbol_converter(prep_dir: str) -> SymbolIdDict:
+def load_prep_symbol_converter(prep_dir: str) -> SymbolIdDict:
   path = os.path.join(prep_dir, _prepared_symbols_json)
   return SymbolIdDict.load_from_file(path)
 
 
-def save_filelist_symbol_converter(prep_dir: str, data: SymbolIdDict):
+def save_prep_symbol_converter(prep_dir: str, data: SymbolIdDict):
   path = os.path.join(prep_dir, _prepared_symbols_json)
   data.save(path)
 
 
-def load_filelist_accents_ids(prep_dir: str) -> AccentsDict:
+def load_prep_accents_ids(prep_dir: str) -> AccentsDict:
   path = os.path.join(prep_dir, _prepared_accents_json)
   return AccentsDict.load(path)
 
 
-def save_filelist_accents_ids(prep_dir: str, data: AccentsDict):
+def save_prep_accents_ids(prep_dir: str, data: AccentsDict):
   path = os.path.join(prep_dir, _prepared_accents_json)
   data.save(path)
 
@@ -114,9 +114,9 @@ def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]]
 
     os.makedirs(prep_dir)
     save_filelist(prep_dir, data)
-    save_filelist_symbol_converter(prep_dir, symbol_ids)
-    save_filelist_accents_ids(prep_dir, accent_ids)
-    save_filelist_speakers_json(prep_dir, speakers_id_dict)
+    save_prep_symbol_converter(prep_dir, symbol_ids)
+    save_prep_accents_ids(prep_dir, accent_ids)
+    save_prep_speakers_json(prep_dir, speakers_id_dict)
 
 
 if __name__ == "__main__":

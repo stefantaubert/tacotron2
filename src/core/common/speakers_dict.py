@@ -1,6 +1,7 @@
 from collections import Counter, OrderedDict
 from typing import OrderedDict as OrderedDictType
 
+from src.core.common.text import switch_keys_with_values
 from src.core.common.utils import parse_json, save_json
 
 
@@ -10,6 +11,14 @@ class SpeakersDict(OrderedDict):  # [str, int]
 
   def get_speakers(self):
     return list(self.keys())
+
+  def get_speaker_id(self, speaker: str) -> int:
+    result = self[speaker]
+    return result
+
+  def get_speaker(self, speaker_id: int) -> str:
+    result = switch_keys_with_values(self)[speaker_id]
+    return result
 
   def id_exists(self, speaker_id: int) -> bool:
     return speaker_id in self.values()

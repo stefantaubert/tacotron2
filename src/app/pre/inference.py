@@ -1,12 +1,11 @@
 import os
-from typing import Optional
 
 from src.app.pre.io import (get_text_dir, load_text_symbol_converter,
                             save_text_symbol_converter)
-from src.app.pre.mapping import (get_infer_map_path, infer_map_exists,
-                                 load_infer_map)
-from src.app.pre.prepare import (get_prepared_dir, load_filelist_accents_ids,
-                                 load_filelist_symbol_converter)
+from src.app.pre.mapping import get_infer_map_path, infer_map_exists
+from src.app.pre.prepare import (get_prepared_dir, load_prep_accents_ids,
+                                 load_prep_symbol_converter)
+from src.app.utils import prepare_logger
 from src.core.common.language import Language
 from src.core.common.symbols_map import SymbolsMap
 from src.core.common.utils import read_text
@@ -15,8 +14,6 @@ from src.core.pre.text.pre_inference import (AccentedSymbol,
                                              InferSentenceList, Sentence,
                                              SentenceList)
 from src.core.pre.text.pre_inference import add_text as infer_add
-from src.core.pre.text.pre_inference import \
-    prepare_for_inference as infer_prepare
 from src.core.pre.text.pre_inference import \
     sents_accent_apply as infer_accents_apply
 from src.core.pre.text.pre_inference import \
@@ -29,7 +26,6 @@ from src.core.pre.text.pre_inference import set_accent
 
 _text_csv = "text.csv"
 _accents_csv = "accents.csv"
-_inference_csv = "inference.csv"
 
 
 def load_text_csv(text_dir: str) -> SentenceList:
@@ -52,16 +48,6 @@ def _save_accents_csv(text_dir: str, data: AccentedSymbolList):
   data.save(path)
 
 
-def load_inference_csv(text_dir: str) -> InferSentenceList:
-  path = os.path.join(text_dir, _inference_csv)
-  return InferSentenceList.load(Sentence, path)
-
-
-def _save_inference_csv(text_dir: str, data: InferSentenceList):
-  path = os.path.join(text_dir, _inference_csv)
-  data.save(path)
-
-
 def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang: Language):
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   if not os.path.isdir(prep_dir):
@@ -74,13 +60,13 @@ def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang:
     )
     print("\n" + data.get_formatted(
       symbol_id_dict=symbol_ids,
-      accent_id_dict=load_filelist_accents_ids(prep_dir)
+      accent_id_dict=load_prep_accents_ids(prep_dir)
     ))
     text_dir = get_text_dir(prep_dir, text_name, create=True)
     _save_text_csv(text_dir, data)
     save_text_symbol_converter(text_dir, symbol_ids)
     _accent_template(base_dir, prep_name, text_name)
-    _prepare_inference(base_dir, prep_name, text_name)
+    _check_for_unknown_symbols(base_dir, prep_name, text_name)
 
 
 def normalize_text(base_dir: str, prep_name: str, text_name: str):
@@ -96,12 +82,12 @@ def normalize_text(base_dir: str, prep_name: str, text_name: str):
     )
     print("\n" + updated_sentences.get_formatted(
       symbol_id_dict=symbol_ids,
-      accent_id_dict=load_filelist_accents_ids(prep_dir)
+      accent_id_dict=load_prep_accents_ids(prep_dir)
     ))
     _save_text_csv(text_dir, updated_sentences)
     save_text_symbol_converter(text_dir, symbol_ids)
     _accent_template(base_dir, prep_name, text_name)
-    _prepare_inference(base_dir, prep_name, text_name)
+    _check_for_unknown_symbols(base_dir, prep_name, text_name)
 
 
 def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones: bool = False, ignore_arcs: bool = True):
@@ -119,12 +105,12 @@ def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones
     )
     print("\n" + updated_sentences.get_formatted(
       symbol_id_dict=symbol_ids,
-      accent_id_dict=load_filelist_accents_ids(prep_dir)
+      accent_id_dict=load_prep_accents_ids(prep_dir)
     ))
     _save_text_csv(text_dir, updated_sentences)
     save_text_symbol_converter(text_dir, symbol_ids)
     _accent_template(base_dir, prep_name, text_name)
-    _prepare_inference(base_dir, prep_name, text_name)
+    _check_for_unknown_symbols(base_dir, prep_name, text_name)
 
 
 def accent_set(base_dir: str, prep_name: str, text_name: str, accent: str):
@@ -136,16 +122,16 @@ def accent_set(base_dir: str, prep_name: str, text_name: str, accent: str):
     print(f"Applying accent {accent}...")
     updated_sentences = set_accent(
       sentences=load_text_csv(text_dir),
-      accent_ids=load_filelist_accents_ids(prep_dir),
+      accent_ids=load_prep_accents_ids(prep_dir),
       accent=accent
     )
     print("\n" + updated_sentences.get_formatted(
       symbol_id_dict=load_text_symbol_converter(text_dir),
-      accent_id_dict=load_filelist_accents_ids(prep_dir)
+      accent_id_dict=load_prep_accents_ids(prep_dir)
     ))
     _save_text_csv(text_dir, updated_sentences)
     _accent_template(base_dir, prep_name, text_name)
-    _prepare_inference(base_dir, prep_name, text_name)
+    _check_for_unknown_symbols(base_dir, prep_name, text_name)
 
 
 def accent_apply(base_dir: str, prep_name: str, text_name: str):
@@ -158,14 +144,14 @@ def accent_apply(base_dir: str, prep_name: str, text_name: str):
     updated_sentences = infer_accents_apply(
       sentences=load_text_csv(text_dir),
       accented_symbols=_load_accents_csv(text_dir),
-      accent_ids=load_filelist_accents_ids(prep_dir),
+      accent_ids=load_prep_accents_ids(prep_dir),
     )
     print("\n" + updated_sentences.get_formatted(
       symbol_id_dict=load_text_symbol_converter(text_dir),
-      accent_id_dict=load_filelist_accents_ids(prep_dir)
+      accent_id_dict=load_prep_accents_ids(prep_dir)
     ))
     _save_text_csv(text_dir, updated_sentences)
-    _prepare_inference(base_dir, prep_name, text_name)
+    _check_for_unknown_symbols(base_dir, prep_name, text_name)
 
 
 def map_text(base_dir: str, prep_name: str, text_name: str, symbols_map_path: str, ignore_arcs: bool = True):
@@ -183,12 +169,12 @@ def map_text(base_dir: str, prep_name: str, text_name: str, symbols_map_path: st
 
     print("\n" + updated_sentences.get_formatted(
       symbol_id_dict=symbol_ids,
-      accent_id_dict=load_filelist_accents_ids(prep_dir)
+      accent_id_dict=load_prep_accents_ids(prep_dir)
     ))
     _save_text_csv(text_dir, updated_sentences)
     save_text_symbol_converter(text_dir, symbol_ids)
     _accent_template(base_dir, prep_name, text_name)
-    _prepare_inference(base_dir, prep_name, text_name)
+    _check_for_unknown_symbols(base_dir, prep_name, text_name)
 
 
 def map_to_prep_symbols(base_dir: str, prep_name: str, text_name: str, ignore_arcs: bool = True):
@@ -210,35 +196,46 @@ def _accent_template(base_dir: str, prep_name: str, text_name: str):
     accented_symbol_list = infer_accents_template(
       sentences=load_text_csv(text_dir),
       text_symbols=load_text_symbol_converter(text_dir),
-      accent_ids=load_filelist_accents_ids(prep_dir),
+      accent_ids=load_prep_accents_ids(prep_dir),
     )
     _save_accents_csv(text_dir, accented_symbol_list)
 
 
-def _prepare_inference(base_dir: str, prep_name: str, text_name: str):
+def get_infer_sentences(base_dir: str, prep_name: str, text_name: str) -> InferSentenceList:
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
-    print("Please add text first.")
+    print(f"The text '{text_name}' doesn't exist.")
+    assert False
+  result = InferSentenceList.from_sentences(
+    sentences=load_text_csv(text_dir),
+    accents=load_prep_accents_ids(prep_dir),
+    symbols=load_text_symbol_converter(text_dir)
+  )
+
+  return result
+
+
+def _check_for_unknown_symbols(base_dir: str, prep_name: str, text_name: str):
+  infer_sents = get_infer_sentences(
+    base_dir, prep_name, text_name)
+
+  prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
+  logger = prepare_logger()
+  unknown_symbols_exist = infer_sents.replace_unknown_symbols(
+    model_symbols=load_prep_symbol_converter(prep_dir),
+    logger=logger
+  )
+
+  if unknown_symbols_exist:
+    logger.info(
+      "Some symbols are not in the prepared dataset symbolset. You need to create an inference map and then apply it to the symbols.")
   else:
-    print("Updating text for inference...")
-    symbs = load_filelist_symbol_converter(prep_dir)
-    infer_sents, unknown_symbols_exist = infer_prepare(
-      sentences=load_text_csv(text_dir),
-      text_symbols=load_text_symbol_converter(text_dir),
-      known_symbols=symbs
-    )
-    print("\n" + infer_sents.get_formatted(
-      symbol_id_dict=symbs,
-      accent_id_dict=load_filelist_accents_ids(prep_dir)
-    ))
-    if unknown_symbols_exist:
-      print("Some symbols are not in the prepared dataset symbolset. You need to create an inference map and then apply it to the symbols.")
-    _save_inference_csv(text_dir, infer_sents)
+    logger.info("All symbols are in the prepared dataset symbolset. You can now synthesize this text.")
 
 
 if __name__ == "__main__":
-  mode = 4
+  mode = 1
   if mode == 1:
     add_text(
       base_dir="/datasets/models/taco2pt_v5",

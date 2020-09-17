@@ -1,106 +1,55 @@
-#from src.core.pre import text_to_symbols_pipeline
-import logging
-from typing import List, Optional, Tuple
+from logging import Logger
+from typing import Optional
 
-import numpy as np
-
-from src.core.common.audio import concatenate_audios, mel_to_numpy
-from src.core.common.taco_stft import TacotronSTFT, create_hparams
 from src.core.inference.synthesizer import Synthesizer
 from src.core.pre.merge_ds import PreparedData
-from src.core.pre.text.pre_inference import InferSentenceList, Sentence
+from src.core.pre.text.pre_inference import InferSentence, InferSentenceList
+from src.core.tacotron.training import CheckpointTacotron
+from src.core.waveglow.train import CheckpointWaveglow
 
 
-def get_logger():
-  return logging.getLogger("infer")
+def validate(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, entry: PreparedData, denoiser_strength: float, sigma: float, custom_taco_hparams: Optional[str], custom_wg_hparams: Optional[str], logger: Logger):
+  model_symbols = tacotron_checkpoint.get_symbols()
+  model_accents = tacotron_checkpoint.get_accents()
+  model_speakers = tacotron_checkpoint.get_speakers()
 
-
-_logger = get_logger()
-
-
-def infer(taco_path: str, waveglow_path: str, speaker_id: int, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: int, sentences: InferSentenceList, custom_taco_hparams: Optional[str] = None, custom_wg_hparams: Optional[str] = None) -> Tuple[np.ndarray, List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]]]:
-  _logger.info("Inferring...")
-
-  return _infer_core(
-    taco_path=taco_path,
-    waveglow_path=waveglow_path,
-    speaker_id=speaker_id,
-    sentence_pause_s=sentence_pause_s,
-    sigma=sigma,
-    denoiser_strength=denoiser_strength,
-    sampling_rate=sampling_rate,
-    sentences=sentences,
-    custom_taco_hparams=custom_taco_hparams,
-    custom_wg_hparams=custom_wg_hparams
+  infer_sent = InferSentence(
+    sent_id=1,
+    symbols=model_symbols.get_symbols(entry.serialized_symbol_ids),
+    accents=model_accents.get_accents(entry.serialized_accent_ids)
   )
 
-
-def validate(entry: PreparedData, taco_path: str, waveglow_path: str, denoiser_strength: float, sigma: float, custom_taco_hparams: Optional[str] = None, custom_wg_hparams: Optional[str] = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-  _logger.info("Validating...")
-
-  hparams = create_hparams()
-  taco_stft = TacotronSTFT.fromhparams(hparams)
-  orig_mel = taco_stft.get_mel_tensor_from_file(entry.wav_path).numpy()
-
-  sentences = InferSentenceList([Sentence(
-    sent_id=0,
-    text="",
-    lang=entry.lang,
-    serialized_symbols=entry.serialized_symbol_ids,
-    serialized_accents=entry.serialized_accent_ids,
-  )])
-
-  output, result = _infer_core(
-    taco_path=taco_path,
-    waveglow_path=waveglow_path,
-    speaker_id=entry.speaker_id,
+  _, result = infer(
+    tacotron_checkpoint=tacotron_checkpoint,
+    waveglow_checkpoint=waveglow_checkpoint,
+    ds_speaker=model_speakers.get_speaker(entry.speaker_id),
     sentence_pause_s=0,
     sigma=sigma,
     denoiser_strength=denoiser_strength,
-    sampling_rate=0,
-    sentences=sentences,
+    sentences=InferSentenceList([infer_sent]),
     custom_taco_hparams=custom_taco_hparams,
-    custom_wg_hparams=custom_wg_hparams
+    custom_wg_hparams=custom_wg_hparams,
+    logger=logger
   )
 
-  mel_outputs, mel_outputs_postnet, alignments = result[0][1]
-  return output, mel_outputs, mel_outputs_postnet, alignments, orig_mel
+  assert len(result) == 1
+
+  return result[0]
 
 
-def _infer_core(taco_path: str, waveglow_path: str, speaker_id: int, sentence_pause_s: float, sigma: float, denoiser_strength: float, sampling_rate: int, sentences: InferSentenceList, custom_taco_hparams: Optional[str] = None, custom_wg_hparams: Optional[str] = None) -> Tuple[np.ndarray, List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]]]:
-  _logger.debug(f"Selected speaker id: {speaker_id}")
-
+def infer(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, ds_speaker: str, sentence_pause_s: float, sigma: float, denoiser_strength: float, sentences: InferSentenceList, custom_taco_hparams: Optional[str], custom_wg_hparams: Optional[str], logger: Logger):
   synth = Synthesizer(
-    taco_path,
-    waveglow_path,
-    logger=_logger,
+    tacotron_checkpoint,
+    waveglow_checkpoint,
+    logger=logger,
     custom_taco_hparams=custom_taco_hparams,
     custom_wg_hparams=custom_wg_hparams
   )
 
-  result: List[Tuple[int, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]] = list()
-
-  symbol_id_dict = synth.taco_synt.symbols
-  accent_id_dict = synth.taco_synt.accents
-
-  # Speed is: 1min inference for 3min wav result
-  for sentence in sentences.items(True):
-    _logger.info(f"\n{sentence.get_formatted(symbol_id_dict, accent_id_dict)}")
-    mels, wav = synth.infer(
-      symbol_ids=sentence.get_symbol_ids(),
-      accent_ids=sentence.get_accent_ids(),
-      speaker_id=speaker_id,
-      sigma=sigma,
-      denoiser_strength=denoiser_strength
-    )
-
-    mels_np: List[Tuple[np.ndarray, np.ndarray, np.ndarray]] = [mel_to_numpy(x) for x in mels]
-    result.append((sentence.sent_id, mels_np, wav))
-
-  audios = [wg_out for _, _, wg_out in result]
-
-  if len(audios) > 0:
-    _logger.info("Concatening audios...")
-  output = concatenate_audios(audios, sentence_pause_s, sampling_rate)
-
-  return output, result
+  return synth.infer(
+    sentences=sentences,
+    speaker=ds_speaker,
+    denoiser_strength=denoiser_strength,
+    sentence_pause_s=sentence_pause_s,
+    sigma=sigma,
+  )

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from math import ceil, floor
-from typing import List, Optional, Set, Tuple
+from logging import Logger
+from math import ceil
+from typing import List, Set, Tuple
 
 from src.core.common.accents_dict import AccentsDict
 from src.core.common.language import Language
@@ -70,7 +71,6 @@ class Sentence:
   lang: Language
   serialized_symbols: str
   serialized_accents: str
-  # Contains only the symbols which are known
 
   def get_symbol_ids(self):
     return deserialize_list(self.serialized_symbols)
@@ -99,10 +99,6 @@ class SentenceList(GenericList[Sentence]):
     return result
 
 
-class InferSentenceList(SentenceList):
-  pass
-
-
 @dataclass()
 class AccentedSymbol:
   position: str
@@ -112,6 +108,49 @@ class AccentedSymbol:
 
 class AccentedSymbolList(GenericList[AccentedSymbol]):
   pass
+
+
+@dataclass
+class InferSentence:
+  sent_id: int
+  symbols: List[str]
+  accents: List[str]
+
+  def get_formatted(self, accent_id_dict: AccentsDict, pairs_per_line=170, space_length=0):
+    return get_formatted_core(
+      sent_id=self.sent_id,
+      symbols=self.symbols,
+      accent_ids=accent_id_dict.get_ids(self.accents),
+      accent_id_dict=accent_id_dict,
+      space_length=space_length,
+      max_pairs_per_line=pairs_per_line
+    )
+
+
+class InferSentenceList(GenericList[InferSentence]):
+  @classmethod
+  def from_sentences(cls, sentences: SentenceList, accents: AccentsDict, symbols: SymbolIdDict):
+    res = cls()
+    for sentence in sentences.items():
+      infer_sent = InferSentence(
+        sent_id=sentence.sent_id,
+        symbols=symbols.get_symbols(sentence.serialized_symbols),
+        accents=accents.get_accents(sentence.serialized_accents)
+      )
+      assert len(infer_sent.symbols) == len(infer_sent.accents)
+      res.append(infer_sent)
+    return res
+
+  def replace_unknown_symbols(self, model_symbols: SymbolIdDict, logger: Logger) -> bool:
+    unknown_symbols_exist = False
+    for sentence in self.items():
+      if model_symbols.has_unknown_symbols(sentence.symbols):
+        sentence.symbols = model_symbols.replace_unknown_symbols_with_pad(sentence.symbols)
+        text = SymbolIdDict.symbols_to_text(sentence.symbols)
+        logger.info(f"Sentence {sentence.sent_id} contains unknown symbols: {text}")
+        unknown_symbols_exist = True
+        assert len(sentence.symbols) == len(sentence.accents)
+    return unknown_symbols_exist
 
 
 def add_text(text: str, lang: Language) -> Tuple[SymbolIdDict, SentenceList]:
@@ -127,11 +166,11 @@ def add_text(text: str, lang: Language) -> Tuple[SymbolIdDict, SentenceList]:
   symbols = SymbolIdDict.init_from_symbols(get_unique_items(sents_symbols))
   for i, sent_symbols in enumerate(sents_symbols):
     sentence = Sentence(
-      sent_id=i,
+      sent_id=i + 1,
       lang=lang,
       serialized_symbols=symbols.get_serialized_ids(sent_symbols),
       serialized_accents=serialize_list([default_accent_id] * len(sent_symbols)),
-      text=SymbolIdDict.symbols_to_str(sent_symbols),
+      text=SymbolIdDict.symbols_to_text(sent_symbols),
     )
     res.append(sentence)
   return symbols, res
@@ -165,7 +204,7 @@ def update_symbols_and_text(sentences: SentenceList, sents_new_symbols: List[Lis
   symbols = SymbolIdDict.init_from_symbols(get_unique_items([x for x in sents_new_symbols]))
   for sentence, new_symbols in zip(sentences.items(), sents_new_symbols):
     sentence.serialized_symbols = symbols.get_serialized_ids(new_symbols)
-    sentence.text = SymbolIdDict.symbols_to_str(new_symbols)
+    sentence.text = SymbolIdDict.symbols_to_text(new_symbols)
     assert len(sentence.get_symbol_ids()) == len(new_symbols)
     assert len(sentence.get_accent_ids()) == len(new_symbols)
   return symbols, sentences
@@ -194,14 +233,14 @@ def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ig
 def sents_map(sentences: SentenceList, text_symbols: SymbolIdDict, symbols_map: SymbolsMap, ignore_arcs: bool) -> Tuple[SymbolIdDict, SentenceList]:
   sents_new_symbols = []
   result = SentenceList()
-  counter = 0
+  new_sent_id = 0
   for sentence in sentences.items():
     symbols = text_symbols.get_symbols(sentence.serialized_symbols)
     accent_ids = deserialize_list(sentence.serialized_accents)
 
     mapped_symbols = symbols_map.apply_to_symbols(symbols)
 
-    text = SymbolIdDict.symbols_to_str(mapped_symbols)
+    text = SymbolIdDict.symbols_to_text(mapped_symbols)
     # a resulting empty text would make no problems
     sents = split_sentences(text, sentence.lang)
     for new_sent_text in sents:
@@ -219,8 +258,9 @@ def sents_map(sentences: SentenceList, text_symbols: SymbolIdDict, symbols_map: 
 
       assert len(new_accent_ids) == len(new_symbols)
 
+      new_sent_id += 1
       tmp = Sentence(
-        sent_id=counter,
+        sent_id=new_sent_id,
         text=new_sent_text,
         lang=sentence.lang,
         serialized_accents=serialize_list(new_accent_ids),
@@ -230,7 +270,6 @@ def sents_map(sentences: SentenceList, text_symbols: SymbolIdDict, symbols_map: 
 
       assert len(tmp.get_accent_ids()) == len(new_symbols)
       result.append(tmp)
-      counter += 1
 
   return update_symbols_and_text(result, sents_new_symbols)
 
@@ -268,27 +307,7 @@ def sents_accent_apply(sentences: SentenceList, accented_symbols: AccentedSymbol
   return sentences
 
 
-def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, known_symbols: SymbolIdDict) -> Tuple[InferSentenceList, bool]:
-  result = InferSentenceList()
-  unknown_symbols_exist = False
-  for sentence in sentences.items():
-    old_text_symbols = text_symbols.get_symbols(sentence.serialized_symbols)
-    assert len(sentence.get_accent_ids()) == len(old_text_symbols)
-    infer_symbols = old_text_symbols
-
-    if known_symbols.has_unknown_symbols(infer_symbols):
-      infer_symbols = known_symbols.replace_unknown_symbols_with_pad(infer_symbols)
-      unknown_symbols_exist = True
-      assert len(infer_symbols) == len(old_text_symbols)
-
-    infer_sentence = Sentence(
-      sent_id=sentence.sent_id,
-      lang=sentence.lang,
-      serialized_accents=sentence.serialized_accents,
-      serialized_symbols=known_symbols.get_serialized_ids(infer_symbols),
-      text=SymbolIdDict.symbols_to_str(infer_symbols)
-    )
-
-    result.append(infer_sentence)
-    # Maybe add info if something was unknown
-  return result, unknown_symbols_exist
+def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, text_accents: AccentsDict, known_symbols: SymbolIdDict, logger: Logger) -> InferSentenceList:
+  result = InferSentenceList.from_sentences(sentences, text_accents, text_symbols)
+  unknown_exist = result.replace_unknown_symbols(known_symbols, logger)
+  return result, unknown_exist

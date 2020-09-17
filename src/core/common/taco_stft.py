@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 import torch
 from librosa.filters import mel as librosa_mel_fn
@@ -48,6 +49,13 @@ def create_hparams(hparams_string=None, verbose=False):
     tf.logging.info('Final parsed hparams: %s', hparams.values())
 
   return hparams
+
+
+def get_mel(wav_path: str) -> np.ndarray:
+  hparams = create_hparams()
+  taco_stft = TacotronSTFT.fromhparams(hparams)
+  orig_mel = taco_stft.get_mel_tensor_from_file(wav_path).numpy()
+  return orig_mel
 
 
 class TacotronSTFT(torch.nn.Module):

@@ -1,6 +1,6 @@
-from src.app.pre.prepare import (get_prepared_dir, load_filelist_accents_ids,
-                                 load_filelist_speakers_json,
-                                 load_filelist_symbol_converter)
+from src.app.pre.prepare import (get_prepared_dir, load_prep_accents_ids,
+                                 load_prep_speakers_json,
+                                 load_prep_symbol_converter)
 from src.core.tacotron.model_converter import convert_v1_to_v2_model
 
 
@@ -10,9 +10,9 @@ def convert_model(base_dir: str, prep_name: str, model_path: str, custom_hparams
   convert_v1_to_v2_model(
     old_model_path=model_path,
     custom_hparams=custom_hparams,
-    speakers=load_filelist_speakers_json(prep_dir),
-    accents=load_filelist_accents_ids(prep_dir),
-    symbols=load_filelist_symbol_converter(prep_dir)
+    speakers=load_prep_speakers_json(prep_dir),
+    accents=load_prep_accents_ids(prep_dir),
+    symbols=load_prep_symbol_converter(prep_dir)
   )
 
 

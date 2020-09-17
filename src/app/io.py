@@ -1,6 +1,7 @@
 import datetime
 import os
 from shutil import copyfile
+from src.app.pre.prepare import load_filelist
 from typing import Optional, Tuple
 
 import matplotlib.pylab as plt
@@ -10,7 +11,7 @@ from src.core.common.audio import float_to_wav
 from src.core.common.mel_plot import plot_melspec
 from src.core.common.utils import (get_parent_dirname, get_subdir, parse_json,
                                    save_json, stack_images_vertically)
-from src.core.pre.merge_ds import PreparedData, PreparedDataList
+from src.core.pre.merge_ds import PreparedData, PreparedDataList, split_prepared_data_train_test_val
 
 # region Training
 
@@ -70,20 +71,28 @@ def load_valset(train_dir: str) -> PreparedDataList:
   return PreparedDataList.load(PreparedData, path)
 
 
-def load_settings(train_dir: str) -> Tuple[str, str]:
+def load_prep_name(train_dir: str) -> str:
   path = os.path.join(train_dir, _settings_json)
   res = parse_json(path)
-  return res["prep_name"], res["custom_hparams"]
+  return res["prep_name"]
 
 
-def save_settings(train_dir: str, prep_name: Optional[str], custom_hparams: Optional[str]):
+def save_prep_name(train_dir: str, prep_name: Optional[str]):
   settings = {
-    "prep_name": prep_name,
-    "custom_hparams": custom_hparams
+    "prep_name": prep_name
   }
   path = os.path.join(train_dir, _settings_json)
   save_json(path, settings)
 
+
+def split_dataset(prep_dir: str, train_dir: str, test_size: float = 0.01, validation_size: float = 0.05, split_seed: int = 1234):
+  wholeset = load_filelist(prep_dir)
+  trainset, testset, valset = split_prepared_data_train_test_val(
+    wholeset, test_size=test_size, validation_size=validation_size, seed=split_seed, shuffle=True)
+  save_trainset(train_dir, trainset)
+  save_testset(train_dir, testset)
+  save_valset(train_dir, valset)
+  return trainset, valset
 
 # endregion
 
@@ -99,7 +108,7 @@ def get_infer_log(infer_dir: str):
 
 def save_infer_wav(infer_dir: str, sampling_rate: int, wav: np.ndarray):
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}.wav")
-  float_to_wav(wav, path, normalize=True, sample_rate=sampling_rate)
+  float_to_wav(wav, path, sample_rate=sampling_rate)
 
 
 def save_infer_plot(infer_dir: str, mel: np.ndarray):
@@ -114,7 +123,6 @@ def save_infer_plot(infer_dir: str, mel: np.ndarray):
 
 
 def _get_validation_root_dir(train_dir: str):
-  train_dir = train_dir
   return get_subdir(train_dir, "validation", create=True)
 
 
@@ -149,7 +157,7 @@ def save_val_comparison(val_dir: str):
 
 def save_val_wav(val_dir: str, sampling_rate: int, wav) -> str:
   path = os.path.join(val_dir, f"{get_parent_dirname(val_dir)}.wav")
-  float_to_wav(wav, path, normalize=True, sample_rate=sampling_rate)
+  float_to_wav(wav, path, sample_rate=sampling_rate)
   return path
 
 
