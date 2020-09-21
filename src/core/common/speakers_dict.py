@@ -39,7 +39,7 @@ class SpeakersDict(OrderedDict):  # [str, int]
   @classmethod
   def fromlist(cls, lst: list):
     res = [(x, i) for i, x in enumerate(lst)]
-    return cls(cls, res)
+    return cls(res)
 
 
 class SpeakersLogDict(OrderedDict):  # [str, int]
