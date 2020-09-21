@@ -429,7 +429,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
   complete_start = time.time()
 
   if checkpoint is not None:
-    hparams = checkpoint.hparams
+    hparams = checkpoint.get_hparams()
   else:
     hparams = create_hparams(
       n_accents=len(accents),

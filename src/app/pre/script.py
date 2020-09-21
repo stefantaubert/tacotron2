@@ -142,10 +142,10 @@ if __name__ == "__main__":
   base_dir = "/datasets/models/taco2pt_v5"
 
   if run_all or mode == 1:
-    prepare_thchs(base_dir)
+    prepare_ljs(base_dir)
 
   if run_all or mode == 2:
-    prepare_ljs(base_dir)
+    prepare_thchs(base_dir)
 
   if run_all or mode == 3:
     prepare_ds(

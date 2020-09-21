@@ -249,7 +249,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   #   model = apply_gradient_allreduce(model)
 
   if checkpoint is not None:
-    hparams = checkpoint.hparams
+    hparams = checkpoint.get_hparams()
   else:
     hparams = create_hparams()
   # is it problematic to change the batch size?
