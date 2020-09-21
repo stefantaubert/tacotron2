@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Optional
+from typing import Dict, Optional
 
 from src.core.inference.synthesizer import Synthesizer
 from src.core.pre.merge_ds import PreparedData
@@ -8,7 +8,7 @@ from src.core.tacotron.training import CheckpointTacotron
 from src.core.waveglow.train import CheckpointWaveglow
 
 
-def validate(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, entry: PreparedData, denoiser_strength: float, sigma: float, custom_taco_hparams: Optional[str], custom_wg_hparams: Optional[str], logger: Logger):
+def validate(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, entry: PreparedData, denoiser_strength: float, sigma: float, custom_taco_hparams: Optional[Dict[str, str]], custom_wg_hparams: Optional[Dict[str, str]], logger: Logger):
   model_symbols = tacotron_checkpoint.get_symbols()
   model_accents = tacotron_checkpoint.get_accents()
   model_speakers = tacotron_checkpoint.get_speakers()
@@ -37,7 +37,7 @@ def validate(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: Check
   return result[0]
 
 
-def infer(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, ds_speaker: str, sentence_pause_s: float, sigma: float, denoiser_strength: float, sentences: InferSentenceList, custom_taco_hparams: Optional[str], custom_wg_hparams: Optional[str], logger: Logger):
+def infer(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, ds_speaker: str, sentence_pause_s: float, sigma: float, denoiser_strength: float, sentences: InferSentenceList, custom_taco_hparams: Optional[Dict[str, str]], custom_wg_hparams: Optional[Dict[str, str]], logger: Logger):
   synth = Synthesizer(
     tacotron_checkpoint,
     waveglow_checkpoint,

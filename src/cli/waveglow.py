@@ -1,11 +1,10 @@
 from argparse import ArgumentParser
-from typing import Optional
 
 from src.app.waveglow.dl import dl_pretrained
 from src.app.waveglow.inference import infer
 from src.app.waveglow.training import continue_train, train
 from src.app.waveglow.validation import validate
-from src.cli.utils import parse_tuple_list
+from src.cli.utils import parse_tuple_list, split_hparams_string
 
 
 def init_train_parser(parser: ArgumentParser):
@@ -15,13 +14,23 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--validation_size', type=float, default=0.1)
   parser.add_argument('--split_seed', type=int, default=1234)
   parser.add_argument('--custom_hparams', type=str)
-  return train
+  return train_cli
+
+
+def train_cli(**args):
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  train(**args)
 
 
 def init_continue_train_parser(parser: ArgumentParser):
   parser.add_argument('--train_name', type=str, required=True)
   parser.add_argument('--custom_hparams', type=str)
-  return continue_train
+  return continue_train_cli
+
+
+def continue_train_cli(**args):
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  continue_train(**args)
 
 
 def init_validate_parser(parser: ArgumentParser):
@@ -34,12 +43,7 @@ def init_validate_parser(parser: ArgumentParser):
   parser.add_argument("--denoiser_strength", default=0.00, type=float, help='Removes model bias.')
   parser.add_argument("--sigma", type=float, default=0.666)
   parser.add_argument('--sampling_rate', type=float, default=22050)
-  return _wg_validate
-
-
-def _wg_validate(base_dir: str, train_name: str, entry_id: Optional[int], ds_speaker: Optional[str], ds: str, custom_checkpoint: Optional[int], sigma: float, denoiser_strength: float, sampling_rate: float):
-  validate(base_dir, train_name, entry_id, parse_tuple_list(ds_speaker),
-           ds, custom_checkpoint, sigma, denoiser_strength, sampling_rate)
+  return validate
 
 
 def init_inference_parser(parser: ArgumentParser):

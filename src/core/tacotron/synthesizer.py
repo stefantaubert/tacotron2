@@ -1,5 +1,6 @@
 import logging
-from typing import List, Optional, Tuple
+from src.core.common.train import overwrite_custom_hparams
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -9,7 +10,7 @@ from src.core.tacotron.training import CheckpointTacotron, load_model
 
 
 class Synthesizer():
-  def __init__(self, checkpoint: CheckpointTacotron, custom_hparams: Optional[str], logger: logging.Logger):
+  def __init__(self, checkpoint: CheckpointTacotron, custom_hparams: Optional[Dict[str, str]], logger: logging.Logger):
     super().__init__()
     self._logger = logger
 
@@ -17,8 +18,7 @@ class Synthesizer():
     self.symbols = checkpoint.get_symbols()
     self.speakers = checkpoint.get_speakers()
     hparams = checkpoint.get_hparams()
-
-    # todo apply custom_hparams
+    overwrite_custom_hparams(hparams, custom_hparams)
 
     model = load_model(
       hparams=hparams,

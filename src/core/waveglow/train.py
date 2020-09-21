@@ -3,7 +3,7 @@ import random
 import time
 from dataclasses import asdict, dataclass
 from logging import Logger
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -18,7 +18,8 @@ from src.core.common.train import (SaveIterationSettings, check_save_it,
                                    get_continue_epoch,
                                    get_formatted_current_total,
                                    get_last_checkpoint, get_pytorch_filename,
-                                   hp_from_raw, hp_raw, skip_batch)
+                                   hp_from_raw, hp_raw,
+                                   overwrite_custom_hparams, skip_batch)
 from src.core.pre.merge_ds import PreparedDataList
 from src.core.waveglow.hparams import create_hparams
 from src.core.waveglow.logger import WaveglowLogger
@@ -191,7 +192,7 @@ def validate(model, criterion, val_loader, iteration, logger: WaveglowLogger, de
   return val_loss
 
 
-def continue_train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger):
+def continue_train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger):
   debug_logger.info("Continuing training...")
   last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
 
@@ -206,7 +207,7 @@ def continue_train(custom_hparams: str, logdir: str, trainset: PreparedDataList,
   )
 
 
-def train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger):
+def train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger):
   debug_logger.info("Starting new training...")
 
   _train(
@@ -220,7 +221,7 @@ def train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: 
   )
 
 
-def _train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, checkpoint: Optional[CheckpointWaveglow], debug_logger: Logger):
+def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, checkpoint: Optional[CheckpointWaveglow], debug_logger: Logger):
   complete_start = time.time()
   logger = WaveglowLogger(logdir)
 
@@ -248,13 +249,11 @@ def _train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset:
   #   model = apply_gradient_allreduce(model)
 
   if checkpoint is not None:
-    model, optimizer, iteration, hparams = model_and_optimizer_from_checkpoint(
-      checkpoint,
-      custom_hparams,
-      debug_logger
-    )
+    hparams = checkpoint.hparams
   else:
-    model, optimizer, iteration, hparams = model_and_optimizer_fresh(custom_hparams, debug_logger)
+    hparams = create_hparams()
+  # is it problematic to change the batch size?
+  overwrite_custom_hparams(hparams, custom_hparams)
 
   debug_logger.info('Final parsed hparams:')
   debug_logger.info('\n'.join(str(hparams.values()).split(',')))
@@ -268,6 +267,15 @@ def _train(custom_hparams: str, logdir: str, trainset: PreparedDataList, valset:
 
   torch.manual_seed(hparams.seed)
   torch.cuda.manual_seed(hparams.seed)
+
+  if checkpoint is not None:
+    model, optimizer, iteration = model_and_optimizer_from_checkpoint(
+      checkpoint,
+      hparams,
+      debug_logger
+    )
+  else:
+    model, optimizer, iteration = model_and_optimizer_fresh(hparams, debug_logger)
 
   # #=====START: ADDED FOR DISTRIBUTED======
   # if n_gpus > 1:
@@ -427,25 +435,20 @@ def load_optimizer(model: WaveGlow, state_dict: Optional[dict], hparams):
   return optimizer
 
 
-def model_and_optimizer_fresh(custom_hparams: str, debug_logger: Logger):
+def model_and_optimizer_fresh(hparams: Any, debug_logger: Logger):
   debug_logger.info("Starting new model...")
 
-  hparams = create_hparams(custom_hparams)
   model = load_model(hparams, None)
   optimizer = load_optimizer(model, None, hparams)
   current_iteration = 0
 
-  return model, optimizer, current_iteration, hparams
+  return model, optimizer, current_iteration
 
 
-def model_and_optimizer_from_checkpoint(checkpoint: CheckpointWaveglow, custom_hparams: str, debug_logger: Logger) -> Tuple[WaveGlow, Any, int]:
+def model_and_optimizer_from_checkpoint(checkpoint: CheckpointWaveglow, hparams: Any, debug_logger: Logger) -> Tuple[WaveGlow, Any, int]:
   debug_logger.info("Continuing training from checkpoint...")
 
-  updated_hparams = checkpoint.get_hparams()
-  # todo apply custom_hparams
-  # assert hparams.batch_size == custom.batch_size
+  model = load_model(hparams, checkpoint.state_dict)
+  optimizer = load_optimizer(model, checkpoint.optimizer, hparams)
 
-  model = load_model(updated_hparams, checkpoint.state_dict)
-  optimizer = load_optimizer(model, checkpoint.optimizer, updated_hparams)
-
-  return model, optimizer, checkpoint.iteration, updated_hparams
+  return model, optimizer, checkpoint.iteration

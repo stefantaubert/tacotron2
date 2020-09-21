@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Optional
+from typing import Dict, Optional
 
 import torch
 
@@ -9,7 +9,7 @@ from src.core.waveglow.synthesizer import Synthesizer
 from src.core.waveglow.train import CheckpointWaveglow
 
 
-def infer(wav_path: str, checkpoint: CheckpointWaveglow, custom_hparams: Optional[str], denoiser_strength: float, sigma: float, logger: Logger):
+def infer(wav_path: str, checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, logger: Logger):
   synth = Synthesizer(
     checkpoint=checkpoint,
     custom_hparams=custom_hparams,

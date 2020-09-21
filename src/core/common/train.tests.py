@@ -1,6 +1,7 @@
 import unittest
 from typing import List
 
+import tensorflow as tf
 from torch.utils.data import DataLoader, Dataset
 
 from src.core.common.train import (check_is_first, check_is_last,
@@ -8,9 +9,10 @@ from src.core.common.train import (check_is_first, check_is_last,
                                    check_is_save_epoch,
                                    check_is_save_iteration,
                                    get_continue_batch_iteration,
-                                   get_continue_epoch,
+                                   get_continue_epoch, get_value_in_type,
                                    iteration_to_batch_iteration,
-                                   iteration_to_epoch, skip_batch)
+                                   iteration_to_epoch,
+                                   overwrite_custom_hparams, skip_batch)
 
 
 class DummyDataset(Dataset):
@@ -25,6 +27,64 @@ class DummyDataset(Dataset):
 
 
 class UnitTests(unittest.TestCase):
+
+  def test_get_value_in_type_int__returns_int(self):
+    res = get_value_in_type(1, "2")
+    self.assertTrue(isinstance(res, int))
+    self.assertEqual(2, res)
+
+  def test_get_value_in_type_float__returns_float(self):
+    res = get_value_in_type(1.0, "2")
+    self.assertTrue(isinstance(res, float))
+    self.assertEqual(2.0, res)
+
+  def test_get_value_in_type_str__returns_str(self):
+    res = get_value_in_type("abc", "2")
+    self.assertTrue(isinstance(res, str))
+    self.assertEqual("2", res)
+
+  def test_get_value_in_type_bool__returns_bool(self):
+    res = get_value_in_type(False, "true")
+    self.assertTrue(isinstance(res, bool))
+    self.assertEqual(True, res)
+
+  def test_get_value_in_type_list__returns_list(self):
+    res = get_value_in_type(["abc"], "2")
+    self.assertTrue(isinstance(res, list))
+    self.assertEqual(["2"], res)
+
+  def test_overwrite_custom_hparams(self):
+    hparams = tf.contrib.training.HParams(
+      epochs=500,
+      seed=1234,
+    )
+
+    custom_hparams = {
+      "epochs": "10",
+      "learning_rate": "0.5"
+    }
+
+    overwrite_custom_hparams(hparams, custom_hparams)
+
+    self.assertEqual(10, hparams.epochs)
+    self.assertTrue(isinstance(hparams.epochs, int))
+    self.assertEqual(1234, hparams.seed)
+    self.assertTrue(isinstance(hparams.seed, int))
+
+  def test_overwrite_custom_hparams_none__does_nothing(self):
+    hparams = tf.contrib.training.HParams(
+      epochs=500,
+      seed=1234,
+    )
+
+    custom_hparams = None
+
+    overwrite_custom_hparams(hparams, custom_hparams)
+
+    self.assertEqual(500, hparams.epochs)
+    self.assertTrue(isinstance(hparams.epochs, int))
+    self.assertEqual(1234, hparams.seed)
+    self.assertTrue(isinstance(hparams.seed, int))
 
   def test_check_is_first__it0_is_false(self):
     res = check_is_first(iteration=0)

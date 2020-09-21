@@ -30,7 +30,8 @@ from src.core.common.train import (SaveIterationSettings, check_save_it,
                                    get_continue_batch_iteration,
                                    get_continue_epoch,
                                    get_formatted_current_total, hp_from_raw,
-                                   hp_raw, skip_batch)
+                                   hp_raw, overwrite_custom_hparams,
+                                   skip_batch)
 from src.core.pre.merge_ds import PreparedData, PreparedDataList
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger
@@ -371,12 +372,11 @@ def validate(model: Tacotron2, criterion: nn.Module, val_loader: DataLoader, ite
   return avg_val_loss
 
 
-def train(warm_model: Optional[CheckpointTacotron], custom_hparams: Optional[str], taco_logger: Tacotron2Logger, symbols: SymbolIdDict, speakers: SpeakersDict, accents: AccentsDict, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, weights_checkpoint: Optional[CheckpointTacotron], weights_map: Optional[SymbolsMap], logger: Logger, checkpoint_logger: Logger):
+def train(warm_model: Optional[CheckpointTacotron], custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, symbols: SymbolIdDict, speakers: SpeakersDict, accents: AccentsDict, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, weights_checkpoint: Optional[CheckpointTacotron], weights_map: Optional[SymbolsMap], logger: Logger, checkpoint_logger: Logger):
   logger.info("Starting new training...")
-  hparams = create_hparams(len(speakers), len(symbols), len(accents), custom_hparams)
 
   _train(
-    hparams=hparams,
+    custom_hparams=custom_hparams,
     taco_logger=taco_logger,
     trainset=trainset,
     valset=valset,
@@ -393,15 +393,11 @@ def train(warm_model: Optional[CheckpointTacotron], custom_hparams: Optional[str
   )
 
 
-def continue_train(checkpoint: CheckpointTacotron, custom_hparams: str, taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, logger: Logger, checkpoint_logger: Logger):
+def continue_train(checkpoint: CheckpointTacotron, custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, logger: Logger, checkpoint_logger: Logger):
   logger.info("Continuing training...")
-  hparams = checkpoint.get_hparams()
-
-  # todo apply custom hparams!
-  # assert hparams.batch_size == custom.batch_size
 
   _train(
-    hparams=hparams,
+    custom_hparams=custom_hparams,
     taco_logger=taco_logger,
     trainset=trainset,
     valset=valset,
@@ -418,7 +414,7 @@ def continue_train(checkpoint: CheckpointTacotron, custom_hparams: str, taco_log
   )
 
 
-def _train(hparams, taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, speakers: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict, checkpoint: Optional[CheckpointTacotron], warm_model: Optional[CheckpointTacotron], weights_checkpoint: Optional[CheckpointTacotron], weights_map: SymbolsMap, logger: Logger, checkpoint_logger: Logger):
+def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, speakers: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict, checkpoint: Optional[CheckpointTacotron], warm_model: Optional[CheckpointTacotron], weights_checkpoint: Optional[CheckpointTacotron], weights_map: SymbolsMap, logger: Logger, checkpoint_logger: Logger):
   """Training and validation logging results to tensorboard and stdout
   Params
   ------
@@ -431,6 +427,17 @@ def _train(hparams, taco_logger: Tacotron2Logger, trainset: PreparedDataList, va
   """
 
   complete_start = time.time()
+
+  if checkpoint is not None:
+    hparams = checkpoint.hparams
+  else:
+    hparams = create_hparams(
+      n_accents=len(accents),
+      n_speakers=len(speakers),
+      n_symbols=len(symbols)
+    )
+  # is it problematic to change the batch size?
+  overwrite_custom_hparams(hparams, custom_hparams)
 
   logger.info('Final parsed hparams:')
   logger.info('\n'.join(str(hparams.values()).split(',')))

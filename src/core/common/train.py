@@ -1,11 +1,12 @@
 import os
 from dataclasses import dataclass
 from math import floor
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 import tensorflow as tf
 
 PYTORCH_EXT = ".pt"
+T = TypeVar('T')
 
 
 def hp_raw(hparams) -> Dict[str, Any]:
@@ -59,6 +60,23 @@ def get_checkpoint(checkpoint_dir: str, iteration: int) -> Tuple[str, int]:
 
 def get_custom_or_last_checkpoint(checkpoint_dir: str, custom_iteration: Optional[int]) -> Tuple[str, int]:
   return get_checkpoint(checkpoint_dir, custom_iteration) if custom_iteration is not None else get_last_checkpoint(checkpoint_dir)
+
+
+def get_value_in_type(old_value: T, new_value: str) -> T:
+  old_type = type(old_value)
+  new_value_with_original_type = old_type(new_value)
+  return new_value_with_original_type
+
+
+def overwrite_custom_hparams(hparams: Any, custom_hparams: Optional[Dict[str, str]]) -> None:
+  # Note: This method does no type conversion from str.
+  # hparams.override_from_dict(custom_hparams)
+  # E.g.: ValueError: Could not cast hparam 'epochs' of type '<class 'int'>' from value '10'
+  if custom_hparams is not None:
+    for param_name, current_value in hparams.values().items():
+      if param_name in custom_hparams.keys():
+        new_value = get_value_in_type(current_value, custom_hparams[param_name])
+        hparams.set_hparam(param_name, new_value)
 
 
 def get_formatted_current_total(current: int, total: int) -> str:

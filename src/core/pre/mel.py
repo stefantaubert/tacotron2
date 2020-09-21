@@ -4,12 +4,14 @@ output: mel data
 """
 import os
 from dataclasses import dataclass
+from typing import Dict, Optional
 
 import torch
 from tqdm import tqdm
 
 from src.core.common.taco_stft import TacotronSTFT, create_hparams
-from src.core.common.train import get_pytorch_filename
+from src.core.common.train import (get_pytorch_filename,
+                                   overwrite_custom_hparams)
 from src.core.common.utils import GenericList, get_chunk_name
 from src.core.pre.wav import WavData, WavDataList
 
@@ -25,12 +27,14 @@ class MelDataList(GenericList[MelData]):
   pass
 
 
-def process(data: WavDataList, dest_dir: str, custom_hparams: str) -> MelDataList:
+def process(data: WavDataList, dest_dir: str, custom_hparams: Optional[Dict[str, str]]) -> MelDataList:
   assert os.path.isdir(dest_dir)
 
   result = MelDataList()
-  hp = create_hparams(custom_hparams)
-  mel_parser = TacotronSTFT.fromhparams(hp)
+  hparams = create_hparams()
+  overwrite_custom_hparams(hparams, custom_hparams)
+
+  mel_parser = TacotronSTFT.fromhparams(hparams)
 
   values: WavData
   for values in tqdm(data):
@@ -40,6 +44,6 @@ def process(data: WavDataList, dest_dir: str, custom_hparams: str) -> MelDataLis
     dest_mel_path = os.path.join(chunk_dir, get_pytorch_filename(repr(values)))
     mel_tensor = mel_parser.get_mel_tensor_from_file(values.wav)
     torch.save(mel_tensor, dest_mel_path)
-    result.append(MelData(values.entry_id, dest_mel_path, hp.n_mel_channels))
+    result.append(MelData(values.entry_id, dest_mel_path, hparams.n_mel_channels))
 
   return result

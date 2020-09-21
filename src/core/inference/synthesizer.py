@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -25,7 +25,7 @@ class InferenceResult():
 
 
 class Synthesizer():
-  def __init__(self, tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, custom_taco_hparams: Optional[str], custom_wg_hparams: Optional[str], logger: logging.Logger):
+  def __init__(self, tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, custom_taco_hparams: Optional[Dict[str, str]], custom_wg_hparams: Optional[Dict[str, str]], logger: logging.Logger):
     super().__init__()
     self._logger = logger
 

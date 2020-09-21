@@ -14,7 +14,7 @@ from src.app.pre.text import (preprocess_text, text_convert_to_ipa,
 from src.app.pre.tools import remove_silence_plot
 from src.app.pre.wav import (preprocess_wavs, wavs_normalize,
                              wavs_remove_silence, wavs_upsample)
-from src.cli.utils import parse_tuple_list
+from src.cli.utils import parse_tuple_list, split_hparams_string
 from src.core.common.language import Language
 
 
@@ -43,19 +43,25 @@ def init_preprocess_mels_parser(parser: ArgumentParser):
   parser.add_argument('--ds_name', type=str, required=True)
   parser.add_argument('--wav_name', type=str, required=True)
   parser.add_argument('--custom_hparams', type=str)
-  return preprocess_mels
+  return preprocess_mels_cli
+
+
+def preprocess_mels_cli(**args):
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  preprocess_mels(**args)
 
 
 def init_prepare_ds_parser(parser: ArgumentParser):
   parser.add_argument('--prep_name', type=str, required=True)
   parser.add_argument('--ds_speakers', type=str, required=True)
   parser.add_argument('--ds_text_audio', type=str, required=True)
-  return _prepare_ds_cli
+  return prepare_ds_cli
 
 
-def _prepare_ds_cli(base_dir: str, prep_name: str, ds_speakers: str, ds_text_audio: str):
-  prepare_ds(base_dir=base_dir, prep_name=prep_name, ds_speakers=parse_tuple_list(
-    ds_speakers), ds_text_audio=parse_tuple_list(ds_text_audio))
+def prepare_ds_cli(**args):
+  args["ds_speakers"] = parse_tuple_list(args["ds_speakers"])
+  args["ds_text_audio"] = parse_tuple_list(args["ds_text_audio"])
+  prepare_ds(**args)
 
 
 def init_preprocess_text_parser(parser: ArgumentParser):

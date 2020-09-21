@@ -3,7 +3,7 @@ from typing import Optional
 import tensorflow as tf
 
 
-def create_hparams(hparams_string: Optional[str], verbose: bool = False) -> tf.contrib.training.HParams:
+def create_hparams(verbose: bool = False) -> tf.contrib.training.HParams:
   """Create model hyperparameters. Parse nondefault from given string."""
 
   hparams = tf.contrib.training.HParams(
@@ -55,10 +55,10 @@ def create_hparams(hparams_string: Optional[str], verbose: bool = False) -> tf.c
     batch_size=12
   )
 
-  if hparams_string is not None:
-    if verbose:
-      tf.logging.info(f"Parsing command line hparams: {hparams_string}")
-    hparams.parse(hparams_string)
+  # if hparams_string is not None:
+  #   if verbose:
+  #     tf.logging.info(f"Parsing command line hparams: {hparams_string}")
+  #   hparams.parse(hparams_string)
 
   if verbose:
     tf.logging.info('Final parsed hparams: %s', hparams.values())

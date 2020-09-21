@@ -93,7 +93,7 @@ def text_normalize(base_dir: str, ds_name: str, orig_text_name: str, dest_text_n
   _text_op(base_dir, ds_name, orig_text_name, dest_text_name, operation)
 
 
-def text_convert_to_ipa(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: str, ignore_tones: bool, ignore_arcs: bool):
+def text_convert_to_ipa(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: str, ignore_tones: bool = False, ignore_arcs: bool = False):
   print("Converting text to IPA...")
   operation = partial(text_convert_to_ipa_core, ignore_tones=ignore_tones,
                       ignore_arcs=ignore_arcs)

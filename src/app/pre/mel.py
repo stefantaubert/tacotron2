@@ -1,4 +1,5 @@
 import os
+from typing import Dict, Optional
 
 from src.app.pre.ds import get_ds_dir
 from src.app.pre.wav import get_wav_dir, load_wav_csv
@@ -27,7 +28,7 @@ def save_mel_csv(mel_dir: str, mel_data: MelDataList):
   mel_data.save(path)
 
 
-def preprocess_mels(base_dir: str, ds_name: str, wav_name: str, custom_hparams: str):
+def preprocess_mels(base_dir: str, ds_name: str, wav_name: str, custom_hparams: Optional[Dict[str, str]] = None):
   print("Preprocessing mels...")
   ds_dir = get_ds_dir(base_dir, ds_name)
   mel_dir = get_mel_dir(ds_dir, wav_name)
@@ -47,13 +48,11 @@ if __name__ == "__main__":
   preprocess_mels(
     base_dir="/datasets/models/taco2pt_v5",
     ds_name="thchs",
-    wav_name="22050kHz_normalized_nosil",
-    custom_hparams="",
+    wav_name="22050kHz_normalized_nosil"
   )
 
   preprocess_mels(
     base_dir="/datasets/models/taco2pt_v5",
     ds_name="ljs",
-    wav_name="22050kHz",
-    custom_hparams="",
+    wav_name="22050kHz"
   )

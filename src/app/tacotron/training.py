@@ -2,7 +2,7 @@ import logging
 import os
 from functools import partial
 from logging import Logger
-from typing import Optional
+from typing import Dict, Optional
 
 from src.app.io import (get_checkpoints_dir, get_train_checkpoints_log_file,
                         get_train_log_file, get_train_logs_dir, load_trainset,
@@ -37,7 +37,7 @@ def save_checkpoint(checkpoint: CheckpointTacotron, save_checkpoint_dir: str, lo
   checkpoint.save(checkpoint_path, logger)
 
 
-def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, custom_hparams: Optional[str] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, weights_map: Optional[str] = None):
+def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, custom_hparams: Optional[Dict[str, str]] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, weights_map: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   train_dir = get_train_dir(base_dir, train_name, create=True)
   logs_dir = get_train_logs_dir(train_dir)
@@ -97,7 +97,7 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
   )
 
 
-def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[str] = None):
+def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -134,17 +134,24 @@ def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[str]
 if __name__ == "__main__":
   mode = 0
   if mode == 0:
-    continue_train(
-      base_dir="/datasets/models/taco2pt_v5",
-      train_name="debug",
-    )
-  elif mode == 1:
     train(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       prep_name="thchs_ljs",
-      custom_hparams="batch_size=17,iters_per_checkpoint=5,epochs_per_checkpoint=1,accents_use_own_symbols=True"
+      custom_hparams={
+        "batch_size": 17,
+        "iters_per_checkpoint": 5,
+        "epochs_per_checkpoint": 1,
+        "accents_use_own_symbols": True
+      }
     )
+
+  elif mode == 1:
+    continue_train(
+      base_dir="/datasets/models/taco2pt_v5",
+      train_name="debug",
+    )
+
   elif mode == 2:
     train(
       base_dir="/datasets/models/taco2pt_v5",
@@ -152,7 +159,11 @@ if __name__ == "__main__":
       prep_name="thchs_ipa",
       warm_start_train_name="ljs_ipa_scratch",
       weights_train_name="ljs_ipa_scratch",
-      custom_hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
+      custom_hparams={
+        "batch_size": 17,
+        "iters_per_checkpoint": 0,
+        "epochs_per_checkpoint": 1
+      }
     )
   elif mode == 3:
     train(

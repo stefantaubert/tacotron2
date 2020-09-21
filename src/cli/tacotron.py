@@ -2,18 +2,18 @@ from argparse import ArgumentParser
 
 from src.app.tacotron.analysis import plot_embeddings
 from src.app.tacotron.defaults import (DEFAULT_DENOISER_STRENGTH,
-                                       DEFAULT_SAMPLING_RATE,
                                        DEFAULT_SENTENCE_PAUSE_S, DEFAULT_SIGMA,
                                        DEFAULT_WAVEGLOW)
 from src.app.tacotron.eval_checkpoints import eval_checkpoints_main
 from src.app.tacotron.inference import infer
 from src.app.tacotron.training import continue_train, train
 from src.app.tacotron.validation import validate
+from src.cli.utils import split_hparams_string
 
 
 def init_plot_emb_parser(parser):
   parser.add_argument('--train_name', type=str, required=True)
-  parser.add_argument('--custom_checkpoint', type=int, default=0)
+  parser.add_argument('--custom_checkpoint', type=int)
   return plot_embeddings
 
 
@@ -23,7 +23,12 @@ def init_eval_checkpoints_parser(parser):
   parser.add_argument('--select', type=int)
   parser.add_argument('--min_it', type=int)
   parser.add_argument('--max_it', type=int)
-  return eval_checkpoints_main
+  return eval_checkpoints_main_cli
+
+
+def eval_checkpoints_main_cli(**args):
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  eval_checkpoints_main(**args)
 
 
 def init_train_parser(parser: ArgumentParser):
@@ -38,13 +43,23 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--weights_train_name', type=str)
   parser.add_argument('--weights_checkpoint', type=int)
   parser.add_argument('--weights_map', type=str)
-  return train
+  return train_cli
+
+
+def train_cli(**args):
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  train(**args)
 
 
 def init_continue_train_parser(parser: ArgumentParser):
   parser.add_argument('--train_name', type=str, required=True)
   parser.add_argument('--custom_hparams', type=str)
-  return continue_train
+  return continue_train_cli
+
+
+def continue_train_cli(**args):
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  continue_train(**args)
 
 
 def init_validate_parser(parser: ArgumentParser):

@@ -25,13 +25,10 @@ def dynamic_range_decompression(x, C=1):
   return torch.exp(x) / C
 
 
-def create_hparams(hparams_string=None, verbose=False):
+def create_hparams(verbose: bool = False):
   """Create model hyperparameters. Parse nondefault from given string."""
 
   hparams = tf.contrib.training.HParams(
-    ################################
-    # Audio Parameters       #
-    ################################
     n_mel_channels=80,
     sampling_rate=22050,
     filter_length=1024,
@@ -41,9 +38,9 @@ def create_hparams(hparams_string=None, verbose=False):
     mel_fmax=8000.0,
   )
 
-  if hparams_string:
-    tf.logging.info('Parsing command line hparams: %s', hparams_string)
-    hparams.parse(hparams_string)
+  # if hparams_string:
+  #   tf.logging.info('Parsing command line hparams: %s', hparams_string)
+  #   hparams.parse(hparams_string)
 
   if verbose:
     tf.logging.info('Final parsed hparams: %s', hparams.values())
