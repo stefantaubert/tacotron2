@@ -1,15 +1,21 @@
 import os
 from collections import Counter
 from dataclasses import dataclass
+from os import name
 from typing import List, Tuple
 
 from src.core.common.accents_dict import AccentsDict
+from src.core.common.gender import Gender
 from src.core.common.language import Language
 from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.utils import (GenericList,
                                    remove_duplicates_list_orderpreserving)
 from src.core.pre.parser.data import PreData, PreDataList
+from src.core.pre.parser.l2arctic import download as dl_arctic
+from src.core.pre.parser.l2arctic import parse as parse_arctic
+from src.core.pre.parser.libritts import download as dl_libritts
+from src.core.pre.parser.libritts import parse as parse_libritts
 from src.core.pre.parser.ljs import download as dl_ljs
 from src.core.pre.parser.ljs import parse as parse_ljs
 from src.core.pre.parser.thchs import download as dl_thchs
@@ -29,6 +35,8 @@ class DsData:
   serialized_accents: str
   wav_path: str
   lang: Language
+  gender: Gender
+
 
   def get_speaker_name(self):
     return str(self.speaker_name)
@@ -53,6 +61,16 @@ def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple
 def thchs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[
         SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   return _preprocess_core(dir_path, auto_dl, dl_thchs, parse_thchs)
+
+
+def libritts_preprocess(dir_path: str, auto_dl: bool) -> Tuple[
+  SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
+  return _preprocess_core(dir_path, auto_dl, dl_libritts, parse_libritts)
+
+
+def arctic_preprocess(dir_path: str, auto_dl: bool) -> Tuple[
+  SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
+  return _preprocess_core(dir_path, auto_dl, dl_arctic, parse_arctic)
 
 
 def ljs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[
@@ -89,16 +107,16 @@ def _get_symbols_id_dict(l: PreDataList) -> SymbolIdDict:
 
 
 def _get_ds_data(l: PreDataList, speakers_dict: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict) -> DsDataList:
-  values: PreData
   result = [DsData(
-    i,
-    values.name,
-    values.speaker_name,
-    speakers_dict[values.speaker_name],
-    values.text,
-    symbols.get_serialized_ids(values.symbols),
-    accents.get_serialized_ids(values.accents),
-    values.wav_path,
-    values.lang
-  ) for i, values in enumerate(l)]
+    entry_id=i,
+    basename=values.name,
+    speaker_name=values.speaker_name,
+    speaker_id=speakers_dict[values.speaker_name],
+    text=values.text,
+    serialized_symbols=symbols.get_serialized_ids(values.symbols),
+    serialized_accents=accents.get_serialized_ids(values.accents),
+    wav_path=values.wav_path,
+    lang=values.lang,
+    gender=values.gender
+  ) for i, values in enumerate(l.items())]
   return DsDataList(result)

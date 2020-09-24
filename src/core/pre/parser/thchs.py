@@ -3,17 +3,22 @@ from typing import List, Tuple
 
 from tqdm import tqdm
 
+from src.core.common.gender import Gender
 from src.core.common.language import Language
 from src.core.common.text import text_to_symbols
-from src.core.common.utils import download_tar
+from src.core.common.utils import download_tar, read_lines
 from src.core.pre.parser.data import PreData, PreDataList
 
-__question_particle1 = '吗'
-__question_particle2 = '呢'
+QUESTION_PARTICLE_1 = '吗'
+QUESTION_PARTICLE_2 = '呢'
+
+MALE_SPEAKERS = {"A8", "A9", "A33", "A35", "B8", "B21", "B34", "C8", "D8"}
+
 
 def download(dir_path: str):
   download_tar("http://data.cslt.org/thchs30/zip/wav.tgz", dir_path)
   download_tar("http://data.cslt.org/thchs30/zip/doc.tgz", dir_path)
+
 
 def parse(dir_path: str) -> PreDataList:
   if not os.path.exists(dir_path):
@@ -31,18 +36,18 @@ def parse(dir_path: str) -> PreDataList:
   ]
 
   files: List[Tuple[Tuple[str, int, int], PreData]] = []
+  lang = Language.CHN
 
   print("Parsing files...")
   for words_path, wavs_dir in parse_paths:
-    with open(words_path, 'r', encoding='utf-8') as f:
-      lines = f.readlines()
-      res = [x.strip() for x in lines]
+    lines = read_lines(words_path)
 
-    for x in tqdm(res):
+    for x in tqdm(lines):
       pos = x.find(' ')
       name, chinese = x[:pos], x[pos + 1:]
 
       speaker_name, nr = name.split("_")
+      speaker_gender = Gender.MALE if speaker_name in MALE_SPEAKERS else Gender.FEMALE
       nr = int(nr)
       speaker_name_letter = speaker_name[0]
       speaker_name_number = int(speaker_name[1:])
@@ -58,21 +63,32 @@ def parse(dir_path: str) -> PreDataList:
       # remove "=" from chinese transcription because it is not correct
       # occurs only in sentences with nr. 374, e.g. B22_374
       chinese = chinese.replace("= ", '')
-      is_question = str.endswith(chinese, __question_particle1) or str.endswith(chinese, __question_particle2)
+      is_question = str.endswith(chinese, QUESTION_PARTICLE_1) or str.endswith(
+        chinese, QUESTION_PARTICLE_2)
       if is_question:
         chinese += "？"
       else:
         chinese += "。"
 
-      symbols = text_to_symbols(chinese, Language.CHN)
-      accents = [speaker_name] * len(symbols)
-      tmp = PreData(name, speaker_name, chinese, wav_path, symbols, accents, Language.CHN)
+      symbols = text_to_symbols(chinese, lang)
 
-      files.append((tmp, (speaker_name_letter, speaker_name_number, nr)))
+      entry = PreData(
+        name=name,
+        speaker_name=speaker_name,
+        text=chinese,
+        wav_path=wav_path,
+        symbols=symbols,
+        accents=[speaker_name] * len(symbols),
+        gender=speaker_gender,
+        lang=lang
+      )
+
+      files.append((entry, (speaker_name_letter, speaker_name_number, nr)))
 
   files.sort(key=lambda tup: tup[1], reverse=False)
   res = PreDataList([x for x, _ in files])
   return res
+
 
 if __name__ == "__main__":
   dest = '/datasets/thchs_wav'
@@ -81,5 +97,5 @@ if __name__ == "__main__":
   # )
 
   res = parse(
-    dir_path = dest
+    dir_path=dest
   )

@@ -5,8 +5,10 @@ import tarfile
 import wget
 from tqdm import tqdm
 
+from src.core.common.gender import Gender
 from src.core.common.language import Language
 from src.core.common.text import text_to_symbols
+from src.core.common.utils import read_lines
 from src.core.pre.parser.data import PreData, PreDataList
 
 
@@ -55,27 +57,30 @@ def parse(path: str) -> PreDataList:
   speaker_name = '1'
   accent_name = "north_america"
   lang = Language.ENG
+  gender = Gender.FEMALE
 
-  with open(metadata_filepath, encoding='utf-8') as f:
-    lines = f.readlines()
+  lines = read_lines(metadata_filepath)
   print("Parsing files...")
   for line in tqdm(lines):
-    parts = line.strip().split('|')
+    parts = line.split('|')
     basename = parts[0]
     # parts[1] contains years, in parts[2] the years are written out
     # ex. ['LJ001-0045', '1469, 1470;', 'fourteen sixty-nine, fourteen seventy;']
     wav_path = os.path.join(wav_dirpath, f'{basename}.wav')
     text = parts[2]
     symbols = text_to_symbols(text, lang)
-    accents = [accent_name] * len(symbols)
-    result.append(PreData(
-      basename,
-      speaker_name,
-      text, wav_path,
-      symbols,
-      accents,
-      lang
-    ))
+    entry = PreData(
+      name=basename,
+      speaker_name=speaker_name,
+      text=text,
+      wav_path=wav_path,
+      symbols=symbols,
+      accents=[accent_name] * len(symbols),
+      gender=gender,
+      lang=lang
+    )
+
+    result.append(entry)
 
   result.sort(key=sort_ljs, reverse=False)
   print("Done.")

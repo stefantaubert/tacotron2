@@ -48,9 +48,9 @@ def create_hparams(n_speakers: int, n_symbols: int, n_accents: int, verbose: boo
     n_symbols=n_symbols,
     symbols_embedding_dim=512,
     n_speakers=n_speakers,
-    speakers_embedding_dim=16,
+    speakers_embedding_dim=128,  # 16,
     n_accents=n_accents,
-    accents_embedding_dim=16,
+    accents_embedding_dim=128,
     accents_use_own_symbols=False,
 
     # Encoder parameters

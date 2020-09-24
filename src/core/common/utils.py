@@ -21,6 +21,33 @@ from src.core.common.globals import CSV_SEPERATOR
 T = TypeVar('T')
 
 
+def get_filenames(parent_dir: str) -> List[str]:
+  assert os.path.isdir(parent_dir)
+  _, _, filenames = next(os.walk(parent_dir))
+  filenames.sort()
+  return filenames
+
+
+def get_filepaths(parent_dir: str) -> List[str]:
+  names = get_filenames(parent_dir)
+  res = [os.path.join(parent_dir, x) for x in names]
+  return res
+
+
+def get_subfolder_names(parent_dir: str) -> List[str]:
+  assert os.path.isdir(parent_dir)
+  _, subfolder_names, _ = next(os.walk(parent_dir))
+  subfolder_names.sort()
+  return subfolder_names
+
+
+def get_subfolders(parent_dir: str) -> List[str]:
+  """return full paths"""
+  names = get_subfolder_names(parent_dir)
+  res = [os.path.join(parent_dir, x) for x in names]
+  return res
+
+
 def console_out_len(text: str):
   res = len([c for c in text if unicodedata.combining(c) == 0])
   return res
@@ -118,6 +145,7 @@ def make_same_dim(a: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, np.ndarray]
 
 
 def get_basename(filepath: str) -> str:
+  '''test.wav -> test'''
   basename, _ = os.path.splitext(os.path.basename(filepath))
   return basename
 
@@ -247,11 +275,16 @@ def to_gpu(x):
   return torch.autograd.Variable(x)
 
 
-def read_text(path: str) -> str:
+def read_lines(path: str) -> List[str]:
   assert os.path.isfile(path)
-  with open(path, "r") as f:
+  with open(path, "r", encoding='utf-8') as f:
     lines = f.readlines()
-  res = ''.join(lines)
+  res = [x.strip("\n") for x in lines]
+  return res
+
+
+def read_text(path: str) -> str:
+  res = '\n'.join(read_lines(path))
   return res
 
 

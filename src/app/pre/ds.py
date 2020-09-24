@@ -5,7 +5,8 @@ from src.core.common.accents_dict import AccentsDict
 from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.utils import get_subdir
-from src.core.pre.ds import (DsData, DsDataList, ljs_preprocess,
+from src.core.pre.ds import (DsData, DsDataList, arctic_preprocess,
+                             libritts_preprocess, ljs_preprocess,
                              thchs_kaldi_preprocess, thchs_preprocess)
 
 # don't do preprocessing here because inconsistent with mels because it is not always usefull to calc mels instand
@@ -87,14 +88,25 @@ def preprocess_ljs(base_dir: str, ds_name: str, path: str, auto_dl: bool):
   _preprocess_ds(base_dir, ds_name, path, auto_dl, ljs_preprocess)
 
 
+
+def preprocess_libritts(base_dir: str, ds_name: str, path: str, auto_dl: bool):
+  print("Preprocessing LibriTTS dataset...")
+  _preprocess_ds(base_dir, ds_name, path, auto_dl, libritts_preprocess)
+
+
+def preprocess_arctic(base_dir: str, ds_name: str, path: str, auto_dl: bool):
+  print("Preprocessing L2 Arctic dataset...")
+  _preprocess_ds(base_dir, ds_name, path, auto_dl, arctic_preprocess)
+
+
 def _preprocess_ds(base_dir: str, ds_name: str, path: str, auto_dl: bool, preprocess_func):
   ds_path = get_ds_dir(base_dir, ds_name, create=False)
   if os.path.isdir(ds_path):
     print("Dataset already processed.")
   else:
-    os.makedirs(ds_path)
     print("Reading data...")
     speakers, speakers_log, symbols, accents, ds_data = preprocess_func(path, auto_dl)
+    os.makedirs(ds_path)
     _save_speaker_json(ds_path, speakers)
     _save_speaker_log_json(ds_path, speakers_log)
     _save_symbols_json(ds_path, symbols)
@@ -104,6 +116,20 @@ def _preprocess_ds(base_dir: str, ds_name: str, path: str, auto_dl: bool, prepro
 
 
 if __name__ == "__main__":
+  preprocess_libritts(
+    base_dir="/datasets/models/taco2pt_v5",
+    path="/datasets/libriTTS",
+    ds_name="libritts",
+    auto_dl=True,
+  )
+
+  preprocess_arctic(
+    base_dir="/datasets/models/taco2pt_v5",
+    path="/datasets/l2arctic",
+    ds_name="arctic",
+    auto_dl=True,
+  )
+
   preprocess_ljs(
     base_dir="/datasets/models/taco2pt_v5",
     path="/datasets/LJSpeech-1.1",
@@ -118,9 +144,9 @@ if __name__ == "__main__":
     auto_dl=True,
   )
 
-  preprocess_thchs_kaldi(
-    base_dir="/datasets/models/taco2pt_v5",
-    path="/datasets/THCHS-30",
-    ds_name="thchs_kaldi",
-    auto_dl=True,
-  )
+  # preprocess_thchs_kaldi(
+  #   base_dir="/datasets/models/taco2pt_v5",
+  #   path="/datasets/THCHS-30",
+  #   ds_name="thchs_kaldi",
+  #   auto_dl=True,
+  # )

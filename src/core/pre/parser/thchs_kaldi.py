@@ -1,14 +1,18 @@
 import glob
 import os
 import shutil
+from src.core.common.gender import Gender
 import tempfile
 
 from tqdm import tqdm
 
 from src.core.common.language import Language
 from src.core.common.text import text_to_symbols
-from src.core.common.utils import create_parent_folder, download_tar
+from src.core.common.utils import (create_parent_folder, download_tar,
+                                   read_lines)
 from src.core.pre.parser.data import PreData, PreDataList
+
+# Warning: Script is not good as thchs normal.
 
 
 def download(dir_path: str):
@@ -21,6 +25,7 @@ def download(dir_path: str):
   dest = os.path.join(parent, subfolder_name)
   shutil.move(content_dir, dest)
   os.rename(dest, dir_path)
+
 
 def parse(dir_path: str) -> PreDataList:
   if not os.path.exists(dir_path):
@@ -38,13 +43,12 @@ def parse(dir_path: str) -> PreDataList:
   wavs_sents = [x for x in wavs_sents if x[1] in sent_files]
 
   print("Skipped:", len(skipped), "of", len(sent_files_gen))
-  #print(skipped)
+  # print(skipped)
 
   res = PreDataList()
   print("Parsing files...")
   for wav, sent_file in tqdm(wavs_sents):
-    with open(sent_file, 'r', encoding='utf-8') as f:
-      content = f.readlines()
+    content = read_lines(sent_file)
     chn = content[0].strip()
     # remove "=" from chinese transcription because it is not correct
     # occurs only in sentences with nr. 374, e.g. B22_374
@@ -56,7 +60,7 @@ def parse(dir_path: str) -> PreDataList:
 
     symbols = text_to_symbols(chn, Language.CHN)
     accents = [speaker] * len(symbols)
-    tmp = PreData(basename, speaker, chn, wav, symbols, accents, Language.CHN)
+    tmp = PreData(basename, speaker, chn, wav, symbols, accents, Gender.FEMALE, Language.CHN)  # TODO Gender
     res.append(tmp)
   print("Done.")
 
@@ -65,11 +69,12 @@ def parse(dir_path: str) -> PreDataList:
 
   return res
 
+
 if __name__ == "__main__":
   # download(
   #   dir_path = '/datasets/THCHS-30'
   # )
 
   res = parse(
-    dir_path = '/datasets/THCHS-30'
+    dir_path='/datasets/THCHS-30'
   )

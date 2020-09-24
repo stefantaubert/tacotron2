@@ -1,13 +1,57 @@
+import os
+import shutil
 import unittest
+from os import remove, removedirs
+from tempfile import mkdtemp
 
 import numpy as np
 
-from src.core.common.utils import (cosine_dist_mels, get_chunk_name,
-                                   make_same_dim)
+from src.core.common.utils import (cosine_dist_mels, get_basename, get_chunk_name,
+                                   get_subfolders, make_same_dim)
 
 
 class UnitTests(unittest.TestCase):
-  
+
+  def test_get_basename_full_path(self):
+    path = "/a/b/c/test.wav.xyz"
+
+    res = get_basename(path)
+
+    self.assertEqual("test.wav", res)
+
+  def test_get_basename_of_filename(self):
+    path = "test.wav.xyz"
+
+    res = get_basename(path)
+
+    self.assertEqual("test.wav", res)
+
+  def test_get_basename_of_dir_wo_slash(self):
+    path = "/a/b/c/test"
+
+    res = get_basename(path)
+
+    self.assertEqual("test", res)
+
+  def test_get_basename_of_dir_w_slash(self):
+    path = "/a/b/c/test/"
+
+    res = get_basename(path)
+
+    self.assertEqual("", res)
+
+  def test_get_subfolders(self):
+    testdir = mkdtemp()
+    test1 = os.path.join(testdir, "test1")
+    test2 = os.path.join(testdir, "test2")
+    os.makedirs(test1)
+    os.makedirs(test2)
+
+    res = get_subfolders(testdir)
+    shutil.rmtree(testdir)
+
+    self.assertEqual([test1, test2], res)
+
   def test_cosine_dist_mels_1_minus1(self):
     a = np.ones(shape=(80, 1))
     b = np.ones(shape=(80, 1))
@@ -72,6 +116,7 @@ class UnitTests(unittest.TestCase):
   def test_1000_500_1490_is_1000_1490(self):
     x = get_chunk_name(1000, 500, 1490)
     self.assertEqual("1000-1490", x)
+
 
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)

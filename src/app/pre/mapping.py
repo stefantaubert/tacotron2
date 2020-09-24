@@ -2,24 +2,22 @@ import os
 from typing import List, Optional, Set
 
 from src.app.pre.io import get_text_dir, load_text_symbol_converter
-from src.app.pre.prepare import (get_available_text_names, get_prepared_dir,
-                                 load_prep_symbol_converter)
+from src.app.pre.prepare import get_prepared_dir, load_prep_symbol_converter
 from src.app.utils import add_console_out_to_logger, init_logger
 from src.core.common.symbols_map import SymbolsMap, create_or_update_map
+from src.core.common.utils import get_subfolder_names
 
-INFER_MAP_NAME = "inference_map.json"
-INFER_MAP_SYMB_NAME = "inference_map.symbols"
+INFER_MAP_FN = "inference_map.json"
+INFER_MAP_SYMB_FN = "inference_map.symbols"
 
 
 def get_all_symbols(prep_dir: str) -> Set[str]:
-  all_text_names = get_available_text_names(prep_dir)
+  all_text_names = get_subfolder_names(prep_dir)
   all_symbols: Set[str] = set()
   for text_name in all_text_names:
     text_dir = get_text_dir(prep_dir, text_name, create=False)
     text_symbol_ids = load_text_symbol_converter(text_dir)
     all_symbols |= text_symbol_ids.get_all_symbols()
-    if "A" in all_symbols:
-      pass
 
   return all_symbols
 
@@ -27,16 +25,18 @@ def get_all_symbols(prep_dir: str) -> Set[str]:
 def save_infer_map(prep_dir: str, infer_map: SymbolsMap):
   infer_map.save(get_infer_map_path(prep_dir))
 
+
 def get_infer_map_path(prep_dir: str) -> str:
-  path = os.path.join(prep_dir, INFER_MAP_NAME)
+  path = os.path.join(prep_dir, INFER_MAP_FN)
   return path
+
 
 def load_infer_map(prep_dir: str) -> SymbolsMap:
   return SymbolsMap.load(get_infer_map_path(prep_dir))
 
 
 def infer_map_exists(prep_dir: str) -> bool:
-  path = os.path.join(prep_dir, INFER_MAP_NAME)
+  path = os.path.join(prep_dir, INFER_MAP_FN)
   return os.path.isfile(path)
 
 
@@ -61,7 +61,7 @@ def try_load_symbols_map(symbols_map_path: str) -> Optional[SymbolsMap]:
 
 
 def save_infer_symbols(prep_dir: str, symbols: List[str]):
-  path = os.path.join(prep_dir, INFER_MAP_SYMB_NAME)
+  path = os.path.join(prep_dir, INFER_MAP_SYMB_FN)
   save_symbols(path, symbols)
 
 

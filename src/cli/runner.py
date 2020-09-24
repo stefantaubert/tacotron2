@@ -1,11 +1,13 @@
 from argparse import ArgumentParser
 
-from src.cli.pre import (init_accent_apply_text_parser, init_accent_set_text_parser, init_add_text_parser,
+from src.cli.pre import (init_accent_apply_text_parser,
+                         init_accent_set_text_parser, init_add_text_parser,
                          init_convert_to_ipa_text_parser,
                          init_create_or_update_inference_map_parser,
                          init_create_or_update_weights_map_parser,
                          init_map_text_parser, init_map_to_prep_symbols_parser,
                          init_normalize_text_parser, init_prepare_ds_parser,
+                         init_preprocess_arctic_parser,
                          init_preprocess_ljs_parser,
                          init_preprocess_mels_parser,
                          init_preprocess_text_parser,
@@ -48,6 +50,8 @@ def _init_parser():
   subparsers = result.add_subparsers(help='sub-command help')
 
   _add_parser_to(subparsers, "preprocess-ljs", init_preprocess_ljs_parser)
+  _add_parser_to(subparsers, "preprocess-arctic", init_preprocess_arctic_parser)
+  _add_parser_to(subparsers, "preprocess-libritts", init_preprocess_arctic_parser)
   _add_parser_to(subparsers, "preprocess-thchs", init_preprocess_thchs_parser)
   _add_parser_to(subparsers, "preprocess-thchs-kaldi", init_preprocess_thchs_kaldi_parser)
 

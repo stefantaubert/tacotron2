@@ -416,6 +416,12 @@ Following setting to prevent that autoimports do not include "src." prefix [see]
 }
 ```
 
+Install Praat:
+
+```sh
+sudo apt-get install praat
+```
+
 ### Requirements
 
 - `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)

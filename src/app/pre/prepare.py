@@ -30,12 +30,6 @@ _prepared_symbols_json = "symbols.json"
 _prepared_accents_json = "accents.json"
 
 
-def get_available_text_names(prep_dir: str) -> List[str]:
-  assert os.path.isdir(prep_dir)
-  _, text_names, _ = next(os.walk(prep_dir))
-  return text_names
-
-
 def get_prepared_dir(base_dir: str, prep_name: str, create: bool = False):
   return get_subdir(_get_prepared_root_dir(base_dir, create), prep_name, create)
 

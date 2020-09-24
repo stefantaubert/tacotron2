@@ -118,6 +118,7 @@ def get_prepared_data(ds_name: str, ds_data: DsDataList, speaker_names: List[Tup
   new_index = 0
   for speaker_name, new_speaker_id in speaker_names:
     for ds_entry in ds_data.items():
+      # TODO maybe compare speaker id to remove the speakername from DsData
       if ds_entry.get_speaker_name() == speaker_name:
         prep_data = map_to_prepared_data(
           ds_name=ds_name,

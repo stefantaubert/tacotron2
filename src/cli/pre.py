@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
-from src.app.pre.ds import (preprocess_ljs, preprocess_thchs,
+from src.app.pre.ds import (preprocess_arctic, preprocess_libritts,
+                            preprocess_ljs, preprocess_thchs,
                             preprocess_thchs_kaldi)
 from src.app.pre.inference import (accent_apply, accent_set, add_text,
                                    ipa_convert_text, map_text,
@@ -30,6 +31,20 @@ def init_preprocess_ljs_parser(parser: ArgumentParser):
   parser.add_argument('--auto_dl', action="store_true")
   parser.add_argument('--ds_name', type=str, required=True, default='ljs')
   return preprocess_ljs
+
+
+def init_preprocess_arctic_parser(parser: ArgumentParser):
+  parser.add_argument('--path', type=str, required=True, help='L2 Arctic dataset directory')
+  parser.add_argument('--auto_dl', action="store_true")
+  parser.add_argument('--ds_name', type=str, required=True, default='arctic')
+  return preprocess_arctic
+
+
+def init_preprocess_libritts_parser(parser: ArgumentParser):
+  parser.add_argument('--path', type=str, required=True, help='LibriTTS dataset directory')
+  parser.add_argument('--auto_dl', action="store_true")
+  parser.add_argument('--ds_name', type=str, required=True, default='libritts')
+  return preprocess_libritts
 
 
 def init_preprocess_thchs_kaldi_parser(parser: ArgumentParser):

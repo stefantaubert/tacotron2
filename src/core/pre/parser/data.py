@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from src.core.common.gender import Gender
 from typing import List
 
 from src.core.common.language import Language
@@ -13,6 +14,7 @@ class PreData:
   wav_path: str
   symbols: List[str]
   accents: List[str]
+  gender: Gender
   lang: Language
 
 class PreDataList(GenericList[PreData]):

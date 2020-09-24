@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 import tensorflow as tf
 
+from src.core.common.utils import get_filenames
+
 PYTORCH_EXT = ".pt"
 T = TypeVar('T')
 
@@ -42,8 +44,7 @@ def get_last_checkpoint(checkpoint_dir: str) -> Tuple[str, int]:
 
 
 def get_all_checkpoint_iterations(checkpoint_dir: str) -> List[int]:
-  assert os.path.isdir(checkpoint_dir)
-  _, _, filenames = next(os.walk(checkpoint_dir))
+  filenames = get_filenames(checkpoint_dir)
   checkpoints_str = [get_pytorch_basename(x)
                      for x in filenames if is_pytorch_file(x)]
   checkpoints = list(sorted(list(map(int, checkpoints_str))))
