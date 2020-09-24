@@ -35,7 +35,7 @@ def create_hparams(n_speakers: int, n_symbols: int, n_accents: int, verbose: boo
     ################################
     n_mel_channels=80,
     sampling_rate=22050,
-    # next 5 occure in mel calculation only
+    # next 5 occur in mel calculation only
     filter_length=1024,
     hop_length=256,
     win_length=1024,

@@ -284,6 +284,7 @@ class WaveGlow(torch.nn.Module):
 
   @staticmethod
   def remove_weightnorm(model):
+    # see: zotero://select/library/items/KIY65PZJ
     waveglow = model
     for wnet in waveglow.WN:
       wnet.start = torch.nn.utils.remove_weight_norm(wnet.start)
