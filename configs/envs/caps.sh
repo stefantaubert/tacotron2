@@ -13,3 +13,9 @@ export ljs_data="$datasets_dir/LJSpeech-1.1"
 
 # optional
 export thchs_data="$datasets_dir/thchs_wav"
+
+# optional
+export arctic_data="$datasets_dir/l2arctic"
+
+# optional
+export lbritts_data="$datasets_dir/libriTTS"

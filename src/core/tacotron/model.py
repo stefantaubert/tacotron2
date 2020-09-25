@@ -633,7 +633,8 @@ class Tacotron2(nn.Module):
     self.speakers_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
     torch.nn.init.xavier_uniform_(self.speakers_embedding.weight)
 
-    # TODO: insert accent embedding here
+    #self.accent_embedding = nn.Embedding(hparams.n_accents, hparams.accents_embedding_dim)
+    # torch.nn.init.xavier_uniform_(self.accent_embedding.weight)
 
     self.encoder = Encoder(hparams)
     self.decoder = Decoder(hparams, logger)

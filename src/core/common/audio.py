@@ -194,7 +194,7 @@ def normalize_file(in_path, out_path):
   write(filename=out_path, rate=sampling_rate, data=wav)
 
 
-def normalize_wav(wav):
+def normalize_wav(wav: np.ndarray):
   if wav.dtype == np.int16 and np.min(wav) == get_min_value(np.int16):
     return wav
   elif wav.dtype == np.int32 and np.min(wav) == get_min_value(np.int32):
@@ -293,6 +293,7 @@ def get_wav_tensor_segment(wav_tensor: torch.FloatTensor, segment_length: int) -
 
 
 if __name__ == "__main__":
+  a, b = read("/datasets/l2arctic/suitcase_corpus/wav/tlv.wav")
   normalize_file("/datasets/thchs_wav/wav/train/A2/A2_21.wav", "/tmp/A2_21.wav")
   import tempfile
   dest = tempfile.mktemp("-A13_224.wav")

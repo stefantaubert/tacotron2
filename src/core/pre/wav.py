@@ -3,7 +3,6 @@ calculate wav duration and sampling rate
 """
 
 import os
-import random
 from dataclasses import dataclass
 
 from scipy.io.wavfile import read
@@ -33,10 +32,6 @@ class WavDataList(GenericList[WavData]):
       if entry.entry_id == entry_id:
         return entry
     raise Exception(f"Entry {entry_id} not found.")
-
-  def get_random_entry(self) -> WavData:
-    idx = random.choice(range(len(self)))
-    return self[idx]
 
 
 def preprocess(data: DsDataList) -> WavDataList:
