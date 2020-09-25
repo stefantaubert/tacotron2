@@ -158,6 +158,6 @@ if __name__ == "__main__":
     base_dir="/datasets/models/taco2pt_v5",
     train_name="debug",
     text_name="north",
-    ds_speaker="ljs,1",
+    ds_speaker="arctic,BWC",
     analysis=True
   )

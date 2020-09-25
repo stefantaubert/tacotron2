@@ -35,8 +35,9 @@ from src.core.common.train import (SaveIterationSettings, check_save_it,
 from src.core.pre.merge_ds import PreparedData, PreparedDataList
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger
-from src.core.tacotron.model import (SPEAKER_EMBEDDINGS_LAYER_NAME,
-                                     SYMBOL_EMBEDDINGS_LAYER_NAME, Tacotron2,
+from src.core.tacotron.model import (ACCENT_EMBEDDING_LAYER_NAME,
+                                     SPEAKER_EMBEDDING_LAYER_NAME,
+                                     SYMBOL_EMBEDDING_LAYER_NAME, Tacotron2,
                                      get_model_symbol_id, get_model_symbol_ids,
                                      get_symbol_weights, update_weights)
 
@@ -72,7 +73,7 @@ class CheckpointTacotron():
     logger.info(f"Saved model to '{checkpoint_path}'.")
 
   def get_symbol_embedding_weights(self) -> torch.Tensor:
-    pretrained_weights = self.state_dict[SYMBOL_EMBEDDINGS_LAYER_NAME]
+    pretrained_weights = self.state_dict[SYMBOL_EMBEDDING_LAYER_NAME]
     return pretrained_weights
 
   @classmethod
@@ -466,11 +467,11 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
         logger=logger
       )
 
-      update_weights(model.embedding, pretrained_weights)
+      update_weights(model.symbol_embedding, pretrained_weights)
 
   logger.debug("Modelweights:")
-  logger.debug(f"is cuda: {model.embedding.weight.is_cuda}")
-  logger.debug(str(model.state_dict()[SYMBOL_EMBEDDINGS_LAYER_NAME]))
+  logger.debug(f"is cuda: {model.symbol_embedding.weight.is_cuda}")
+  logger.debug(str(model.state_dict()[SYMBOL_EMBEDDING_LAYER_NAME]))
 
   collate_fn = SymbolsMelCollate(
     n_frames_per_step=hparams.n_frames_per_step,
@@ -599,7 +600,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
 
 def update_symbol_embeddings(model: Tacotron2, weights: torch.Tensor, logger: Logger):
   logger.info("Loading pretrained mapped embeddings...")
-  update_weights(model.embedding, weights)
+  update_weights(model.symbol_embedding, weights)
 
 
 def model_and_optimizer_fresh(hparams, logger: Logger):
@@ -650,8 +651,9 @@ def warm_start_model(model: Tacotron2, warm_start_states: dict, ignore_layers: L
   logger.info("Loading states from pretrained model...")
   # The default value from HParams is [""], an empty list was not working.
   ignore_layers.extend([
-    SYMBOL_EMBEDDINGS_LAYER_NAME,
-    SPEAKER_EMBEDDINGS_LAYER_NAME
+    SYMBOL_EMBEDDING_LAYER_NAME,
+    ACCENT_EMBEDDING_LAYER_NAME,
+    SPEAKER_EMBEDDING_LAYER_NAME
   ])
 
   model_dict = {k: v for k, v in warm_start_states.items() if k not in ignore_layers}

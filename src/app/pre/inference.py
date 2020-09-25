@@ -2,7 +2,8 @@ import os
 
 from src.app.pre.io import (get_text_dir, load_text_symbol_converter,
                             save_text_symbol_converter)
-from src.app.pre.mapping import get_infer_map_path, infer_map_exists
+from src.app.pre.mapping import (create_or_update_inference_map,
+                                 get_infer_map_path, infer_map_exists)
 from src.app.pre.prepare import (get_prepared_dir, load_prep_accents_ids,
                                  load_prep_symbol_converter)
 from src.app.utils import prepare_logger
@@ -239,7 +240,7 @@ if __name__ == "__main__":
   if mode == 1:
     add_text(
       base_dir="/datasets/models/taco2pt_v5",
-      prep_name="thchs_ljs",
+      prep_name="arctic_ipa",
       text_name="north",
       filepath="examples/en/north.txt",
       lang=Language.ENG,
@@ -247,33 +248,45 @@ if __name__ == "__main__":
 
     normalize_text(
       base_dir="/datasets/models/taco2pt_v5",
-      prep_name="thchs_ljs",
+      prep_name="arctic_ipa",
       text_name="north",
+    )
+
+    accent_set(
+      base_dir="/datasets/models/taco2pt_v5",
+      prep_name="arctic_ipa",
+      text_name="north",
+      accent="Chinese-BWC"
     )
 
     ipa_convert_text(
       base_dir="/datasets/models/taco2pt_v5",
-      prep_name="thchs_ljs",
+      prep_name="arctic_ipa",
       text_name="north",
+    )
+
+    create_or_update_inference_map(
+      base_dir="/datasets/models/taco2pt_v5",
+      prep_name="arctic_ipa",
     )
 
     # map_text(
     #   base_dir="/datasets/models/taco2pt_v5",
-    #   prep_name="thchs_ljs",
+    #   prep_name="arctic_ipa",
     #   text_name="north",
     #   symbols_map="",
     # )
 
     map_to_prep_symbols(
       base_dir="/datasets/models/taco2pt_v5",
-      prep_name="thchs_ljs",
+      prep_name="arctic_ipa",
       text_name="north"
     )
 
   elif mode == 2:
     accent_apply(
       base_dir="/datasets/models/taco2pt_v5",
-      prep_name="thchs_ljs",
+      prep_name="arctic_ipa",
       text_name="north",
     )
   elif mode == 3:

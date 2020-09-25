@@ -30,6 +30,12 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 ```
 
+and ensure you have an updated screen:
+
+```sh
+sudo apt upgrade screen
+```
+
 ### Locally with remote Server
 
 Serveraddress for example `joedoe@example.com`.

@@ -48,7 +48,7 @@ python -m src.cli.runner preprocess-mels \
 python -m src.cli.runner prepare-ds \
   --prep_name="arctic_ipa" \
   --ds_speakers="arctic,all" \
-  --ds_text_audio="arctic,ipa_norm,22050Hz"
+  --ds_text_audio="arctic,ipa_norm,44100Hz"
 
 # Preprocessing LJ-Speech
 
