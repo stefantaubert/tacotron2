@@ -55,13 +55,13 @@ def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
 
     for wav, textgrid, transcript in zip(wavs, textgrids, transcripts):
       text_en = read_text(transcript)
-      final_text = f"{text_en}."
+      text_en = f"{text_en}."
       symbols = text_to_symbols(text_en, lang)
 
       entry = PreData(
         name=get_basename(wav),
         speaker_name=speaker_name,
-        text=final_text,
+        text=text_en,
         wav_path=wav,
         symbols=symbols,
         accents=[accent_name] * len(symbols),
@@ -71,13 +71,13 @@ def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
 
       entries.append(entry)
 
-  entries.sort(key=sort_l2arctic, reverse=False)
+  entries.sort(key=sort_arctic, reverse=False)
   logger.info(f"Parsed {len(entries)} entries from {len(speakers_dict)} speakers.")
 
   return entries
 
 
-def sort_l2arctic(entry: PreData) -> str:
+def sort_arctic(entry: PreData) -> str:
   return entry.speaker_name, entry.name
 
 

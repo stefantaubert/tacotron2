@@ -11,9 +11,9 @@ from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.utils import (GenericList,
                                    remove_duplicates_list_orderpreserving)
+from src.core.pre.parser.arctic import download as dl_arctic
+from src.core.pre.parser.arctic import parse as parse_arctic
 from src.core.pre.parser.data import PreData, PreDataList
-from src.core.pre.parser.l2arctic import download as dl_arctic
-from src.core.pre.parser.l2arctic import parse as parse_arctic
 from src.core.pre.parser.libritts import download as dl_libritts
 from src.core.pre.parser.libritts import parse as parse_libritts
 from src.core.pre.parser.ljs import download as dl_ljs
@@ -36,7 +36,6 @@ class DsData:
   wav_path: str
   lang: Language
   gender: Gender
-
 
   def get_speaker_name(self):
     return str(self.speaker_name)
