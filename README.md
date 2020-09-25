@@ -28,6 +28,7 @@ Check with `locale` which setting you have and if `en_US.UTF-8` is not in the va
 ```sh
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
+# note: execute before before you open a screen
 ```
 
 and ensure you have an updated screen:

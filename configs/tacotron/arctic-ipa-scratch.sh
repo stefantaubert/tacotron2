@@ -68,5 +68,4 @@ python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
   --ds_speaker=$ds_speaker \
   --text_name=$text_name \
-  --analysis \
-  --custom_checkpoint=0
+  --analysis
