@@ -57,5 +57,6 @@ def init_inference_parser(parser: ArgumentParser):
 
 
 def init_download_parser(parser: ArgumentParser):
-  parser.add_argument('--train_name', type=str, default="pretrained")
+  parser.add_argument('--train_name', type=str, default="pretrained_v3")
+  parser.set_defaults(version=3)
   return dl_pretrained

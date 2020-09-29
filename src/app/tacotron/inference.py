@@ -129,7 +129,9 @@ def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveg
     denoiser_strength=denoiser_strength,
     sentences=infer_sents,
     custom_taco_hparams=None,
-    custom_wg_hparams=None,
+    custom_wg_hparams={
+      "sampling_rate": 44100
+    },
     logger=logger
   )
 

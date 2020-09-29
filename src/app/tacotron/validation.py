@@ -70,7 +70,9 @@ def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, e
     entry=entry,
     logger=logger,
     custom_taco_hparams=None,
-    custom_wg_hparams=None
+    custom_wg_hparams={
+      "sampling_rate": 44100
+    }
   )
 
   orig_mel = get_mel(entry.wav_path)
