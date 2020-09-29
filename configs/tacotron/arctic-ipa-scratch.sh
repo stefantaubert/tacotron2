@@ -69,3 +69,4 @@ python -m src.cli.runner tacotron-infer \
   --ds_speaker=$ds_speaker \
   --text_name=$text_name \
   --analysis
+  
