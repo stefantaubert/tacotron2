@@ -75,7 +75,9 @@ def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, e
     }
   )
 
-  orig_mel = get_mel(entry.wav_path)
+  orig_mel = get_mel(entry.wav_path, custom_hparams={
+    "sampling_rate": 44100
+  })
   save_val_orig_wav(val_dir, entry.wav_path)
   save_val_orig_plot(val_dir, orig_mel)
 

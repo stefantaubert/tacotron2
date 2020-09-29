@@ -1,3 +1,5 @@
+from typing import Dict, Optional
+
 import numpy as np
 import tensorflow as tf
 import torch
@@ -5,6 +7,7 @@ from librosa.filters import mel as librosa_mel_fn
 
 from src.core.common.audio import wav_to_float32_tensor
 from src.core.common.stft import STFT
+from src.core.common.train import overwrite_custom_hparams
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
@@ -48,8 +51,9 @@ def create_hparams(verbose: bool = False):
   return hparams
 
 
-def get_mel(wav_path: str) -> np.ndarray:
+def get_mel(wav_path: str, custom_hparams: Optional[Dict[str, str]]) -> np.ndarray:
   hparams = create_hparams()
+  overwrite_custom_hparams(hparams, custom_hparams)
   taco_stft = TacotronSTFT.fromhparams(hparams)
   orig_mel = taco_stft.get_mel_tensor_from_file(wav_path).numpy()
   return orig_mel
