@@ -466,10 +466,10 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
         logger=logger
       )
 
-      update_weights(model.symbol_embedding, pretrained_weights)
+      update_weights(model.embedding, pretrained_weights)
 
   logger.debug("Modelweights:")
-  logger.debug(f"is cuda: {model.symbol_embedding.weight.is_cuda}")
+  logger.debug(f"is cuda: {model.embedding.weight.is_cuda}")
   logger.debug(str(model.state_dict()[SYMBOL_EMBEDDING_LAYER_NAME]))
 
   collate_fn = SymbolsMelCollate(
