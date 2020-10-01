@@ -1,13 +1,13 @@
 from typing import Dict, Optional
 
 import numpy as np
-import tensorflow as tf
 import torch
 from librosa.filters import mel as librosa_mel_fn
 
 from src.core.common.audio import wav_to_float32_tensor
 from src.core.common.stft import STFT
 from src.core.common.train import overwrite_custom_hparams
+from src.core.tacotron.hparams import AudioHParams
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
@@ -28,32 +28,9 @@ def dynamic_range_decompression(x, C=1):
   return torch.exp(x) / C
 
 
-def create_hparams(verbose: bool = False):
-  """Create model hyperparameters. Parse nondefault from given string."""
-
-  hparams = tf.contrib.training.HParams(
-    n_mel_channels=80,
-    sampling_rate=22050,
-    filter_length=1024,
-    hop_length=256,
-    win_length=1024,
-    mel_fmin=0.0,
-    mel_fmax=8000.0,
-  )
-
-  # if hparams_string:
-  #   tf.logging.info('Parsing command line hparams: %s', hparams_string)
-  #   hparams.parse(hparams_string)
-
-  if verbose:
-    tf.logging.info('Final parsed hparams: %s', hparams.values())
-
-  return hparams
-
-
 def get_mel(wav_path: str, custom_hparams: Optional[Dict[str, str]]) -> np.ndarray:
-  hparams = create_hparams()
-  overwrite_custom_hparams(hparams, custom_hparams)
+  hparams = AudioHParams()
+  hparams = overwrite_custom_hparams(hparams, custom_hparams)
   taco_stft = TacotronSTFT.fromhparams(hparams)
   orig_mel = taco_stft.get_mel_tensor_from_file(wav_path).numpy()
   return orig_mel
@@ -72,7 +49,7 @@ class TacotronSTFT(torch.nn.Module):
     self.register_buffer('mel_basis', mel_basis)
 
   @classmethod
-  def fromhparams(cls, hparams: tf.contrib.training.HParams):
+  def fromhparams(cls, hparams: AudioHParams):
     return cls(
       filter_length=hparams.filter_length,
       hop_length=hparams.hop_length,
@@ -114,8 +91,7 @@ class TacotronSTFT(torch.nn.Module):
     wav_tensor, sr = wav_to_float32_tensor(wav_path)
 
     if sr != self.sampling_rate:
-      raise ValueError("{} {} SR doesn't match target {} SR".format(
-        wav_path, sr, self.sampling_rate))
+      raise ValueError(f"{wav_path} {sr} SR doesn't match target {self.sampling_rate} SR")
 
     return self.get_mel_tensor(wav_tensor)
 

@@ -10,6 +10,7 @@ from torch.nn import functional as F
 from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.layers import ConvNorm, LinearNorm
 from src.core.common.utils import get_mask_from_lengths, to_gpu
+from src.core.tacotron.hparams import HParams
 
 SYMBOL_EMBEDDING_LAYER_NAME = "embedding.weight"
 SPEAKER_EMBEDDING_LAYER_NAME = "speakers_embedding.weight"
@@ -83,7 +84,7 @@ def get_symbol_id(model_symbol_id: int, n_symbols: int, accents_use_own_symbols:
 
 
 class LocationLayer(nn.Module):
-  def __init__(self, hparams):
+  def __init__(self, hparams: HParams):
     super(LocationLayer, self).__init__()
     self.location_conv = ConvNorm(
       in_channels=2,
@@ -110,7 +111,7 @@ class LocationLayer(nn.Module):
 
 
 class Attention(nn.Module):
-  def __init__(self, hparams):
+  def __init__(self, hparams: HParams):
     super(Attention, self).__init__()
     self.query_layer = LinearNorm(
       in_dim=hparams.attention_rnn_dim,
@@ -181,7 +182,7 @@ class Attention(nn.Module):
 
 
 class Prenet(nn.Module):
-  def __init__(self, hparams):
+  def __init__(self, hparams: HParams):
     super(Prenet, self).__init__()
     self.layers = nn.ModuleList([
       LinearNorm(
@@ -209,7 +210,7 @@ class Postnet(nn.Module):
     - Five 1-d convolution with 512 channels and kernel size 5
   """
 
-  def __init__(self, hparams):
+  def __init__(self, hparams: HParams):
     super(Postnet, self).__init__()
     self.convolutions = nn.ModuleList()
 
@@ -279,7 +280,7 @@ class Encoder(nn.Module):
     - Bidirectional LSTM
   """
 
-  def __init__(self, hparams):
+  def __init__(self, hparams: HParams):
     super(Encoder, self).__init__()
 
     convolutions = []
@@ -335,7 +336,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-  def __init__(self, hparams, logger: Logger):
+  def __init__(self, hparams: HParams, logger: Logger):
     super(Decoder, self).__init__()
     self.logger = logger
     self.n_mel_channels = hparams.n_mel_channels
@@ -575,7 +576,7 @@ class Decoder(nn.Module):
     return self.parse_decoder_outputs(mel_outputs, gate_outputs, alignments)
 
 
-def get_symbol_weights(hparams) -> torch.Tensor:
+def get_symbol_weights(hparams: HParams) -> torch.Tensor:
   model_symbols_count = get_model_symbols_count(
     hparams.n_symbols,
     hparams.n_accents,
@@ -606,7 +607,7 @@ def weights_to_embedding(weights: torch.Tensor) -> nn.Embedding:
 
 
 class Tacotron2(nn.Module):
-  def __init__(self, hparams, logger: Logger):
+  def __init__(self, hparams: HParams, logger: Logger):
     super(Tacotron2, self).__init__()
     model_symbols_count = get_model_symbols_count(
       hparams.n_symbols,

@@ -11,8 +11,7 @@ from src.core.common.train import (check_is_first, check_is_last,
                                    get_continue_batch_iteration,
                                    get_continue_epoch, get_value_in_type,
                                    iteration_to_batch_iteration,
-                                   iteration_to_epoch,
-                                   overwrite_custom_hparams, skip_batch)
+                                   iteration_to_epoch, skip_batch)
 
 
 class DummyDataset(Dataset):
@@ -53,38 +52,55 @@ class UnitTests(unittest.TestCase):
     self.assertTrue(isinstance(res, list))
     self.assertEqual(["2"], res)
 
-  def test_overwrite_custom_hparams(self):
-    hparams = tf.contrib.training.HParams(
-      epochs=500,
-      seed=1234,
-    )
+  # NOTE: I replaced tf hparams with dataclasses
+  # def hp_raw(hparams) -> Dict[str, Any]:
+  #   return hparams.values()
 
-    custom_hparams = {
-      "epochs": "10",
-      "learning_rate": "0.5"
-    }
+  # def hp_from_raw(raw: Dict[str, Any]) -> tf.contrib.training.HParams:
+  #   return tf.contrib.training.HParams(**raw)
 
-    overwrite_custom_hparams(hparams, custom_hparams)
+  # def overwrite_custom_tf_hparams(hparams: Any, custom_hparams: Optional[Dict[str, str]]) -> None:
+  #   # Note: This method does no type conversion from str.
+  #   # hparams.override_from_dict(custom_hparams)
+  #   # E.g.: ValueError: Could not cast hparam 'epochs' of type '<class 'int'>' from value '10'
+  #   if custom_hparams is not None:
+  #     for param_name, current_value in hparams.values().items():
+  #       if param_name in custom_hparams.keys():
+  #         new_value = get_value_in_type(current_value, custom_hparams[param_name])
+  #         hparams.set_hparam(param_name, new_value)
 
-    self.assertEqual(10, hparams.epochs)
-    self.assertTrue(isinstance(hparams.epochs, int))
-    self.assertEqual(1234, hparams.seed)
-    self.assertTrue(isinstance(hparams.seed, int))
+  # def test_overwrite_custom_hparams(self):
+  #   hparams = tf.contrib.training.HParams(
+  #     epochs=500,
+  #     seed=1234,
+  #   )
 
-  def test_overwrite_custom_hparams_none__does_nothing(self):
-    hparams = tf.contrib.training.HParams(
-      epochs=500,
-      seed=1234,
-    )
+  #   custom_hparams = {
+  #     "epochs": "10",
+  #     "learning_rate": "0.5"
+  #   }
 
-    custom_hparams = None
+  #   overwrite_custom_tf_hparams(hparams, custom_hparams)
 
-    overwrite_custom_hparams(hparams, custom_hparams)
+  #   self.assertEqual(10, hparams.epochs)
+  #   self.assertTrue(isinstance(hparams.epochs, int))
+  #   self.assertEqual(1234, hparams.seed)
+  #   self.assertTrue(isinstance(hparams.seed, int))
 
-    self.assertEqual(500, hparams.epochs)
-    self.assertTrue(isinstance(hparams.epochs, int))
-    self.assertEqual(1234, hparams.seed)
-    self.assertTrue(isinstance(hparams.seed, int))
+  # def test_overwrite_custom_hparams_none__does_nothing(self):
+  #   hparams = tf.contrib.training.HParams(
+  #     epochs=500,
+  #     seed=1234,
+  #   )
+
+  #   custom_hparams = None
+
+  #   overwrite_custom_tf_hparams(hparams, custom_hparams)
+
+  #   self.assertEqual(500, hparams.epochs)
+  #   self.assertTrue(isinstance(hparams.epochs, int))
+  #   self.assertEqual(1234, hparams.seed)
+  #   self.assertTrue(isinstance(hparams.seed, int))
 
   def test_check_is_first__it0_is_false(self):
     res = check_is_first(iteration=0)

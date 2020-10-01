@@ -1,64 +1,53 @@
-import tensorflow as tf
+from dataclasses import dataclass
 
 
-def create_hparams(verbose: bool = False) -> tf.contrib.training.HParams:
-  """Create model hyperparameters. Parse nondefault from given string."""
+@dataclass
+class ExperimentHParams():
+  fp16_run = False
+  epochs: int = 100000
+  iters_per_checkpoint: int = 2000
+  epochs_per_checkpoint: int = 1
+  seed: int = 1234
+  # is not usefull
+  cache_wavs: bool = False
+  # # dist_config
+  # dist_backend="nccl",
+  # dist_url="tcp://localhost:54321",
 
-  hparams = tf.contrib.training.HParams(
-    ################################
-    # Experiment Parameters    #
-    ################################
-    fp16_run=False,
-    epochs=100000,
-    iters_per_checkpoint=2000,
-    epochs_per_checkpoint=1,
-    seed=1234,
-    # is not usefull
-    cache_wavs=False,
 
-    # # dist_config
-    # dist_backend="nccl",
-    # dist_url="tcp://localhost:54321",
+@dataclass
+class AudioHParams():
+  segment_length: int = 16000
+  sampling_rate: int = 22050
+  # next 5 occur in mel calculation only
+  filter_length: int = 1024
+  hop_length: int = 256
+  win_length: int = 1024
+  mel_fmin: float = 0.0
+  mel_fmax: float = 8000.0
 
-    ################################
-    # Audio Parameters       #
-    ################################
-    segment_length=16000,
-    sampling_rate=22050,
-    filter_length=1024,
-    hop_length=256,
-    win_length=1024,
-    mel_fmin=0.0,
-    mel_fmax=8000.0,
 
-    ################################
-    # Model Parameters       #
-    ################################
-    n_mel_channels=80,
-    n_flows=12,
-    n_group=8,
-    n_early_every=4,
-    n_early_size=2,
+@dataclass
+class ModelHParams():
+  n_mel_channels: int = 80
+  n_flows: int = 12
+  n_group: int = 8
+  n_early_every: int = 4
+  n_early_size: int = 2
 
-    # WN_config
-    n_layers=8,
-    n_channels=256,
-    kernel_size=3,
+  # WN_config
+  n_layers: int = 8
+  n_channels: int = 256
+  kernel_size: int = 3
 
-    ################################
-    # Optimization Hyperparameters #
-    ################################
-    learning_rate=1e-4,
-    sigma=1.0,
-    batch_size=12
-  )
 
-  # if hparams_string is not None:
-  #   if verbose:
-  #     tf.logging.info(f"Parsing command line hparams: {hparams_string}")
-  #   hparams.parse(hparams_string)
+@dataclass
+class OptimizerHParams():
+  learning_rate = 1e-4
+  sigma = 1.0
+  batch_size: int = 1
 
-  if verbose:
-    tf.logging.info('Final parsed hparams: %s', hparams.values())
 
-  return hparams
+@dataclass
+class HParams(ExperimentHParams, AudioHParams, ModelHParams, OptimizerHParams):
+  pass

@@ -6,7 +6,6 @@ from logging import Logger
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-import tensorflow as tf
 import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
@@ -18,10 +17,10 @@ from src.core.common.train import (SaveIterationSettings, check_save_it,
                                    get_continue_epoch,
                                    get_formatted_current_total,
                                    get_last_checkpoint, get_pytorch_filename,
-                                   hp_from_raw, hp_raw,
-                                   overwrite_custom_hparams, skip_batch)
+                                   log_hparams, overwrite_custom_hparams,
+                                   skip_batch)
 from src.core.pre.merge_ds import PreparedDataList
-from src.core.waveglow.hparams import create_hparams
+from src.core.waveglow.hparams import HParams
 from src.core.waveglow.logger import WaveglowLogger
 from src.core.waveglow.model import WaveGlow, WaveGlowLoss
 
@@ -35,8 +34,8 @@ class CheckpointWaveglow():
   iteration: int
   hparams: dict
 
-  def get_hparams(self) -> tf.contrib.training.HParams:
-    return hp_from_raw(self.hparams)
+  def get_hparams(self) -> HParams:
+    return HParams(**self.hparams)
 
   def save(self, checkpoint_path: str, logger: Logger):
     logger.info(f"Saving model at iteration {self.iteration}...")
@@ -60,7 +59,7 @@ class MelLoader(Dataset):
   spectrogram, audio pair.
   """
 
-  def __init__(self, prepare_ds_data: PreparedDataList, hparams, logger: Logger):
+  def __init__(self, prepare_ds_data: PreparedDataList, hparams: HParams, logger: Logger):
     self.taco_stft = TacotronSTFT.fromhparams(hparams)
     self.segment_length: int = hparams.segment_length
     self.sampling_rate: int = hparams.sampling_rate
@@ -109,7 +108,7 @@ class MelLoader(Dataset):
 # #=====END:   ADDED FOR DISTRIBUTED======
 
 
-def load_model(hparams, state_dict: Optional[dict]):
+def load_model(hparams: HParams, state_dict: Optional[dict]):
   model = WaveGlow(hparams)
   model = model.cuda()
 
@@ -119,7 +118,7 @@ def load_model(hparams, state_dict: Optional[dict]):
   return model
 
 
-def prepare_dataloaders(hparams, trainset: PreparedDataList, valset: PreparedDataList, logger: Logger):
+def prepare_dataloaders(hparams: HParams, trainset: PreparedDataList, valset: PreparedDataList, logger: Logger):
   logger.info(
     f"Duration trainset {trainset.get_total_duration_s() / 60:.2f}min / {trainset.get_total_duration_s() / 60 / 60:.2f}h")
   logger.info(
@@ -251,12 +250,11 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   if checkpoint is not None:
     hparams = checkpoint.get_hparams()
   else:
-    hparams = create_hparams()
+    hparams = HParams()
   # is it problematic to change the batch size?
-  overwrite_custom_hparams(hparams, custom_hparams)
+  hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
-  debug_logger.info('Final parsed hparams:')
-  debug_logger.info('\n'.join(str(hparams.values()).split(',')))
+  log_hparams(hparams, debug_logger)
 
   debug_logger.info("Distributed Run: {}".format(False))
   debug_logger.info("cuDNN Enabled: {}".format(torch.backends.cudnn.enabled))
@@ -408,7 +406,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
           optimizer=optimizer.state_dict(),
           learning_rate=hparams.learning_rate,
           iteration=iteration,
-          hparams=hp_raw(hparams),
+          hparams=asdict(hparams),
         )
 
         checkpoint_path = os.path.join(
@@ -421,7 +419,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   debug_logger.info(f'Finished training. Total duration: {duration_s / 60:.2f}min')
 
 
-def load_optimizer(model: WaveGlow, state_dict: Optional[dict], hparams):
+def load_optimizer(model: WaveGlow, state_dict: Optional[dict], hparams: HParams):
   # warn: use saved learning rate is ignored here
 
   optimizer = torch.optim.Adam(
@@ -435,7 +433,7 @@ def load_optimizer(model: WaveGlow, state_dict: Optional[dict], hparams):
   return optimizer
 
 
-def model_and_optimizer_fresh(hparams: Any, debug_logger: Logger):
+def model_and_optimizer_fresh(hparams: HParams, debug_logger: Logger):
   debug_logger.info("Starting new model...")
 
   model = load_model(hparams, None)
@@ -445,7 +443,7 @@ def model_and_optimizer_fresh(hparams: Any, debug_logger: Logger):
   return model, optimizer, current_iteration
 
 
-def model_and_optimizer_from_checkpoint(checkpoint: CheckpointWaveglow, hparams: Any, debug_logger: Logger) -> Tuple[WaveGlow, Any, int]:
+def model_and_optimizer_from_checkpoint(checkpoint: CheckpointWaveglow, hparams: HParams, debug_logger: Logger) -> Tuple[WaveGlow, Any, int]:
   debug_logger.info("Continuing training from checkpoint...")
 
   model = load_model(hparams, checkpoint.state_dict)

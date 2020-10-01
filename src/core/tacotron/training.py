@@ -10,7 +10,6 @@ from typing import OrderedDict as OrderedDictType
 from typing import Tuple
 
 import numpy as np
-import tensorflow as tf
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
@@ -29,11 +28,10 @@ from src.core.common.train import (SaveIterationSettings, check_save_it,
                                    get_checkpoint,
                                    get_continue_batch_iteration,
                                    get_continue_epoch,
-                                   get_formatted_current_total, hp_from_raw,
-                                   hp_raw, overwrite_custom_hparams,
-                                   skip_batch)
+                                   get_formatted_current_total, log_hparams,
+                                   overwrite_custom_hparams, skip_batch)
 from src.core.pre.merge_ds import PreparedData, PreparedDataList
-from src.core.tacotron.hparams import create_hparams
+from src.core.tacotron.hparams import HParams
 from src.core.tacotron.logger import Tacotron2Logger
 from src.core.tacotron.model import (SPEAKER_EMBEDDING_LAYER_NAME,
                                      SYMBOL_EMBEDDING_LAYER_NAME, Tacotron2,
@@ -62,8 +60,8 @@ class CheckpointTacotron():
   def get_speakers(self) -> SpeakersDict:
     return SpeakersDict.from_raw(self.speakers)
 
-  def get_hparams(self) -> tf.contrib.training.HParams:
-    return hp_from_raw(self.hparams)
+  def get_hparams(self) -> HParams:
+    return HParams(**self.hparams)
 
   def save(self, checkpoint_path: str, logger: Logger):
     logger.info(f"Saving model at iteration {self.iteration}...")
@@ -95,7 +93,7 @@ class SymbolsMelLoader(Dataset):
     3) computes mel-spectrograms from audio files.
   """
 
-  def __init__(self, prepare_ds_ms_data: PreparedDataList, hparams, logger: Logger):
+  def __init__(self, prepare_ds_ms_data: PreparedDataList, hparams: HParams, logger: Logger):
     data = prepare_ds_ms_data
 
     random.seed(hparams.seed)
@@ -268,7 +266,7 @@ class Tacotron2Loss(nn.Module):
     return mel_loss + gate_loss
 
 
-def prepare_valloader(hparams, collate_fn: SymbolsMelCollate, valset: PreparedDataList, logger: Logger) -> DataLoader:
+def prepare_valloader(hparams: HParams, collate_fn: SymbolsMelCollate, valset: PreparedDataList, logger: Logger) -> DataLoader:
   logger.info(
     f"Duration valset {valset.get_total_duration_s() / 60:.2f}min / {valset.get_total_duration_s() / 60 / 60:.2f}h")
 
@@ -291,7 +289,7 @@ def prepare_valloader(hparams, collate_fn: SymbolsMelCollate, valset: PreparedDa
   return val_loader
 
 
-def prepare_trainloader(hparams, collate_fn: SymbolsMelCollate, trainset: PreparedDataList, logger: Logger) -> DataLoader:
+def prepare_trainloader(hparams: HParams, collate_fn: SymbolsMelCollate, trainset: PreparedDataList, logger: Logger) -> DataLoader:
   # Get data, data loaders and collate function ready
   logger.info(
     f"Duration trainset {trainset.get_total_duration_s() / 60:.2f}min / {trainset.get_total_duration_s() / 60 / 60:.2f}h")
@@ -319,7 +317,7 @@ def prepare_trainloader(hparams, collate_fn: SymbolsMelCollate, trainset: Prepar
   return train_loader
 
 
-def load_model(hparams, state_dict: Optional[dict], logger: logging.Logger):
+def load_model(hparams: HParams, state_dict: Optional[dict], logger: logging.Logger):
   model = Tacotron2(hparams, logger).cuda()
   # if hparams.fp16_run:
   #   model.decoder.attention_layer.score_mask_value = finfo('float16').min
@@ -431,16 +429,19 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
   if checkpoint is not None:
     hparams = checkpoint.get_hparams()
   else:
-    hparams = create_hparams(
+    hparams = HParams(
       n_accents=len(accents),
       n_speakers=len(speakers),
       n_symbols=len(symbols)
     )
   # is it problematic to change the batch size?
-  overwrite_custom_hparams(hparams, custom_hparams)
+  hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
-  logger.info('Final parsed hparams:')
-  logger.info('\n'.join(str(hparams.values()).split(',')))
+  assert hparams.n_accents > 0
+  assert hparams.n_speakers > 0
+  assert hparams.n_symbols > 0
+
+  log_hparams(hparams, logger)
 
   torch.manual_seed(hparams.seed)
   torch.cuda.manual_seed(hparams.seed)
@@ -580,7 +581,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
           optimizer=optimizer.state_dict(),
           learning_rate=learning_rate,
           iteration=iteration,
-          hparams=hp_raw(hparams),
+          hparams=asdict(hparams),
           symbols=symbols.raw(),
           accents=accents.raw(),
           speakers=speakers.raw()
@@ -602,7 +603,7 @@ def update_symbol_embeddings(model: Tacotron2, weights: torch.Tensor, logger: Lo
   update_weights(model.symbol_embedding, weights)
 
 
-def model_and_optimizer_fresh(hparams, logger: Logger):
+def model_and_optimizer_fresh(hparams: HParams, logger: Logger):
   logger.info("Starting new model...")
   model = load_model(hparams, None, logger)
 
@@ -627,7 +628,7 @@ def model_and_optimizer_fresh(hparams, logger: Logger):
   return model, optimizer, hparams.learning_rate, current_iteration
 
 
-def model_and_optimizer_from_checkpoint(checkpoint: CheckpointTacotron, updated_hparams, logger: Logger):
+def model_and_optimizer_from_checkpoint(checkpoint: CheckpointTacotron, updated_hparams: HParams, logger: Logger):
   logger.info("Continuing training from checkpoint...")
   learning_rate: float = updated_hparams.learning_rate
   if updated_hparams.use_saved_learning_rate:
@@ -701,7 +702,7 @@ def map_weights(model_symbols_id_map: OrderedDictType[int, int], model_weights, 
     model_weights[map_to_model_symbol_id] = trained_weights[map_from_symbol_id]
 
 
-def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, custom_mapping: Optional[SymbolsMap], hparams, logger: Logger) -> torch.Tensor:
+def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: torch.Tensor, trained_symbols: SymbolIdDict, custom_mapping: Optional[SymbolsMap], hparams: HParams, logger: Logger) -> torch.Tensor:
   symbols_match_not_model = trained_weights.shape[0] != len(trained_symbols)
   if symbols_match_not_model:
     logger.exception(
@@ -749,7 +750,7 @@ def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: torc
   return model_weights
 
 
-def eval_checkpoints(custom_hparams: Optional[str], checkpoint_dir: str, select: int, min_it: int, max_it: int, n_symbols: int, n_accents: int, n_speakers: int, valset: PreparedDataList, logger: Logger):
+def eval_checkpoints(custom_hparams: Optional[Dict[str, str]], checkpoint_dir: str, select: int, min_it: int, max_it: int, n_symbols: int, n_accents: int, n_speakers: int, valset: PreparedDataList, logger: Logger):
   its = get_all_checkpoint_iterations(checkpoint_dir)
   logger.info(f"Available iterations {its}")
   filtered_its = filter_checkpoints(its, select, min_it, max_it)
@@ -759,7 +760,13 @@ def eval_checkpoints(custom_hparams: Optional[str], checkpoint_dir: str, select:
     logger.info("None selected. Exiting.")
     return
 
-  hparams = create_hparams(n_speakers, n_symbols, n_accents, custom_hparams)
+  hparams = HParams(
+    n_speakers=n_speakers,
+    n_symbols=n_symbols,
+    n_accents=n_accents
+  )
+
+  hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
   collate_fn = SymbolsMelCollate(
     hparams.n_frames_per_step,

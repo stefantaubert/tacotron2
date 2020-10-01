@@ -1,22 +1,14 @@
 import os
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
+from logging import Logger
 from math import floor
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
-
-import tensorflow as tf
+from typing import Dict, List, Optional, Tuple, TypeVar, Union
 
 from src.core.common.utils import get_filenames
 
 PYTORCH_EXT = ".pt"
-T = TypeVar('T')
 
-
-def hp_raw(hparams) -> Dict[str, Any]:
-  return hparams.values()
-
-
-def hp_from_raw(raw: Dict[str, Any]) -> tf.contrib.training.HParams:
-  return tf.contrib.training.HParams(**raw)
+_T = TypeVar("_T")
 
 
 def get_pytorch_filename(name: Union[str, int]) -> str:
@@ -63,21 +55,46 @@ def get_custom_or_last_checkpoint(checkpoint_dir: str, custom_iteration: Optiona
   return get_checkpoint(checkpoint_dir, custom_iteration) if custom_iteration is not None else get_last_checkpoint(checkpoint_dir)
 
 
-def get_value_in_type(old_value: T, new_value: str) -> T:
+def get_value_in_type(old_value: _T, new_value: str) -> _T:
   old_type = type(old_value)
   new_value_with_original_type = old_type(new_value)
   return new_value_with_original_type
 
 
-def overwrite_custom_hparams(hparams: Any, custom_hparams: Optional[Dict[str, str]]) -> None:
-  # Note: This method does no type conversion from str.
-  # hparams.override_from_dict(custom_hparams)
-  # E.g.: ValueError: Could not cast hparam 'epochs' of type '<class 'int'>' from value '10'
-  if custom_hparams is not None:
-    for param_name, current_value in hparams.values().items():
-      if param_name in custom_hparams.keys():
-        new_value = get_value_in_type(current_value, custom_hparams[param_name])
-        hparams.set_hparam(param_name, new_value)
+def check_has_unknown_params(params: Dict[str, str], hparams: _T) -> bool:
+  available_params = asdict(hparams)
+  for custom_hparam in params.keys():
+    if custom_hparam not in available_params.keys():
+      return True
+  return False
+
+
+def set_types_according_to_dataclass(params: Dict[str, str], hparams: _T) -> None:
+  available_params = asdict(hparams)
+  for custom_hparam, new_value in params.items():
+    assert custom_hparam in available_params.keys()
+    hparam_value = available_params[custom_hparam]
+    params[custom_hparam] = get_value_in_type(hparam_value, new_value)
+
+
+def overwrite_custom_hparams(hparams_dc: _T, custom_hparams: Optional[Dict[str, str]]) -> _T:
+  if custom_hparams is None:
+    return hparams_dc
+
+  if check_has_unknown_params(custom_hparams, hparams_dc):
+    raise Exception()
+
+  set_types_according_to_dataclass(custom_hparams, hparams_dc)
+
+  result = replace(hparams_dc, **custom_hparams)
+  return result
+
+
+def log_hparams(hparams: _T, logger: Logger):
+  logger.info("=== HParams ===")
+  for param, val in asdict(hparams).items():
+    logger.info(f" {param} = {val}")
+  logger.info("===============")
 
 
 def get_formatted_current_total(current: int, total: int) -> str:

@@ -3,11 +3,11 @@ import os
 import shutil
 import sys
 import tempfile
+from dataclasses import asdict
 
 import torch
 
-from src.core.common.train import hp_raw
-from src.core.waveglow.hparams import create_hparams
+from src.core.waveglow.hparams import HParams
 from src.core.waveglow.train import CheckpointWaveglow
 
 
@@ -30,7 +30,7 @@ def _convert_core(source: str, destination: str):
   sys.path.append("src/core/waveglow/converter/")
   checkpoint_dict = torch.load(source, map_location='cpu')
 
-  hparams = create_hparams()
+  hparams = HParams()
 
   iteration = 1
   if "iteration" in checkpoint_dict.keys():
@@ -50,7 +50,7 @@ def _convert_core(source: str, destination: str):
     state_dict = model.state_dict()
 
   res = CheckpointWaveglow(
-    hparams=hp_raw(hparams),
+    hparams=asdict(hparams),
     iteration=iteration,
     learning_rate=learning_rate,
     optimizer=optimizer,

@@ -5,10 +5,11 @@ output: mel data
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from src.core.common.taco_stft import TacotronSTFT, create_hparams
+from src.core.common.taco_stft import TacotronSTFT
 from src.core.common.train import overwrite_custom_hparams
 from src.core.common.utils import GenericList
 from src.core.pre.wav import WavDataList
+from src.core.tacotron.hparams import AudioHParams
 
 
 @dataclass()
@@ -24,9 +25,8 @@ class MelDataList(GenericList[MelData]):
 
 def process(data: WavDataList, custom_hparams: Optional[Dict[str, str]], save_callback: Any) -> MelDataList:
   result = MelDataList()
-  hparams = create_hparams()
-  overwrite_custom_hparams(hparams, custom_hparams)
-
+  hparams = AudioHParams()
+  hparams = overwrite_custom_hparams(hparams, custom_hparams)
   mel_parser = TacotronSTFT.fromhparams(hparams)
 
   for wav_entry in data.items(True):

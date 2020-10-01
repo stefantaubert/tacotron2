@@ -132,7 +132,7 @@ def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict
 
 
 if __name__ == "__main__":
-  mode = 0
+  mode = 1
   if mode == 0:
     train(
       base_dir="/datasets/models/taco2pt_v5",
@@ -151,7 +151,7 @@ if __name__ == "__main__":
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       custom_hparams={
-        "iters_per_checkpoint": 100,
+        "iters_per_checkpoint": 5,
       }
     )
 

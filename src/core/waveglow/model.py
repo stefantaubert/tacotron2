@@ -1,5 +1,6 @@
 # For copyright see LICENCE
 
+from src.core.waveglow.hparams import HParams
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -85,7 +86,7 @@ class WN(torch.nn.Module):
   size reset. The dilation only doubles on each layer
   """
 
-  def __init__(self, n_in_channels, n_mel_channels, hparams):
+  def __init__(self, n_in_channels, n_mel_channels, hparams: HParams):
     super(WN, self).__init__()
     assert(hparams.kernel_size % 2 == 1)
     assert(hparams.n_channels % 2 == 0)
@@ -151,7 +152,7 @@ class WN(torch.nn.Module):
 
 
 class WaveGlow(torch.nn.Module):
-  def __init__(self, hparams):
+  def __init__(self, hparams: HParams):
     super(WaveGlow, self).__init__()
 
     self.upsample = torch.nn.ConvTranspose1d(
