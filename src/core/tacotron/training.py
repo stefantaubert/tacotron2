@@ -35,8 +35,7 @@ from src.core.common.train import (SaveIterationSettings, check_save_it,
 from src.core.pre.merge_ds import PreparedData, PreparedDataList
 from src.core.tacotron.hparams import create_hparams
 from src.core.tacotron.logger import Tacotron2Logger
-from src.core.tacotron.model import (ACCENT_EMBEDDING_LAYER_NAME,
-                                     SPEAKER_EMBEDDING_LAYER_NAME,
+from src.core.tacotron.model import (SPEAKER_EMBEDDING_LAYER_NAME,
                                      SYMBOL_EMBEDDING_LAYER_NAME, Tacotron2,
                                      get_model_symbol_id, get_model_symbol_ids,
                                      get_symbol_weights, update_weights)
@@ -652,7 +651,7 @@ def warm_start_model(model: Tacotron2, warm_start_states: dict, ignore_layers: L
   # The default value from HParams is [""], an empty list was not working.
   ignore_layers.extend([
     SYMBOL_EMBEDDING_LAYER_NAME,
-    ACCENT_EMBEDDING_LAYER_NAME,
+    # ACCENT_EMBEDDING_LAYER_NAME,
     SPEAKER_EMBEDDING_LAYER_NAME
   ])
 
