@@ -24,12 +24,13 @@ def convert_glow(origin: str, destination: str, keep_orig: bool = False):
 
 
 def _convert_core(source: str, destination: str):
+  '''in version 3 there is only "model"'''
   assert os.path.isfile(source)
 
   sys.path.append("src/core/waveglow/converter/")
   checkpoint_dict = torch.load(source, map_location='cpu')
 
-  hp = create_hparams(None)
+  hparams = create_hparams()
 
   iteration = 1
   if "iteration" in checkpoint_dict.keys():
@@ -39,7 +40,7 @@ def _convert_core(source: str, destination: str):
   if "optimizer" in checkpoint_dict.keys():
     optimizer = checkpoint_dict["optimizer"]
 
-  learning_rate = hp.learning_rate
+  learning_rate = hparams.learning_rate
   if "learning_rate" in checkpoint_dict.keys():
     learning_rate = checkpoint_dict["learning_rate"]
 
@@ -49,7 +50,7 @@ def _convert_core(source: str, destination: str):
     state_dict = model.state_dict()
 
   res = CheckpointWaveglow(
-    hparams=hp_raw(hp),
+    hparams=hp_raw(hparams),
     iteration=iteration,
     learning_rate=learning_rate,
     optimizer=optimizer,

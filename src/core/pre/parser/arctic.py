@@ -42,7 +42,8 @@ def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
       logger.info(f"Skipping {speaker_name}")
       continue
     wavs = get_filepaths(os.path.join(speaker_folder, "wav"))
-    annotations = get_filepaths(os.path.join(speaker_folder, "annotation"))  # only 150
+    # only 150, they do not contain good IPA
+    annotations = get_filepaths(os.path.join(speaker_folder, "annotation"))
     textgrids = get_filepaths(os.path.join(speaker_folder, "textgrid"))
     transcripts = get_filepaths(os.path.join(speaker_folder, "transcript"))
 

@@ -73,25 +73,86 @@ def init_validate_parser(parser: ArgumentParser):
   parser.add_argument("--denoiser_strength", default=DEFAULT_DENOISER_STRENGTH,
                       type=float, help='Removes model bias.')
   parser.add_argument("--sigma", default=DEFAULT_SIGMA, type=float)
-  return validate
+
+  parser.add_argument(
+    '--custom_tacotron_hparams',
+    type=str
+  )
+
+  parser.add_argument(
+    '--custom_waveglow_hparams',
+    type=str
+  )
+
+  return validate_cli
+
+
+def validate_cli(**args):
+  args["custom_tacotron_hparams"] = split_hparams_string(args["custom_tacotron_hparams"])
+  args["custom_waveglow_hparams"] = split_hparams_string(args["custom_waveglow_hparams"])
+  validate(**args)
 
 
 def init_inference_parser(parser: ArgumentParser):
-  parser.add_argument('--train_name', type=str, required=True)
-  parser.add_argument('--text_name', type=str, required=True)
-  parser.add_argument('--ds_speaker', type=str, help="ds_name,speaker_name", required=True)
-  parser.add_argument('--waveglow', type=str, help="Waveglow train_name", default=DEFAULT_WAVEGLOW)
-  parser.add_argument('--custom_checkpoint', type=int)
-  parser.add_argument('--sentence_pause_s', type=float, default=DEFAULT_SENTENCE_PAUSE_S)
+  parser.add_argument(
+    '--train_name',
+    type=str, required=True
+  )
+
+  parser.add_argument(
+    '--text_name',
+    type=str, required=True
+  )
+
+  parser.add_argument(
+    '--ds_speaker',
+    type=str, required=True, help="ds_name,speaker_name"
+  )
+
+  parser.add_argument(
+    '--waveglow',
+    type=str, help="Waveglow train_name", default=DEFAULT_WAVEGLOW
+  )
+
+  parser.add_argument(
+    '--custom_checkpoint',
+    type=int
+  )
+
+  parser.add_argument(
+    '--sentence_pause_s',
+    type=float, default=DEFAULT_SENTENCE_PAUSE_S
+  )
+
   parser.add_argument(
     '--sigma',
-    type=float,
-    default=DEFAULT_SIGMA
+    type=float, default=DEFAULT_SIGMA
   )
+
   parser.add_argument(
     '--denoiser_strength',
-    type=float,
-    default=DEFAULT_DENOISER_STRENGTH
+    type=float, default=DEFAULT_DENOISER_STRENGTH
   )
-  parser.add_argument('--analysis', action='store_true')
-  return infer
+
+  parser.add_argument(
+    '--analysis',
+    action='store_true'
+  )
+
+  parser.add_argument(
+    '--custom_tacotron_hparams',
+    type=str
+  )
+
+  parser.add_argument(
+    '--custom_waveglow_hparams',
+    type=str
+  )
+
+  return infer_cli
+
+
+def infer_cli(**args):
+  args["custom_tacotron_hparams"] = split_hparams_string(args["custom_tacotron_hparams"])
+  args["custom_waveglow_hparams"] = split_hparams_string(args["custom_waveglow_hparams"])
+  infer(**args)

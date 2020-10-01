@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Dict, Optional
 
 from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log,
                         load_testset, load_valset, save_val_orig_plot,
@@ -11,7 +11,7 @@ from src.core.waveglow.inference import infer
 from src.core.waveglow.train import CheckpointWaveglow
 
 
-def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.00):
+def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.00, custom_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -38,7 +38,7 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
     denoiser_strength=denoiser_strength,
     sigma=sigma,
     checkpoint=checkpoint,
-    custom_hparams=None,
+    custom_hparams=custom_hparams,
     logger=logger
   )
 

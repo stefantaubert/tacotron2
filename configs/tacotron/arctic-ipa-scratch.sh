@@ -68,5 +68,5 @@ python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
   --ds_speaker=$ds_speaker \
   --text_name=$text_name \
+  --custom_waveglow_hparams="sampling_rate=44100"
   --analysis
-  

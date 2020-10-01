@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Dict, Optional
 
 import matplotlib.pylab as plt
 
@@ -36,7 +36,7 @@ def save_val_alignments_sentence_plot(val_dir: str, mel):
   plt.savefig(path, bbox_inches='tight')
 
 
-def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH):
+def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_tacotron_hparams: Optional[Dict[str, str]] = None, custom_waveglow_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -69,15 +69,11 @@ def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, e
     denoiser_strength=denoiser_strength,
     entry=entry,
     logger=logger,
-    custom_taco_hparams=None,
-    custom_wg_hparams={
-      "sampling_rate": 44100
-    }
+    custom_taco_hparams=custom_tacotron_hparams,
+    custom_wg_hparams=custom_waveglow_hparams
   )
 
-  orig_mel = get_mel(entry.wav_path, custom_hparams={
-    "sampling_rate": 44100
-  })
+  orig_mel = get_mel(entry.wav_path, custom_hparams=custom_waveglow_hparams)
   save_val_orig_wav(val_dir, entry.wav_path)
   save_val_orig_plot(val_dir, orig_mel)
 

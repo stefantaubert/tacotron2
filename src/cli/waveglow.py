@@ -4,7 +4,7 @@ from src.app.waveglow.dl import dl_pretrained
 from src.app.waveglow.inference import infer
 from src.app.waveglow.training import continue_train, train
 from src.app.waveglow.validation import validate
-from src.cli.utils import parse_tuple_list, split_hparams_string
+from src.cli.utils import split_hparams_string
 
 
 def init_train_parser(parser: ArgumentParser):
@@ -43,7 +43,13 @@ def init_validate_parser(parser: ArgumentParser):
   parser.add_argument("--denoiser_strength", default=0.00, type=float, help='Removes model bias.')
   parser.add_argument("--sigma", type=float, default=0.666)
   parser.add_argument('--sampling_rate', type=float, default=22050)
-  return validate
+  parser.add_argument('--custom_hparams', type=str)
+  return validate_cli
+
+
+def validate_cli(**args):
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  validate(**args)
 
 
 def init_inference_parser(parser: ArgumentParser):
@@ -53,10 +59,17 @@ def init_inference_parser(parser: ArgumentParser):
   parser.add_argument('--sigma', type=float, default=0.666)
   parser.add_argument('--denoiser_strength', type=float, default=0.00)
   parser.add_argument('--sampling_rate', type=float, default=22050)
-  return infer
+  parser.add_argument('--custom_hparams', type=str)
+  return infer_cli
+
+
+def infer_cli(**args):
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  infer(**args)
 
 
 def init_download_parser(parser: ArgumentParser):
   parser.add_argument('--train_name', type=str, default="pretrained_v3")
-  parser.set_defaults(version=3)
+  parser.add_argument('--version', type=int, default=3)
+  parser.add_argument('--prep_name', type=str)
   return dl_pretrained
