@@ -5,7 +5,7 @@ from src.app.tacotron.defaults import (DEFAULT_DENOISER_STRENGTH,
                                        DEFAULT_SENTENCE_PAUSE_S, DEFAULT_SIGMA,
                                        DEFAULT_WAVEGLOW)
 from src.app.tacotron.eval_checkpoints import eval_checkpoints_main
-from src.app.tacotron.inference import infer
+from src.app.tacotron.inference import infer_main
 from src.app.tacotron.training import continue_train, train
 from src.app.tacotron.validation import validate
 from src.cli.utils import split_hparams_string
@@ -155,4 +155,4 @@ def init_inference_parser(parser: ArgumentParser):
 def infer_cli(**args):
   args["custom_tacotron_hparams"] = split_hparams_string(args["custom_tacotron_hparams"])
   args["custom_waveglow_hparams"] = split_hparams_string(args["custom_waveglow_hparams"])
-  infer(**args)
+  infer_main(**args)

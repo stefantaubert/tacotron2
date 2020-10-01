@@ -9,7 +9,6 @@ from src.app.io import (get_checkpoints_dir, get_infer_log,
                         get_inference_root_dir, load_prep_name, save_infer_wav)
 from src.app.pre.inference import get_infer_sentences
 from src.app.tacotron.defaults import (DEFAULT_DENOISER_STRENGTH,
-                                       DEFAULT_SAMPLING_RATE,
                                        DEFAULT_SENTENCE_PAUSE_S, DEFAULT_SIGMA,
                                        DEFAULT_WAVEGLOW)
 from src.app.tacotron.io import get_train_dir
@@ -23,7 +22,7 @@ from src.core.common.train import (get_custom_or_last_checkpoint,
 from src.core.common.utils import (get_parent_dirname, get_subdir, parse_json,
                                    stack_images_horizontally,
                                    stack_images_vertically)
-from src.core.inference.infer import infer as infer_core
+from src.core.inference.infer import infer
 from src.core.inference.synthesizer import InferenceResult
 from src.core.tacotron.training import CheckpointTacotron
 from src.core.waveglow.train import CheckpointWaveglow
@@ -96,7 +95,7 @@ def save_infer_h_plot(infer_dir: str, sentence_ids: List[int]):
   stack_images_horizontally(paths, path)
 
 
-def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveglow: str = DEFAULT_WAVEGLOW, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = DEFAULT_SENTENCE_PAUSE_S, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sampling_rate: float = DEFAULT_SAMPLING_RATE, analysis: bool = True, custom_tacotron_hparams: Optional[Dict[str, str]] = None, custom_waveglow_hparams: Optional[Dict[str, str]] = None):
+def infer_main(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveglow: str = DEFAULT_WAVEGLOW, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = DEFAULT_SENTENCE_PAUSE_S, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, analysis: bool = True, custom_tacotron_hparams: Optional[Dict[str, str]] = None, custom_waveglow_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -120,7 +119,7 @@ def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveg
   wg_checkpoint_path, _ = get_last_checkpoint(get_checkpoints_dir(train_dir_wg))
   wg_checkpoint = CheckpointWaveglow.load(wg_checkpoint_path, logger)
 
-  wav, inference_results = infer_core(
+  wav, inference_results = infer(
     tacotron_checkpoint=taco_checkpoint,
     waveglow_checkpoint=wg_checkpoint,
     ds_speaker=ds_speaker,
@@ -134,6 +133,7 @@ def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveg
   )
 
   logger.info("Saving wav...")
+  sampling_rate = inference_results[0].sampling_rate
   save_infer_wav(infer_dir, sampling_rate, wav)
 
   if analysis:
@@ -154,10 +154,10 @@ def infer(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveg
 
 
 if __name__ == "__main__":
-  infer(
+  infer_main(
     base_dir="/datasets/models/taco2pt_v5",
-    train_name="debug",
-    text_name="north",
+    train_name="arctic_ipa_warm",
+    text_name="north_sven_orig",
     ds_speaker="arctic,BWC",
     analysis=True
   )

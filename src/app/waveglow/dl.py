@@ -1,4 +1,5 @@
 import os
+from src.app.tacotron.defaults import DEFAULT_WAVEGLOW
 from typing import Optional
 
 from src.app.io import (get_checkpoints_dir, save_prep_name, save_testset,
@@ -14,7 +15,7 @@ def get_checkpoint_pretrained(checkpoints_dir: str):
   return os.path.join(checkpoints_dir, get_pytorch_filename("1"))
 
 
-def dl_pretrained(base_dir: str, train_name: str = "pretrained_v3", prep_name: Optional[str] = None, version: int = 3):
+def dl_pretrained(base_dir: str, train_name: str = DEFAULT_WAVEGLOW, prep_name: Optional[str] = None, version: int = 3):
   train_dir = get_train_dir(base_dir, train_name, create=True)
   assert os.path.isdir(train_dir)
   checkpoints_dir = get_checkpoints_dir(train_dir)

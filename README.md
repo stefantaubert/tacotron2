@@ -447,5 +447,6 @@ I also successfully tryed this configurations:
 to save requirements:
 
 ```bash
-pipreqs .
+pip install pipreqs
+pipreqs . --savepath="pipreqs.txt"
 ```

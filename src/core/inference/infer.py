@@ -1,14 +1,16 @@
 from logging import Logger
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple
 
-from src.core.inference.synthesizer import Synthesizer
+import numpy as np
+
+from src.core.inference.synthesizer import InferenceResult, Synthesizer
 from src.core.pre.merge_ds import PreparedData
 from src.core.pre.text.pre_inference import InferSentence, InferSentenceList
 from src.core.tacotron.training import CheckpointTacotron
 from src.core.waveglow.train import CheckpointWaveglow
 
 
-def validate(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, entry: PreparedData, denoiser_strength: float, sigma: float, custom_taco_hparams: Optional[Dict[str, str]], custom_wg_hparams: Optional[Dict[str, str]], logger: Logger):
+def validate(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, entry: PreparedData, denoiser_strength: float, sigma: float, custom_taco_hparams: Optional[Dict[str, str]], custom_wg_hparams: Optional[Dict[str, str]], logger: Logger) -> InferenceResult:
   model_symbols = tacotron_checkpoint.get_symbols()
   model_accents = tacotron_checkpoint.get_accents()
   model_speakers = tacotron_checkpoint.get_speakers()
@@ -37,7 +39,7 @@ def validate(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: Check
   return result[0]
 
 
-def infer(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, ds_speaker: str, sentence_pause_s: float, sigma: float, denoiser_strength: float, sentences: InferSentenceList, custom_taco_hparams: Optional[Dict[str, str]], custom_wg_hparams: Optional[Dict[str, str]], logger: Logger):
+def infer(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, ds_speaker: str, sentence_pause_s: float, sigma: float, denoiser_strength: float, sentences: InferSentenceList, custom_taco_hparams: Optional[Dict[str, str]], custom_wg_hparams: Optional[Dict[str, str]], logger: Logger) -> Tuple[np.ndarray, List[InferenceResult]]:
   synth = Synthesizer(
     tacotron_checkpoint,
     waveglow_checkpoint,

@@ -89,7 +89,7 @@ def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, e
 if __name__ == "__main__":
   validate(
     base_dir="/datasets/models/taco2pt_v5",
-    train_name="debug",
+    train_name="arctic_ipa_warm",
   )
 
   # validate(

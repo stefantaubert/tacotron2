@@ -39,9 +39,9 @@ class MelLoader(Dataset):
 
   def __init__(self, prepare_ds_data: PreparedDataList, hparams: HParams, logger: Logger):
     self.taco_stft = TacotronSTFT.fromhparams(hparams)
-    self.segment_length: int = hparams.segment_length
-    self.sampling_rate: int = hparams.sampling_rate
-    self.cache_wavs: bool = hparams.cache_wavs
+    self.segment_length = hparams.segment_length
+    self.sampling_rate = hparams.sampling_rate
+    self.cache_wavs = hparams.cache_wavs
     self._logger = logger
 
     data = prepare_ds_data

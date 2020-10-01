@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class ExperimentHParams():
-  fp16_run = False
+  fp16_run: bool = False
   epochs: int = 100000
   iters_per_checkpoint: int = 2000
   epochs_per_checkpoint: int = 1
@@ -43,8 +43,8 @@ class ModelHParams():
 
 @dataclass
 class OptimizerHParams():
-  learning_rate = 1e-4
-  sigma = 1.0
+  learning_rate: float = 1e-4
+  sigma: float = 1.0
   batch_size: int = 1
 
 

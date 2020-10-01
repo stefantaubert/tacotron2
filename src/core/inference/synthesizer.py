@@ -66,7 +66,7 @@ class Synthesizer():
     infer_res = InferenceResult(
       sentence=sentence,
       wav=synthesized_sentence,
-      sampling_rate=self._taco_synt.hparams.sampling_rate,
+      sampling_rate=self._wg_synt.hparams.sampling_rate,
       mel_outputs=mel_to_numpy(mel_outputs),
       mel_outputs_postnet=mel_to_numpy(mel_outputs_postnet),
       gate_outputs=mel_to_numpy(gate_outputs),

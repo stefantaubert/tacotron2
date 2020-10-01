@@ -1,7 +1,6 @@
 import unittest
 from typing import List
 
-import tensorflow as tf
 from torch.utils.data import DataLoader, Dataset
 
 from src.core.common.train import (check_is_first, check_is_last,

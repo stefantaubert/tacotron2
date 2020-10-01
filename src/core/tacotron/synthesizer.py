@@ -48,8 +48,8 @@ class Synthesizer():
       if allow_unknown:
         symbols = self.symbols.replace_unknown_symbols_with_pad(symbols)
       else:
-        self._logger.error("Unknown symbols are not allowed!")
-        assert False
+        self._logger.exception("Unknown symbols are not allowed!")
+        raise Exception()
 
     accent_ids = self.accents.get_ids(accents)
     accents_tensor = np.array([accent_ids])

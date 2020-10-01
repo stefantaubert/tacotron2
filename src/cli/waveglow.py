@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from src.app.tacotron.defaults import DEFAULT_WAVEGLOW
 
 from src.app.waveglow.dl import dl_pretrained
 from src.app.waveglow.inference import infer
@@ -69,7 +70,7 @@ def infer_cli(**args):
 
 
 def init_download_parser(parser: ArgumentParser):
-  parser.add_argument('--train_name', type=str, default="pretrained_v3")
+  parser.add_argument('--train_name', type=str, default=DEFAULT_WAVEGLOW)
   parser.add_argument('--version', type=int, default=3)
   parser.add_argument('--prep_name', type=str)
   return dl_pretrained
