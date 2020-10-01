@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from src.core.common.audio import get_wav_tensor_segment, wav_to_float32_tensor
+from src.core.common.checkpoint import Checkpoint
 from src.core.common.taco_stft import TacotronSTFT
 from src.core.common.train import (SaveIterationSettings, check_save_it,
                                    get_continue_batch_iteration,
@@ -26,32 +27,9 @@ from src.core.waveglow.model import WaveGlow, WaveGlowLoss
 
 
 @dataclass
-class CheckpointWaveglow():
-  # Renaming of any of these fields will destroy previous models!
-  state_dict: dict
-  optimizer: dict
-  learning_rate: float
-  iteration: int
-  hparams: dict
-
+class CheckpointWaveglow(Checkpoint):
   def get_hparams(self) -> HParams:
     return HParams(**self.hparams)
-
-  def save(self, checkpoint_path: str, logger: Logger):
-    logger.info(f"Saving model at iteration {self.iteration}...")
-    checkpoint_dict = asdict(self)
-    torch.save(checkpoint_dict, checkpoint_path)
-    logger.info(f"Saved model to '{checkpoint_path}'.")
-
-  @classmethod
-  def load(cls, checkpoint_path: str, logger: Logger):
-    assert os.path.isfile(checkpoint_path)
-    logger.info(f"Loading waveglow model '{checkpoint_path}'...")
-    checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-    result = cls(**checkpoint_dict)
-    logger.info(f"Loaded model at iteration {result.iteration}.")
-    return result
-
 
 class MelLoader(Dataset):
   """

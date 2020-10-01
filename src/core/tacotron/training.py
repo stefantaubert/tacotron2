@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from src.core.common.accents_dict import PADDING_ACCENT, AccentsDict
+from src.core.common.checkpoint import Checkpoint
 from src.core.common.speakers_dict import SpeakersDict
 from src.core.common.symbol_id_dict import PADDING_SYMBOL, SymbolIdDict
 from src.core.common.symbols_map import (SymbolsMap, get_map,
@@ -40,13 +41,8 @@ from src.core.tacotron.model import (SPEAKER_EMBEDDING_LAYER_NAME,
 
 
 @dataclass
-class CheckpointTacotron():
+class CheckpointTacotron(Checkpoint):
   # Renaming of any of these fields will destroy previous models!
-  state_dict: dict
-  optimizer: dict
-  learning_rate: float
-  iteration: int
-  hparams: dict
   speakers: OrderedDictType[str, int]
   symbols: OrderedDictType[str, int]
   accents: OrderedDictType[str, int]
@@ -63,23 +59,15 @@ class CheckpointTacotron():
   def get_hparams(self) -> HParams:
     return HParams(**self.hparams)
 
-  def save(self, checkpoint_path: str, logger: Logger):
-    logger.info(f"Saving model at iteration {self.iteration}...")
-    checkpoint_dict = asdict(self)
-    torch.save(checkpoint_dict, checkpoint_path)
-    logger.info(f"Saved model to '{checkpoint_path}'.")
-
   def get_symbol_embedding_weights(self) -> torch.Tensor:
     pretrained_weights = self.state_dict[SYMBOL_EMBEDDING_LAYER_NAME]
     return pretrained_weights
 
   @classmethod
   def load(cls, checkpoint_path: str, logger: Logger):
-    assert os.path.isfile(checkpoint_path)
-    logger.info(f"Loading tacotron model '{checkpoint_path}'...")
-    checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-    result = cls(**checkpoint_dict)
-    logger.info(f"Loaded model at iteration {result.iteration}.")
+    result = super().load(checkpoint_path, logger)
+
+    # pylint: disable=no-member
     logger.info(f'Including {len(result.symbols)} symbols.')
     logger.info(f'Including {len(result.accents)} accents.')
     logger.info(f'Including {len(result.speakers)} speaker(s).')

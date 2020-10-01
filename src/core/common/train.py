@@ -93,7 +93,7 @@ def overwrite_custom_hparams(hparams_dc: _T, custom_hparams: Optional[Dict[str, 
 def log_hparams(hparams: _T, logger: Logger):
   logger.info("=== HParams ===")
   for param, val in asdict(hparams).items():
-    logger.info(f" {param} = {val}")
+    logger.info(f"- {param} = {val}")
   logger.info("===============")
 
 
