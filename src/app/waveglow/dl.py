@@ -1,10 +1,10 @@
 import os
-from src.app.tacotron.defaults import DEFAULT_WAVEGLOW
 from typing import Optional
 
 from src.app.io import (get_checkpoints_dir, save_prep_name, save_testset,
                         save_valset)
 from src.app.pre.prepare import get_prepared_dir, load_filelist
+from src.app.tacotron.defaults import DEFAULT_WAVEGLOW
 from src.app.waveglow.io import get_train_dir
 from src.core.common.train import get_pytorch_filename
 from src.core.waveglow.converter.convert import convert_glow
@@ -47,5 +47,5 @@ if __name__ == "__main__":
     version=3,
     train_name="pretrained_v3",
     base_dir="/datasets/models/taco2pt_v5",
-    prep_name="ljs_ipa",
+    prep_name="arctic_ipa",
   )

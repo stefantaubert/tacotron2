@@ -50,6 +50,21 @@ python -m src.cli.runner prepare-ds \
   --ds_speakers="arctic,all" \
   --ds_text_audio="arctic,ipa_norm,44100Hz"
 
+python -m src.cli.runner wavs-resample \
+  --ds_name="arctic" \
+  --orig_wav_name="44100Hz" \
+  --dest_wav_name="22050Hz" \
+  --rate=22050
+
+python -m src.cli.runner preprocess-mels \
+  --ds_name="arctic" \
+  --wav_name="22050Hz"
+
+python -m src.cli.runner prepare-ds \
+  --prep_name="arctic_ipa_22050" \
+  --ds_speakers="arctic,all" \
+  --ds_text_audio="arctic,ipa_norm,22050Hz"
+
 # Preprocessing LJ-Speech
 
 python -m src.cli.runner preprocess-ljs \

@@ -11,7 +11,7 @@ from src.core.waveglow.inference import infer
 from src.core.waveglow.train import CheckpointWaveglow
 
 
-def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: int = 0, sigma: float = 0.666, denoiser_strength: float = 0.00, custom_hparams: Optional[Dict[str, str]] = None):
+def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = 0.666, denoiser_strength: float = 0.00, custom_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -20,7 +20,7 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
   elif ds == "test":
     data = load_testset(train_dir)
   else:
-    assert False
+    raise Exception()
 
   entry = data.get_for_validation(entry_id, ds_speaker)
 
@@ -70,5 +70,8 @@ if __name__ == "__main__":
   validate(
     base_dir="/datasets/models/taco2pt_v5",
     train_name="pretrained_v3",
-    entry_id=865
+    entry_id=865,
+    custom_hparams={
+      "sampling_rate": 44100
+    }
   )

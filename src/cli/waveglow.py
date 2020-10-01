@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
-from src.app.tacotron.defaults import DEFAULT_WAVEGLOW
 
+from src.app.tacotron.defaults import DEFAULT_WAVEGLOW
 from src.app.waveglow.dl import dl_pretrained
 from src.app.waveglow.inference import infer
 from src.app.waveglow.training import continue_train, train
@@ -40,10 +40,9 @@ def init_validate_parser(parser: ArgumentParser):
   parser.add_argument('--ds_speaker', type=str, help="ds_name,speaker_name")
   parser.add_argument('--ds', type=str, help="Choose if validation- or testset should be taken.",
                       choices=["val", "test"], default="val")
-  parser.add_argument('--custom_checkpoint', type=int, default=0)
+  parser.add_argument('--custom_checkpoint', type=int)
   parser.add_argument("--denoiser_strength", default=0.00, type=float, help='Removes model bias.')
   parser.add_argument("--sigma", type=float, default=0.666)
-  parser.add_argument('--sampling_rate', type=float, default=22050)
   parser.add_argument('--custom_hparams', type=str)
   return validate_cli
 
@@ -59,7 +58,6 @@ def init_inference_parser(parser: ArgumentParser):
   parser.add_argument('--custom_checkpoint', type=int)
   parser.add_argument('--sigma', type=float, default=0.666)
   parser.add_argument('--denoiser_strength', type=float, default=0.00)
-  parser.add_argument('--sampling_rate', type=float, default=22050)
   parser.add_argument('--custom_hparams', type=str)
   return infer_cli
 
