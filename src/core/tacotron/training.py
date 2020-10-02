@@ -566,7 +566,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
         f"Loss: {reduced_loss:.6f}",
         f"Grad norm: {grad_norm:.6f}",
         #f"Dur.: {duration:.2f}s/it",
-        f"Avg. dur.: {avg_batch_dur:.2f}s/it & {avg_epoch_dur / 60 / 60:.2f}h/epoch",
+        f"Avg. dur.: {avg_batch_dur:.2f}s/it & {avg_epoch_dur / 60:.2f}min/epoch",
         f"Tot. dur.: {(time.perf_counter() - train_start) / 60 / 60:.2f}h/{estimated_remaining_duration / 60 / 60:.1f}h ({estimated_remaining_duration / 60 / 60 / 24:.1f}days)",
       ]))
 
