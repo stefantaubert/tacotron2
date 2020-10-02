@@ -182,6 +182,14 @@ class UnitTests(unittest.TestCase):
     res = check_is_last_batch_iteration(iteration=5, batch_iterations=5)
     self.assertTrue(res)
 
+  def test_check_is_save_epoch__cu0_pc2_is_false(self):
+    res = check_is_save_epoch(
+      epoch=0,
+      epochs_per_checkpoint=2
+    )
+
+    self.assertFalse(res)
+
   def test_check_is_save_epoch__cu5_pc0_is_false(self):
     res = check_is_save_epoch(
       epoch=5,
@@ -204,15 +212,23 @@ class UnitTests(unittest.TestCase):
       epochs_per_checkpoint=5,
     )
 
+    self.assertFalse(res)
+
+  def test_check_is_save_epoch__cu4_pc5_is_true(self):
+    res = check_is_save_epoch(
+      epoch=4,
+      epochs_per_checkpoint=5,
+    )
+
     self.assertTrue(res)
 
-  def test_check_is_save_epoch__cu5_pc5_is_true(self):
+  def test_check_is_save_epoch__cu5_pc5_is_false(self):
     res = check_is_save_epoch(
       epoch=5,
       epochs_per_checkpoint=5,
     )
 
-    self.assertTrue(res)
+    self.assertFalse(res)
 
   # region iteration_to_epoch
   def test_iteration_to_epoch_it1_tot2_is_0(self):
@@ -345,23 +361,21 @@ class UnitTests(unittest.TestCase):
     self.assertEqual([True, True, False], result)
 
   def test_get_next_save_it__return_it(self):
-    epoch = 0
     iteration = 1
     settings = SaveIterationSettings(
-      epochs=1,
-      batch_iterations=10,
+      epochs=4,
+      batch_iterations=3,
       save_first_iteration=False,
       save_last_iteration=True,
       iters_per_checkpoint=0,
-      epochs_per_checkpoint=0
+      epochs_per_checkpoint=2
     )
 
-    res = get_next_save_it(epoch, iteration, settings)
+    res = get_next_save_it(iteration, settings)
 
-    self.assertEqual(10, res)
+    self.assertEqual(6, res)
 
   def test_get_next_save_it__return_none(self):
-    epoch = 0
     iteration = 1
     settings = SaveIterationSettings(
       epochs=1,
@@ -372,9 +386,10 @@ class UnitTests(unittest.TestCase):
       epochs_per_checkpoint=0
     )
 
-    res = get_next_save_it(epoch, iteration, settings)
+    res = get_next_save_it(iteration, settings)
 
     self.assertIsNone(res)
+
 
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)

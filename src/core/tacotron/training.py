@@ -560,7 +560,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
       remaining_its = hparams.epochs * batch_iterations - iteration
       estimated_remaining_duration = avg_batch_dur * remaining_its
 
-      next_it = get_next_save_it(epoch, iteration, save_it_settings)
+      next_it = get_next_save_it(iteration, save_it_settings)
       next_checkpoint_save_time = 0
       if next_it is not None:
         next_checkpoint_save_time = (next_it - iteration) * avg_batch_dur

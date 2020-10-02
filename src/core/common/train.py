@@ -26,7 +26,7 @@ def is_pytorch_file(filename: str):
 
 
 def get_last_checkpoint(checkpoint_dir: str) -> Tuple[str, int]:
-  #checkpoint_dir = get_checkpoint_dir(training_dir_path)
+  # checkpoint_dir = get_checkpoint_dir(training_dir_path)
   its = get_all_checkpoint_iterations(checkpoint_dir)
   at_least_one_checkpoint_exists = len(its) > 0
   if not at_least_one_checkpoint_exists:
@@ -144,9 +144,10 @@ def check_save_it(epoch: int, iteration: int, settings: SaveIterationSettings) -
   return False
 
 
-def get_next_save_it(epoch: int, iteration: int, settings: SaveIterationSettings) -> Optional[int]:
+def get_next_save_it(iteration: int, settings: SaveIterationSettings) -> Optional[int]:
   result = iteration
   while result <= settings.epochs * settings.batch_iterations:
+    epoch = iteration_to_epoch(result, settings.batch_iterations)
     if check_save_it(epoch, result, settings):
       return result
     result += 1
@@ -174,7 +175,7 @@ def check_is_save_epoch(epoch: int, epochs_per_checkpoint: int) -> bool:
   assert epoch >= 0
 
   save_epochs = epochs_per_checkpoint > 0
-  return save_epochs and epoch % epochs_per_checkpoint == 0
+  return save_epochs and ((epoch + 1) % epochs_per_checkpoint == 0)
 
 
 def check_is_last_batch_iteration(iteration: int, batch_iterations: int):
