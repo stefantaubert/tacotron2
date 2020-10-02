@@ -562,12 +562,12 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
       logger.info(" | ".join([
         f"Epoch: {get_formatted_current_total(epoch + 1, hparams.epochs)}",
         f"It.: {get_formatted_current_total(batch_iteration + 1, batch_iterations)}",
-        f"Tot. it.: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)}",
+        f"Tot. it.: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)} ({iteration / hparams.epochs * batch_iterations:.2f}%)",
         f"Loss: {reduced_loss:.6f}",
         f"Grad norm: {grad_norm:.6f}",
         #f"Dur.: {duration:.2f}s/it",
-        f"Avg. dur.: {avg_batch_dur:.2f}s/it & {avg_epoch_dur / 60:.2f}min/epoch",
-        f"Tot. dur.: {(time.perf_counter() - train_start) / 60 / 60:.2f}h/{estimated_remaining_duration / 60 / 60:.1f}h ({estimated_remaining_duration / 60 / 60 / 24:.1f}days)",
+        f"Avg. dur.: {avg_batch_dur:.2f}s/it & {avg_epoch_dur / 60:.0f}min/epoch",
+        f"Tot. dur.: {(time.perf_counter() - train_start) / 60 / 60:.2f}h/{estimated_remaining_duration / 60 / 60:.0f}h ({estimated_remaining_duration / 60 / 60 / 24:.1f}days)",
       ]))
 
       taco_logger.log_training(reduced_loss, grad_norm, learning_rate,
