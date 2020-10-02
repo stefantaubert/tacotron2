@@ -449,7 +449,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
     model, optimizer, learning_rate, iteration = model_and_optimizer_fresh(hparams, logger)
 
     if warm_model is not None:
-      warm_start_model(model, warm_model, hparams.ignore_layers, logger)
+      warm_start_model(model, warm_model, hparams, logger)
 
     if weights_checkpoint is not None:
       pretrained_weights = get_mapped_symbol_weights(
