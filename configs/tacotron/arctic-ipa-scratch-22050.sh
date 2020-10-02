@@ -1,24 +1,17 @@
 # Init
 ## Capslock
 source /datasets/code/tacotron2/configs/envs/caps.sh
-export train_name="ljs_ipa_scratch"
-export prep_name="ljs_ipa"
+export train_name="arctic_ipa_22050_warm"
+export prep_name="arctic_ipa_22050"
 export batch_size=26
-export epochs_per_checkpoint=5
-
-## GCP
-source /home/stefan_taubert/tacotron2/configs/envs/gcp.sh
-export train_name="ljs_ipa_scratch"
-export prep_name="ljs_ipa"
-export batch_size=52
-export epochs_per_checkpoint=2
+export epochs_per_checkpoint=1
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/phil.sh
-export train_name="ljs_ipa_scratch"
-export prep_name="ljs_ipa"
+export train_name="arctic_ipa_22050_scratch"
+export prep_name="arctic_ipa_22050"
 export batch_size=25
-export epochs_per_checkpoint=10
+export epochs_per_checkpoint=1
 
 # Training
 python -m src.cli.runner tacotron-train \
@@ -28,7 +21,10 @@ python -m src.cli.runner tacotron-train \
   --validation_size=0.01 \
   --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint,epochs=2000"
 
-python -m src.cli.runner tacotron-continue-train --train_name=$train_name --custom_hparams="iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint,epochs=2000"
+python -m src.cli.runner tacotron-continue-train --train_name=$train_name
+
+python -m src.cli.runner tacotron-validate --train_name=$train_name
+
 # Inference
 
 ## add texts...
@@ -37,12 +33,11 @@ python -m src.cli.runner tacotron-continue-train --train_name=$train_name --cust
 python -m src.cli.runner prepare-inference-map \
   --prep_name=$prep_name \
   --template_map="maps/inference/eng_ipa.json"
+  #--template_map="maps/weights/thchs_ipa_ljs_ipa.json"
 
-  --template_map="maps/weights/thchs_ipa_ljs_ipa.json"
+export ds_speaker="arctic,BWC"
 
-export ds_speaker="ljs,1"
-
-export accent="north_america"
+export accent="Chinese-BWC"
 
 export text_name="ipa-north_sven_orig"
 export text_name="ipa-north_sven_v2"
@@ -69,5 +64,4 @@ python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
   --ds_speaker=$ds_speaker \
   --text_name=$text_name \
-  --analysis \
-  --custom_checkpoint=16058
+  --analysis

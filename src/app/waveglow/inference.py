@@ -28,6 +28,7 @@ def save_infer_orig_plot(infer_dir: str, mel: np.ndarray):
   plot_melspec(mel, title="Original")
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}_orig.png")
   plt.savefig(path, bbox_inches='tight')
+  plt.close()
   return path
 
 

@@ -99,6 +99,7 @@ def split_dataset(prep_dir: str, train_dir: str, test_size: float = 0.01, valida
 
 # region Inference
 
+
 def get_inference_root_dir(train_dir: str):
   return get_subdir(train_dir, "inference", create=True)
 
@@ -116,6 +117,7 @@ def save_infer_plot(infer_dir: str, mel: np.ndarray):
   plot_melspec(mel, title=get_parent_dirname(infer_dir))
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}.png")
   plt.savefig(path, bbox_inches='tight')
+  plt.close()
   return path
 
 # endregion
@@ -137,6 +139,7 @@ def save_val_plot(val_dir: str, mel):
   plot_melspec(mel, title=parent_dir)
   path = os.path.join(val_dir, f"{parent_dir}.png")
   plt.savefig(path, bbox_inches='tight')
+  plt.close()
 
 
 def save_val_orig_plot(val_dir: str, mel):
@@ -144,6 +147,7 @@ def save_val_orig_plot(val_dir: str, mel):
   plot_melspec(mel, title=parent_dir)
   path = os.path.join(val_dir, f"{parent_dir}_orig.png")
   plt.savefig(path, bbox_inches='tight')
+  plt.close()
 
 
 def save_val_comparison(val_dir: str):

@@ -27,6 +27,7 @@ def save_val_pre_postnet_plot(val_dir: str, mel):
   plot_melspec(mel, title=f"{parent_dir}: Pre-Postnet")
   path = os.path.join(val_dir, f"{parent_dir}_pre_post.png")
   plt.savefig(path, bbox_inches='tight')
+  plt.close()
 
 
 def save_val_alignments_sentence_plot(val_dir: str, mel):
@@ -34,6 +35,7 @@ def save_val_alignments_sentence_plot(val_dir: str, mel):
   plot_melspec(mel, title=f"{parent_dir}: Alignments")
   path = os.path.join(val_dir, f"{parent_dir}_alignments.png")
   plt.savefig(path, bbox_inches='tight')
+  plt.close()
 
 
 def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_tacotron_hparams: Optional[Dict[str, str]] = None, custom_waveglow_hparams: Optional[Dict[str, str]] = None):

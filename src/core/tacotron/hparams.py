@@ -18,7 +18,7 @@ class ExperimentHParams():
   #dist_url: str = "tcp://localhost:54321"
   cudnn_enabled: bool = True
   cudnn_benchmark: bool = False
-  ignore_layers: list = field(default_factory=list)  # [""] -> to define that it is a list
+  ignore_layers: list = field(default_factory=list)
 
 
 @dataclass

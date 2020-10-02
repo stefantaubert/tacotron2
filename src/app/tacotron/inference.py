@@ -42,6 +42,7 @@ def save_infer_sentence_plot(infer_dir: str, infer_res: InferenceResult):
     get_parent_dirname(infer_dir), infer_res.sentence.sent_id))
   path = os.path.join(infer_dir, f"{infer_res.sentence.sent_id}.png")
   plt.savefig(path, bbox_inches='tight')
+  plt.close()
 
 
 def save_infer_pre_postnet_sentence_plot(infer_dir: str, infer_res: InferenceResult):
@@ -49,6 +50,7 @@ def save_infer_pre_postnet_sentence_plot(infer_dir: str, infer_res: InferenceRes
                title="{}: Pre-Postnet {}".format(get_parent_dirname(infer_dir), infer_res.sentence.sent_id))
   path = os.path.join(infer_dir, f"{infer_res.sentence.sent_id}_pre_post.png")
   plt.savefig(path, bbox_inches='tight')
+  plt.close()
 
 
 def save_infer_alignments_sentence_plot(infer_dir: str, infer_res: InferenceResult):
@@ -56,6 +58,7 @@ def save_infer_alignments_sentence_plot(infer_dir: str, infer_res: InferenceResu
     get_parent_dirname(infer_dir), infer_res.sentence.sent_id))
   path = os.path.join(infer_dir, f"{infer_res.sentence.sent_id}_alignments.png")
   plt.savefig(path, bbox_inches='tight')
+  plt.close()
 
 
 def save_infer_wav_sentence(infer_dir: str, infer_res: InferenceResult):

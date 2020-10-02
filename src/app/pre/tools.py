@@ -18,6 +18,7 @@ def _save_orig_plot_if_not_exists(dest_dir: str, mel):
   if not os.path.isfile(path):
     plot_melspec(mel, title="Original")
     plt.savefig(path, bbox_inches='tight')
+    plt.close()
   return path
 
 
@@ -31,6 +32,7 @@ def _save_trimmed_plot_temp(mel):
   path = tempfile.mktemp(suffix=".png")
   plot_melspec(mel, title="Trimmed")
   plt.savefig(path, bbox_inches='tight')
+  plt.close()
   return path
 
 

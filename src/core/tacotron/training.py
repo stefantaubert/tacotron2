@@ -554,15 +554,20 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
       start = end
 
       batch_durations.append(duration)
+      avg_batch_dur = np.mean(batch_durations)
+      avg_epoch_dur = avg_batch_dur * batch_iterations
+      remaining_its = hparams.epochs * batch_iterations - iteration
+      estimated_remaining_duration = avg_batch_dur * remaining_its
+
       logger.info(" | ".join([
         f"Epoch: {get_formatted_current_total(epoch + 1, hparams.epochs)}",
-        f"Iteration: {get_formatted_current_total(batch_iteration + 1, batch_iterations)}",
-        f"Total iteration: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)}",
-        f"Train loss: {reduced_loss:.6f}",
-        f"Grad Norm: {grad_norm:.6f}",
-        f"Duration: {duration:.2f}s/it",
-        f"Avg. duration: {np.mean(batch_durations):.2f}s/it",
-        f"Total Duration: {(time.perf_counter() - train_start) / 60 / 60:.2f}h"
+        f"It.: {get_formatted_current_total(batch_iteration + 1, batch_iterations)}",
+        f"Tot. it.: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)}",
+        f"Loss: {reduced_loss:.6f}",
+        f"Grad norm: {grad_norm:.6f}",
+        #f"Dur.: {duration:.2f}s/it",
+        f"Avg. dur.: {avg_batch_dur:.2f}s/it & {avg_epoch_dur / 60 / 60:.2f}h/epoch",
+        f"Tot. dur.: {(time.perf_counter() - train_start) / 60 / 60:.2f}h/{estimated_remaining_duration / 60 / 60:.1f}h ({estimated_remaining_duration / 60 / 60 / 24:.1f}days)",
       ]))
 
       taco_logger.log_training(reduced_loss, grad_norm, learning_rate,
@@ -657,7 +662,7 @@ def model_and_optimizer_from_checkpoint(checkpoint: CheckpointTacotron, updated_
     model_parameters=model.parameters(),
     learning_rate=learning_rate,
     weight_decay=updated_hparams.weight_decay,
-    state_dict=checkpoint.state_dict
+    state_dict=checkpoint.optimizer
   )
 
   return model, optimizer, learning_rate, checkpoint.iteration
