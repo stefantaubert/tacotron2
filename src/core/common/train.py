@@ -3,13 +3,15 @@ import os
 from dataclasses import asdict, dataclass, replace
 from logging import Logger
 from math import floor
-from typing import Dict, Generic, List, Optional, Set, Tuple, Type, TypeVar, Union
+from typing import (Dict, Generic, List, Optional, Set, Tuple, Type, TypeVar,
+                    Union)
 
 from src.core.common.utils import get_filenames
 
 PYTORCH_EXT = ".pt"
 
 _T = TypeVar("_T")
+
 
 def get_pytorch_filename(name: Union[str, int]) -> str:
   return f"{name}{PYTORCH_EXT}"
@@ -140,6 +142,15 @@ def check_save_it(epoch: int, iteration: int, settings: SaveIterationSettings) -
     return True
 
   return False
+
+
+def get_next_save_it(epoch: int, iteration: int, settings: SaveIterationSettings) -> Optional[int]:
+  result = iteration
+  while result <= settings.epochs * settings.batch_iterations:
+    if check_save_it(epoch, result, settings):
+      return result
+    result += 1
+  return None
 
 
 def check_is_first(iteration: int) -> bool:

@@ -4,13 +4,15 @@ from typing import List
 
 from torch.utils.data import DataLoader, Dataset
 
-from src.core.common.train import (check_is_first, check_is_last,
+from src.core.common.train import (SaveIterationSettings, check_is_first,
+                                   check_is_last,
                                    check_is_last_batch_iteration,
                                    check_is_save_epoch,
                                    check_is_save_iteration,
                                    get_continue_batch_iteration,
                                    get_continue_epoch, get_dataclass_from_dict,
-                                   get_only_known_params, get_value_in_type,
+                                   get_next_save_it, get_only_known_params,
+                                   get_value_in_type,
                                    iteration_to_batch_iteration,
                                    iteration_to_epoch, skip_batch)
 
@@ -342,6 +344,37 @@ class UnitTests(unittest.TestCase):
       result.append(skip_batch(continue_batch_iteration, batch_iteration))
     self.assertEqual([True, True, False], result)
 
+  def test_get_next_save_it__return_it(self):
+    epoch = 0
+    iteration = 1
+    settings = SaveIterationSettings(
+      epochs=1,
+      batch_iterations=10,
+      save_first_iteration=False,
+      save_last_iteration=True,
+      iters_per_checkpoint=0,
+      epochs_per_checkpoint=0
+    )
+
+    res = get_next_save_it(epoch, iteration, settings)
+
+    self.assertEqual(10, res)
+
+  def test_get_next_save_it__return_none(self):
+    epoch = 0
+    iteration = 1
+    settings = SaveIterationSettings(
+      epochs=1,
+      batch_iterations=10,
+      save_first_iteration=False,
+      save_last_iteration=False,
+      iters_per_checkpoint=0,
+      epochs_per_checkpoint=0
+    )
+
+    res = get_next_save_it(epoch, iteration, settings)
+
+    self.assertIsNone(res)
 
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)

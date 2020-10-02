@@ -151,7 +151,7 @@ if __name__ == "__main__":
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       custom_hparams={
-        "iters_per_checkpoint": 5,
+        "iters_per_checkpoint": 100,
       }
     )
 

@@ -28,7 +28,8 @@ from src.core.common.train import (SaveIterationSettings, check_save_it,
                                    get_checkpoint,
                                    get_continue_batch_iteration,
                                    get_continue_epoch,
-                                   get_formatted_current_total, log_hparams,
+                                   get_formatted_current_total,
+                                   get_next_save_it, log_hparams,
                                    overwrite_custom_hparams, skip_batch)
 from src.core.pre.merge_ds import PreparedData, PreparedDataList
 from src.core.tacotron.hparams import HParams
@@ -559,6 +560,11 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
       remaining_its = hparams.epochs * batch_iterations - iteration
       estimated_remaining_duration = avg_batch_dur * remaining_its
 
+      next_it = get_next_save_it(epoch, iteration, save_it_settings)
+      next_checkpoint_save_time = 0
+      if next_it is not None:
+        next_checkpoint_save_time = (next_it - iteration) * avg_batch_dur
+
       logger.info(" | ".join([
         f"Epoch: {get_formatted_current_total(epoch + 1, hparams.epochs)}",
         f"It.: {get_formatted_current_total(batch_iteration + 1, batch_iterations)}",
@@ -568,6 +574,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
         #f"Dur.: {duration:.2f}s/it",
         f"Avg. dur.: {avg_batch_dur:.2f}s/it & {avg_epoch_dur / 60:.0f}min/epoch",
         f"Tot. dur.: {(time.perf_counter() - train_start) / 60 / 60:.2f}h/{estimated_remaining_duration / 60 / 60:.0f}h ({estimated_remaining_duration / 60 / 60 / 24:.1f}days)",
+        f"Next checkpoint: {next_checkpoint_save_time / 60:.0f}min",
       ]))
 
       taco_logger.log_training(reduced_loss, grad_norm, learning_rate,
