@@ -1,15 +1,15 @@
+import dataclasses
 import os
 from dataclasses import asdict, dataclass, replace
 from logging import Logger
 from math import floor
-from typing import Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Dict, Generic, List, Optional, Set, Tuple, Type, TypeVar, Union
 
 from src.core.common.utils import get_filenames
 
 PYTORCH_EXT = ".pt"
 
 _T = TypeVar("_T")
-
 
 def get_pytorch_filename(name: Union[str, int]) -> str:
   return f"{name}{PYTORCH_EXT}"
@@ -61,6 +61,19 @@ def get_value_in_type(old_value: _T, new_value: str) -> _T:
   return new_value_with_original_type
 
 
+def get_only_known_params(params: Dict[str, str], hparams: _T) -> Dict[str, str]:
+  available_params = asdict(hparams)
+  res = {k: v for k, v in params.items() if k in available_params.keys()}
+  return res
+
+
+def get_dataclass_from_dict(params: Dict[str, str], dc: Type[_T]) -> Tuple[_T, Set[str]]:
+  field_names = {x.name for x in dataclasses.fields(dc)}
+  res = {k: v for k, v in params.items() if k in field_names}
+  ignored = {k for k in params.keys() if k not in field_names}
+  return dc(**res), ignored
+
+
 def check_has_unknown_params(params: Dict[str, str], hparams: _T) -> bool:
   available_params = asdict(hparams)
   for custom_hparam in params.keys():
@@ -81,6 +94,7 @@ def overwrite_custom_hparams(hparams_dc: _T, custom_hparams: Optional[Dict[str, 
   if custom_hparams is None:
     return hparams_dc
 
+  # custom_hparams = get_only_known_params(custom_hparams, hparams_dc)
   if check_has_unknown_params(custom_hparams, hparams_dc):
     raise Exception()
 

@@ -1,8 +1,13 @@
 import os
 from dataclasses import asdict, dataclass
 from logging import Logger
+from typing import Type, TypeVar
 
 import torch
+
+from src.core.common.train import get_dataclass_from_dict
+
+_HParamsType = TypeVar("_HParamsType")
 
 
 @dataclass
@@ -13,6 +18,12 @@ class Checkpoint():
   learning_rate: float
   iteration: int
   hparams: dict
+
+  def get_hparams(self, logger: Logger, hparam_type: Type[_HParamsType]) -> _HParamsType:
+    res, ignored = get_dataclass_from_dict(self.hparams, hparam_type)
+    logger.warning(
+      f"Ignored these hparams from checkpoint because the did not exist in the current HParams: {ignored}.")
+    return res
 
   def save(self, checkpoint_path: str, logger: Logger):
     logger.info(f"Saving model at iteration {self.iteration}...")

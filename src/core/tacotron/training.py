@@ -1,5 +1,4 @@
 import logging
-import os
 import random
 import time
 from collections import OrderedDict
@@ -39,6 +38,12 @@ from src.core.tacotron.model import (SPEAKER_EMBEDDING_LAYER_NAME,
                                      get_model_symbol_id, get_model_symbol_ids,
                                      get_symbol_weights, update_weights)
 
+WARM_START_IGNORE_LAYERS = [
+  SYMBOL_EMBEDDING_LAYER_NAME,
+  # ACCENT_EMBEDDING_LAYER_NAME,
+  SPEAKER_EMBEDDING_LAYER_NAME
+]
+
 
 @dataclass
 class CheckpointTacotron(Checkpoint):
@@ -46,6 +51,10 @@ class CheckpointTacotron(Checkpoint):
   speakers: OrderedDictType[str, int]
   symbols: OrderedDictType[str, int]
   accents: OrderedDictType[str, int]
+
+  # pylint: disable=arguments-differ
+  def get_hparams(self, logger: Logger) -> HParams:
+    return super().get_hparams(logger, HParams)
 
   def get_symbols(self) -> SymbolIdDict:
     return SymbolIdDict.from_raw(self.symbols)
@@ -55,9 +64,6 @@ class CheckpointTacotron(Checkpoint):
 
   def get_speakers(self) -> SpeakersDict:
     return SpeakersDict.from_raw(self.speakers)
-
-  def get_hparams(self) -> HParams:
-    return HParams(**self.hparams)
 
   def get_symbol_embedding_weights(self) -> torch.Tensor:
     pretrained_weights = self.state_dict[SYMBOL_EMBEDDING_LAYER_NAME]
@@ -415,7 +421,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
   complete_start = time.time()
 
   if checkpoint is not None:
-    hparams = checkpoint.get_hparams()
+    hparams = checkpoint.get_hparams(logger)
   else:
     hparams = HParams(
       n_accents=len(accents),
@@ -443,7 +449,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
     model, optimizer, learning_rate, iteration = model_and_optimizer_fresh(hparams, logger)
 
     if warm_model is not None:
-      warm_start_model(model, warm_model.state_dict, hparams.ignore_layers, logger)
+      warm_start_model(model, warm_model, hparams.ignore_layers, logger)
 
     if weights_checkpoint is not None:
       pretrained_weights = get_mapped_symbol_weights(
@@ -621,6 +627,7 @@ def model_and_optimizer_fresh(hparams: HParams, logger: Logger):
 
   return model, optimizer, hparams.learning_rate, current_iteration
 
+
 def load_optimizer(model_parameters, learning_rate: float, weight_decay, state_dict: Optional[dict]) -> torch.optim.Adam:
   optimizer = torch.optim.Adam(
     params=model_parameters,
@@ -632,6 +639,7 @@ def load_optimizer(model_parameters, learning_rate: float, weight_decay, state_d
     optimizer.load_state_dict(state_dict)
 
   return optimizer
+
 
 def model_and_optimizer_from_checkpoint(checkpoint: CheckpointTacotron, updated_hparams: HParams, logger: Logger):
   logger.info("Continuing training from checkpoint...")
@@ -655,16 +663,23 @@ def model_and_optimizer_from_checkpoint(checkpoint: CheckpointTacotron, updated_
   return model, optimizer, learning_rate, checkpoint.iteration
 
 
-def warm_start_model(model: Tacotron2, warm_start_states: dict, ignore_layers: List[str], logger: Logger):
+def warm_start_model(model: Tacotron2, warm_model: CheckpointTacotron, hparams: HParams, logger: Logger):
   logger.info("Loading states from pretrained model...")
-  # The default value from HParams is [""], an empty list was not working.
-  ignore_layers.extend([
-    SYMBOL_EMBEDDING_LAYER_NAME,
-    # ACCENT_EMBEDDING_LAYER_NAME,
-    SPEAKER_EMBEDDING_LAYER_NAME
-  ])
 
-  model_dict = {k: v for k, v in warm_start_states.items() if k not in ignore_layers}
+  warm_model_hparams = warm_model.get_hparams(logger)
+  speakers_embedding_dim_mismatch = warm_model_hparams.speakers_embedding_dim != hparams.speakers_embedding_dim
+  symbols_embedding_dim_mismatch = warm_model_hparams.symbols_embedding_dim != hparams.symbols_embedding_dim
+
+  if speakers_embedding_dim_mismatch or symbols_embedding_dim_mismatch:
+    msg = "Mismatch in embedding dimensions!"
+    logger.exception(msg)
+    raise Exception(msg)
+
+  # The default value from HParams is [""], an empty list was not working.
+  ignore_layers = hparams.ignore_layers
+  ignore_layers.extend(WARM_START_IGNORE_LAYERS)
+
+  model_dict = {k: v for k, v in warm_model.state_dict.items() if k not in ignore_layers}
   _update_model_state_dict(model, model_dict)
 
 

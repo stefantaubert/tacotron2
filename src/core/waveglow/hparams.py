@@ -5,7 +5,7 @@ from src.core.common.taco_stft import STFTHParams
 
 @dataclass
 class ExperimentHParams():
-  fp16_run: bool = False
+  #fp16_run: bool = False
   epochs: int = 100000
   iters_per_checkpoint: int = 2000
   epochs_per_checkpoint: int = 1

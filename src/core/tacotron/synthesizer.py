@@ -17,7 +17,7 @@ class Synthesizer():
     self.accents = checkpoint.get_accents()
     self.symbols = checkpoint.get_symbols()
     self.speakers = checkpoint.get_speakers()
-    hparams = checkpoint.get_hparams()
+    hparams = checkpoint.get_hparams(logger)
     hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
     model = load_model(

@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import dataclass
 from typing import List
 
 from torch.utils.data import DataLoader, Dataset
@@ -8,7 +9,8 @@ from src.core.common.train import (check_is_first, check_is_last,
                                    check_is_save_epoch,
                                    check_is_save_iteration,
                                    get_continue_batch_iteration,
-                                   get_continue_epoch, get_value_in_type,
+                                   get_continue_epoch, get_dataclass_from_dict,
+                                   get_only_known_params, get_value_in_type,
                                    iteration_to_batch_iteration,
                                    iteration_to_epoch, skip_batch)
 
@@ -25,6 +27,27 @@ class DummyDataset(Dataset):
 
 
 class UnitTests(unittest.TestCase):
+  def test_get_dataclass_from_dict(self):
+    @dataclass
+    class DummyHp:
+      b: int = 4
+
+    inp = {"a": "1", "b": "2"}
+    res, ignored = get_dataclass_from_dict(inp, DummyHp)
+    self.assertIsInstance(res, DummyHp)
+    self.assertEqual({"a"}, ignored)
+
+  def test_get_only_known_params(self):
+    @dataclass
+    class DummyHp:
+      b: int = 4
+
+    inp = {"a": "1", "b": "2"}
+
+    res = get_only_known_params(inp, DummyHp())
+
+    self.assertEqual(1, len(res))
+    self.assertEqual("2", res["b"])
 
   def test_get_value_in_type_int__returns_int(self):
     res = get_value_in_type(1, "2")

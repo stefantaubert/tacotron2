@@ -10,7 +10,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-from src.core.common.audio import get_wav_tensor_segment, wav_to_float32_tensor
+from src.core.common.audio import get_wav_tensor_segment
 from src.core.common.checkpoint import Checkpoint
 from src.core.common.taco_stft import TacotronSTFT
 from src.core.common.train import (SaveIterationSettings, check_save_it,
@@ -28,8 +28,10 @@ from src.core.waveglow.model import WaveGlow, WaveGlowLoss
 
 @dataclass
 class CheckpointWaveglow(Checkpoint):
-  def get_hparams(self) -> HParams:
-    return HParams(**self.hparams)
+  # pylint: disable=arguments-differ
+  def get_hparams(self, logger: Logger) -> HParams:
+    return super().get_hparams(logger, HParams)
+
 
 class MelLoader(Dataset):
   """
@@ -217,7 +219,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   #   model = apply_gradient_allreduce(model)
 
   if checkpoint is not None:
-    hparams = checkpoint.get_hparams()
+    hparams = checkpoint.get_hparams(logger)
   else:
     hparams = HParams()
   # is it problematic to change the batch size?

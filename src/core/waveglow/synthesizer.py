@@ -17,7 +17,7 @@ class Synthesizer():
     super().__init__()
     self._logger = logger
 
-    hparams = checkpoint.get_hparams()
+    hparams = checkpoint.get_hparams(logger)
     hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
     model = load_model(hparams, checkpoint.state_dict)
