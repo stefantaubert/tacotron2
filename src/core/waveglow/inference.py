@@ -20,7 +20,7 @@ def infer(wav_path: str, checkpoint: CheckpointWaveglow, custom_hparams: Optiona
   #   from apex import amp
   #   waveglow, _ = amp.initialize(waveglow, [], opt_level="O3")
 
-  taco_stft = TacotronSTFT.fromhparams(synth.hparams)
+  taco_stft = TacotronSTFT(synth.hparams, logger=logger)
 
   mel = taco_stft.get_mel_tensor_from_file(wav_path)
   mel_var = torch.autograd.Variable(mel)
@@ -30,9 +30,9 @@ def infer(wav_path: str, checkpoint: CheckpointWaveglow, custom_hparams: Optiona
   #mel = mel.half() if is_fp16 else mel
 
   audio = synth.infer(mel_var, sigma, denoiser_strength)
+
   audio_tensor = torch.FloatTensor(audio)
   mel_pred = taco_stft.get_mel_tensor(audio_tensor)
-
   orig_np = mel.cpu().numpy()
   pred_np = mel_pred.numpy()
 

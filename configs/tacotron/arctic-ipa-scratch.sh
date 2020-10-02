@@ -17,8 +17,8 @@ export epochs_per_checkpoint=2
 source /home/stefan/tacotron2/configs/envs/phil.sh
 export train_name="arctic_ipa_scratch"
 export prep_name="arctic_ipa"
-export batch_size=15
-export epochs_per_checkpoint=10
+export batch_size=17
+export epochs_per_checkpoint=5
 
 # Training
 python -m src.cli.runner tacotron-train \

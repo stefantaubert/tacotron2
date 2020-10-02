@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from logging import Logger, getLogger
 from typing import Dict, Optional
 
 import numpy as np
@@ -7,7 +9,6 @@ from librosa.filters import mel as librosa_mel_fn
 from src.core.common.audio import wav_to_float32_tensor
 from src.core.common.stft import STFT
 from src.core.common.train import overwrite_custom_hparams
-from src.core.tacotron.hparams import AudioHParams
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
@@ -29,36 +30,40 @@ def dynamic_range_decompression(x, C=1):
 
 
 def get_mel(wav_path: str, custom_hparams: Optional[Dict[str, str]]) -> np.ndarray:
-  hparams = AudioHParams()
+  hparams = STFTHParams()
   hparams = overwrite_custom_hparams(hparams, custom_hparams)
-  taco_stft = TacotronSTFT.fromhparams(hparams)
+  taco_stft = TacotronSTFT(hparams, logger=getLogger())
   orig_mel = taco_stft.get_mel_tensor_from_file(wav_path).numpy()
   return orig_mel
 
 
+@dataclass
+class STFTHParams():
+  n_mel_channels: int = 80
+  sampling_rate: int = 22050
+  filter_length: int = 1024
+  hop_length: int = 256
+  win_length: int = 1024
+  mel_fmin: float = 0.0
+  mel_fmax: float = 8000.0
+
+
 class TacotronSTFT(torch.nn.Module):
-  def __init__(self, filter_length=1024, hop_length=256, win_length=1024,
-               n_mel_channels=80, sampling_rate=22050, mel_fmin=0.0,
-               mel_fmax=8000.0):
+  def __init__(self, hparams: STFTHParams, logger: Logger):
     super(TacotronSTFT, self).__init__()
-    self.n_mel_channels = n_mel_channels
-    self.sampling_rate = sampling_rate
-    self.stft_fn = STFT(filter_length, hop_length, win_length)
-    mel_basis = librosa_mel_fn(sampling_rate, filter_length, n_mel_channels, mel_fmin, mel_fmax)
+    self.logger = logger
+    self.n_mel_channels = hparams.n_mel_channels
+    self.sampling_rate = hparams.sampling_rate
+    self.stft_fn = STFT(hparams.filter_length, hparams.hop_length, hparams.win_length)
+    mel_basis = librosa_mel_fn(
+      sr=hparams.sampling_rate,
+      n_fft=hparams.filter_length,
+      n_mels=hparams.n_mel_channels,
+      fmin=hparams.mel_fmin,
+      fmax=hparams.mel_fmax
+    )
     mel_basis = torch.from_numpy(mel_basis).float()
     self.register_buffer('mel_basis', mel_basis)
-
-  @classmethod
-  def fromhparams(cls, hparams: AudioHParams):
-    return cls(
-      filter_length=hparams.filter_length,
-      hop_length=hparams.hop_length,
-      win_length=hparams.win_length,
-      n_mel_channels=hparams.n_mel_channels,
-      sampling_rate=hparams.sampling_rate,
-      mel_fmin=hparams.mel_fmin,
-      mel_fmax=hparams.mel_fmax
-    )
 
   def spectral_normalize(self, magnitudes):
     output = dynamic_range_compression(magnitudes)
@@ -87,12 +92,18 @@ class TacotronSTFT(torch.nn.Module):
     mel_output = self.spectral_normalize(mel_output)
     return mel_output
 
+  def get_wav_tensor_from_file(self, wav_path: str) -> torch.Tensor:
+    wav_tensor, sampling_rate = wav_to_float32_tensor(wav_path)
+
+    if sampling_rate != self.sampling_rate:
+      msg = f"{wav_path}: The sampling rate of the file ({sampling_rate}Hz) doesn't match the target sampling rate ({self.sampling_rate}Hz)!"
+      self.logger.exception(msg)
+      raise ValueError(msg)
+
+    return wav_tensor
+
   def get_mel_tensor_from_file(self, wav_path: str) -> torch.Tensor:
-    wav_tensor, sr = wav_to_float32_tensor(wav_path)
-
-    if sr != self.sampling_rate:
-      raise ValueError(f"{wav_path} {sr} SR doesn't match target {self.sampling_rate} SR")
-
+    wav_tensor = self.get_wav_tensor_from_file(wav_path)
     return self.get_mel_tensor(wav_tensor)
 
   def get_mel_tensor(self, wav_tensor: torch.Tensor) -> torch.Tensor:

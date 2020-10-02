@@ -280,7 +280,7 @@ def wav_to_float32_tensor(path: str) -> Tuple[torch.Tensor, int]:
   return wav_tensor, sampling_rate
 
 
-def get_wav_tensor_segment(wav_tensor: torch.FloatTensor, segment_length: int) -> torch.FloatTensor:
+def get_wav_tensor_segment(wav_tensor: torch.Tensor, segment_length: int) -> torch.Tensor:
   if wav_tensor.size(0) >= segment_length:
     max_audio_start = wav_tensor.size(0) - segment_length
     audio_start = random.randint(0, max_audio_start)
@@ -293,6 +293,7 @@ def get_wav_tensor_segment(wav_tensor: torch.FloatTensor, segment_length: int) -
 
 
 if __name__ == "__main__":
+  a, b = read("/datasets/libriTTS/dev-clean/8842/304647/8842_304647_000050_000000.wav")
   a, b = read("/datasets/l2arctic/suitcase_corpus/wav/tlv.wav")
   normalize_file("/datasets/thchs_wav/wav/train/A2/A2_21.wav", "/tmp/A2_21.wav")
   import tempfile

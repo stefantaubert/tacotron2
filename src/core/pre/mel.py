@@ -3,14 +3,13 @@ input: wav data
 output: mel data
 """
 from dataclasses import dataclass
+from logging import getLogger
 from typing import Any, Dict, Optional
 
-from src.core.common.taco_stft import TacotronSTFT
+from src.core.common.taco_stft import STFTHParams, TacotronSTFT
 from src.core.common.train import overwrite_custom_hparams
 from src.core.common.utils import GenericList
 from src.core.pre.wav import WavDataList
-from src.core.tacotron.hparams import AudioHParams
-
 
 @dataclass()
 class MelData:
@@ -25,9 +24,9 @@ class MelDataList(GenericList[MelData]):
 
 def process(data: WavDataList, custom_hparams: Optional[Dict[str, str]], save_callback: Any) -> MelDataList:
   result = MelDataList()
-  hparams = AudioHParams()
+  hparams = STFTHParams()
   hparams = overwrite_custom_hparams(hparams, custom_hparams)
-  mel_parser = TacotronSTFT.fromhparams(hparams)
+  mel_parser = TacotronSTFT(hparams, logger=getLogger())
 
   for wav_entry in data.items(True):
     mel_tensor = mel_parser.get_mel_tensor_from_file(wav_entry.wav)

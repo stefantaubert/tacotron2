@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from src.core.common.taco_stft import STFTHParams
+
 
 @dataclass
 class ExperimentHParams():
@@ -9,11 +11,11 @@ class ExperimentHParams():
   # 0 if no saving, 1 for each and so on...
   epochs_per_checkpoint: int = 1
   seed: int = 1234
-  dynamic_loss_scaling: bool = True
-  fp16_run: bool = False
-  distributed_run: bool = False
-  dist_backend: str = "nccl"
-  dist_url: str = "tcp://localhost:54321"
+  #dynamic_loss_scaling: bool = True
+  #fp16_run: bool = False
+  #distributed_run: bool = False
+  #dist_backend: str = "nccl"
+  #dist_url: str = "tcp://localhost:54321"
   cudnn_enabled: bool = True
   cudnn_benchmark: bool = False
   ignore_layers: list = field(default_factory=list)  # [""] -> to define that it is a list
@@ -24,18 +26,6 @@ class DataHParams():
   load_mel_from_disk: bool = False
   cache_mels: bool = False
   use_saved_mels: bool = True
-
-
-@dataclass
-class AudioHParams():
-  n_mel_channels: int = 80
-  sampling_rate: int = 22050
-  # next 5 occur in mel calculation only
-  filter_length: int = 1024
-  hop_length: int = 256
-  win_length: int = 1024
-  mel_fmin: float = 0.0
-  mel_fmax: float = 8000.0
 
 
 @dataclass
@@ -83,9 +73,10 @@ class OptimizerHParams():
   weight_decay: float = 1e-6
   grad_clip_thresh: float = 1.0
   batch_size: int = 64
-  mask_padding: bool = True  # set model's padded outputs to padded values
+  # set model's padded outputs to padded values
+  mask_padding: bool = True
 
 
 @dataclass
-class HParams(ExperimentHParams, DataHParams, AudioHParams, ModelHParams, OptimizerHParams):
+class HParams(ExperimentHParams, DataHParams, STFTHParams, ModelHParams, OptimizerHParams):
   pass

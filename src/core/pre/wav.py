@@ -2,16 +2,16 @@
 calculate wav duration and sampling rate
 """
 
+from logging import getLogger
 import os
 from dataclasses import dataclass
-from src.core.tacotron.hparams import AudioHParams
 
 from scipy.io.wavfile import read
 from tqdm import tqdm
 
 from src.core.common.audio import (get_duration_s, normalize_file,
                                    remove_silence_file, upsample_file)
-from src.core.common.taco_stft import TacotronSTFT
+from src.core.common.taco_stft import STFTHParams, TacotronSTFT
 from src.core.common.utils import GenericList, get_chunk_name
 from src.core.pre.ds import DsData, DsDataList
 
@@ -101,9 +101,9 @@ def remove_silence_plot(wav_path: str, out_path: str, chunk_size: int, threshold
 
   sampling_rate, _ = read(wav_path)
 
-  hparams = AudioHParams()
+  hparams = STFTHParams()
   hparams.sampling_rate = sampling_rate
-  plotter = TacotronSTFT.fromhparams(hparams)
+  plotter = TacotronSTFT(hparams, logger=getLogger())
 
   mel_orig = plotter.get_mel_tensor_from_file(wav_path)
   mel_trimmed = plotter.get_mel_tensor_from_file(out_path)

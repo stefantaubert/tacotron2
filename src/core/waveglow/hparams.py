@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from src.core.common.taco_stft import STFTHParams
+
 
 @dataclass
 class ExperimentHParams():
@@ -16,19 +18,8 @@ class ExperimentHParams():
 
 
 @dataclass
-class AudioHParams():
-  segment_length: int = 16000
-  sampling_rate: int = 22050
-  # next 5 occur in mel calculation only
-  filter_length: int = 1024
-  hop_length: int = 256
-  win_length: int = 1024
-  mel_fmin: float = 0.0
-  mel_fmax: float = 8000.0
-
-
-@dataclass
 class ModelHParams():
+  segment_length: int = 16000
   n_mel_channels: int = 80
   n_flows: int = 12
   n_group: int = 8
@@ -49,5 +40,5 @@ class OptimizerHParams():
 
 
 @dataclass
-class HParams(ExperimentHParams, AudioHParams, ModelHParams, OptimizerHParams):
+class HParams(ExperimentHParams, STFTHParams, ModelHParams, OptimizerHParams):
   pass

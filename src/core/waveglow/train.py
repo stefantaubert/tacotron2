@@ -38,10 +38,8 @@ class MelLoader(Dataset):
   """
 
   def __init__(self, prepare_ds_data: PreparedDataList, hparams: HParams, logger: Logger):
-    self.taco_stft = TacotronSTFT.fromhparams(hparams)
-    self.segment_length = hparams.segment_length
-    self.sampling_rate = hparams.sampling_rate
-    self.cache_wavs = hparams.cache_wavs
+    self.taco_stft = TacotronSTFT(hparams, logger=logger)
+    self.hparams = hparams
     self._logger = logger
 
     data = prepare_ds_data
@@ -57,23 +55,16 @@ class MelLoader(Dataset):
       self._logger.info("Loading wavs into memory...")
       cache = {}
       for i, wav_path in tqdm(wav_paths.items()):
-        cache[i] = self._load_wav_tensor(wav_path)
+        cache[i] = self.taco_stft.get_wav_tensor_from_file(wav_path)
       self._logger.info("Done")
       self.cache = cache
 
-  def _load_wav_tensor(self, wav_path: str):
-    wav_tensor, sr = wav_to_float32_tensor(wav_path)
-    if sr != self.sampling_rate:
-      self._logger.exception(f"{wav_path} {sr} SR doesn't match target {self.sampling_rate} SR")
-      raise ValueError()
-    return wav_tensor
-
   def __getitem__(self, index):
-    if self.cache_wavs:
+    if self.hparams.cache_wavs:
       wav_tensor = self.cache[index].clone().detach()
     else:
-      wav_tensor = self._load_wav_tensor(self.wav_paths[index])
-    wav_tensor = get_wav_tensor_segment(wav_tensor, self.segment_length)
+      wav_tensor = self.taco_stft.get_wav_tensor_from_file(self.wav_paths[index])
+    wav_tensor = get_wav_tensor_segment(wav_tensor, self.hparams.segment_length)
     mel_tensor = self.taco_stft.get_mel_tensor(wav_tensor)
     return (mel_tensor, wav_tensor)
 

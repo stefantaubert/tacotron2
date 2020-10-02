@@ -37,6 +37,7 @@ python -m src.cli.runner tacotron-continue-train --train_name=$train_name --cust
 python -m src.cli.runner prepare-inference-map \
   --prep_name=$prep_name \
   --template_map="maps/inference/eng_ipa.json"
+
   --template_map="maps/weights/thchs_ipa_ljs_ipa.json"
 
 export ds_speaker="ljs,1"
@@ -68,5 +69,4 @@ python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
   --ds_speaker=$ds_speaker \
   --text_name=$text_name \
-  --analysis \
-  --custom_checkpoint=0
+  --analysis

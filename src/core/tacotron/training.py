@@ -88,7 +88,7 @@ class SymbolsMelLoader(Dataset):
     random.shuffle(data)
     self.use_saved_mels: bool = hparams.use_saved_mels
     if not hparams.use_saved_mels:
-      self.mel_parser = TacotronSTFT.fromhparams(hparams)
+      self.mel_parser = TacotronSTFT(hparams, logger)
 
     logger.info("Reading files...")
     self.data: Dict[int, Tuple[torch.IntTensor, torch.IntTensor, str, int]] = {}
@@ -593,7 +593,12 @@ def update_symbol_embeddings(model: Tacotron2, weights: torch.Tensor, logger: Lo
 
 def model_and_optimizer_fresh(hparams: HParams, logger: Logger):
   logger.info("Starting new model...")
-  model = load_model(hparams, None, logger)
+
+  model = load_model(
+    hparams=hparams,
+    state_dict=None,
+    logger=logger
+  )
 
   # if hparams.distributed_run:
   #   init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
@@ -605,16 +610,28 @@ def model_and_optimizer_fresh(hparams: HParams, logger: Logger):
   # if hparams.distributed_run:
   #   model = apply_gradient_allreduce(model)
 
-  optimizer = torch.optim.Adam(
-    params=model.parameters(),
-    lr=hparams.learning_rate,
-    weight_decay=hparams.weight_decay
+  optimizer = load_optimizer(
+    model_parameters=model.parameters(),
+    learning_rate=hparams.learning_rate,
+    weight_decay=hparams.weight_decay,
+    state_dict=None
   )
 
   current_iteration = 0
 
   return model, optimizer, hparams.learning_rate, current_iteration
 
+def load_optimizer(model_parameters, learning_rate: float, weight_decay, state_dict: Optional[dict]) -> torch.optim.Adam:
+  optimizer = torch.optim.Adam(
+    params=model_parameters,
+    lr=learning_rate,
+    weight_decay=weight_decay
+  )
+
+  if state_dict is not None:
+    optimizer.load_state_dict(state_dict)
+
+  return optimizer
 
 def model_and_optimizer_from_checkpoint(checkpoint: CheckpointTacotron, updated_hparams: HParams, logger: Logger):
   logger.info("Continuing training from checkpoint...")
@@ -622,15 +639,18 @@ def model_and_optimizer_from_checkpoint(checkpoint: CheckpointTacotron, updated_
   if updated_hparams.use_saved_learning_rate:
     learning_rate = checkpoint.learning_rate
 
-  model = load_model(updated_hparams, checkpoint.state_dict, logger)
-
-  # warn: use saved learning rate is ignored here
-  optimizer = torch.optim.Adam(
-    params=model.parameters(),
-    lr=learning_rate,
-    weight_decay=updated_hparams.weight_decay
+  model = load_model(
+    hparams=updated_hparams,
+    state_dict=checkpoint.state_dict,
+    logger=logger
   )
-  optimizer.load_state_dict(checkpoint.optimizer)
+
+  optimizer = load_optimizer(
+    model_parameters=model.parameters(),
+    learning_rate=learning_rate,
+    weight_decay=updated_hparams.weight_decay,
+    state_dict=checkpoint.state_dict
+  )
 
   return model, optimizer, learning_rate, checkpoint.iteration
 

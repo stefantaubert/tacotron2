@@ -1,17 +1,18 @@
 import datetime
 import os
 from shutil import copyfile
-from src.app.pre.prepare import load_filelist
 from typing import Optional, Tuple
 
 import matplotlib.pylab as plt
 import numpy as np
 
+from src.app.pre.prepare import load_filelist
 from src.core.common.audio import float_to_wav
 from src.core.common.mel_plot import plot_melspec
 from src.core.common.utils import (get_parent_dirname, get_subdir, parse_json,
                                    save_json, stack_images_vertically)
-from src.core.pre.merge_ds import PreparedData, PreparedDataList, split_prepared_data_train_test_val
+from src.core.pre.merge_ds import (PreparedData, PreparedDataList,
+                                   split_prepared_data_train_test_val)
 
 # region Training
 
