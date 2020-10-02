@@ -562,7 +562,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
       logger.info(" | ".join([
         f"Epoch: {get_formatted_current_total(epoch + 1, hparams.epochs)}",
         f"It.: {get_formatted_current_total(batch_iteration + 1, batch_iterations)}",
-        f"Tot. it.: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)} ({iteration / hparams.epochs * batch_iterations:.2f}%)",
+        f"Tot. it.: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)} ({iteration / (hparams.epochs * batch_iterations):.2f}%)",
         f"Loss: {reduced_loss:.6f}",
         f"Grad norm: {grad_norm:.6f}",
         #f"Dur.: {duration:.2f}s/it",
