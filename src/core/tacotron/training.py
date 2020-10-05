@@ -36,28 +36,6 @@ from src.core.tacotron.model import (SYMBOL_EMBEDDING_LAYER_NAME,
 from src.core.tacotron.model_checkpoint import CheckpointTacotron
 from src.core.tacotron.model_weights import get_mapped_symbol_weights
 
-# import torch.distributed as dist
-
-# def reduce_tensor(tensor, n_gpus):
-#   rt = tensor.clone()
-#   dist.all_reduce(rt, op=dist.reduce_op.SUM)
-#   rt /= n_gpus
-#   return rt
-
-# def init_distributed(hparams, n_gpus, rank, group_name, training_dir_path):
-#   assert torch.cuda.is_available(), "Distributed mode requires CUDA."
-#   log(training_dir_path, "Initializing Distributed")
-
-#   # Set cuda device so everything is done on the right GPU.
-#   torch.cuda.set_device(rank % torch.cuda.device_count())
-
-#   # Initialize distributed communication
-#   dist.init_process_group(
-#     backend=hparams.dist_backend, init_method=hparams.dist_url,
-#     world_size=n_gpus, rank=rank, group_name=group_name)
-
-#   log(training_dir_path, "Done initializing distributed")
-
 
 class Tacotron2Loss(nn.Module):
   def __init__(self) -> None:
@@ -269,25 +247,10 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
       y_pred = model(x)
 
       loss = criterion(y_pred, y)
-      # if hparams.distributed_run:
-      #   reduced_loss = reduce_tensor(loss.data, n_gpus).item()
-      # else:
-      #   reduced_loss = loss.item()
       reduced_loss = loss.item()
 
-      # if hparams.fp16_run:
-      #   with amp.scale_loss(loss, optimizer) as scaled_loss:
-      #     scaled_loss.backward()
-      # else:
-      #   loss.backward()
       loss.backward()
 
-      # if hparams.fp16_run:
-      #   grad_norm = torch.nn.utils.clip_grad_norm_(
-      #     amp.master_params(optimizer), hparams.grad_clip_thresh)
-      #   is_overflow = math.isnan(grad_norm)
-      # else:
-      #   grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), hparams.grad_clip_thresh)
       grad_norm = torch.nn.utils.clip_grad_norm_(
         parameters=model.parameters(),
         max_norm=hparams.grad_clip_thresh
@@ -353,11 +316,6 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
 
 def load_model(hparams: HParams, state_dict: Optional[dict], logger: logging.Logger):
   model = Tacotron2(hparams, logger).cuda()
-  # if hparams.fp16_run:
-  #   model.decoder.attention_layer.score_mask_value = finfo('float16').min
-
-  # if hparams.distributed_run:
-  #   model = apply_gradient_allreduce(model)
   if state_dict is not None:
     model.load_state_dict(state_dict)
 
@@ -389,16 +347,6 @@ def load_model_and_optimizer(hparams: HParams, checkpoint: Optional[Checkpoint],
     hparams=hparams,
     state_dict=checkpoint.optimizer if checkpoint is not None else None
   )
-
-  # if hparams.distributed_run:
-  #   init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
-
-  # if hparams.fp16_run:
-  #   from apex import amp
-  #   model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
-
-  # if hparams.distributed_run:
-  #   model = apply_gradient_allreduce(model)
 
   return model, optimizer
 

@@ -184,9 +184,6 @@ def prepare_valloader(hparams: HParams, collate_fn: SymbolsMelCollate, valset: P
   val = SymbolsMelLoader(valset, hparams, logger)
   val_sampler = None
 
-  # if distributed_run:
-  #   val_sampler = DistributedSampler(val)
-
   val_loader = DataLoader(
     dataset=val,
     sampler=val_sampler,
@@ -209,10 +206,6 @@ def prepare_trainloader(hparams: HParams, collate_fn: SymbolsMelCollate, trainse
 
   train_sampler = None
   shuffle = True
-
-  # if hparams.distributed_run:
-  #   train_sampler = DistributedSampler(trn)
-  #   shuffle = False
 
   train_loader = DataLoader(
     dataset=trn,

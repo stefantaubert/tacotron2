@@ -52,11 +52,6 @@ class MelLoader(Dataset):
   def __len__(self):
     return len(self.wav_paths)
 
-# #=====START: ADDED FOR DISTRIBUTED======
-# from distributed_waveglow import init_distributed, apply_gradient_allreduce, reduce_tensor
-# from torch.utils.data.distributed import DistributedSampler
-# #=====END:   ADDED FOR DISTRIBUTED======
-
 
 def parse_batch(batch) -> Tuple[torch.autograd.Variable, torch.autograd.Variable]:
   mel, audio = batch
@@ -74,9 +69,6 @@ def prepare_trainloader(hparams: HParams, trainset: PreparedDataList, logger: Lo
   train_sampler = None
   shuffle = False  # maybe set to true bc taco is also true
 
-  # # =====START: ADDED FOR DISTRIBUTED======
-  # train_sampler = DistributedSampler(trn) if n_gpus > 1 else None
-  # # =====END:   ADDED FOR DISTRIBUTED======
   train_loader = DataLoader(
     dataset=trn,
     num_workers=0,

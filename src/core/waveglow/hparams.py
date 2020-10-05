@@ -12,9 +12,6 @@ class ExperimentHParams():
   seed: int = 1234
   # is not usefull
   cache_wavs: bool = False
-  # # dist_config
-  # dist_backend="nccl",
-  # dist_url="tcp://localhost:54321",
   cudnn_enabled: bool = True
   cudnn_benchmark: bool = False
 

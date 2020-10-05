@@ -51,12 +51,6 @@ class WaveGlowLoss(torch.nn.Module):
     return loss / (z.size(0) * z.size(1) * z.size(2))
 
 
-# #=====START: ADDED FOR DISTRIBUTED======
-# from distributed_waveglow import init_distributed, apply_gradient_allreduce, reduce_tensor
-# from torch.utils.data.distributed import DistributedSampler
-# #=====END:   ADDED FOR DISTRIBUTED======
-
-
 def load_model(hparams: HParams, state_dict: Optional[dict]):
   model = WaveGlow(hparams).cuda()
 
@@ -122,29 +116,6 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   complete_start = time.time()
   logger = WaveglowLogger(logdir)
 
-  # if hparams.distributed_run:
-  #   init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
-
-  # rank = 0 # 'rank of current gpu'
-  # n_gpus = torch.cuda.device_count() # 'number of gpus'
-  # if n_gpus > 1:
-  #   raise Exception("More than one GPU is currently not supported.")
-  # group_name = "group_name" # 'Distributed group name'
-  # if n_gpus > 1:
-  #   if args.group_name == '':
-  #     print("WARNING: Multiple GPUs detected but no distributed group set")
-  #     print("Only running 1 GPU.  Use distributed.py for multiple GPUs")
-  #     n_gpus = 1
-  # if n_gpus == 1 and args.rank != 0:
-  #   raise Exception("Doing single GPU training on rank > 0")
-
-  # if hparams.fp16_run:
-  #   from apex import amp
-  #   model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
-
-  # if hparams.distributed_run:
-  #   model = apply_gradient_allreduce(model)
-
   if checkpoint is not None:
     hparams = checkpoint.get_hparams(logger)
   else:
@@ -162,20 +133,6 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   )
 
   iteration = get_iteration(checkpoint)
-
-  # #=====START: ADDED FOR DISTRIBUTED======
-  # if n_gpus > 1:
-  #   model = apply_gradient_allreduce(model)
-  # #=====END:   ADDED FOR DISTRIBUTED======
-
-  # if fp16_run:
-  #   from apex import amp
-  #   model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
-
-  # #=====START: ADDED FOR DISTRIBUTED======
-  # if n_gpus > 1:
-  #   init_distributed(rank, n_gpus, group_name, **dist_config)
-  # #=====END:   ADDED FOR DISTRIBUTED======
 
   criterion = WaveGlowLoss(
     sigma=hparams.sigma
@@ -205,7 +162,6 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   #     os.chmod(output_directory, 0o775)
   #   print("output directory", output_directory)
 
-  # if hparams.with_tensorboard and rank == 0:
 
   model.train()
 
@@ -254,17 +210,8 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
       y_pred = model(x)
 
       loss = criterion(y_pred, y)
-      # if n_gpus > 1:
-      #   reduced_loss = reduce_tensor(loss.data, n_gpus).item()
-      # else:
-      #   reduced_loss = loss.item()
       reduced_loss = loss.item()
 
-      # if fp16_run:
-      #   with amp.scale_loss(loss, optimizer) as scaled_loss:
-      #     scaled_loss.backward()
-      # else:
-      #   loss.backward()
       loss.backward()
 
       optimizer.step()
@@ -288,10 +235,8 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
 
       logger.log_training(reduced_loss, hparams.learning_rate, duration, iteration)
 
-      # if hparams.with_tensorboard and rank == 0:
       logger.add_scalar('training_loss', reduced_loss, iteration)
 
-      # if rank == 0:
       save_it = check_save_it(epoch, iteration, save_it_settings)
       if save_it:
         checkpoint = CheckpointWaveglow.from_instances(
@@ -334,15 +279,5 @@ def load_model_and_optimizer(hparams: HParams, checkpoint: Optional[Checkpoint],
     hparams=hparams,
     state_dict=checkpoint.optimizer if checkpoint is not None else None
   )
-
-  # if hparams.distributed_run:
-  #   init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
-
-  # if hparams.fp16_run:
-  #   from apex import amp
-  #   model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
-
-  # if hparams.distributed_run:
-  #   model = apply_gradient_allreduce(model)
 
   return model, optimizer

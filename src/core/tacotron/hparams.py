@@ -12,11 +12,6 @@ class ExperimentHParams():
   # 0 if no saving, 1 for each and so on...
   epochs_per_checkpoint: int = 1
   seed: int = 1234
-  #dynamic_loss_scaling: bool = True
-  #fp16_run: bool = False
-  #distributed_run: bool = False
-  #dist_backend: str = "nccl"
-  #dist_url: str = "tcp://localhost:54321"
   cudnn_enabled: bool = True
   cudnn_benchmark: bool = False
   ignore_layers: List[str] = field(default_factory=list)
