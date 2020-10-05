@@ -1,77 +1,55 @@
 import os
-import random
 import time
-from dataclasses import asdict, dataclass
 from logging import Logger
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, Iterator, List, Optional
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch import nn
+from torch.nn import Parameter
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.core.common.audio import get_wav_tensor_segment
-from src.core.common.checkpoint import Checkpoint
-from src.core.common.taco_stft import TacotronSTFT
+from src.core.common.checkpoint import Checkpoint, get_iteration
 from src.core.common.train import (SaveIterationSettings, check_save_it,
                                    get_continue_batch_iteration,
                                    get_continue_epoch,
                                    get_formatted_current_total,
                                    get_last_checkpoint, get_pytorch_filename,
-                                   log_hparams, overwrite_custom_hparams,
-                                   skip_batch)
+                                   init_cuddn, init_cuddn_benchmark,
+                                   init_torch_seed, log_hparams,
+                                   overwrite_custom_hparams, skip_batch,
+                                   validate_model)
 from src.core.pre.merge_ds import PreparedDataList
-from src.core.waveglow.hparams import HParams
+from src.core.waveglow.dataloader import (parse_batch, prepare_trainloader,
+                                          prepare_valloader)
+from src.core.waveglow.hparams import (ExperimentHParams, HParams,
+                                       OptimizerHParams)
 from src.core.waveglow.logger import WaveglowLogger
-from src.core.waveglow.model import WaveGlow, WaveGlowLoss
+from src.core.waveglow.model import WaveGlow
+from src.core.waveglow.model_checkpoint import CheckpointWaveglow
 
 
-@dataclass
-class CheckpointWaveglow(Checkpoint):
-  # pylint: disable=arguments-differ
-  def get_hparams(self, logger: Logger) -> HParams:
-    return super().get_hparams(logger, HParams)
+class WaveGlowLoss(torch.nn.Module):
+  def __init__(self, sigma=1.0):
+    super().__init__()
+    self.sigma = sigma
 
+  def forward(self, y_pred, y):
+    z, log_s_list, log_det_W_list = y_pred
+    log_s_total = 0
+    log_det_W_total = 0
+    for i, log_s in enumerate(log_s_list):
+      if i == 0:
+        log_s_total = torch.sum(log_s)
+        log_det_W_total = log_det_W_list[i]
+      else:
+        log_s_total = log_s_total + torch.sum(log_s)
+        log_det_W_total += log_det_W_list[i]
 
-class MelLoader(Dataset):
-  """
-  This is the main class that calculates the spectrogram and returns the
-  spectrogram, audio pair.
-  """
+    loss = torch.sum(z * z) / (2 * self.sigma * self.sigma) - log_s_total - log_det_W_total
+    return loss / (z.size(0) * z.size(1) * z.size(2))
 
-  def __init__(self, prepare_ds_data: PreparedDataList, hparams: HParams, logger: Logger):
-    self.taco_stft = TacotronSTFT(hparams, logger=logger)
-    self.hparams = hparams
-    self._logger = logger
-
-    data = prepare_ds_data
-    random.seed(hparams.seed)
-    random.shuffle(data)
-
-    wav_paths = {}
-    for i, values in enumerate(data.items()):
-      wav_paths[i] = values.wav_path
-    self.wav_paths = wav_paths
-
-    if hparams.cache_wavs:
-      self._logger.info("Loading wavs into memory...")
-      cache = {}
-      for i, wav_path in tqdm(wav_paths.items()):
-        cache[i] = self.taco_stft.get_wav_tensor_from_file(wav_path)
-      self._logger.info("Done")
-      self.cache = cache
-
-  def __getitem__(self, index):
-    if self.hparams.cache_wavs:
-      wav_tensor = self.cache[index].clone().detach()
-    else:
-      wav_tensor = self.taco_stft.get_wav_tensor_from_file(self.wav_paths[index])
-    wav_tensor = get_wav_tensor_segment(wav_tensor, self.hparams.segment_length)
-    mel_tensor = self.taco_stft.get_mel_tensor(wav_tensor)
-    return (mel_tensor, wav_tensor)
-
-  def __len__(self):
-    return len(self.wav_paths)
 
 # #=====START: ADDED FOR DISTRIBUTED======
 # from distributed_waveglow import init_distributed, apply_gradient_allreduce, reduce_tensor
@@ -80,8 +58,7 @@ class MelLoader(Dataset):
 
 
 def load_model(hparams: HParams, state_dict: Optional[dict]):
-  model = WaveGlow(hparams)
-  model = model.cuda()
+  model = WaveGlow(hparams).cuda()
 
   if state_dict is not None:
     model.load_state_dict(state_dict)
@@ -89,77 +66,21 @@ def load_model(hparams: HParams, state_dict: Optional[dict]):
   return model
 
 
-def prepare_dataloaders(hparams: HParams, trainset: PreparedDataList, valset: PreparedDataList, logger: Logger):
-  logger.info(
-    f"Duration trainset {trainset.get_total_duration_s() / 60:.2f}min / {trainset.get_total_duration_s() / 60 / 60:.2f}h")
-  logger.info(
-    f"Duration valset {valset.get_total_duration_s() / 60:.2f}min / {valset.get_total_duration_s() / 60 / 60:.2f}h")
+def validate(model: nn.Module, criterion: nn.Module, val_loader: DataLoader, iteration, wg_logger: WaveglowLogger, logger: Logger):
+  logger.debug("Validating...")
+  avg_val_loss, res = validate_model(model, criterion, val_loader, parse_batch)
+  logger.info(f"Validation loss {iteration}: {avg_val_loss:9f}")
 
-  trn = MelLoader(trainset, hparams, logger)
+  logger.debug("Logging to tensorboard...")
+  log_only_last_validation_batch = True
+  if log_only_last_validation_batch:
+    wg_logger.log_validation(*res[-1], iteration)
+  else:
+    for entry in tqdm(res):
+      wg_logger.log_validation(*entry, iteration)
+  logger.debug("Finished.")
 
-  train_sampler = None
-  shuffle = False  # maybe set to true bc taco is also true
-
-  # # =====START: ADDED FOR DISTRIBUTED======
-  # train_sampler = DistributedSampler(trn) if n_gpus > 1 else None
-  # # =====END:   ADDED FOR DISTRIBUTED======
-  train_loader = DataLoader(
-    dataset=trn,
-    num_workers=0,
-    shuffle=shuffle,
-    sampler=train_sampler,
-    batch_size=hparams.batch_size,
-    pin_memory=False,
-    drop_last=True
-  )
-
-  val = MelLoader(valset, hparams, logger)
-  val_sampler = None
-
-  val_loader = DataLoader(
-    dataset=val,
-    sampler=val_sampler,
-    num_workers=0,
-    shuffle=False,
-    batch_size=hparams.batch_size,
-    pin_memory=False
-  )
-
-  return train_loader, val_loader
-
-
-def validate_core(model, criterion, val_loader: DataLoader, logger: Logger):
-  """Handles all the validation scoring and printing"""
-  model.eval()
-  with torch.no_grad():
-
-    # if distributed_run:
-    #   val_sampler = DistributedSampler(valset)
-
-    val_loss = 0.0
-    logger.info("Validating...")
-    for batch in tqdm(val_loader):
-      x = model.parse_batch(batch)
-      y_pred = model(x)
-      loss = criterion(y_pred)
-      # if distributed_run:
-      #   reduced_val_loss = reduce_tensor(loss.data, n_gpus).item()
-      # else:
-      #  reduced_val_loss = loss.item()
-      reduced_val_loss = loss.item()
-      val_loss += reduced_val_loss
-    avg_val_loss = val_loss / len(val_loader)
-
-  model.train()
-  return avg_val_loss, model, y_pred
-
-
-def validate(model, criterion, val_loader, iteration, logger: WaveglowLogger, debug_logger: Logger):
-  val_loss, model, y_pred = validate_core(model, criterion, val_loader, debug_logger)
-  debug_logger.info("Validation loss {}: {:9f}".format(iteration, val_loss))
-  logger.log_validation(val_loss, model, y_pred, iteration)
-
-  return val_loss
+  return avg_val_loss
 
 
 def continue_train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger):
@@ -189,6 +110,12 @@ def train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prepa
     checkpoint=None,
     debug_logger=debug_logger
   )
+
+
+def init_torch(hparams: ExperimentHParams):
+  init_torch_seed(hparams.seed)
+  init_cuddn(hparams.cudnn_enabled)
+  init_cuddn_benchmark(hparams.cudnn_benchmark)
 
 
 def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, checkpoint: Optional[CheckpointWaveglow], debug_logger: Logger):
@@ -226,25 +153,15 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
   log_hparams(hparams, debug_logger)
+  init_torch(hparams)
 
-  debug_logger.info("Distributed Run: {}".format(False))
-  debug_logger.info("cuDNN Enabled: {}".format(torch.backends.cudnn.enabled))
-  debug_logger.info("cuDNN Benchmark: {}".format(torch.backends.cudnn.benchmark))
+  model, optimizer = load_model_and_optimizer(
+    hparams=hparams,
+    checkpoint=checkpoint,
+    logger=logger,
+  )
 
-  torch.backends.cudnn.enabled = True
-  torch.backends.cudnn.benchmark = False
-
-  torch.manual_seed(hparams.seed)
-  torch.cuda.manual_seed(hparams.seed)
-
-  if checkpoint is not None:
-    model, optimizer, iteration = model_and_optimizer_from_checkpoint(
-      checkpoint,
-      hparams,
-      debug_logger
-    )
-  else:
-    model, optimizer, iteration = model_and_optimizer_fresh(hparams, debug_logger)
+  iteration = get_iteration(checkpoint)
 
   # #=====START: ADDED FOR DISTRIBUTED======
   # if n_gpus > 1:
@@ -264,11 +181,16 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
     sigma=hparams.sigma
   )
 
-  train_loader, val_loader = prepare_dataloaders(
-    hparams,
-    trainset,
-    valset,
-    debug_logger
+  train_loader = prepare_trainloader(
+    hparams=hparams,
+    trainset=trainset,
+    logger=debug_logger
+  )
+
+  val_loader = prepare_valloader(
+    hparams=hparams,
+    valset=valset,
+    logger=debug_logger
   )
 
   batch_iterations = len(train_loader)
@@ -328,10 +250,10 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
       # debug_logger.debug(f"Current batch: {batch[0][0]}")
 
       model.zero_grad()
-      x = WaveGlow.parse_batch(batch)
+      x, y = parse_batch(batch)
       y_pred = model(x)
 
-      loss = criterion(y_pred)
+      loss = criterion(y_pred, y)
       # if n_gpus > 1:
       #   reduced_loss = reduce_tensor(loss.data, n_gpus).item()
       # else:
@@ -372,12 +294,11 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
       # if rank == 0:
       save_it = check_save_it(epoch, iteration, save_it_settings)
       if save_it:
-        checkpoint = CheckpointWaveglow(
-          state_dict=model.state_dict(),
-          optimizer=optimizer.state_dict(),
-          learning_rate=hparams.learning_rate,
+        checkpoint = CheckpointWaveglow.from_instances(
+          model=model,
+          optimizer=optimizer,
+          hparams=hparams,
           iteration=iteration,
-          hparams=asdict(hparams),
         )
 
         checkpoint_path = os.path.join(
@@ -390,11 +311,9 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   debug_logger.info(f'Finished training. Total duration: {duration_s / 60:.2f}min')
 
 
-def load_optimizer(model: WaveGlow, state_dict: Optional[dict], hparams: HParams):
-  # warn: use saved learning rate is ignored here
-
+def load_optimizer(model_parameters: Iterator[Parameter], hparams: OptimizerHParams, state_dict: Optional[dict]) -> torch.optim.Adam:
   optimizer = torch.optim.Adam(
-    params=model.parameters(),
+    params=model_parameters,
     lr=hparams.learning_rate,
   )
 
@@ -404,20 +323,26 @@ def load_optimizer(model: WaveGlow, state_dict: Optional[dict], hparams: HParams
   return optimizer
 
 
-def model_and_optimizer_fresh(hparams: HParams, debug_logger: Logger):
-  debug_logger.info("Starting new model...")
+def load_model_and_optimizer(hparams: HParams, checkpoint: Optional[Checkpoint], logger: Logger):
+  model = load_model(
+    hparams=hparams,
+    state_dict=checkpoint.state_dict if checkpoint is not None else None,
+  )
 
-  model = load_model(hparams, None)
-  optimizer = load_optimizer(model, None, hparams)
-  current_iteration = 0
+  optimizer = load_optimizer(
+    model_parameters=model.parameters(),
+    hparams=hparams,
+    state_dict=checkpoint.optimizer if checkpoint is not None else None
+  )
 
-  return model, optimizer, current_iteration
+  # if hparams.distributed_run:
+  #   init_distributed(hparams, n_gpus, rank, group_name, training_dir_path)
 
+  # if hparams.fp16_run:
+  #   from apex import amp
+  #   model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
 
-def model_and_optimizer_from_checkpoint(checkpoint: CheckpointWaveglow, hparams: HParams, debug_logger: Logger) -> Tuple[WaveGlow, Any, int]:
-  debug_logger.info("Continuing training from checkpoint...")
+  # if hparams.distributed_run:
+  #   model = apply_gradient_allreduce(model)
 
-  model = load_model(hparams, checkpoint.state_dict)
-  optimizer = load_optimizer(model, checkpoint.optimizer, hparams)
-
-  return model, optimizer, checkpoint.iteration
+  return model, optimizer

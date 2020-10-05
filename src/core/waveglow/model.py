@@ -1,9 +1,10 @@
 # For copyright see LICENCE
 
-from src.core.waveglow.hparams import HParams
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
+
+from src.core.waveglow.hparams import HParams
 
 
 @torch.jit.script
@@ -14,25 +15,6 @@ def fused_add_tanh_sigmoid_multiply(input_a, input_b, n_channels):
   s_act = torch.sigmoid(in_act[:, n_channels_int:, :])
   acts = t_act * s_act
   return acts
-
-
-class WaveGlowLoss(torch.nn.Module):
-  def __init__(self, sigma=1.0):
-    super(WaveGlowLoss, self).__init__()
-    self.sigma = sigma
-
-  def forward(self, model_output):
-    z, log_s_list, log_det_W_list = model_output
-    for i, log_s in enumerate(log_s_list):
-      if i == 0:
-        log_s_total = torch.sum(log_s)
-        log_det_W_total = log_det_W_list[i]
-      else:
-        log_s_total = log_s_total + torch.sum(log_s)
-        log_det_W_total += log_det_W_list[i]
-
-    loss = torch.sum(z * z) / (2 * self.sigma * self.sigma) - log_s_total - log_det_W_total
-    return loss / (z.size(0) * z.size(1) * z.size(2))
 
 
 class Invertible1x1Conv(torch.nn.Module):
@@ -187,13 +169,6 @@ class WaveGlow(torch.nn.Module):
       )
       self.WN.append(WN_res)
     self.n_remaining_channels = n_remaining_channels  # Useful during inference
-
-  @staticmethod
-  def parse_batch(batch):
-    mel, audio = batch
-    mel = torch.autograd.Variable(mel.cuda())
-    audio = torch.autograd.Variable(audio.cuda())
-    return (mel, audio)
 
   def forward(self, forward_input):
     """

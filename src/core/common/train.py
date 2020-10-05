@@ -2,15 +2,34 @@ import dataclasses
 import os
 from dataclasses import asdict, dataclass, replace
 from logging import Logger
-from math import floor
-from typing import (Dict, Generic, List, Optional, Set, Tuple, Type, TypeVar,
-                    Union)
+from math import floor, sqrt
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, TypeVar, Union
+
+import torch
+from torch import Tensor, nn
+from torch.optim.optimizer import \
+    Optimizer  # pylint: disable=no-name-in-module
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from src.core.common.utils import get_filenames
 
 PYTORCH_EXT = ".pt"
 
 _T = TypeVar("_T")
+
+
+def init_torch_seed(seed: int):
+  torch.manual_seed(seed)
+  torch.cuda.manual_seed(seed)
+
+
+def init_cuddn(enabled: bool):
+  torch.backends.cudnn.enabled = enabled
+
+
+def init_cuddn_benchmark(enabled: bool):
+  torch.backends.cudnn.benchmark = enabled
 
 
 def get_pytorch_filename(name: Union[str, int]) -> str:
@@ -92,6 +111,10 @@ def set_types_according_to_dataclass(params: Dict[str, str], hparams: _T) -> Non
     params[custom_hparam] = get_value_in_type(hparam_value, new_value)
 
 
+def update_learning_rate_optimizer(optimizer: Optimizer, learning_rate: float):
+  for param_group in optimizer.param_groups:
+    param_group['lr'] = learning_rate
+
 def overwrite_custom_hparams(hparams_dc: _T, custom_hparams: Optional[Dict[str, str]]) -> _T:
   if custom_hparams is None:
     return hparams_dc
@@ -106,6 +129,36 @@ def overwrite_custom_hparams(hparams_dc: _T, custom_hparams: Optional[Dict[str, 
   return result
 
 
+def get_uniform_weights(dimension: int, emb_dim: int) -> Tensor:
+  # TODO check cuda is correct here
+  weight = torch.zeros(size=(dimension, emb_dim), device="cuda")
+  std = sqrt(2.0 / (dimension + emb_dim))
+  val = sqrt(3.0) * std  # uniform bounds for std
+  nn.init.uniform_(weight, -val, val)
+  return weight
+
+
+def update_weights(emb: nn.Embedding, weights: Tensor) -> None:
+  emb.weight = nn.Parameter(weights)
+
+
+def weights_to_embedding(weights: Tensor) -> nn.Embedding:
+  embedding = nn.Embedding(weights.shape[0], weights.shape[1])
+  update_weights(embedding, weights)
+  return embedding
+
+
+def copy_state_dict(state_dict: Dict[str, Tensor], to_model: nn.Module, ignore: List[str]):
+  model_dict = {k: v for k, v in state_dict.items() if k not in ignore}
+  update_state_dict(to_model, model_dict)
+
+
+def update_state_dict(model: nn.Module, updates: Dict[str, Tensor]):
+  dummy_dict = model.state_dict()
+  dummy_dict.update(updates)
+  model.load_state_dict(dummy_dict)
+
+
 def log_hparams(hparams: _T, logger: Logger):
   logger.info("=== HParams ===")
   for param, val in asdict(hparams).items():
@@ -113,8 +166,31 @@ def log_hparams(hparams: _T, logger: Logger):
   logger.info("===============")
 
 
+
 def get_formatted_current_total(current: int, total: int) -> str:
   return f"{str(current).zfill(len(str(total)))}/{total}"
+
+
+def validate_model(model: nn.Module, criterion: nn.Module, val_loader: DataLoader, batch_parse_method) -> Tuple[float, Tuple[float, nn.Module, Tuple, Tuple]]:
+  model.eval()
+  res = []
+  with torch.no_grad():
+    total_val_loss = 0.0
+    for batch in tqdm(val_loader):
+      x, y = batch_parse_method(batch)
+      y_pred = model(x)
+      loss = criterion(y_pred, y)
+      # if distributed_run:
+      #   reduced_val_loss = reduce_tensor(loss.data, n_gpus).item()
+      # else:
+      #  reduced_val_loss = loss.item()
+      reduced_val_loss = loss.item()
+      res.append((reduced_val_loss, model, y, y_pred))
+      total_val_loss += reduced_val_loss
+    avg_val_loss = total_val_loss / len(val_loader)
+  model.train()
+
+  return avg_val_loss, res
 
 
 @dataclass

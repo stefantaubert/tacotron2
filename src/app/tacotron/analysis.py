@@ -7,9 +7,9 @@ import plotly.offline as plt
 from src.app.io import get_checkpoints_dir
 from src.app.tacotron.io import get_train_dir
 from src.app.utils import prepare_logger
+from src.core.common.analysis import plot_embeddings as plot_embeddings_core
 from src.core.common.train import get_custom_or_last_checkpoint
 from src.core.common.utils import get_subdir, save_df
-from src.core.tacotron.analysis import plot_embeddings as plot_embeddings_core
 from src.core.tacotron.training import CheckpointTacotron
 
 
@@ -43,6 +43,7 @@ def plot_embeddings(base_dir: str, train_name: str, custom_checkpoint: Optional[
     get_checkpoints_dir(train_dir), custom_checkpoint)
   checkpoint = CheckpointTacotron.load(checkpoint_path, logger)
 
+  # pylint: disable=no-member
   text, fig_2d, fig_3d = plot_embeddings_core(
     symbols=checkpoint.get_symbols(),
     emb=checkpoint.get_symbol_embedding_weights(),

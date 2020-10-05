@@ -56,17 +56,18 @@ def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict
 
 
 if __name__ == "__main__":
-  mode = 1
+  mode = 0
   if mode == 0:
     train(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       prep_name="thchs_ljs",
       custom_hparams={
-        "batch_size": 4,
-        "iters_per_checkpoint": 50,
+        "batch_size": 3,
+        "iters_per_checkpoint": 5,
         "cache_wavs": False
-      }
+      },
+      validation_size=0.001,
     )
 
   elif mode == 1:

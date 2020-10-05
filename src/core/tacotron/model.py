@@ -1,86 +1,25 @@
 from logging import Logger
-from math import sqrt
-from typing import List, Optional, Tuple
+from typing import Tuple
 
 import torch
 from torch import nn
 from torch.autograd import Variable
 from torch.nn import functional as F
 
-from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.layers import ConvNorm, LinearNorm
-from src.core.common.utils import get_mask_from_lengths, to_gpu
+from src.core.common.train import get_uniform_weights, weights_to_embedding
+from src.core.common.utils import get_mask_from_lengths
 from src.core.tacotron.hparams import HParams
+from src.core.tacotron.model_symbols import get_model_symbols_count
 
 SYMBOL_EMBEDDING_LAYER_NAME = "embedding.weight"
 SPEAKER_EMBEDDING_LAYER_NAME = "speakers_embedding.weight"
-SHARED_SYMBOLS = [PADDING_SYMBOL]
-SHARED_SYMBOLS_COUNT = len(SHARED_SYMBOLS)
 
-
-def get_model_symbol_ids(symbol_ids: List[int], accent_ids: List[int], n_symbols: int,
-                         accents_use_own_symbols: bool,
-                         shared_symbol_count: int = SHARED_SYMBOLS_COUNT) -> List[int]:
-  assert len(symbol_ids) == len(accent_ids)
-  model_symbol_ids = [
-    get_model_symbol_id(
-      symbol_id,
-      accent_id,
-      n_symbols,
-      accents_use_own_symbols,
-      shared_symbol_count
-    ) for symbol_id, accent_id in zip(symbol_ids, accent_ids)
-  ]
-
-  return model_symbol_ids
-
-
-def get_model_symbols_count(n_symbols: int, n_accents: int, accents_use_own_symbols: bool,
-                            shared_symbol_count: int = SHARED_SYMBOLS_COUNT) -> int:
-  assert n_symbols >= shared_symbol_count
-
-  if accents_use_own_symbols:
-    return shared_symbol_count + (n_symbols - shared_symbol_count) * n_accents
-
-  return n_symbols
-
-
-def get_model_symbol_id(symbol_id: int, accent_id: int, n_symbols: int,
-                        accents_use_own_symbols: bool,
-                        shared_symbol_count: int = SHARED_SYMBOLS_COUNT) -> int:
-  assert n_symbols >= shared_symbol_count
-  assert symbol_id < n_symbols
-  assert accent_id >= 0
-  assert symbol_id >= 0
-
-  if accents_use_own_symbols:
-    is_shared_symbol = symbol_id < shared_symbol_count
-    if is_shared_symbol:
-      return symbol_id
-
-    return symbol_id + (n_symbols - shared_symbol_count) * accent_id
-
-  return symbol_id
-
-
-def get_symbol_id(model_symbol_id: int, n_symbols: int, accents_use_own_symbols: bool,
-                  shared_symbol_count: int = SHARED_SYMBOLS_COUNT) -> int:
-  assert n_symbols >= shared_symbol_count
-  assert model_symbol_id >= 0
-
-  if accents_use_own_symbols:
-    is_shared_symbol = model_symbol_id < shared_symbol_count
-    if is_shared_symbol:
-      return model_symbol_id
-
-    n_symbols_wo_pad = n_symbols - shared_symbol_count
-    if n_symbols_wo_pad == 1:
-      # if it is not shared it must be the symbol left
-      return n_symbols - 1
-
-    return model_symbol_id % n_symbols_wo_pad
-
-  return model_symbol_id
+WARM_START_IGNORE_LAYERS = [
+  SYMBOL_EMBEDDING_LAYER_NAME,
+  # ACCENT_EMBEDDING_LAYER_NAME,
+  SPEAKER_EMBEDDING_LAYER_NAME
+]
 
 
 class LocationLayer(nn.Module):
@@ -587,25 +526,6 @@ def get_symbol_weights(hparams: HParams) -> torch.Tensor:
   return model_weights
 
 
-def get_uniform_weights(model_symbols_count: int, emb_dim: int) -> torch.Tensor:
-  # TODO check cuda is correct here
-  weight = torch.zeros(size=(model_symbols_count, emb_dim), device="cuda")
-  std = sqrt(2.0 / (model_symbols_count + emb_dim))
-  val = sqrt(3.0) * std  # uniform bounds for std
-  nn.init.uniform_(weight, -val, val)
-  return weight
-
-
-def update_weights(emb: nn.Embedding, weights: torch.Tensor) -> None:
-  emb.weight = nn.Parameter(weights)
-
-
-def weights_to_embedding(weights: torch.Tensor) -> nn.Embedding:
-  embedding = nn.Embedding(weights.shape[0], weights.shape[1])
-  update_weights(embedding, weights)
-  return embedding
-
-
 class Tacotron2(nn.Module):
   def __init__(self, hparams: HParams, logger: Logger):
     super(Tacotron2, self).__init__()
@@ -640,27 +560,6 @@ class Tacotron2(nn.Module):
     self.encoder = Encoder(hparams)
     self.decoder = Decoder(hparams, logger)
     self.postnet = Postnet(hparams)
-
-  @staticmethod
-  def make_batch(symbols_padded: torch.LongTensor, accents_padded: torch.LongTensor, input_lengths: torch.LongTensor, mel_padded: torch.FloatTensor, gate_padded: torch.FloatTensor, output_lengths: torch.LongTensor, speaker_ids: torch.LongTensor) -> Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor, torch.FloatTensor, torch.FloatTensor, torch.LongTensor, torch.LongTensor]:
-    return symbols_padded, accents_padded, input_lengths, mel_padded, gate_padded, output_lengths, speaker_ids
-
-  @staticmethod
-  def parse_batch(batch: Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor, torch.FloatTensor, torch.FloatTensor, torch.LongTensor, torch.LongTensor]) -> Tuple[Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor, torch.FloatTensor, torch.LongTensor, torch.LongTensor, torch.LongTensor], Tuple[torch.FloatTensor, torch.FloatTensor]]:
-    symbols_padded, accents_padded, input_lengths, mel_padded, gate_padded, output_lengths, speaker_ids = batch
-    symbols_padded = to_gpu(symbols_padded).long()
-    accents_padded = to_gpu(accents_padded).long()
-    input_lengths = to_gpu(input_lengths).long()
-    max_len = torch.max(input_lengths.data).item()
-    mel_padded = to_gpu(mel_padded).float()
-    gate_padded = to_gpu(gate_padded).float()
-    output_lengths = to_gpu(output_lengths).long()
-    speaker_ids = to_gpu(speaker_ids).long()
-
-    x = (symbols_padded, accents_padded, input_lengths,
-         mel_padded, max_len, output_lengths, speaker_ids)
-    y = (mel_padded, gate_padded)
-    return x, y
 
   def forward(self, inputs: Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor, torch.FloatTensor, torch.LongTensor, torch.LongTensor, torch.LongTensor]) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     text_inputs, accent_inputs, text_lengths, mels, max_len, output_lengths, speaker_ids = inputs

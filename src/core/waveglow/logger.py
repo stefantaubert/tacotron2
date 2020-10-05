@@ -10,5 +10,5 @@ class WaveglowLogger(SummaryWriter):
       self.add_scalar("learning.rate", learning_rate, iteration)
       self.add_scalar("duration", duration, iteration)
 
-  def log_validation(self, reduced_loss, model, y_pred, iteration):
+  def log_validation(self, reduced_loss, model, y, y_pred, iteration):
     self.add_scalar("validation.loss", reduced_loss, iteration)

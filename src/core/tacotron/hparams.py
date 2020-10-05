@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import List
 
 from src.core.common.taco_stft import STFTHParams
 
@@ -18,7 +19,7 @@ class ExperimentHParams():
   #dist_url: str = "tcp://localhost:54321"
   cudnn_enabled: bool = True
   cudnn_benchmark: bool = False
-  ignore_layers: list = field(default_factory=list)
+  ignore_layers: List[str] = field(default_factory=list)
 
 
 @dataclass
