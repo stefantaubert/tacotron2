@@ -43,6 +43,4 @@ class Synthesizer():
     if is_overamp(audio_np):
       self._logger.warn("Waveglow output was overamplified.")
 
-    audio_np_normalized = normalize_wav(audio_np)
-
-    return audio_np_normalized
+    return audio_np

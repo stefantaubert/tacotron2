@@ -166,7 +166,6 @@ def log_hparams(hparams: _T, logger: Logger):
   logger.info("===============")
 
 
-
 def get_formatted_current_total(current: int, total: int) -> str:
   return f"{str(current).zfill(len(str(total)))}/{total}"
 

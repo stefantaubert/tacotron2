@@ -7,6 +7,7 @@ from collections import Counter
 from dataclasses import astuple
 from pathlib import Path
 from typing import Generic, List, Set, Tuple, Type, TypeVar, Union
+from matplotlib.figure import Figure
 
 import numpy as np
 import pandas as pd
@@ -20,6 +21,11 @@ from src.core.common.globals import CSV_SEPERATOR
 
 T = TypeVar('T')
 
+
+def figure_to_numpy(fig: Figure):
+  data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+  data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+  return data
 
 def get_filenames(parent_dir: str) -> List[str]:
   assert os.path.isdir(parent_dir)

@@ -1,9 +1,9 @@
+from src.core.tacotron.model_checkpoint import convert_v1_to_v2_model
 from typing import Dict, Optional
 
 from src.app.pre.prepare import (get_prepared_dir, load_prep_accents_ids,
                                  load_prep_speakers_json,
                                  load_prep_symbol_converter)
-from src.core.tacotron.model_converter import convert_v1_to_v2_model
 
 
 def convert_model(base_dir: str, prep_name: str, model_path: str, custom_hparams: Optional[Dict[str, str]]):

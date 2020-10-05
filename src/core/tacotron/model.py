@@ -15,12 +15,6 @@ from src.core.tacotron.model_symbols import get_model_symbols_count
 SYMBOL_EMBEDDING_LAYER_NAME = "embedding.weight"
 SPEAKER_EMBEDDING_LAYER_NAME = "speakers_embedding.weight"
 
-WARM_START_IGNORE_LAYERS = [
-  SYMBOL_EMBEDDING_LAYER_NAME,
-  # ACCENT_EMBEDDING_LAYER_NAME,
-  SPEAKER_EMBEDDING_LAYER_NAME
-]
-
 
 class LocationLayer(nn.Module):
   def __init__(self, hparams: HParams):

@@ -17,7 +17,7 @@ from src.core.common.taco_stft import get_mel
 from src.core.common.train import (get_custom_or_last_checkpoint,
                                    get_last_checkpoint)
 from src.core.common.utils import get_parent_dirname
-from src.core.inference.infer import validate as validate_core
+from src.core.inference.infer import validate
 from src.core.tacotron.training import CheckpointTacotron
 from src.core.waveglow.train import CheckpointWaveglow
 
@@ -38,7 +38,7 @@ def save_val_alignments_sentence_plot(val_dir: str, mel):
   plt.close()
 
 
-def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_tacotron_hparams: Optional[Dict[str, str]] = None, custom_waveglow_hparams: Optional[Dict[str, str]] = None):
+def validate_main(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_tacotron_hparams: Optional[Dict[str, str]] = None, custom_waveglow_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -64,7 +64,7 @@ def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, e
   wg_checkpoint_path, _ = get_last_checkpoint(get_checkpoints_dir(train_dir_wg))
   wg_checkpoint = CheckpointWaveglow.load(wg_checkpoint_path, logger)
 
-  result = validate_core(
+  result = validate(
     tacotron_checkpoint=taco_checkpoint,
     waveglow_checkpoint=wg_checkpoint,
     sigma=sigma,
@@ -89,7 +89,7 @@ def validate(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, e
 
 
 if __name__ == "__main__":
-  validate(
+  validate_main(
     base_dir="/datasets/models/taco2pt_v5",
     train_name="arctic_ipa_warm",
   )

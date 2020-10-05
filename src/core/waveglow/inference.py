@@ -1,4 +1,5 @@
 from logging import Logger
+from src.core.common.audio import normalize_wav
 from typing import Dict, Optional
 
 import torch
@@ -24,6 +25,7 @@ def infer(wav_path: str, checkpoint: CheckpointWaveglow, custom_hparams: Optiona
   mel_var = mel_var.unsqueeze(0)
 
   audio = synth.infer(mel_var, sigma, denoiser_strength)
+  audio = normalize_wav(audio)
 
   audio_tensor = torch.FloatTensor(audio)
   mel_pred = taco_stft.get_mel_tensor(audio_tensor)

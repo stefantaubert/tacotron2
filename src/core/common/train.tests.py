@@ -11,7 +11,7 @@ from src.core.common.train import (SaveIterationSettings, check_is_first,
                                    check_is_save_iteration,
                                    get_continue_batch_iteration,
                                    get_continue_epoch, get_dataclass_from_dict,
-                                   get_next_save_it, get_only_known_params,
+                                   get_next_save_it, get_only_known_params, get_uniform_weights,
                                    get_value_in_type,
                                    iteration_to_batch_iteration,
                                    iteration_to_epoch, skip_batch)
@@ -29,6 +29,13 @@ class DummyDataset(Dataset):
 
 
 class UnitTests(unittest.TestCase):
+
+  def test_get_uniform_weights(self):
+    res = get_uniform_weights(5, 100)
+    self.assertNotEqual(0, res[0][0])
+    self.assertEqual(5, res.shape[0])
+    self.assertEqual(100, res.shape[1])
+
   def test_get_dataclass_from_dict(self):
     @dataclass
     class DummyHp:

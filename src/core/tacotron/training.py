@@ -31,8 +31,8 @@ from src.core.tacotron.dataloader import (SymbolsMelCollate, parse_batch,
 from src.core.tacotron.hparams import (ExperimentHParams, HParams,
                                        OptimizerHParams)
 from src.core.tacotron.logger import Tacotron2Logger
-from src.core.tacotron.model import (SYMBOL_EMBEDDING_LAYER_NAME,
-                                     WARM_START_IGNORE_LAYERS, Tacotron2)
+from src.core.tacotron.model import (SPEAKER_EMBEDDING_LAYER_NAME,
+                                     SYMBOL_EMBEDDING_LAYER_NAME, Tacotron2)
 from src.core.tacotron.model_checkpoint import CheckpointTacotron
 from src.core.tacotron.model_weights import get_mapped_symbol_weights
 
@@ -365,7 +365,11 @@ def warm_start_model(model: nn.Module, warm_model: CheckpointTacotron, hparams: 
   copy_state_dict(
     state_dict=warm_model.state_dict,
     to_model=model,
-    ignore=hparams.ignore_layers + WARM_START_IGNORE_LAYERS
+    ignore=hparams.ignore_layers + [
+      SYMBOL_EMBEDDING_LAYER_NAME,
+      # ACCENT_EMBEDDING_LAYER_NAME,
+      SPEAKER_EMBEDDING_LAYER_NAME
+    ]
   )
 
 

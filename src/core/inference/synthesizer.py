@@ -4,7 +4,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from src.core.common.audio import concatenate_audios, mel_to_numpy
+from src.core.common.audio import (concatenate_audios, mel_to_numpy,
+                                   normalize_wav)
 from src.core.pre.text.pre_inference import (InferSentence, InferSentenceList,
                                              Sentence)
 from src.core.tacotron.synthesizer import Synthesizer as TacoSynthesizer
@@ -48,6 +49,7 @@ class Synthesizer():
     if len(wavs) > 1:
       self._logger.info("Concatening audios...")
     output = concatenate_audios(wavs, sentence_pause_s, self._taco_synt.hparams.sampling_rate)
+
     return output
 
   def _infer_sentence(self, sentence: InferSentence, speaker: str, sigma: float, denoiser_strength: float):
@@ -88,5 +90,9 @@ class Synthesizer():
       result.append(infer_res)
 
     output = self._concatenate_wavs(result, sentence_pause_s)
+
+    output = normalize_wav(output)
+    for infer_res in result:
+      infer_res.wav = normalize_wav(infer_res.wav)
 
     return output, result
