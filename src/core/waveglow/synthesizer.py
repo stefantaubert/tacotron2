@@ -6,7 +6,7 @@ from typing import Dict, Optional
 import numpy as np
 import torch
 
-from src.core.common.audio import is_overamp, normalize_wav
+from src.core.common.audio import is_overamp
 from src.core.common.train import overwrite_custom_hparams
 from src.core.waveglow.denoiser import Denoiser
 from src.core.waveglow.train import CheckpointWaveglow, load_model
@@ -24,8 +24,14 @@ class Synthesizer():
     model = model.remove_weightnorm(model)
     model = model.eval()
 
-    denoiser = Denoiser(model)
-    denoiser = denoiser.cuda()
+    denoiser = Denoiser(
+      waveglow=model,
+      filter_length=1024,
+      n_overlap=4,
+      win_length=1024,
+      mode="zeros",
+      logger=logger,
+    ).cuda()
 
     self.hparams = hparams
     self.model = model

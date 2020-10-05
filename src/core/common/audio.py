@@ -308,10 +308,10 @@ if __name__ == "__main__":
     buffer_end_ms=25
   )
 
-  wav, sr = wav_to_float32("/datasets/thchs_wav/wav/train/A22/A22_107.wav")
-  trim = detect_leading_silence(wav, silence_threshold=-25, chunk_size=5, buffer=100)
-  wav = wav[trim:]
-  float_to_wav(wav, "/tmp/A22_107_nosil.wav", sample_rate=sr)
+  #wav, sr = wav_to_float32("/datasets/thchs_wav/wav/train/A22/A22_107.wav")
+  #trim = detect_leading_silence(wav, silence_threshold=-25, chunk_size=5, buffer=100)
+  #wav = wav[trim:]
+  #float_to_wav(wav, "/tmp/A22_107_nosil.wav", sample_rate=sr)
   #upsample("/datasets/Report/08/03/B4_322.wav", "/tmp/B4_322.wav", 22050)
   #upsample("/datasets/thchs_wav/wav/test/D31/D31_881.wav", "/tmp/D31_881.wav", 22050)
   #ewav, _ = wav_to_float32("/datasets/models/taco2pt_v2/thchs_ipa_warm_mapped_all_tones/inference/validation_2020-07-27_08-54-17_D31_769_D31_50777/validation_2020-07-27_08-54-17_D31_769_D31_50777_inferred.wav")

@@ -1,16 +1,19 @@
+from logging import Logger, getLogger
+
 import torch
 
 from src.core.common.stft import STFT
+from src.core.waveglow.model import WaveGlow
 
 
 class Denoiser(torch.nn.Module):
   """ Removes model bias from audio produced with waveglow """
 
-  def __init__(self, waveglow, filter_length=1024, n_overlap=4, win_length=1024, mode='zeros'):
-    super(Denoiser, self).__init__()
+  def __init__(self, waveglow: WaveGlow, filter_length=1024, n_overlap=4, win_length=1024, mode='zeros', logger: Logger = getLogger()):
+    super().__init__()
     self.stft = STFT(filter_length=filter_length,
-             hop_length=int(filter_length/n_overlap),
-             win_length=win_length).cuda()
+                     hop_length=int(filter_length / n_overlap),
+                     win_length=win_length).cuda()
     if mode == 'zeros':
       mel_input = torch.zeros(
         (1, 80, 88),
@@ -22,7 +25,9 @@ class Denoiser(torch.nn.Module):
         dtype=waveglow.upsample.weight.dtype,
         device=waveglow.upsample.weight.device)
     else:
-      raise Exception("Mode {} if not supported".format(mode))
+      msg = f"Mode {mode} if not supported"
+      logger.exception(msg)
+      raise Exception(msg)
 
     with torch.no_grad():
       bias_audio = waveglow.infer(mel_input, sigma=0.0).float()
