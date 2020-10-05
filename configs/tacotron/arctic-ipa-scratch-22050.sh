@@ -4,14 +4,14 @@ source /datasets/code/tacotron2/configs/envs/caps.sh
 export train_name="arctic_ipa_22050_warm"
 export prep_name="arctic_ipa_22050"
 export batch_size=26
-export epochs_per_checkpoint=1
+export epochs_per_checkpoint=5
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/phil.sh
 export train_name="arctic_ipa_22050_scratch"
 export prep_name="arctic_ipa_22050"
 export batch_size=25
-export epochs_per_checkpoint=1
+export epochs_per_checkpoint=5
 
 # Training
 python -m src.cli.runner tacotron-train \
@@ -23,7 +23,8 @@ python -m src.cli.runner tacotron-train \
 
 python -m src.cli.runner tacotron-continue-train --train_name=$train_name --custom_hparams="epochs_per_checkpoint=5"
 
-python -m src.cli.runner tacotron-validate --train_name=$train_name
+python -m src.cli.runner tacotron-validate --train_name=$train_name --custom_checkpoint=90185
+python -m src.cli.runner tacotron-validate --train_name=$train_name --custom_checkpoint=21220
 
 # Inference
 
