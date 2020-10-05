@@ -30,6 +30,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
+from typing import Optional
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -39,7 +41,7 @@ from torch.autograd import Variable
 
 
 def window_sumsquare(window, n_frames, hop_length=200, win_length=800,
-           n_fft=800, dtype=np.float32, norm=None):
+                     n_fft=800, dtype=np.float32, norm=None):
   """
   # from librosa 0.6
   Compute the sum-square envelope of a window function at a given hop length.
@@ -92,8 +94,9 @@ def window_sumsquare(window, n_frames, hop_length=200, win_length=800,
 
 class STFT(torch.nn.Module):
   """adapted from Prem Seetharaman's https://github.com/pseeth/pytorch-stft"""
+
   def __init__(self, filter_length=800, hop_length=200, win_length=800,
-         window='hann'):
+               window: Optional[str] = 'hann'):
     super(STFT, self).__init__()
     self.filter_length = filter_length
     self.hop_length = hop_length
@@ -105,7 +108,7 @@ class STFT(torch.nn.Module):
 
     cutoff = int((self.filter_length / 2 + 1))
     fourier_basis = np.vstack([np.real(fourier_basis[:cutoff, :]),
-                   np.imag(fourier_basis[:cutoff, :])])
+                               np.imag(fourier_basis[:cutoff, :])])
 
     forward_basis = torch.FloatTensor(fourier_basis[:, None, :])
     inverse_basis = torch.FloatTensor(
@@ -157,7 +160,7 @@ class STFT(torch.nn.Module):
 
   def inverse(self, magnitude, phase):
     recombine_magnitude_phase = torch.cat(
-      [magnitude*torch.cos(phase), magnitude*torch.sin(phase)], dim=1)
+      [magnitude * torch.cos(phase), magnitude * torch.sin(phase)], dim=1)
 
     inverse_transform = F.conv_transpose1d(
       recombine_magnitude_phase,
@@ -181,8 +184,8 @@ class STFT(torch.nn.Module):
       # scale by hop ratio
       inverse_transform *= float(self.filter_length) / self.hop_length
 
-    inverse_transform = inverse_transform[:, :, int(self.filter_length/2):]
-    inverse_transform = inverse_transform[:, :, :-int(self.filter_length/2):]
+    inverse_transform = inverse_transform[:, :, int(self.filter_length / 2):]
+    inverse_transform = inverse_transform[:, :, :-int(self.filter_length / 2):]
 
     return inverse_transform
 

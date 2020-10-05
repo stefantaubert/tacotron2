@@ -26,9 +26,7 @@ class Synthesizer():
 
     denoiser = Denoiser(
       waveglow=model,
-      filter_length=1024,
-      n_overlap=4,
-      win_length=1024,
+      hparams=hparams,
       mode="zeros",
       logger=logger,
     ).cuda()

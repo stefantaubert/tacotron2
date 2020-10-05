@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.core.common.taco_stft import STFTHParams
+from src.core.common.taco_stft import TSTFTHParams
 
 
 @dataclass
@@ -39,5 +39,5 @@ class OptimizerHParams():
 
 
 @dataclass
-class HParams(ExperimentHParams, STFTHParams, ModelHParams, OptimizerHParams):
+class HParams(ExperimentHParams, TSTFTHParams, ModelHParams, OptimizerHParams):
   pass

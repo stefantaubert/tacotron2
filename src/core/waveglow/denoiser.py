@@ -1,27 +1,34 @@
-from logging import Logger, getLogger
+from logging import Logger
 
 import torch
+from torch import Tensor
 
 from src.core.common.stft import STFT
+from src.core.common.taco_stft import TSTFTHParams
 from src.core.waveglow.model import WaveGlow
+
+BIAS_MEL_LENGTH = 88
 
 
 class Denoiser(torch.nn.Module):
   """ Removes model bias from audio produced with waveglow """
 
-  def __init__(self, waveglow: WaveGlow, filter_length=1024, n_overlap=4, win_length=1024, mode='zeros', logger: Logger = getLogger()):
+  def __init__(self, waveglow: WaveGlow, hparams: TSTFTHParams, mode: str, logger: Logger):
     super().__init__()
-    self.stft = STFT(filter_length=filter_length,
-                     hop_length=int(filter_length / n_overlap),
-                     win_length=win_length).cuda()
+    self.stft = STFT(
+      filter_length=hparams.filter_length,
+      hop_length=hparams.hop_length,
+      win_length=hparams.win_length,
+    ).cuda()
+
     if mode == 'zeros':
       mel_input = torch.zeros(
-        (1, 80, 88),
+        (1, hparams.n_mel_channels, BIAS_MEL_LENGTH),
         dtype=waveglow.upsample.weight.dtype,
         device=waveglow.upsample.weight.device)
     elif mode == 'normal':
       mel_input = torch.randn(
-        (1, 80, 88),
+        (1, hparams.n_mel_channels, BIAS_MEL_LENGTH),
         dtype=waveglow.upsample.weight.dtype,
         device=waveglow.upsample.weight.device)
     else:
@@ -35,7 +42,7 @@ class Denoiser(torch.nn.Module):
 
     self.register_buffer('bias_spec', bias_spec[:, :, 0][:, :, None])
 
-  def forward(self, audio, strength=0.1):
+  def forward(self, audio: Tensor, strength: float):
     audio_spec, audio_angles = self.stft.transform(audio.cuda().float())
     audio_spec_denoised = audio_spec - self.bias_spec * strength
     audio_spec_denoised = torch.clamp(audio_spec_denoised, 0.0)

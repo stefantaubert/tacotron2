@@ -30,7 +30,7 @@ def dynamic_range_decompression(x, C=1):
 
 
 def get_mel(wav_path: str, custom_hparams: Optional[Dict[str, str]]) -> np.ndarray:
-  hparams = STFTHParams()
+  hparams = TSTFTHParams()
   hparams = overwrite_custom_hparams(hparams, custom_hparams)
   taco_stft = TacotronSTFT(hparams, logger=getLogger())
   orig_mel = taco_stft.get_mel_tensor_from_file(wav_path).numpy()
@@ -39,22 +39,32 @@ def get_mel(wav_path: str, custom_hparams: Optional[Dict[str, str]]) -> np.ndarr
 
 @dataclass
 class STFTHParams():
+  filter_length: int = 1024
+  hop_length: int = 256  # int(filter_length / n_overlap), n_overlap=4
+  win_length: int = 1024
+
+
+@dataclass
+class TSTFTHParams(STFTHParams):
   n_mel_channels: int = 80
   sampling_rate: int = 22050
-  filter_length: int = 1024
-  hop_length: int = 256
-  win_length: int = 1024
   mel_fmin: float = 0.0
   mel_fmax: float = 8000.0
 
 
 class TacotronSTFT(torch.nn.Module):
-  def __init__(self, hparams: STFTHParams, logger: Logger):
-    super(TacotronSTFT, self).__init__()
+  def __init__(self, hparams: TSTFTHParams, logger: Logger):
+    super().__init__()
     self.logger = logger
     self.n_mel_channels = hparams.n_mel_channels
     self.sampling_rate = hparams.sampling_rate
-    self.stft_fn = STFT(hparams.filter_length, hparams.hop_length, hparams.win_length)
+    self.stft_fn = STFT(
+      filter_length=hparams.filter_length,
+      hop_length=hparams.hop_length,
+      win_length=hparams.win_length,
+      window="hann"
+    )
+
     mel_basis = librosa_mel_fn(
       sr=hparams.sampling_rate,
       n_fft=hparams.filter_length,

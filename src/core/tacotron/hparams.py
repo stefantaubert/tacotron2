@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from src.core.common.taco_stft import STFTHParams
+from src.core.common.taco_stft import TSTFTHParams
 
 
 @dataclass
@@ -74,5 +74,5 @@ class OptimizerHParams():
 
 
 @dataclass
-class HParams(ExperimentHParams, DataHParams, STFTHParams, ModelHParams, OptimizerHParams):
+class HParams(ExperimentHParams, DataHParams, TSTFTHParams, ModelHParams, OptimizerHParams):
   pass

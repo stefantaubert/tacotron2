@@ -73,6 +73,7 @@ def infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: Opti
 if __name__ == "__main__":
   infer(
     base_dir="/datasets/models/taco2pt_v5",
-    train_name="debug",
-    wav_path="/datasets/LJSpeech-1.1-lite/wavs/LJ003-0347.wav"
+    train_name="pretrained_v3",
+    wav_path="/datasets/LJSpeech-1.1-lite/wavs/LJ003-0347.wav",
+    denoiser_strength=0.001,
   )

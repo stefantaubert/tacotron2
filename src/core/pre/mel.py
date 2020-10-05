@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from logging import getLogger
 from typing import Any, Dict, Optional
 
-from src.core.common.taco_stft import STFTHParams, TacotronSTFT
+from src.core.common.taco_stft import TSTFTHParams, TacotronSTFT
 from src.core.common.train import overwrite_custom_hparams
 from src.core.common.utils import GenericList
 from src.core.pre.wav import WavDataList
@@ -24,7 +24,7 @@ class MelDataList(GenericList[MelData]):
 
 def process(data: WavDataList, custom_hparams: Optional[Dict[str, str]], save_callback: Any) -> MelDataList:
   result = MelDataList()
-  hparams = STFTHParams()
+  hparams = TSTFTHParams()
   hparams = overwrite_custom_hparams(hparams, custom_hparams)
   mel_parser = TacotronSTFT(hparams, logger=getLogger())
 
