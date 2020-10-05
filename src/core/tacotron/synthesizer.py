@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from src.core.common.train import overwrite_custom_hparams
-from src.core.tacotron.model import get_model_symbol_ids
+from src.core.tacotron.model_symbols import get_model_symbol_ids
 from src.core.tacotron.training import CheckpointTacotron, load_model
 
 
