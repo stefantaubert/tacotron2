@@ -6,8 +6,7 @@ from src.app.pre.prepare import (get_prepared_dir, load_prep_accents_ids,
                                  load_prep_symbol_converter)
 from src.app.tacotron.io import get_train_dir
 from src.app.utils import prepare_logger
-from src.core.tacotron.training import \
-    eval_checkpoints as eval_checkpoints_core
+from src.core.tacotron.eval_checkpoints import eval_checkpoints
 
 
 def eval_checkpoints_main(base_dir: str, train_name: str, select: int, min_it: int, max_it: int):
@@ -23,7 +22,7 @@ def eval_checkpoints_main(base_dir: str, train_name: str, select: int, min_it: i
 
   logger = prepare_logger()
 
-  eval_checkpoints_core(
+  eval_checkpoints(
     custom_hparams=None,
     checkpoint_dir=get_checkpoints_dir(train_dir),
     select=select,
