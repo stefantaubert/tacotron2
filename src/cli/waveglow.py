@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from src.app.tacotron.defaults import DEFAULT_WAVEGLOW
 from src.app.waveglow.dl import dl_pretrained
 from src.app.waveglow.inference import infer
-from src.app.waveglow.training import continue_train, train
+from src.app.waveglow.training import continue_training, start_new_training
 from src.app.waveglow.validation import validate
 from src.cli.utils import split_hparams_string
 
@@ -15,12 +15,14 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--validation_size', type=float, default=0.1)
   parser.add_argument('--split_seed', type=int, default=1234)
   parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--warm_start_train_name', type=str)
+  parser.add_argument('--warm_start_checkpoint', type=int)
   return train_cli
 
 
 def train_cli(**args):
   args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
-  train(**args)
+  start_new_training(**args)
 
 
 def init_continue_train_parser(parser: ArgumentParser):
@@ -31,7 +33,7 @@ def init_continue_train_parser(parser: ArgumentParser):
 
 def continue_train_cli(**args):
   args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
-  continue_train(**args)
+  continue_training(**args)
 
 
 def init_validate_parser(parser: ArgumentParser):

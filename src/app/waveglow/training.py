@@ -1,4 +1,5 @@
 import os
+from logging import Logger
 from typing import Dict, Optional
 
 from src.app.io import (get_checkpoints_dir, get_train_log_file,
@@ -8,12 +9,23 @@ from src.app.io import (get_checkpoints_dir, get_train_log_file,
 from src.app.pre.prepare import get_prepared_dir, load_filelist
 from src.app.utils import prepare_logger
 from src.app.waveglow.io import get_train_dir
+from src.core.common.train import get_custom_or_last_checkpoint
 from src.core.pre.merge_ds import split_prepared_data_train_test_val
-from src.core.waveglow.train import continue_train as continue_train_core
-from src.core.waveglow.train import train as train_core
+from src.core.waveglow.model_checkpoint import CheckpointWaveglow
+from src.core.waveglow.train import continue_train, train
 
 
-def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.01, validation_size: float = 0.01, custom_hparams: Optional[Dict[str, str]] = None, split_seed: int = 1234):
+def try_load_checkpoint(base_dir: str, train_name: Optional[str], checkpoint: Optional[int], logger: Logger) -> Optional[CheckpointWaveglow]:
+  result = None
+  if train_name:
+    train_dir = get_train_dir(base_dir, train_name, False)
+    checkpoint_path, _ = get_custom_or_last_checkpoint(
+      get_checkpoints_dir(train_dir), checkpoint)
+    result = CheckpointWaveglow.load(checkpoint_path, logger)
+  return result
+
+
+def start_new_training(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.01, validation_size: float = 0.01, custom_hparams: Optional[Dict[str, str]] = None, split_seed: int = 1234, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   wholeset = load_filelist(prep_dir)
   trainset, testset, valset = split_prepared_data_train_test_val(
@@ -26,26 +38,34 @@ def train(base_dir: str, train_name: str, prep_name: str, test_size: float = 0.0
   logs_dir = get_train_logs_dir(train_dir)
   logger = prepare_logger(get_train_log_file(logs_dir), reset=True)
 
+  warm_model = try_load_checkpoint(
+    base_dir=base_dir,
+    train_name=warm_start_train_name,
+    checkpoint=warm_start_checkpoint,
+    logger=logger
+  )
+
   save_prep_name(train_dir, prep_name)
 
-  train_core(
+  train(
     custom_hparams=custom_hparams,
     logdir=logs_dir,
     trainset=trainset,
     valset=valset,
     save_checkpoint_dir=get_checkpoints_dir(train_dir),
-    debug_logger=logger
+    debug_logger=logger,
+    warm_model=warm_model,
   )
 
 
-def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict[str, str]] = None):
+def continue_training(base_dir: str, train_name: str, custom_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
   logs_dir = get_train_logs_dir(train_dir)
   logger = prepare_logger(get_train_log_file(logs_dir))
 
-  continue_train_core(
+  continue_train(
     custom_hparams=custom_hparams,
     logdir=logs_dir,
     trainset=load_trainset(train_dir),
@@ -58,7 +78,7 @@ def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict
 if __name__ == "__main__":
   mode = 0
   if mode == 0:
-    train(
+    start_new_training(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       prep_name="thchs_ljs",
@@ -71,7 +91,7 @@ if __name__ == "__main__":
     )
 
   elif mode == 1:
-    continue_train(
+    continue_training(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug"
     )

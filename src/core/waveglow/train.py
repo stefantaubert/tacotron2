@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from src.core.common.checkpoint import Checkpoint, get_iteration
 from src.core.common.train import (SaveIterationSettings, check_save_it,
+                                   copy_state_dict,
                                    get_continue_batch_iteration,
                                    get_continue_epoch,
                                    get_formatted_current_total,
@@ -48,7 +49,8 @@ class WaveGlowLoss(torch.nn.Module):
         log_det_W_total += log_det_W_list[i]
 
     loss = torch.sum(z * z) / (2 * self.sigma * self.sigma) - log_s_total - log_det_W_total
-    return loss / (z.size(0) * z.size(1) * z.size(2))
+    result = loss / (z.size(0) * z.size(1) * z.size(2))
+    return result
 
 
 def load_model(hparams: HParams, state_dict: Optional[dict]):
@@ -88,11 +90,12 @@ def continue_train(custom_hparams: Optional[Dict[str, str]], logdir: str, trains
     valset=valset,
     save_checkpoint_dir=save_checkpoint_dir,
     checkpoint=CheckpointWaveglow.load(last_checkpoint_path, debug_logger),
-    debug_logger=debug_logger
+    logger=debug_logger,
+    warm_model=None,
   )
 
 
-def train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger):
+def train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger: Logger, warm_model: Optional[CheckpointWaveglow]):
   debug_logger.info("Starting new training...")
 
   _train(
@@ -102,7 +105,8 @@ def train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prepa
     valset=valset,
     save_checkpoint_dir=save_checkpoint_dir,
     checkpoint=None,
-    debug_logger=debug_logger
+    logger=debug_logger,
+    warm_model=warm_model,
   )
 
 
@@ -112,9 +116,17 @@ def init_torch(hparams: ExperimentHParams):
   init_cuddn_benchmark(hparams.cudnn_benchmark)
 
 
-def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, checkpoint: Optional[CheckpointWaveglow], debug_logger: Logger):
+def warm_start_model(model: nn.Module, warm_model: CheckpointWaveglow):
+  copy_state_dict(
+    state_dict=warm_model.state_dict,
+    to_model=model,
+    ignore=[]
+  )
+
+
+def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, checkpoint: Optional[CheckpointWaveglow], logger: Logger, warm_model: Optional[CheckpointWaveglow]):
   complete_start = time.time()
-  logger = WaveglowLogger(logdir)
+  wg_logger = WaveglowLogger(logdir)
 
   if checkpoint is not None:
     hparams = checkpoint.get_hparams(logger)
@@ -123,7 +135,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   # is it problematic to change the batch size?
   hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
-  log_hparams(hparams, debug_logger)
+  log_hparams(hparams, logger)
   init_torch(hparams)
 
   model, optimizer = load_model_and_optimizer(
@@ -134,6 +146,10 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
 
   iteration = get_iteration(checkpoint)
 
+  if checkpoint is None and warm_model is not None:
+    logger.info("Loading states from pretrained model...")
+    warm_start_model(model, warm_model)
+
   criterion = WaveGlowLoss(
     sigma=hparams.sigma
   )
@@ -141,18 +157,18 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   train_loader = prepare_trainloader(
     hparams=hparams,
     trainset=trainset,
-    logger=debug_logger
+    logger=logger
   )
 
   val_loader = prepare_valloader(
     hparams=hparams,
     valset=valset,
-    logger=debug_logger
+    logger=logger
   )
 
   batch_iterations = len(train_loader)
   if batch_iterations == 0:
-    debug_logger.error("Not enough trainingdata.")
+    logger.error("Not enough trainingdata.")
     raise Exception()
 
   # Get shared output_directory ready
@@ -161,7 +177,6 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
   #     os.makedirs(output_directory)
   #     os.chmod(output_directory, 0o775)
   #   print("output directory", output_directory)
-
 
   model.train()
 
@@ -190,8 +205,8 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
     next_batch_iteration = get_continue_batch_iteration(iteration, batch_iterations)
     skip_bar = None
     if next_batch_iteration > 0:
-      debug_logger.debug(f"Current batch is {next_batch_iteration} of {batch_iterations}")
-      debug_logger.debug("Skipping batches...")
+      logger.debug(f"Current batch is {next_batch_iteration} of {batch_iterations}")
+      logger.debug("Skipping batches...")
       skip_bar = tqdm(total=next_batch_iteration)
     for batch_iteration, batch in enumerate(train_loader):
       need_to_skip_batch = skip_batch(
@@ -223,7 +238,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
       start = end
 
       batch_durations.append(duration)
-      debug_logger.info(" | ".join([
+      logger.info(" | ".join([
         f"Epoch: {get_formatted_current_total(epoch + 1, hparams.epochs)}",
         f"Iteration: {get_formatted_current_total(batch_iteration + 1, batch_iterations)}",
         f"Total iteration: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)}",
@@ -233,9 +248,9 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
         f"Total Duration: {(time.perf_counter() - train_start) / 60 / 60:.2f}h"
       ]))
 
-      logger.log_training(reduced_loss, hparams.learning_rate, duration, iteration)
+      wg_logger.log_training(reduced_loss, hparams.learning_rate, duration, iteration)
 
-      logger.add_scalar('training_loss', reduced_loss, iteration)
+      wg_logger.add_scalar('training_loss', reduced_loss, iteration)
 
       save_it = check_save_it(epoch, iteration, save_it_settings)
       if save_it:
@@ -248,12 +263,12 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
 
         checkpoint_path = os.path.join(
           save_checkpoint_dir, get_pytorch_filename(iteration))
-        checkpoint.save(checkpoint_path, debug_logger)
+        checkpoint.save(checkpoint_path, logger)
 
-        validate(model, criterion, val_loader, iteration, logger, debug_logger)
+        validate(model, criterion, val_loader, iteration, wg_logger, logger)
 
   duration_s = time.time() - complete_start
-  debug_logger.info(f'Finished training. Total duration: {duration_s / 60:.2f}min')
+  logger.info(f'Finished training. Total duration: {duration_s / 60:.2f}min')
 
 
 def load_optimizer(model_parameters: Iterator[Parameter], hparams: OptimizerHParams, state_dict: Optional[dict]) -> torch.optim.Adam:

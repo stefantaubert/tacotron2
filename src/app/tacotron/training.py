@@ -28,6 +28,7 @@ def try_load_checkpoint(base_dir: str, train_name: Optional[str], checkpoint: Op
     checkpoint_path, _ = get_custom_or_last_checkpoint(
       get_checkpoints_dir(train_dir), checkpoint)
     result = CheckpointTacotron.load(checkpoint_path, logger)
+    logger.info(f"Using warm start model: {checkpoint_path}")
   return result
 
 

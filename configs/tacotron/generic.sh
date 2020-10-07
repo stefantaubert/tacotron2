@@ -20,7 +20,7 @@ python -m src.cli.runner create-inference-map \
 python -m src.cli.runner tacotron-plot-embeddings --train_name=$train_name
 
 # Validate
-python -m src.cli.runner tacotron-validate --train_name=$train_name
+python -m src.cli.runner tacotron-validate --train_name=$train_name --denoiser_strength=0.0005 --sigma=1.0  --entry_id=10017 --waveglow="warm"
 #  --waveglow="scratch"
 
 # Validate checkpoints

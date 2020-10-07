@@ -1,5 +1,5 @@
 # Download pretrained waveglow model
-python -m src.cli.runner waveglow-dl
+python -m src.cli.runner waveglow-dl --version=3 --train_name="pretrained_v3" --prep_name="ljs_scratch"
 
 ## Open Tensorboard
 # if you get an error message, try: `pip uninstall tensorboard-plugin-wit`

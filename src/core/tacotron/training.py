@@ -172,6 +172,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
 
   if checkpoint is None:
     if warm_model is not None:
+      logger.info("Loading states from pretrained model...")
       warm_start_model(model, warm_model, hparams, logger)
 
     if weights_checkpoint is not None:
@@ -278,7 +279,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
       logger.info(" | ".join([
         f"Epoch: {get_formatted_current_total(epoch + 1, hparams.epochs)}",
         f"It.: {get_formatted_current_total(batch_iteration + 1, batch_iterations)}",
-        f"Tot. it.: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)} ({iteration / (hparams.epochs * batch_iterations):.2f}%)",
+        f"Tot. it.: {get_formatted_current_total(iteration, hparams.epochs * batch_iterations)} ({iteration / (hparams.epochs * batch_iterations) * 100:.2f}%)",
         f"Loss: {reduced_loss:.6f}",
         f"Grad norm: {grad_norm:.6f}",
         #f"Dur.: {duration:.2f}s/it",
@@ -352,7 +353,6 @@ def load_model_and_optimizer(hparams: HParams, checkpoint: Optional[Checkpoint],
 
 
 def warm_start_model(model: nn.Module, warm_model: CheckpointTacotron, hparams: HParams, logger: Logger):
-  logger.info("Loading states from pretrained model...")
   warm_model_hparams = warm_model.get_hparams(logger)
   speakers_embedding_dim_mismatch = warm_model_hparams.speakers_embedding_dim != hparams.speakers_embedding_dim
   symbols_embedding_dim_mismatch = warm_model_hparams.symbols_embedding_dim != hparams.symbols_embedding_dim
