@@ -6,8 +6,8 @@ from src.app.pre.ds import (preprocess_arctic, preprocess_libritts,
 from src.app.pre.inference import (accent_apply, accent_set, add_text,
                                    ipa_convert_text, map_text,
                                    map_to_prep_symbols, normalize_text)
-from src.app.pre.mapping import (create_or_update_inference_map,
-                                 create_or_update_weights_map)
+from src.app.pre.mapping import (create_or_update_inference_map_main,
+                                 create_or_update_weights_map_main)
 from src.app.pre.mel import preprocess_mels
 from src.app.pre.prepare import prepare_ds
 from src.app.pre.text import (preprocess_text, text_convert_to_ipa,
@@ -154,13 +154,13 @@ def init_create_or_update_weights_map_parser(parser: ArgumentParser):
   parser.add_argument('--prep_name', type=str, required=True)
   parser.add_argument('--weights_prep_name', type=str, required=True)
   parser.add_argument('--template_map', type=str)
-  return create_or_update_weights_map
+  return create_or_update_weights_map_main
 
 
 def init_create_or_update_inference_map_parser(parser: ArgumentParser):
   parser.add_argument('--prep_name', type=str, required=True)
   parser.add_argument('--template_map', type=str)
-  return create_or_update_inference_map
+  return create_or_update_inference_map_main
 
 
 def init_add_text_parser(parser: ArgumentParser):

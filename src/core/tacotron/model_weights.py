@@ -6,8 +6,7 @@ from typing import OrderedDict as OrderedDictType
 from torch import Tensor
 
 from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.symbols_map import (SymbolsMap, get_map,
-                                         symbols_map_to_symbols_ids_map)
+from src.core.common.symbols_map import SymbolsMap
 from src.core.tacotron.hparams import HParams
 from src.core.tacotron.model import get_symbol_weights
 from src.core.tacotron.model_symbols import get_model_symbol_id
@@ -50,18 +49,25 @@ def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: Tens
       f"Weights mapping: symbol space from pretrained model ({trained_weights.shape[0]}) did not match amount of symbols ({len(trained_symbols)}).")
     raise Exception()
 
-  symbols_map = get_map(
-    dest_symbols=model_symbols.get_all_symbols(),
-    orig_symbols=trained_symbols.get_all_symbols(),
-    symbols_mapping=custom_mapping,
-    logger=logger
-  )
+  if custom_mapping is None:
+    symbols_map = SymbolsMap.from_intersection(
+      map_to=model_symbols.get_all_symbols(),
+      map_from=trained_symbols.get_all_symbols(),
+    )
+  else:
+    symbols_map = custom_mapping
+    symbols_map.remove_unknown_symbols(
+      known_to_symbol=model_symbols.get_all_symbols(),
+      known_from_symbols=trained_symbols.get_all_symbols()
+    )
 
-  symbols_id_map = symbols_map_to_symbols_ids_map(
-    dest_symbols=model_symbols,
-    orig_symbols=trained_symbols,
-    symbols_mapping=symbols_map,
-    logger=logger
+  # Remove all empty mappings
+  symbols_wo_mapping = symbols_map.get_symbols_with_empty_mapping()
+  symbols_map.pop_batch(symbols_wo_mapping)
+
+  symbols_id_map = symbols_map.convert_to_symbols_ids_map(
+    to_symbols=model_symbols,
+    from_symbols=trained_symbols,
   )
 
   model_symbols_id_map = symbols_ids_map_to_model_symbols_ids_map(
@@ -80,7 +86,6 @@ def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: Tens
     logger=logger
   )
 
-  symbols_wo_mapping = symbols_map.get_symbols_without_mapping()
   not_existing_symbols = model_symbols.get_all_symbols() - symbols_map.keys()
   no_mapping = symbols_wo_mapping | not_existing_symbols
   if len(no_mapping) > 0:

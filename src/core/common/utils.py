@@ -91,7 +91,7 @@ def save_df(dataframe: pd.DataFrame, path: str):
   dataframe.to_csv(path, header=None, index=None, sep=CSV_SEPERATOR)
 
 
-def get_sorted_set(unsorted_set: Set[T]) -> List[T]:
+def get_sorted_list_from_set(unsorted_set: Set[T]) -> List[T]:
   res: List[T] = list(sorted(list(unsorted_set)))
   return res
 

@@ -53,8 +53,9 @@ python -m src.cli.runner text-ipa \
   --ignore_tones \
   --ignore_arcs
 
+export prep_name="libritts_ipa_22050"
 python -m src.cli.runner prepare-ds \
-  --prep_name="libritts_ipa_22050" \
+  --prep_name=$prep_name \
   --ds_speakers="libritts,all" \
   --ds_text_audio="libritts,ipa_norm,22050Hz"
 
@@ -106,8 +107,9 @@ python -m src.cli.runner preprocess-mels \
   --ds_name="arctic" \
   --wav_name="22050Hz"
 
+export prep_name="arctic_ipa_22050"
 python -m src.cli.runner prepare-ds \
-  --prep_name="arctic_ipa_22050" \
+  --prep_name=$prep_name \
   --ds_speakers="arctic,all" \
   --ds_text_audio="arctic,ipa_norm,22050Hz"
 
@@ -142,8 +144,9 @@ python -m src.cli.runner preprocess-mels \
   --ds_name="ljs" \
   --wav_name="22050Hz"
 
+export prep_name="ljs_ipa"
 python -m src.cli.runner prepare-ds \
-  --prep_name="ljs_ipa" \
+  --prep_name=$prep_name \
   --ds_speakers="ljs,all" \
   --ds_text_audio="ljs,ipa_norm,22050Hz"
 
@@ -194,8 +197,9 @@ python -m src.cli.runner preprocess-mels \
   --ds_name="thchs" \
   --wav_name="22050Hz_norm_wo_sil"
 
+export prep_name="thchs_ipa"
 python -m src.cli.runner prepare-ds \
-  --prep_name="thchs_ipa" \
+  --prep_name=$prep_name \
   --ds_speakers="thchs,all" \
   --ds_text_audio="thchs,ipa,22050Hz_norm_wo_sil"
 
@@ -211,6 +215,7 @@ python -m src.cli.runner wavs-remove-silence-plot \
 
 # LJS+THCHS IPA merge
 
+export prep_name="thchs_ljs_ipa"
 python -m src.cli.runner prepare-ds \
   --prep_name="thchs_ljs_ipa" \
   --ds_speakers="thchs,all;ljs,all" \

@@ -52,10 +52,6 @@ export text_name="eng-stella"
 export text_name="eng-democritus_v2"
 export text_name="eng-north"
 
-python -m src.cli.runner prepare-text-automap \
-  --prep_name=$prep_name \
-  --text_name=$text_name
-
 python -m src.cli.runner prepare-text-set-accent \
   --prep_name=$prep_name \
   --text_name=$text_name \
@@ -65,4 +61,6 @@ python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
   --ds_speaker=$ds_speaker \
   --text_name=$text_name \
+  --custom_tacotron_hparams="max_decoder_steps=2000" \
   --analysis
+

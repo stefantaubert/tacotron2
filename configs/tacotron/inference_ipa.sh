@@ -1,5 +1,18 @@
 # Inference
 
+## Capslock
+source /datasets/code/tacotron2/configs/envs/caps.sh
+
+## Phil
+source /home/stefan/tacotron2/configs/envs/phil.sh
+
+export prep_name="ljs_ipa"
+export prep_name="thchs_ipa"
+export prep_name="thchs_ljs_ipa"
+export prep_name="arctic_ipa_22050"
+export prep_name="libritts_ipa_22050"
+
+
 ## IPA
 export text="examples/ipa/north_sven_orig.txt"
 export text_name="ipa-north_sven_orig"
@@ -69,3 +82,19 @@ export text_name="eng-north"
 python -m src.cli.runner prepare-text-add --filepath=$text --prep_name=$prep_name --text_name=$text_name --lang=ENG
 python -m src.cli.runner prepare-text-normalize --prep_name=$prep_name --text_name=$text_name
 python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=$text_name
+
+
+
+# Update Inference Map
+
+python -m src.cli.runner prepare-inference-map \
+  --prep_name=$prep_name \
+  --template_map="maps/inference/eng_ipa.json"
+
+python -m src.cli.runner prepare-inference-map \
+  --prep_name=$prep_name \
+  --template_map="maps/inference/chn_ipa.json"
+
+python -m src.cli.runner prepare-text-automap \
+  --prep_name=$prep_name \
+  --text_name=$text_name

@@ -1,124 +1,126 @@
 import os
 import tempfile
-from logging import getLogger
 import unittest
-
-from torch import nn
+from logging import getLogger
 
 from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.symbols_map import (Language, SymbolsMap,
-                                         create_inference_map,
-                                         create_symbols_map,
-                                         get_symbols_id_mapping, take_selection_of_map, update_map)
+from src.core.common.symbols_map import SymbolsMap, create_or_update_map
 
 test_logger = getLogger("Tests")
 
+
 class UnitTests(unittest.TestCase):
 
-
   def test_from_two_sets(self):
-    m = SymbolsMap.from_two_sets({"a", "b"}, {"b", "c"})
+    m = SymbolsMap.from_intersection({"a", "b"}, {"b", "c"})
 
     self.assertEqual(2, len(m))
     self.assertEqual("b", m["b"])
     self.assertEqual("", m["c"])
 
-  def test_update_map_empty_symbols_are_taken(self):
-    old_map = SymbolsMap([
-      ("a", "a"),
-    ])
+  def test_update_existing_to_mappings_overwrites_empty_mapping(self):
+    old = SymbolsMap({"a": ""})
 
-    new_map = SymbolsMap([
-      ("a", ""),
-      ("b", ""),
-    ])
+    old.update_existing_to_mappings({"a": "a"})
 
-    res = update_map(old_map, new_map)
+    self.assertEqual(1, len(old))
+    self.assertEqual("a", old["a"])
 
-    self.assertEqual(2, len(new_map))
-    self.assertEqual("a", new_map["a"])
-    self.assertEqual("", new_map["b"])
-    self.assertTrue(res)
+  def test_update_existing_to_mappings_ignores_mapping_with_unknown_symbol(self):
+    old = SymbolsMap({"b": ""})
 
-  def test_update_map_non_existing_symbols_are_ignored(self):
-    old_map = SymbolsMap([
-      ("a", "a"),
-    ])
+    old.update_existing_to_mappings({"a": "a"})
 
-    new_map = SymbolsMap([
-      ("b", "b"),
-    ])
+    self.assertEqual(1, len(old))
+    self.assertEqual("", old["b"])
 
-    res = update_map(old_map, new_map)
+  def test_update_existing_to_mappings_ignores_mapping_with_empty_symbol(self):
+    old = SymbolsMap({"a": "a"})
 
-    self.assertEqual(1, len(new_map))
-    self.assertEqual("b", new_map["b"])
-    self.assertTrue(res)
+    old.update_existing_to_mappings({"a": ""})
 
-  def test_update_map_new_symbols_are_taken(self):
-    old_map = SymbolsMap([
-      ("a", "a"),
-    ])
+    self.assertEqual(1, len(old))
+    self.assertEqual("a", old["a"])
 
-    new_map = SymbolsMap([
-      ("a", "b"),
-    ])
+  # def test_update_map_non_existing_symbols_are_ignored(self):
+  #   old_map = SymbolsMap([
+  #     ("a", "a"),
+  #   ])
 
-    res = update_map(old_map, new_map)
+  #   new_map = SymbolsMap([
+  #     ("b", "b"),
+  #   ])
 
-    self.assertEqual(1, len(new_map))
-    self.assertEqual("b", new_map["a"])
-    self.assertFalse(res)
+  #   res = update_map(old_map, new_map)
 
-  def test_update_map_new_symbols_are_added(self):
-    old_map = SymbolsMap([
-      ("a", "a"),
-    ])
+  #   self.assertEqual(1, len(new_map))
+  #   self.assertEqual("b", new_map["b"])
+  #   self.assertTrue(res)
 
-    new_map = SymbolsMap([
-      ("a", "a"),
-      ("b", "b"),
-    ])
+  # def test_update_map_new_symbols_are_taken(self):
+  #   old_map = SymbolsMap([
+  #     ("a", "a"),
+  #   ])
 
-    res = update_map(old_map, new_map)
+  #   new_map = SymbolsMap([
+  #     ("a", "b"),
+  #   ])
 
-    self.assertEqual(2, len(new_map))
-    self.assertEqual("a", new_map["a"])
-    self.assertEqual("b", new_map["b"])
-    self.assertTrue(res)
+  #   res = update_map(old_map, new_map)
 
-  def test_update_map(self):
-    old_map = SymbolsMap([
-      ("a", "a"),
-      ("b", "c"),
-      ("d", ""),
-      ("g", "h"),
-    ])
+  #   self.assertEqual(1, len(new_map))
+  #   self.assertEqual("b", new_map["a"])
+  #   self.assertFalse(res)
 
-    new_map = SymbolsMap([
-      ("a", "c"),
-      ("b", "a"),
-      ("d", "x"),
-      ("e", "f"),
-      ("g", ""),
-    ])
+  # def test_update_map_new_symbols_are_added(self):
+  #   old_map = SymbolsMap([
+  #     ("a", "a"),
+  #   ])
 
-    res = update_map(old_map, new_map)
+  #   new_map = SymbolsMap([
+  #     ("a", "a"),
+  #     ("b", "b"),
+  #   ])
 
-    self.assertEqual("c", new_map["a"])
-    self.assertEqual("a", new_map["b"])
-    self.assertEqual("x", new_map["d"])
-    self.assertEqual("f", new_map["e"])
-    self.assertEqual("h", new_map["g"])
-    self.assertTrue(res)
+  #   res = update_map(old_map, new_map)
+
+  #   self.assertEqual(2, len(new_map))
+  #   self.assertEqual("a", new_map["a"])
+  #   self.assertEqual("b", new_map["b"])
+  #   self.assertTrue(res)
+
+  # def test_update_map(self):
+  #   old_map = SymbolsMap([
+  #     ("a", "a"),
+  #     ("b", "c"),
+  #     ("d", ""),
+  #     ("g", "h"),
+  #   ])
+
+  #   new_map = SymbolsMap([
+  #     ("a", "c"),
+  #     ("b", "a"),
+  #     ("d", "x"),
+  #     ("e", "f"),
+  #     ("g", ""),
+  #   ])
+
+  #   res = update_map(old_map, new_map)
+
+  #   self.assertEqual("c", new_map["a"])
+  #   self.assertEqual("a", new_map["b"])
+  #   self.assertEqual("x", new_map["d"])
+  #   self.assertEqual("f", new_map["e"])
+  #   self.assertEqual("h", new_map["g"])
+  #   self.assertTrue(res)
 
   def test_save_load_symbols_map(self):
     path = tempfile.mktemp()
-    symbols_map = SymbolsMap([
-      ("b", "a"),
-      ("c", "b"),
-      ("x", "y"),
-    ])
+    symbols_map = SymbolsMap({
+      "b": "a",
+      "c": "b",
+      "x": "y",
+    })
     symbols_map.save(path)
     res = SymbolsMap.load(path)
     os.remove(path)
@@ -127,94 +129,89 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("b", res["c"])
     self.assertEqual("y", res["x"])
 
-  def test_create_inference_map_no_ipa(self):
+  def test_create_or_update_map_no_other_maps(self):
     orig_symbols = {"b", "c"}
-    corpora = "abc d\n \te"
+    corpora = {"a", "b"}
 
-    symbols_id_map, symbols = create_inference_map(orig_symbols, corpora, lang=Language.ENG)
-
-    self.assertEqual(8, len(symbols_id_map))
-    self.assertEqual("b", symbols_id_map["b"])
-    self.assertEqual("c", symbols_id_map["c"])
-    self.assertEqual("", symbols_id_map["\t"])
-    self.assertEqual("", symbols_id_map["\n"])
-    self.assertEqual("", symbols_id_map[" "])
-    self.assertEqual("", symbols_id_map["a"])
-    self.assertEqual("", symbols_id_map["d"])
-    self.assertEqual("", symbols_id_map["e"])
-    self.assertEqual(["b", "c"], symbols)
-
-  def test_create_inference_map_ipa(self):
-    orig_symbols = {"ŋ", "ɔ", " "}
-    corpora = "ɛəŋ m\n \tɔ"
-
-    symbols_id_map, symbols = create_inference_map(orig_symbols, corpora, lang=Language.ENG, ignore_arcs=True, ignore_tones=True)
-
-    self.assertEqual(8, len(symbols_id_map))
-    self.assertEqual(symbols_id_map["ŋ"], "ŋ")
-    self.assertEqual(symbols_id_map["ɔ"], "ɔ")
-    self.assertEqual(symbols_id_map[" "], " ")
-    self.assertEqual(symbols_id_map["\t"], "")
-    self.assertEqual(symbols_id_map["\n"], "")
-    self.assertEqual(symbols_id_map["ə"], "")
-    self.assertEqual(symbols_id_map["ɛ"], "")
-    self.assertEqual(symbols_id_map["m"], "")
-    self.assertEqual([" ", "ŋ", "ɔ"], symbols)
-
-  def test_create_symbols_map_without_map(self):
-    dest_symbols = {"b", "c"}
-    orig_symbols = {"a", "b"}
-    symb_map = SymbolsMap.from_two_sets(orig_symbols, dest_symbols)
-
-    symb_map.filter(dest_symbols, orig_symbols, test_logger)
-
-    self.assertEqual(1, len(symb_map))
-    self.assertEqual(symb_map["b"], "b")
-
-  def test_create_symbols_map_with_map(self):
-    dest_symbols = {"b", "c", "d"}
-    orig_symbols = {"a", "b"}
-
-    symbols_map = SymbolsMap.from_tuples([
-      ("b", "a"),
-      ("c", "b"),
-      ("x", "y"),
-    ])
-
-    symbols_map.filter(dest_symbols, orig_symbols, test_logger)
-
-    self.assertEqual(2, len(symbols_map))
-    self.assertEqual(symbols_map["b"], "a")
-    self.assertEqual(symbols_map["c"], "b")
-
-  def test_get_symbols_id_mapping_without_map(self):
-    model_conv = SymbolIdDict.init_from_symbols({"b", "c"})
-
-    trained_symbols = SymbolIdDict.init_from_symbols({"a", "b"})
-
-    symbols_id_map = get_symbols_id_mapping(
-      dest_symbols=model_conv,
-      orig_symbols=trained_symbols
+    symbols_id_map, symbols = create_or_update_map(
+      orig=orig_symbols,
+      dest=corpora,
+      existing_map=None,
+      template_map=None,
     )
 
-    self.assertEqual(1, len(symbols_id_map))
-    self.assertEqual(symbols_id_map[model_conv.get_id("b")], trained_symbols.get_id("b"))
-
-  def test_get_symbols_id_mapping_with_map(self):
-    model_conv = SymbolIdDict.init_from_symbols({"b", "c", "d"})
-
-    trained_symbols = SymbolIdDict.init_from_symbols({"a", "b"})
-    symbols_map = SymbolsMap.from_tuples([
-      ("b", "a"),
-      ("c", "b"),
-      ("x", "y"),
-    ])
-
-    symbols_id_map = get_symbols_id_mapping(model_conv, trained_symbols, symbols_map)
-
+    self.assertEqual(symbols_id_map["a"], "")
+    self.assertEqual(symbols_id_map["b"], "b")
     self.assertEqual(2, len(symbols_id_map))
-    self.assertEqual(symbols_id_map[model_conv.get_id("b")], trained_symbols.get_id("a"))
-    self.assertEqual(symbols_id_map[model_conv.get_id("c")], trained_symbols.get_id("b"))
+    self.assertEqual(["b", "c"], symbols)
+
+  def test_create_or_update_map_with_template_map(self):
+    orig_symbols = {"c", "d", "e"}
+    corpora = {"a", "b", "c"}
+
+    template_map = SymbolsMap({
+      "b": "d",
+      "e": "f"
+    })
+
+    symbols_id_map, symbols = create_or_update_map(
+      orig=orig_symbols,
+      dest=corpora,
+      template_map=template_map,
+      existing_map=None,
+    )
+
+    self.assertEqual(symbols_id_map["a"], "")
+    self.assertEqual(symbols_id_map["b"], "d")
+    self.assertEqual(symbols_id_map["c"], "c")
+    self.assertEqual(3, len(symbols_id_map))
+    self.assertEqual(["c", "d", "e"], symbols)
+
+  def test_create_or_update_map_with_template_map_and_existing_map(self):
+    orig_symbols = {"c", "d", "e"}
+    corpora = {"a", "b", "c"}
+
+    existing_map = SymbolsMap({
+      "a": "a",
+      "b": "b",
+      "c": "c",
+    })
+
+    template_map = SymbolsMap({
+      "b": "d",
+      "e": "f"
+    })
+
+    symbols_id_map, symbols = create_or_update_map(
+      orig=orig_symbols,
+      dest=corpora,
+      template_map=template_map,
+      existing_map=None,
+    )
+
+    self.assertEqual(symbols_id_map["a"], "")
+    self.assertEqual(symbols_id_map["b"], "d")
+    self.assertEqual(symbols_id_map["c"], "c")
+    self.assertEqual(3, len(symbols_id_map))
+    self.assertEqual(["c", "d", "e"], symbols)
+
+  def test_get_symbols_id_mapping_without_map(self):
+    from_symbols = {"b", "c"}
+    to_symbols = {"a", "b"}
+    from_conv = SymbolIdDict.init_from_symbols(from_symbols)
+    to_conv = SymbolIdDict.init_from_symbols(to_symbols)
+    mapping = SymbolsMap.from_intersection(from_symbols, to_symbols)
+    mapping.update_existing_to_mappings({"a": "c"})
+
+    symbols_id_map = mapping.convert_to_symbols_ids_map(
+      to_symbols=to_conv,
+      from_symbols=from_conv,
+    )
+
+    self.assertEqual(symbols_id_map[from_conv.get_id("b")], to_conv.get_id("b"))
+    self.assertEqual(symbols_id_map[from_conv.get_id("c")], to_conv.get_id("a"))
+    self.assertEqual(2, len(symbols_id_map))
+
 
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)

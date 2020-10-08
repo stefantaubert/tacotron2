@@ -4,7 +4,9 @@ from typing import List, Optional, Set
 from src.app.pre.io import get_text_dir, load_text_symbol_converter
 from src.app.pre.prepare import get_prepared_dir, load_prep_symbol_converter
 from src.app.utils import add_console_out_to_logger, init_logger
-from src.core.common.symbols_map import SymbolsMap, create_or_update_map
+from src.core.common.symbols_map import (SymbolsMap,
+                                         create_or_update_inference_map,
+                                         create_or_update_weights_map)
 from src.core.common.utils import get_subfolder_names
 
 INFER_MAP_FN = "inference_map.json"
@@ -75,7 +77,7 @@ def save_symbols(path: str, symbols: List[str]):
     f.write('\n'.join([f"\"{x}\"" for x in symbols]))
 
 
-def create_or_update_weights_map(base_dir: str, prep_name: str, weights_prep_name: str, template_map: Optional[str] = None):
+def create_or_update_weights_map_main(base_dir: str, prep_name: str, weights_prep_name: str, template_map: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   assert os.path.isdir(prep_dir)
   orig_prep_dir = get_prepared_dir(base_dir, weights_prep_name)
@@ -95,19 +97,18 @@ def create_or_update_weights_map(base_dir: str, prep_name: str, weights_prep_nam
   else:
     existing_map = None
 
-  weights_map, symbols = create_or_update_map(
+  weights_map, symbols = create_or_update_weights_map(
     orig=load_prep_symbol_converter(orig_prep_dir).get_all_symbols(),
     dest=load_prep_symbol_converter(prep_dir).get_all_symbols(),
     existing_map=existing_map,
     template_map=_template_map,
-    logger=logger
   )
 
   save_weights_map(prep_dir, weights_prep_name, weights_map)
   save_weights_symbols(prep_dir, weights_prep_name, symbols)
 
 
-def create_or_update_inference_map(base_dir: str, prep_name: str, template_map: Optional[str] = None):
+def create_or_update_inference_map_main(base_dir: str, prep_name: str, template_map: Optional[str] = None):
   logger = init_logger()
   add_console_out_to_logger(logger)
   logger.info("Creating/updating inference map...")
@@ -126,12 +127,11 @@ def create_or_update_inference_map(base_dir: str, prep_name: str, template_map: 
   else:
     existing_map = None
 
-  infer_map, symbols = create_or_update_map(
+  infer_map, symbols = create_or_update_inference_map(
     orig=load_prep_symbol_converter(prep_dir).get_all_symbols(),
     dest=all_symbols,
     existing_map=existing_map,
     template_map=_template_map,
-    logger=logger
   )
 
   save_infer_map(prep_dir, infer_map)
@@ -141,14 +141,14 @@ def create_or_update_inference_map(base_dir: str, prep_name: str, template_map: 
 if __name__ == "__main__":
   mode = 2
   if mode == 1:
-    create_or_update_weights_map(
+    create_or_update_weights_map_main(
       base_dir="/datasets/models/taco2pt_v5",
-      prep_name="thchs",
+      prep_name="ljs_ipa",
       weights_prep_name="thchs"
     )
   elif mode == 2:
-    create_or_update_inference_map(
+    create_or_update_inference_map_main(
       base_dir="/datasets/models/taco2pt_v5",
       prep_name="ljs_ipa",
-      template_map="maps/weights/thchs_ipa_ljs_ipa.json"
+      template_map="maps/inference/eng_ipa.json"
     )
