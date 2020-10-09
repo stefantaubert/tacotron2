@@ -133,14 +133,16 @@ def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict
 
 
 if __name__ == "__main__":
-  mode = 1
+  mode = 0
   if mode == 0:
     train(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
-      prep_name="arctic_ipa",
+      prep_name="ljs_ipa",
+      test_size=0,
+      validation_size=0.001,
       custom_hparams={
-        "batch_size": 17,
+        "batch_size": 26,
         "iters_per_checkpoint": 5,
         "epochs_per_checkpoint": 1,
         "accents_use_own_symbols": False

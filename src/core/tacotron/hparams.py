@@ -31,13 +31,17 @@ class ModelHParams():
   n_accents: int = 0
   symbols_embedding_dim: int = 512
   speakers_embedding_dim: int = 128  # 16
-  #accents_embedding_dim: int = 512
+  accents_embedding_dim: int = 128
   accents_use_own_symbols: bool = False
 
   # Encoder parameters
-  encoder_kernel_size: int = 5
-  encoder_n_convolutions: int = 3
-  encoder_embedding_dim: int = 512
+  symbols_encoder_kernel_size: int = 5
+  symbols_encoder_n_convolutions: int = 3
+  symbols_encoder_embedding_dim: int = 512
+
+  accents_encoder_kernel_size: int = 3
+  accents_encoder_n_convolutions: int = 3
+  accents_encoder_embedding_dim: int = 128
 
   # Decoder parameters
   n_frames_per_step: int = 1  # currently only 1 is supported

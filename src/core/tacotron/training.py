@@ -31,7 +31,8 @@ from src.core.tacotron.dataloader import (SymbolsMelCollate, parse_batch,
 from src.core.tacotron.hparams import (ExperimentHParams, HParams,
                                        OptimizerHParams)
 from src.core.tacotron.logger import Tacotron2Logger
-from src.core.tacotron.model import (SPEAKER_EMBEDDING_LAYER_NAME,
+from src.core.tacotron.model import (ACCENT_EMBEDDING_LAYER_NAME,
+                                     SPEAKER_EMBEDDING_LAYER_NAME,
                                      SYMBOL_EMBEDDING_LAYER_NAME, Tacotron2)
 from src.core.tacotron.model_checkpoint import CheckpointTacotron
 from src.core.tacotron.model_weights import get_mapped_symbol_weights
@@ -122,8 +123,8 @@ def init_torch(hparams: ExperimentHParams):
   init_cuddn_benchmark(hparams.cudnn_benchmark)
 
 
-def log_symbol_weights(model: nn.Module, logger: Logger):
-  logger.info(f"Symbolweights (cuda: {model.embedding.weight.is_cuda})")
+def log_symbol_weights(model: Tacotron2, logger: Logger):
+  logger.info(f"Symbolweights (cuda: {model.symbol_embedding.weight.is_cuda})")
   logger.info(str(model.state_dict()[SYMBOL_EMBEDDING_LAYER_NAME]))
 
 
@@ -367,7 +368,7 @@ def warm_start_model(model: nn.Module, warm_model: CheckpointTacotron, hparams: 
     to_model=model,
     ignore=hparams.ignore_layers + [
       SYMBOL_EMBEDDING_LAYER_NAME,
-      # ACCENT_EMBEDDING_LAYER_NAME,
+      ACCENT_EMBEDDING_LAYER_NAME,
       SPEAKER_EMBEDDING_LAYER_NAME
     ]
   )

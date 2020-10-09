@@ -2,18 +2,19 @@ from logging import Logger
 from typing import Tuple
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.autograd import Variable
 from torch.nn import functional as F
 
 from src.core.common.layers import ConvNorm, LinearNorm
 from src.core.common.train import get_uniform_weights, weights_to_embedding
-from src.core.common.utils import get_mask_from_lengths
+from src.core.common.utils import get_mask_from_lengths, to_gpu
 from src.core.tacotron.hparams import HParams
 from src.core.tacotron.model_symbols import get_model_symbols_count
 
-SYMBOL_EMBEDDING_LAYER_NAME = "embedding.weight"
-SPEAKER_EMBEDDING_LAYER_NAME = "speakers_embedding.weight"
+SYMBOL_EMBEDDING_LAYER_NAME = "symbol_embedding.weight"
+SPEAKER_EMBEDDING_LAYER_NAME = "speaker_embedding.weight"
+ACCENT_EMBEDDING_LAYER_NAME = "accent_embedding.weight"
 
 
 class LocationLayer(nn.Module):
@@ -53,8 +54,11 @@ class Attention(nn.Module):
       w_init_gain='tanh'
     )
 
+    merged_embeddings_dim = hparams.symbols_encoder_embedding_dim + \
+        hparams.accents_embedding_dim + hparams.speakers_embedding_dim
+
     self.memory_layer = LinearNorm(
-      in_dim=hparams.encoder_embedding_dim + hparams.speakers_embedding_dim,
+      in_dim=merged_embeddings_dim,
       out_dim=hparams.attention_dim,
       bias=False,
       w_init_gain='tanh'
@@ -207,34 +211,95 @@ class Postnet(nn.Module):
     return x
 
 
-class Encoder(nn.Module):
+class AccentsEncoder(nn.Module):
   """Encoder module:
     - Three 1-d convolution banks
     - Bidirectional LSTM
   """
 
   def __init__(self, hparams: HParams):
-    super(Encoder, self).__init__()
+    super().__init__()
 
     convolutions = []
-    for _ in range(hparams.encoder_n_convolutions):
+    for _ in range(hparams.accents_encoder_n_convolutions):
       conv_norm = ConvNorm(
-        in_channels=hparams.encoder_embedding_dim,
-        out_channels=hparams.encoder_embedding_dim,
-        kernel_size=hparams.encoder_kernel_size,
+        in_channels=hparams.accents_encoder_embedding_dim,
+        out_channels=hparams.accents_encoder_embedding_dim,
+        kernel_size=hparams.accents_encoder_kernel_size,
         stride=1,
-        padding=int((hparams.encoder_kernel_size - 1) / 2),
+        padding=int((hparams.accents_encoder_kernel_size - 1) / 2),
         dilation=1,
         w_init_gain='relu'
       )
-      batch_norm = nn.BatchNorm1d(hparams.encoder_embedding_dim)
+      batch_norm = nn.BatchNorm1d(num_features=hparams.accents_encoder_embedding_dim)
       conv_layer = nn.Sequential(conv_norm, batch_norm)
       convolutions.append(conv_layer)
     self.convolutions = nn.ModuleList(convolutions)
 
     self.lstm = nn.LSTM(
-      input_size=hparams.encoder_embedding_dim,
-      hidden_size=int(hparams.encoder_embedding_dim / 2),
+      input_size=hparams.accents_encoder_embedding_dim,
+      hidden_size=int(hparams.accents_encoder_embedding_dim / 2),
+      num_layers=1,
+      batch_first=True,
+      bidirectional=True
+    )
+
+  def forward(self, x, input_lengths):
+    for conv in self.convolutions:
+      x = F.dropout(F.relu(conv(x)), 0.5, self.training)
+
+    x = x.transpose(1, 2)
+
+    # pytorch tensor are not reversible, hence the conversion
+    input_lengths = input_lengths.cpu().numpy()
+    x = nn.utils.rnn.pack_padded_sequence(x, input_lengths, batch_first=True)
+
+    self.lstm.flatten_parameters()
+    outputs, _ = self.lstm(x)
+    outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True)
+
+    return outputs
+
+  def inference(self, x):
+    for conv in self.convolutions:
+      x = F.dropout(F.relu(conv(x)), 0.5, self.training)
+
+    x = x.transpose(1, 2)
+
+    self.lstm.flatten_parameters()
+    outputs, _ = self.lstm(x)
+
+    return outputs
+
+
+class SymbolsEncoder(nn.Module):
+  """Encoder module:
+    - Three 1-d convolution banks
+    - Bidirectional LSTM
+  """
+
+  def __init__(self, hparams: HParams):
+    super().__init__()
+
+    convolutions = []
+    for _ in range(hparams.symbols_encoder_n_convolutions):
+      conv_norm = ConvNorm(
+        in_channels=hparams.symbols_encoder_embedding_dim,
+        out_channels=hparams.symbols_encoder_embedding_dim,
+        kernel_size=hparams.symbols_encoder_kernel_size,
+        stride=1,
+        padding=int((hparams.symbols_encoder_kernel_size - 1) / 2),
+        dilation=1,
+        w_init_gain='relu'
+      )
+      batch_norm = nn.BatchNorm1d(num_features=hparams.symbols_encoder_embedding_dim)
+      conv_layer = nn.Sequential(conv_norm, batch_norm)
+      convolutions.append(conv_layer)
+    self.convolutions = nn.ModuleList(convolutions)
+
+    self.lstm = nn.LSTM(
+      input_size=hparams.symbols_encoder_embedding_dim,
+      hidden_size=int(hparams.symbols_encoder_embedding_dim / 2),
       num_layers=1,
       batch_first=True,
       bidirectional=True
@@ -274,8 +339,6 @@ class Decoder(nn.Module):
     self.logger = logger
     self.n_mel_channels = hparams.n_mel_channels
     self.n_frames_per_step = hparams.n_frames_per_step
-    self.encoder_embedding_dim = hparams.encoder_embedding_dim
-    self.speakers_embedding_dim = hparams.speakers_embedding_dim
     self.attention_rnn_dim = hparams.attention_rnn_dim
     self.decoder_rnn_dim = hparams.decoder_rnn_dim
     self.prenet_dim = hparams.prenet_dim
@@ -286,30 +349,33 @@ class Decoder(nn.Module):
 
     self.prenet = Prenet(hparams)
 
+    self.merged_embeddings_dim = hparams.symbols_encoder_embedding_dim + \
+        hparams.accents_encoder_embedding_dim + hparams.speakers_embedding_dim
+
     self.attention_rnn = nn.LSTMCell(
-      input_size=hparams.prenet_dim + hparams.encoder_embedding_dim + hparams.speakers_embedding_dim,
-      hidden_size=hparams.attention_rnn_dim
+      input_size=hparams.prenet_dim + self.merged_embeddings_dim,
+      hidden_size=hparams.attention_rnn_dim,
     )
 
     self.attention_layer = Attention(hparams)
 
     # Deep Voice 2: "one site-speciﬁc embedding as the initial decoder GRU hidden state" -> is in Tacotron 2 now a LSTM
     self.decoder_rnn = nn.LSTMCell(
-      input_size=hparams.attention_rnn_dim + hparams.encoder_embedding_dim + hparams.speakers_embedding_dim,
+      input_size=hparams.attention_rnn_dim + self.merged_embeddings_dim,
       hidden_size=hparams.decoder_rnn_dim,
-      bias=True
+      bias=True,
     )
 
     self.linear_projection = LinearNorm(
-      in_dim=hparams.decoder_rnn_dim + hparams.encoder_embedding_dim + hparams.speakers_embedding_dim,
+      in_dim=hparams.decoder_rnn_dim + self.merged_embeddings_dim,
       out_dim=hparams.n_mel_channels * hparams.n_frames_per_step
     )
 
     self.gate_layer = LinearNorm(
-      in_dim=hparams.decoder_rnn_dim + hparams.encoder_embedding_dim + hparams.speakers_embedding_dim,
+      in_dim=hparams.decoder_rnn_dim + self.merged_embeddings_dim,
       out_dim=1,
       bias=True,
-      w_init_gain='sigmoid'
+      w_init_gain='sigmoid',
     )
 
   def get_go_frame(self, memory):
@@ -322,38 +388,10 @@ class Decoder(nn.Module):
     -------
     decoder_input: all zeros frames
     """
-    B = memory.size(0)
+    batch_size = memory.size(0)
     decoder_input = Variable(memory.data.new(
-      B, self.n_mel_channels * self.n_frames_per_step).zero_())
+      batch_size, self.n_mel_channels * self.n_frames_per_step).zero_())
     return decoder_input
-
-  def initialize_decoder_states(self, memory, mask):
-    """ Initializes attention rnn states, decoder rnn states, attention
-    weights, attention cumulative weights, attention context, stores memory
-    and stores processed memory
-    PARAMS
-    ------
-    memory: Encoder outputs
-    mask: Mask for padded data if training, expects None for inference
-    """
-    B = memory.size(0)
-    MAX_TIME = memory.size(1)
-
-    self.attention_hidden = Variable(memory.data.new(B, self.attention_rnn_dim).zero_())
-    self.attention_cell = Variable(memory.data.new(B, self.attention_rnn_dim).zero_())
-
-    self.decoder_hidden = Variable(memory.data.new(B, self.decoder_rnn_dim).zero_())
-    self.decoder_cell = Variable(memory.data.new(B, self.decoder_rnn_dim).zero_())
-
-    self.attention_weights = Variable(memory.data.new(B, MAX_TIME).zero_())
-    self.attention_weights_cum = Variable(memory.data.new(B, MAX_TIME).zero_())
-
-    self.attention_context = Variable(memory.data.new(
-      B, self.encoder_embedding_dim + self.speakers_embedding_dim).zero_())
-
-    self.memory = memory
-    self.processed_memory = self.attention_layer.memory_layer(memory)
-    self.mask = mask
 
   def parse_decoder_inputs(self, decoder_inputs):
     """ Prepares decoder inputs, i.e. mel outputs
@@ -374,34 +412,6 @@ class Decoder(nn.Module):
     decoder_inputs = decoder_inputs.transpose(0, 1)
     return decoder_inputs
 
-  def parse_decoder_outputs(self, mel_outputs, gate_outputs, alignments) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """ Prepares decoder outputs for output
-    PARAMS
-    ------
-    mel_outputs:
-    gate_outputs: gate output energies
-    alignments:
-
-    RETURNS
-    -------
-    mel_outputs:
-    gate_outpust: gate output energies
-    alignments:
-    """
-    # (T_out, B) -> (B, T_out)
-    alignments = torch.stack(alignments).transpose(0, 1)
-    # (T_out, B) -> (B, T_out)
-    gate_outputs = torch.stack(gate_outputs).transpose(0, 1)
-    gate_outputs = gate_outputs.contiguous()
-    # (T_out, B, n_mel_channels) -> (B, T_out, n_mel_channels)
-    mel_outputs = torch.stack(mel_outputs).transpose(0, 1).contiguous()
-    # decouple frames per step
-    mel_outputs = mel_outputs.view(mel_outputs.size(0), -1, self.n_mel_channels)
-    # (B, T_out, n_mel_channels) -> (B, n_mel_channels, T_out)
-    mel_outputs = mel_outputs.transpose(1, 2)
-
-    return mel_outputs, gate_outputs, alignments
-
   def decode(self, decoder_input):
     """ Decoder step using stored states, attention and memory
     PARAMS
@@ -415,21 +425,45 @@ class Decoder(nn.Module):
     attention_weights:
     """
     cell_input = torch.cat((decoder_input, self.attention_context), -1)
+
     self.attention_hidden, self.attention_cell = self.attention_rnn(
-      cell_input, (self.attention_hidden, self.attention_cell))
+      input=cell_input,
+      hx=(self.attention_hidden, self.attention_cell)
+    )
+
     self.attention_hidden = F.dropout(
-      self.attention_hidden, self.p_attention_dropout, self.training)
+      input=self.attention_hidden,
+      p=self.p_attention_dropout,
+      training=self.training
+    )
 
     attention_weights_cat = torch.cat(
-      (self.attention_weights.unsqueeze(1), self.attention_weights_cum.unsqueeze(1)), dim=1)
+      (self.attention_weights.unsqueeze(1), self.attention_weights_cum.unsqueeze(1)),
+      dim=1
+    )
+
     self.attention_context, self.attention_weights = self.attention_layer(
-      self.attention_hidden, self.memory, self.processed_memory, attention_weights_cat, self.mask)
+      attention_hidden_state=self.attention_hidden,
+      memory=self.memory,
+      processed_memory=self.processed_memory,
+      attention_weights_cat=attention_weights_cat,
+      mask=self.mask
+    )
 
     self.attention_weights_cum += self.attention_weights
+
     decoder_input = torch.cat((self.attention_hidden, self.attention_context), -1)
+
     self.decoder_hidden, self.decoder_cell = self.decoder_rnn(
-      decoder_input, (self.decoder_hidden, self.decoder_cell))
-    self.decoder_hidden = F.dropout(self.decoder_hidden, self.p_decoder_dropout, self.training)
+      input=decoder_input,
+      hx=(self.decoder_hidden, self.decoder_cell)
+    )
+
+    self.decoder_hidden = F.dropout(
+      input=self.decoder_hidden,
+      p=self.p_decoder_dropout,
+      training=self.training
+    )
 
     decoder_hidden_attention_context = torch.cat(
       (self.decoder_hidden, self.attention_context), dim=1)
@@ -438,11 +472,11 @@ class Decoder(nn.Module):
     gate_prediction = self.gate_layer(decoder_hidden_attention_context)
     return decoder_output, gate_prediction, self.attention_weights
 
-  def forward(self, memory, decoder_inputs, memory_lengths) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+  def forward(self, memory: Tensor, decoder_inputs: Tensor, memory_lengths: Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """ Decoder forward pass for training
     PARAMS
     ------
-    memory: Encoder outputs + speaker embeddings
+    memory: Symbol Encoder outputs + Accent Encoder outputs + speaker embeddings [17, 65, 1152]
     decoder_inputs: Decoder inputs for teacher forcing. i.e. mel-specs
     memory_lengths: Encoder output lengths for attention masking.
 
@@ -455,9 +489,10 @@ class Decoder(nn.Module):
     # get_go_frame -> parse_decoder_inputs -> prenet -> initialize_decoder_states -> decode -> parse_decoder_outputs
     decoder_input = self.get_go_frame(memory)
     # [20, 80] -> [1, 20, 80]
-    decoder_input = decoder_input.unsqueeze(0)
+    decoder_input = decoder_input.unsqueeze(0)  # -> [1, 17, 80]
     decoder_inputs = self.parse_decoder_inputs(decoder_inputs)
     decoder_inputs = torch.cat((decoder_input, decoder_inputs), dim=0)
+
     decoder_inputs = self.prenet(decoder_inputs)
 
     self.initialize_decoder_states(memory, mask=~get_mask_from_lengths(memory_lengths))
@@ -508,6 +543,62 @@ class Decoder(nn.Module):
 
     return self.parse_decoder_outputs(mel_outputs, gate_outputs, alignments)
 
+  def initialize_decoder_states(self, memory: Tensor, mask):
+    """ Initializes attention rnn states, decoder rnn states, attention
+    weights, attention cumulative weights, attention context, stores memory
+    and stores processed memory
+    PARAMS
+    ------
+    memory: Encoder outputs [17, 65, 1152]
+    mask: Mask for padded data if training, expects None for inference
+    """
+    batch_size = memory.size(0)
+    MAX_TIME = memory.size(1)
+
+    self.attention_hidden = Variable(memory.data.new(batch_size, self.attention_rnn_dim).zero_())
+    self.attention_cell = Variable(memory.data.new(batch_size, self.attention_rnn_dim).zero_())
+
+    self.decoder_hidden = Variable(memory.data.new(batch_size, self.decoder_rnn_dim).zero_())
+    self.decoder_cell = Variable(memory.data.new(batch_size, self.decoder_rnn_dim).zero_())
+
+    self.attention_weights = Variable(memory.data.new(batch_size, MAX_TIME).zero_())
+    self.attention_weights_cum = Variable(memory.data.new(batch_size, MAX_TIME).zero_())
+
+    self.attention_context = Variable(memory.data.new(
+      batch_size, self.merged_embeddings_dim).zero_())
+
+    self.memory = memory
+    self.processed_memory = self.attention_layer.memory_layer(memory)
+    self.mask = mask
+
+  def parse_decoder_outputs(self, mel_outputs, gate_outputs, alignments) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """ Prepares decoder outputs for output
+    PARAMS
+    ------
+    mel_outputs:
+    gate_outputs: gate output energies
+    alignments:
+
+    RETURNS
+    -------
+    mel_outputs:
+    gate_outpust: gate output energies
+    alignments:
+    """
+    # (T_out, B) -> (B, T_out)
+    alignments = torch.stack(alignments).transpose(0, 1)
+    # (T_out, B) -> (B, T_out)
+    gate_outputs = torch.stack(gate_outputs).transpose(0, 1)
+    gate_outputs = gate_outputs.contiguous()
+    # (T_out, B, n_mel_channels) -> (B, T_out, n_mel_channels)
+    mel_outputs = torch.stack(mel_outputs).transpose(0, 1).contiguous()
+    # decouple frames per step
+    mel_outputs = mel_outputs.view(mel_outputs.size(0), -1, self.n_mel_channels)
+    # (B, T_out, n_mel_channels) -> (B, n_mel_channels, T_out)
+    mel_outputs = mel_outputs.transpose(1, 2)
+
+    return mel_outputs, gate_outputs, alignments
+
 
 def get_symbol_weights(hparams: HParams) -> torch.Tensor:
   model_symbols_count = get_model_symbols_count(
@@ -540,18 +631,18 @@ class Tacotron2(nn.Module):
     self.mask_padding = hparams.mask_padding
     self.n_mel_channels = hparams.n_mel_channels
 
-    # TODO rename to symbol_embeddings but it will destroy all previous trained models
     symbol_emb_weights = get_symbol_weights(hparams)
-    self.embedding = weights_to_embedding(symbol_emb_weights)
-    logger.debug(f"is cuda: {self.embedding.weight.is_cuda}")
+    self.symbol_embedding = weights_to_embedding(symbol_emb_weights)
+    logger.debug(f"is cuda: {self.symbol_embedding.weight.is_cuda}")
 
-    self.speakers_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
-    torch.nn.init.xavier_uniform_(self.speakers_embedding.weight)
+    self.speaker_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
+    torch.nn.init.xavier_uniform_(self.speaker_embedding.weight)
 
-    #self.accent_embedding = nn.Embedding(hparams.n_accents, hparams.accents_embedding_dim)
-    # torch.nn.init.xavier_uniform_(self.accent_embedding.weight)
+    self.accent_embedding = nn.Embedding(hparams.n_accents, hparams.accents_embedding_dim)
+    torch.nn.init.xavier_uniform_(self.accent_embedding.weight)
 
-    self.encoder = Encoder(hparams)
+    self.symbol_encoder = SymbolsEncoder(hparams)
+    self.accent_encoder = AccentsEncoder(hparams)
     self.decoder = Decoder(hparams, logger)
     self.postnet = Postnet(hparams)
 
@@ -559,25 +650,40 @@ class Tacotron2(nn.Module):
     text_inputs, accent_inputs, text_lengths, mels, max_len, output_lengths, speaker_ids = inputs
     text_lengths, output_lengths = text_lengths.data, output_lengths.data
 
-    embedded_inputs = self.embedding(input=text_inputs)
+    # Symbols
+    embedded_symbols = self.symbol_embedding(input=text_inputs)
     # from [20, 133, 512]) to [20, 512, 133]
-    embedded_inputs = embedded_inputs.transpose(1, 2)
+    embedded_symbols = embedded_symbols.transpose(1, 2)
 
-    encoder_outputs = self.encoder(
-      x=embedded_inputs,
+    symbol_encoder_outputs = self.symbol_encoder(
+      x=embedded_symbols,
+      input_lengths=text_lengths
+    )  # [20, 133, 512] -> 20 = batch_size
+
+    # Accents
+    embedded_accent_inputs = self.accent_embedding(input=accent_inputs)
+    # from [20, 133, 512]) to [20, 512, 133]
+    embedded_accent_inputs = embedded_accent_inputs.transpose(1, 2)
+
+    accent_encoder_outputs = self.accent_encoder(
+      x=embedded_accent_inputs,
       input_lengths=text_lengths
     )  # [20, 133, 512]
 
     # Extract speaker embeddings
     # From [20] to [20, 1]
     speaker_ids = speaker_ids.unsqueeze(1)
-    embedded_speakers = self.speakers_embedding(input=speaker_ids)
+    embedded_speakers = self.speaker_embedding(input=speaker_ids)
     # From [20, 1, 16] to [20, 133, 16]
     # copies the values from one speaker to all max_len dimension arrays
     embedded_speakers = embedded_speakers.expand(-1, max_len, -1)
 
     # concatenate symbol and speaker embeddings (-1 means last dimension)
-    merged_outputs = torch.cat([encoder_outputs, embedded_speakers], -1)
+    merged_outputs = torch.cat([
+      symbol_encoder_outputs,
+      accent_encoder_outputs,
+      embedded_speakers
+    ], -1)
 
     mel_outputs, gate_outputs, alignments = self.decoder(
       memory=merged_outputs,
@@ -600,17 +706,34 @@ class Tacotron2(nn.Module):
     return mel_outputs, mel_outputs_postnet, gate_outputs, alignments
 
   def inference(self, inputs: torch.LongTensor, accents: torch.LongTensor, speaker_id: torch.LongTensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    embedded_inputs = self.embedding(inputs).transpose(1, 2)
-    encoder_outputs = self.encoder.inference(embedded_inputs)
+    # Symbols
+    embedded_symbols = self.symbol_embedding(input=inputs)
+    # from [20, 133, 512]) to [20, 512, 133]
+    embedded_symbols = embedded_symbols.transpose(1, 2)
 
-    # TODO process accents
+    symbol_encoder_outputs = self.symbol_encoder.inference(
+      x=embedded_symbols,
+    )  # [20, 133, 512]
+
+    # Accents
+    embedded_accent_inputs = self.accent_embedding(input=accents)
+    # from [20, 133, 512]) to [20, 512, 133]
+    embedded_accent_inputs = embedded_accent_inputs.transpose(1, 2)
+
+    accent_encoder_outputs = self.accent_encoder.inference(
+      x=embedded_accent_inputs
+    )  # [20, 133, 512]
 
     # Extract speaker embeddings
     speaker_id = speaker_id.unsqueeze(1)
-    embedded_speaker = self.speakers_embedding(input=speaker_id)
-    embedded_speaker = embedded_speaker.expand(-1, encoder_outputs.shape[1], -1)
+    embedded_speaker = self.speaker_embedding(input=speaker_id)
+    embedded_speaker = embedded_speaker.expand(-1, symbol_encoder_outputs.shape[1], -1)
 
-    merged_outputs = torch.cat([encoder_outputs, embedded_speaker], -1)
+    merged_outputs = torch.cat([
+      symbol_encoder_outputs,
+      accent_encoder_outputs,
+      embedded_speaker
+    ], -1)
 
     mel_outputs, gate_outputs, alignments = self.decoder.inference(merged_outputs)
 
