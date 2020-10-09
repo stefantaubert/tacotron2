@@ -23,7 +23,7 @@ class Checkpoint():
     res, ignored = get_dataclass_from_dict(self.hparams, hparam_type)
     if len(ignored) > 0:
       logger.warning(
-        f"Ignored these hparams from checkpoint because the did not exist in the current HParams: {ignored}.")
+        f"Ignored these hparams from checkpoint because they did not exist in the current HParams: {ignored}.")
     return res
 
   def save(self, checkpoint_path: str, logger: Logger):

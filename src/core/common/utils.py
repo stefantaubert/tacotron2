@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import random
 import tarfile
@@ -6,13 +7,13 @@ import unicodedata
 from collections import Counter
 from dataclasses import astuple
 from pathlib import Path
-from typing import Generic, List, Set, Tuple, Type, TypeVar, Union
-from matplotlib.figure import Figure
+from typing import Any, Generic, List, Set, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import torch
 import wget
+from matplotlib.figure import Figure
 from PIL import Image
 from scipy.spatial.distance import cosine
 from tqdm import tqdm
@@ -22,10 +23,17 @@ from src.core.common.globals import CSV_SEPERATOR
 T = TypeVar('T')
 
 
+def pass_lines(method: Any, text: str):
+  lines = text.split("\n")
+  for l in lines:
+    method(l)
+
+
 def figure_to_numpy(fig: Figure):
   data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
   data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
   return data
+
 
 def get_filenames(parent_dir: str) -> List[str]:
   assert os.path.isdir(parent_dir)
@@ -175,6 +183,8 @@ def get_chunk_name(i, chunksize, maximum):
 
 
 def stack_images_vertically(list_im, out_path):
+  old_level = logging.getLogger().level
+  logging.getLogger().setLevel(logging.INFO)
   images = [Image.open(i) for i in list_im]
   widths, heights = zip(*(i.size for i in images))
 
@@ -192,9 +202,12 @@ def stack_images_vertically(list_im, out_path):
     new_im.paste(im, (0, y_offset))
     y_offset += im.size[1]
   new_im.save(out_path)
+  logging.getLogger().setLevel(old_level)
 
 
 def stack_images_horizontally(list_im: List[str], out_path: str):
+  old_level = logging.getLogger().level
+  logging.getLogger().setLevel(logging.INFO)
   images = [Image.open(i) for i in list_im]
   widths, heights = zip(*(i.size for i in images))
 
@@ -212,6 +225,7 @@ def stack_images_horizontally(list_im: List[str], out_path: str):
     new_im.paste(im, (x_offset, 0))
     x_offset += im.size[0]
   new_im.save(out_path)
+  logging.getLogger().setLevel(old_level)
 
 
 def create_parent_folder(file: str) -> str:

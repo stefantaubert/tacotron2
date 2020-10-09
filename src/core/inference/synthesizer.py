@@ -6,6 +6,7 @@ import numpy as np
 
 from src.core.common.audio import (concatenate_audios, mel_to_numpy,
                                    normalize_wav)
+from src.core.common.utils import pass_lines
 from src.core.pre.text.pre_inference import (InferSentence, InferSentenceList,
                                              Sentence)
 from src.core.tacotron.synthesizer import Synthesizer as TacoSynthesizer
@@ -83,15 +84,26 @@ class Synthesizer():
 
     accent_id_dict = self._taco_synt.accents
 
-    # Speed is: 1min inference for 3min wav result
-    for sentence in sentences.items(True):
+    all_in_one = False
+
+    if all_in_one:
+      sentence = sentences.to_sentence(
+        space_symbol=" ",
+        space_accent="north_america",
+      )
       self._logger.info(f"\n{sentence.get_formatted(accent_id_dict)}")
       infer_res = self._infer_sentence(sentence, speaker, sigma, denoiser_strength)
       result.append(infer_res)
+    else:
+      # Speed is: 1min inference for 3min wav result
+      for sentence in sentences.items(True):
+        pass_lines(self._logger.info, sentence.get_formatted(accent_id_dict))
+        infer_res = self._infer_sentence(sentence, speaker, sigma, denoiser_strength)
+        result.append(infer_res)
 
     output = self._concatenate_wavs(result, sentence_pause_s)
-
     output = normalize_wav(output)
+
     for infer_res in result:
       infer_res.wav = normalize_wav(infer_res.wav)
 

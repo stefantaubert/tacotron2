@@ -500,7 +500,7 @@ class Decoder(nn.Module):
       if torch.sigmoid(gate_output.data) > self.gate_threshold:
         break
 
-      if len(mel_outputs) == self.max_decoder_steps:
+      if self.max_decoder_steps > 0 and len(mel_outputs) == self.max_decoder_steps:
         self.logger.warn("Reached max decoder steps.")
         break
 

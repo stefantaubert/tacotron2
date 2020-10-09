@@ -47,6 +47,7 @@ export text_name="eng-coma"
 export text_name="eng-rainbow"
 export text_name="eng-stella"
 export text_name="eng-democritus_v2"
+export text_name="eng-democritus_orig"
 export text_name="eng-north"
 
 python -m src.cli.runner prepare-text-automap \

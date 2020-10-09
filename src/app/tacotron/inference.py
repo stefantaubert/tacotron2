@@ -159,8 +159,11 @@ def infer_main(base_dir: str, train_name: str, text_name: str, ds_speaker: str, 
 if __name__ == "__main__":
   infer_main(
     base_dir="/datasets/models/taco2pt_v5",
-    train_name="arctic_ipa_warm",
-    text_name="north_sven_orig",
-    ds_speaker="arctic,BWC",
-    analysis=True
+    train_name="ljs_ipa_scratch_128",
+    text_name="ipa-north_sven_orig",
+    ds_speaker="ljs,1",
+    analysis=True,
+    custom_tacotron_hparams={
+      "max_decoder_steps": 0
+    }
   )

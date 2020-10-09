@@ -34,8 +34,8 @@ class Synthesizer():
   def _get_model_symbols_tensor(self, symbol_ids: List[int], accent_ids: List[int]) -> torch.LongTensor:
     model_symbol_ids = get_model_symbol_ids(
       symbol_ids, accent_ids, self.hparams.n_symbols, self.hparams.accents_use_own_symbols)
-    self._logger.debug(f"Symbol ids:\n{symbol_ids}")
-    self._logger.debug(f"Model symbol ids:\n{model_symbol_ids}")
+    #self._logger.debug(f"Symbol ids:\n{symbol_ids}")
+    #self._logger.debug(f"Model symbol ids:\n{model_symbol_ids}")
     symbols_tensor = np.array([model_symbol_ids])
     symbols_tensor = torch.from_numpy(symbols_tensor)
     symbols_tensor = torch.autograd.Variable(symbols_tensor)

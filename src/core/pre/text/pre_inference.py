@@ -42,9 +42,10 @@ def get_formatted_core(sent_id: int, symbols: List[str], accent_ids: List[int], 
         f"{occuring_accent_id}={accent_id_dict.get_accent(occuring_accent_id)}")
     accends_names_lines = ', '.join(accent_ids_list)
     final_pair_lines.append(accends_names_lines)
-    final_pair_lines.append("")
+    # final_pair_lines.append("")
   # add symbols count
-  final_pair_lines[-4] += f" ({len(final_symbols)})"
+  final_pair_lines[-3] += f" ({len(final_symbols)})"
+  # final_pair_lines[-4] += f" ({len(final_symbols)})"
   sent_mark = f"{sent_id}: "
   final_pair_lines[0] = f"{sent_mark}{final_pair_lines[0]}"
   for i in range(len(final_pair_lines) - 1):
@@ -151,6 +152,19 @@ class InferSentenceList(GenericList[InferSentence]):
         unknown_symbols_exist = True
         assert len(sentence.symbols) == len(sentence.accents)
     return unknown_symbols_exist
+
+  def to_sentence(self, space_symbol: str, space_accent: str) -> InferSentence:
+    res = InferSentence(
+      sent_id=1,
+      symbols=[],
+      accents=[],
+    )
+
+    for sent in self.items():
+      res.symbols.extend(sent.symbols + [space_symbol])
+      res.accents.extend(sent.accents + [space_accent])
+
+    return res
 
 
 def add_text(text: str, lang: Language) -> Tuple[SymbolIdDict, SentenceList]:

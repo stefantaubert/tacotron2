@@ -12,6 +12,14 @@ export prep_name="thchs_ljs_ipa"
 export prep_name="arctic_ipa_22050"
 export prep_name="libritts_ipa_22050"
 
+## Quick-Test
+export text="examples/quick-test.txt"
+export text_name="quick-test"
+python -m src.cli.runner prepare-text-add --filepath=$text --prep_name=$prep_name --text_name=$text_name --lang=ENG
+python -m src.cli.runner prepare-text-normalize --prep_name=$prep_name --text_name=$text_name
+python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=$text_name
+
+
 
 ## IPA
 export text="examples/ipa/north_sven_orig.txt"
@@ -52,6 +60,12 @@ python -m src.cli.runner prepare-text-add --filepath=$text --prep_name=$prep_nam
 python -m src.cli.runner prepare-text-normalize --prep_name=$prep_name --text_name=$text_name
 python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=$text_name
 
+export text="examples/ger/example.txt"
+export text_name="ger-example"
+python -m src.cli.runner prepare-text-add --filepath=$text --prep_name=$prep_name --text_name=$text_name --lang=GER
+python -m src.cli.runner prepare-text-normalize --prep_name=$prep_name --text_name=$text_name
+python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=$text_name
+
 ## English
 export text="examples/en/coma.txt"
 export text_name="eng-coma"
@@ -73,6 +87,12 @@ python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=
 
 export text="examples/en/democritus_v2.txt"
 export text_name="eng-democritus_v2"
+python -m src.cli.runner prepare-text-add --filepath=$text --prep_name=$prep_name --text_name=$text_name --lang=ENG
+python -m src.cli.runner prepare-text-normalize --prep_name=$prep_name --text_name=$text_name
+python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=$text_name
+
+export text="examples/en/democritus_orig.txt"
+export text_name="eng-democritus_orig"
 python -m src.cli.runner prepare-text-add --filepath=$text --prep_name=$prep_name --text_name=$text_name --lang=ENG
 python -m src.cli.runner prepare-text-normalize --prep_name=$prep_name --text_name=$text_name
 python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=$text_name

@@ -33,10 +33,6 @@ python -m src.cli.runner prepare-inference-map \
 
   --template_map="maps/weights/thchs_ipa_ljs_ipa.json"
 
-export ds_speaker="ljs,1"
-
-export accent="north_america"
-
 export text_name="ipa-north_sven_orig"
 export text_name="ipa-north_sven_v2"
 export text_name="ipa-north_ger"
@@ -48,10 +44,11 @@ export text_name="eng-rainbow"
 export text_name="eng-stella"
 export text_name="eng-democritus_v2"
 export text_name="eng-north"
+export text_name="quick-test"
 
-python -m src.cli.runner prepare-text-automap \
-  --prep_name=$prep_name \
-  --text_name=$text_name
+export ds_speaker="ljs,1"
+
+export accent="north_america"
 
 python -m src.cli.runner prepare-text-set-accent \
   --prep_name=$prep_name \
@@ -62,4 +59,8 @@ python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
   --ds_speaker=$ds_speaker \
   --text_name=$text_name \
-  --analysis
+  --analysis \
+  --custom_tacotron_hparams="max_decoder_steps=3000"
+
+
+  --waveglow="warm"

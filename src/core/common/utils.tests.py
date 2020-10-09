@@ -6,11 +6,18 @@ from tempfile import mkdtemp
 
 import numpy as np
 
-from src.core.common.utils import (cosine_dist_mels, get_basename, get_chunk_name,
-                                   get_subfolders, make_same_dim)
+from src.core.common.utils import (cosine_dist_mels, get_basename,
+                                   get_chunk_name, get_subfolders,
+                                   make_same_dim, pass_lines)
 
 
 class UnitTests(unittest.TestCase):
+
+  def test_pass_lines(self):
+    text = "abc\ndef\ngh"
+    res = []
+    pass_lines(res.append, text)
+    self.assertEqual(["abc", "def", "gh"], res)
 
   def test_get_basename_full_path(self):
     path = "/a/b/c/test.wav.xyz"

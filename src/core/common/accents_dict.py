@@ -31,7 +31,7 @@ class AccentsDict():
     assert accent in self._ids_to_accents.keys()
     return self._ids_to_accents[accent]
 
-  def get_accent(self, accent_id: str) -> str:
+  def get_accent(self, accent_id: int) -> str:
     assert accent_id in self._ids_to_accents.values()
     for accent, a_id in self._ids_to_accents.items():
       if a_id == accent_id:
