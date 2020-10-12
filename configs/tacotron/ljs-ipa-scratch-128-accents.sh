@@ -4,7 +4,7 @@ source /datasets/code/tacotron2/configs/envs/caps.sh
 export train_name="ljs_ipa_scratch_128_accents"
 export prep_name="ljs_ipa"
 export batch_size=26
-export epochs_per_checkpoint=1
+export epochs_per_checkpoint=5
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/phil.sh
@@ -21,7 +21,9 @@ python -m src.cli.runner tacotron-train \
   --validation_size=0.01 \
   --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint,speakers_embedding_dim=128"
 
-python -m src.cli.runner tacotron-continue-train --train_name=$train_name
+python -m src.cli.runner tacotron-continue-train --train_name=$train_name --custom_hparams="epochs_per_checkpoint=$epochs_per_checkpoint"
+
+python -m src.cli.runner tacotron-validate --train_name=$train_name --custom_tacotron_hparams="max_decoder_steps=3000"
 # Inference
 
 ## add texts...
