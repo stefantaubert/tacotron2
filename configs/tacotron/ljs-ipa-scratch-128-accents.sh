@@ -51,6 +51,7 @@ export text_name="quick-test"
 export ds_speaker="ljs,1"
 
 export accent="north_america"
+export accent="none"
 
 python -m src.cli.runner prepare-text-set-accent \
   --prep_name=$prep_name \

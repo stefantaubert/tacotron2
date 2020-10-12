@@ -11,7 +11,7 @@ source /home/stefan/tacotron2/configs/envs/phil.sh
 export train_name="arctic_ipa_22050_warm_128"
 export prep_name="arctic_ipa_22050"
 export batch_size=25
-export epochs_per_checkpoint=5
+export epochs_per_checkpoint=1
 
 # Training
 python -m src.cli.runner tacotron-train \
