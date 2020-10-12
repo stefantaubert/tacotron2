@@ -42,7 +42,7 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--warm_start_checkpoint', type=int)
   parser.add_argument('--weights_train_name', type=str)
   parser.add_argument('--weights_checkpoint', type=int)
-  parser.add_argument('--weights_map', type=str)
+  parser.add_argument('--use_weights_map', action='store_true')
   return train_cli
 
 

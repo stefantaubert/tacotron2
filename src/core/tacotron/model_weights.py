@@ -25,7 +25,7 @@ def symbols_ids_map_to_model_symbols_ids_map(symbols_id_map: OrderedDictType[int
         accents_use_own_symbols
       )
 
-      res[map_to_model_id] = symbols_id_map[map_from_symbol_id]
+      res[map_to_model_id] = map_from_symbol_id
 
     if not accents_use_own_symbols:
       break
