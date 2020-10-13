@@ -1,4 +1,5 @@
 import re
+from typing import Match
 
 import inflect
 
@@ -10,15 +11,23 @@ _dollars_re = re.compile(r'\$([0-9\.\,]*[0-9]+)')
 _ordinal_re = re.compile(r'[0-9]+(st|nd|rd|th)')
 _number_re = re.compile(r'[0-9]+')
 
+_e_re = re.compile(r'\be([0-9]+)')
+_e_minus_re = re.compile(r'\be-([0-9]+)')
+_factor_e_re = re.compile(r'([0-9]+)e([0-9]+)')
+_factor_e_minus_re = re.compile(r'([0-9]+)e-([0-9]+)')
 
-def _remove_commas(m):
+_minus_re = re.compile(r'(\s|^)-([0-9]+)')
+
+
+def _remove_commas(m: Match) -> str:
   return m.group(1).replace(',', '')
 
 
-def _expand_decimal_point(m):
+def _expand_decimal_point(m: Match) -> str:
   return m.group(1).replace('.', ' point ')
 
-def _expand_dollars(m):
+
+def _expand_dollars(m: Match) -> str:
   match = m.group(1)
   parts = match.split('.')
   if len(parts) > 2:
@@ -39,11 +48,11 @@ def _expand_dollars(m):
     return 'zero dollars'
 
 
-def _expand_ordinal(m):
+def _expand_ordinal(m: Match) -> str:
   return _inflect.number_to_words(m.group(0))
 
 
-def _expand_number(m):
+def _expand_number(m: Match) -> str:
   num = int(m.group(0))
   if num > 1000 and num < 3000:
     if num == 2000:
@@ -58,7 +67,22 @@ def _expand_number(m):
     return _inflect.number_to_words(num, andword='')
 
 
-def normalize_numbers(text):
+def replace_e_to_the_power_of(text: str) -> str:
+  text = re.sub(_e_minus_re, r'ten to the power of minus \1', text)
+  text = re.sub(_e_re, r'ten to the power of \1', text)
+  text = re.sub(_factor_e_minus_re, r'\1 times ten to the power of minus \2', text)
+  text = re.sub(_factor_e_re, r'\1 times ten to the power of \2', text)
+  return text
+
+
+def replace_minus(text: str) -> str:
+  text = re.sub(_minus_re, r'\1minus \2', text)
+  return text
+
+
+def normalize_numbers(text: str) -> str:
+  text = replace_e_to_the_power_of(text)
+  text = replace_minus(text)
   text = re.sub(_comma_number_re, _remove_commas, text)
   text = re.sub(_pounds_re, r'\1 pounds', text)
   text = re.sub(_dollars_re, _expand_dollars, text)

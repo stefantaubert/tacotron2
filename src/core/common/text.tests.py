@@ -8,9 +8,10 @@ from src.core.common.text import *
 class UnitTests(unittest.TestCase):
 
   def test_normalize_en(self):
-    inp = "ü Hello my name is mr. test and    1 + 3 is $4.   "
+    inp = "ü Hello my name is mr. test and    1 + 3 is $4. g 5e12  "
     res = normalize_en(inp)
-    self.assertEqual("u Hello my name is mister test and one + three is four dollars.", res)
+    self.assertEqual(
+      "u Hello my name is mister test and one + three is four dollars. grams five times ten to the power of twelve", res)
 
   def test_en_to_ipa(self):
     text = "This is a test. And an other one."

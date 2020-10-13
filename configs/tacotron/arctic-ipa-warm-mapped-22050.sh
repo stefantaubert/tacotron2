@@ -1,14 +1,14 @@
 # Init
 ## Capslock
 source /datasets/code/tacotron2/configs/envs/caps.sh
-export train_name="arctic_ipa_22050_warm_128"
+export train_name="arctic_ipa_22050_warm_mapped_128"
 export prep_name="arctic_ipa_22050"
 export batch_size=26
 export epochs_per_checkpoint=1
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/phil.sh
-export train_name="arctic_ipa_22050_warm_128"
+export train_name="arctic_ipa_22050_warm_mapped_128"
 export prep_name="arctic_ipa_22050"
 export batch_size=25
 export epochs_per_checkpoint=5
@@ -32,7 +32,8 @@ python -m src.cli.runner tacotron-train \
 
 python -m src.cli.runner tacotron-continue-train --train_name=$train_name
 
-python -m src.cli.runner tacotron-validate --train_name=$train_name
+python -m src.cli.runner tacotron-validate --train_name=$train_name \
+  --custom_tacotron_hparams="max_decoder_steps=2000"
 
 
 # Inference
@@ -46,8 +47,10 @@ python -m src.cli.runner prepare-inference-map \
   #--template_map="maps/weights/thchs_ipa_ljs_ipa.json"
 
 export ds_speaker="arctic,BWC"
+export ds_speaker="arctic,LXC"
 
 export accent="Chinese-BWC"
+export accent="Chinese-LXC"
 
 export text_name="ipa-north_sven_orig"
 export text_name="ipa-north_sven_v2"

@@ -185,7 +185,7 @@ if __name__ == "__main__":
       prep_name="thchs_ipa",
       warm_start_train_name="ljs_ipa_scratch",
       weights_train_name="ljs_ipa_scratch",
-      #weights_map="maps/weights/thchs_ipa_ljs_ipa.json",
+      # weights_map="maps/weights/thchs_ipa_ljs_ipa.json",
       custom_hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
     )
   elif mode == 4:
@@ -201,6 +201,6 @@ if __name__ == "__main__":
       prep_name="thchs_ipa_acc",
       warm_start_train_name="ljs_ipa_scratch",
       weights_train_name="ljs_ipa_scratch",
-      #weights_map="maps/weights/thchs_ipa_acc_ljs_ipa.json",
+      # weights_map="maps/weights/thchs_ipa_acc_ljs_ipa.json",
       custom_hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
     )

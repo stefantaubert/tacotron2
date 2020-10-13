@@ -450,3 +450,11 @@ to save requirements:
 pip install pipreqs
 pipreqs . --savepath="pipreqs.txt"
 ```
+
+## How to prepare texts
+
+- "intrinsically blue," -> "intrinsically blue",
+- "intrinsically blue." -> "intrinsically blue".
+- "5cm" -> "5 cm"
+- "3.5*10^-5 -> "3.5e-5"
+
