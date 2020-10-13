@@ -33,13 +33,15 @@ def symbols_ids_map_to_model_symbols_ids_map(symbols_id_map: OrderedDictType[int
   return res
 
 
-def map_weights(model_symbols_id_map: OrderedDictType[int, int], model_weights, trained_weights, logger: Logger):
+def map_weights(model_symbols_id_map: OrderedDictType[int, int], model_weights, trained_weights, logger: Logger) -> None:
   for map_to_model_symbol_id, map_from_symbol_id in model_symbols_id_map.items():
     assert 0 <= map_to_model_symbol_id < model_weights.shape[0]
     assert 0 <= map_from_symbol_id < trained_weights.shape[0]
-
-    logger.debug(f"Mapped {map_from_symbol_id} to {map_to_model_symbol_id}.")
+    old_weights = model_weights[map_to_model_symbol_id]
     model_weights[map_to_model_symbol_id] = trained_weights[map_from_symbol_id]
+    logger.debug(f"Mapped {map_from_symbol_id} to {map_to_model_symbol_id}.")
+    logger.debug(f"Old {old_weights}")
+    logger.debug(f"New {model_weights[map_to_model_symbol_id]}")
 
 
 def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: Tensor, trained_symbols: SymbolIdDict, custom_mapping: Optional[SymbolsMap], hparams: HParams, logger: Logger) -> Tensor:
