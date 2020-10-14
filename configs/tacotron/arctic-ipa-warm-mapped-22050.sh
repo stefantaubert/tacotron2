@@ -6,7 +6,7 @@ export prep_name="arctic_ipa_22050"
 export batch_size=26
 export epochs_per_checkpoint=1
 
-## Philnɔɹθ wɪnd ɡnɔɹθ wɪnd ɡejv ʌp ðə ətɛmpt. ðɛn ðə sʌn ʃajnd awt wɔɹmli, ænd ɪmidiətli ðə tɹævəlɹ̩ tʊk ɔf hɪz klowk. ænd sow ðə nɔɹθ wɪnd wɑz əblajdʒd tə kənfɛs ðæt ðə sʌn wɑz ðə stɹɔŋɹ̩ ʌv ðə tejv ʌp ðə ətɛmpt. ðɛn ðə sʌn ʃajnd awt wɔɹmli, ænd ɪmidiətli ðə tɹævəlɹ̩ tʊk ɔf hɪz klowk. ænd sow ðə nɔɹθ wɪnd wɑz əblajdʒd tə kənfɛs ðæt ðə sʌn wɑz ðə stɹɔŋɹ̩ ʌv ðə t
+## Phil
 source /home/stefan/tacotron2/configs/envs/phil.sh
 export train_name="arctic_ipa_22050_warm_mapped_128"
 export prep_name="arctic_ipa_22050"
@@ -27,6 +27,7 @@ python -m src.cli.runner tacotron-train \
   --validation_size=0.01 \
   --warm_start_train_name="ljs_ipa_scratch_128" \
   --weights_train_name="ljs_ipa_scratch_128" \
+  --map_from_speaker="ljs,1" \
   --use_weights_map \
   --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint,speakers_embedding_dim=128"
 
