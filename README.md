@@ -1,5 +1,7 @@
 # Tacotron 2 with IPA and Multispeaker Support
 
+You can listen to sound samples [here](https://stefantaubert.github.io/tacotron2/)
+
 ## Applied modifications
 
 I have modified the original tacotron 2 code:
@@ -19,7 +21,6 @@ I have modified the original tacotron 2 code:
 - added plotting of symbolspace in 2D and 3D and in a table
 - adjusted paths
 
-You can listen to sound samples [here](/index.html)
 
 ## Setup
 

@@ -6,7 +6,7 @@ export prep_name="arctic_ipa_22050"
 export batch_size=26
 export epochs_per_checkpoint=1
 
-## Phil
+## Philnɔɹθ wɪnd ɡnɔɹθ wɪnd ɡejv ʌp ðə ətɛmpt. ðɛn ðə sʌn ʃajnd awt wɔɹmli, ænd ɪmidiətli ðə tɹævəlɹ̩ tʊk ɔf hɪz klowk. ænd sow ðə nɔɹθ wɪnd wɑz əblajdʒd tə kənfɛs ðæt ðə sʌn wɑz ðə stɹɔŋɹ̩ ʌv ðə tejv ʌp ðə ətɛmpt. ðɛn ðə sʌn ʃajnd awt wɔɹmli, ænd ɪmidiətli ðə tɹævəlɹ̩ tʊk ɔf hɪz klowk. ænd sow ðə nɔɹθ wɪnd wɑz əblajdʒd tə kənfɛs ðæt ðə sʌn wɑz ðə stɹɔŋɹ̩ ʌv ðə t
 source /home/stefan/tacotron2/configs/envs/phil.sh
 export train_name="arctic_ipa_22050_warm_mapped_128"
 export prep_name="arctic_ipa_22050"

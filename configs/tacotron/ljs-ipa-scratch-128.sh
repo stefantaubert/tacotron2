@@ -22,6 +22,8 @@ python -m src.cli.runner tacotron-train \
   --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint,speakers_embedding_dim=128"
 
 python -m src.cli.runner tacotron-continue-train --train_name=$train_name
+
+python -m src.cli.runner tacotron-validate --train_name=$train_name --custom_tacotron_hparams="max_decoder_steps=2000"
 # Inference
 
 ## add texts...

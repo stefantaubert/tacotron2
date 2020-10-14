@@ -6,7 +6,7 @@ source /datasets/code/tacotron2/configs/envs/caps.sh
 export train_name="thchs_ipa_warm_mapped_w_tones_speaker_mapped"
 export prep_name="thchs"
 export batch_size=17
-export epochs_per_checkpoint=1
+export epochs_per_checkpoint=1nɔɹθ wɪnd ɡejv ʌp ðə ətɛmpt. ðɛn ðə sʌn ʃajnd awt wɔɹmli, ænd ɪmidiətli ðə tɹævəlɹ̩ tʊk ɔf hɪz klowk. ænd sow ðə nɔɹθ wɪnd wɑz əblajdʒd tə kənfɛs ðæt ðə sʌn wɑz ðə stɹɔŋɹ̩ ʌv ðə t
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/phil.sh
@@ -35,6 +35,8 @@ python -m src.cli.runner tacotron-train \
 
 python -m src.cli.runner tacotron-continue-train --train_name=$train_name
 # Inference
+
+python -m src.cli.runner tacotron-validate --train_name=$train_name --custom_tacotron_hparams="max_decoder_steps=2000"
 
 # Update Inference Map
 python -m src.cli.runner prepare-inference-map \
