@@ -1,14 +1,14 @@
 # Init
 ## Capslock
 source /datasets/code/tacotron2/configs/envs/caps.sh
-export train_name="thchs_ipa_warm_mapped_w_tones"
-export prep_name="thchs_ipa"
+export train_name="thchs_ipa_warm_mapped_w_tones_speaker_mapped"
+export prep_name="thchs"
 export batch_size=17
 export epochs_per_checkpoint=1
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/phil.sh
-export train_name="thchs_ipa_warm_mapped_w_tones"
+export train_name="thchs_ipa_warm_mapped_w_tones_speaker_mapped"
 export prep_name="thchs_ipa"
 export batch_size=17
 export epochs_per_checkpoint=1
@@ -17,7 +17,7 @@ export epochs_per_checkpoint=1
 python -m src.cli.runner prepare-weights-map \
   --weights_prep_name="ljs_ipa" \
   --prep_name=$prep_name \
-  --template_map="maps/weights/thchs_ipa_acc_ljs_ipa.json"
+  --template_map="maps/weights/chn_ipa.json"
 
 # Training
 python -m src.cli.runner tacotron-train \
@@ -27,6 +27,7 @@ python -m src.cli.runner tacotron-train \
   --validation_size=0.01 \
   --warm_start_train_name="ljs_ipa_scratch_128" \
   --weights_train_name="ljs_ipa_scratch_128" \
+  --map_from_speaker="ljs,1" \
   --use_weights_map \
   --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint"
 

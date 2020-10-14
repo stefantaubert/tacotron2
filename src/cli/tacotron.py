@@ -6,7 +6,7 @@ from src.app.tacotron.defaults import (DEFAULT_DENOISER_STRENGTH,
                                        DEFAULT_WAVEGLOW)
 from src.app.tacotron.eval_checkpoints import eval_checkpoints_main
 from src.app.tacotron.inference import infer_main
-from src.app.tacotron.training import continue_train, train
+from src.app.tacotron.training import continue_train_main, train_main
 from src.app.tacotron.validation import validate_main
 from src.cli.utils import split_hparams_string
 
@@ -42,13 +42,14 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--warm_start_checkpoint', type=int)
   parser.add_argument('--weights_train_name', type=str)
   parser.add_argument('--weights_checkpoint', type=int)
+  parser.add_argument('--map_from_speaker', type=str)
   parser.add_argument('--use_weights_map', action='store_true')
   return train_cli
 
 
 def train_cli(**args):
   args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
-  train(**args)
+  train_main(**args)
 
 
 def init_continue_train_parser(parser: ArgumentParser):
@@ -59,7 +60,7 @@ def init_continue_train_parser(parser: ArgumentParser):
 
 def continue_train_cli(**args):
   args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
-  continue_train(**args)
+  continue_train_main(**args)
 
 
 def init_validate_parser(parser: ArgumentParser):

@@ -5,10 +5,11 @@ from typing import OrderedDict as OrderedDictType
 
 from torch import Tensor
 
+from src.core.common.speakers_dict import SpeakersDict
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.symbols_map import SymbolsMap
 from src.core.tacotron.hparams import HParams
-from src.core.tacotron.model import get_symbol_weights
+from src.core.tacotron.model import get_speaker_weights, get_symbol_weights
 from src.core.tacotron.model_symbols import get_model_symbol_id
 
 
@@ -33,15 +34,15 @@ def symbols_ids_map_to_model_symbols_ids_map(symbols_id_map: OrderedDictType[int
   return res
 
 
-def map_weights(model_symbols_id_map: OrderedDictType[int, int], model_weights, trained_weights, logger: Logger) -> None:
-  for map_to_model_symbol_id, map_from_symbol_id in model_symbols_id_map.items():
-    assert 0 <= map_to_model_symbol_id < model_weights.shape[0]
-    assert 0 <= map_from_symbol_id < trained_weights.shape[0]
-    old_weights = model_weights[map_to_model_symbol_id]
-    model_weights[map_to_model_symbol_id] = trained_weights[map_from_symbol_id]
-    logger.debug(f"Mapped {map_from_symbol_id} to {map_to_model_symbol_id}.")
+def map_weights(model_symbols_id_map: OrderedDictType[int, int], model_weights: Tensor, trained_weights: Tensor, logger: Logger) -> None:
+  for map_to_id, map_from_id in model_symbols_id_map.items():
+    assert 0 <= map_to_id < model_weights.shape[0]
+    assert 0 <= map_from_id < trained_weights.shape[0]
+    old_weights = model_weights[map_to_id].cpu().numpy()[:5]
+    model_weights[map_to_id] = trained_weights[map_from_id]
+    logger.debug(f"Mapped {map_from_id} to {map_to_id}.")
     logger.debug(f"Old {old_weights}")
-    logger.debug(f"New {model_weights[map_to_model_symbol_id]}")
+    logger.debug(f"New {model_weights[map_to_id].cpu().numpy()[:5]}")
 
 
 def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: Tensor, trained_symbols: SymbolIdDict, custom_mapping: Optional[SymbolsMap], hparams: HParams, logger: Logger) -> Tensor:
@@ -96,3 +97,20 @@ def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: Tens
     logger.info("All symbols were mapped.")
 
   return model_weights
+
+
+def get_mapped_speaker_weights(model_speakers: SpeakersDict, trained_weights: Tensor, trained_speaker: SpeakersDict, map_from_speaker_name: str, hparams: HParams, logger: Logger) -> Tensor:
+  map_from_id = trained_speaker.get_speaker_id(map_from_speaker_name)
+  speakers_map: OrderedDictType[int, int] = OrderedDict(
+    {new_speaker_id: map_from_id for new_speaker_id in model_speakers.values()})
+
+  weights = get_speaker_weights(hparams)
+
+  map_weights(
+    model_symbols_id_map=speakers_map,
+    model_weights=weights,
+    trained_weights=trained_weights,
+    logger=logger
+  )
+
+  return weights
