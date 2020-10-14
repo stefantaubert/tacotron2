@@ -19,6 +19,8 @@ I have modified the original tacotron 2 code:
 - added plotting of symbolspace in 2D and 3D and in a table
 - adjusted paths
 
+You can listen to sound samples [here](/index.html)
+
 ## Setup
 
 ### Change Console Encoding to display IPA chars

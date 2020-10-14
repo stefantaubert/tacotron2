@@ -41,6 +41,12 @@ python -m src.cli.runner prepare-text-add --filepath=$text --prep_name=$prep_nam
 python -m src.cli.runner prepare-text-normalize --prep_name=$prep_name --text_name=$text_name
 python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=$text_name
 
+export text="examples/chn/north_orig.txt"
+export text_name="chn-north-orig"
+python -m src.cli.runner prepare-text-add --filepath=$text --prep_name=$prep_name --text_name=$text_name --lang=CHN
+python -m src.cli.runner prepare-text-normalize --prep_name=$prep_name --text_name=$text_name
+python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=$text_name
+
 export text="examples/chn/north.txt"
 export text_name="chn-north"
 python -m src.cli.runner prepare-text-add --filepath=$text --prep_name=$prep_name --text_name=$text_name --lang=CHN

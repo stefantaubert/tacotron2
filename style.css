@@ -1,0 +1,20 @@
+th {
+  text-align: left;
+}
+
+p {
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+audio {
+  width: 100%;
+}
+
+.textblock {
+  margin-bottom: 10px;
+}
+
+.description {
+  font-style: italic;
+}

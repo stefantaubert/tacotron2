@@ -33,11 +33,10 @@ python -m src.cli.runner prepare-inference-map \
 
   --template_map="maps/weights/thchs_ipa_ljs_ipa.json"
 
-export text_name="ipa-north_sven_orig"
-export text_name="ipa-north_sven_v2"
+export text_name="ipa-north_sven"
 export text_name="ipa-north_ger"
 export text_name="chn-thchs"
-export text_name="chn-north"
+export text_name="chn-north-orig"
 export text_name="ger-nord"
 export text_name="eng-coma"
 export text_name="eng-rainbow"

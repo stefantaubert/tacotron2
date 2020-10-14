@@ -1,1 +1,244 @@
-<h1>Test</h1>
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Audio samples from Tacotron 2</title>
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+    integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+    integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+    integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+    crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="row">
+      <div class="col-xs-12">
+        <h1>Audio samples from Tacotron 2</h1>
+        <p><b>Authors</b>: Stefan Taubert, Sven Albrecht, Rewa Tamboli, Maximilian Eibl, Josef Schmied, Günther Daniel
+          Rey
+        </p>
+        <p><i>Recommendation: The best quality is obtained by listening with headphones.</i></p>
+        <p>You can download our pretrained model <a href="https://tuc.cloud/index.php/s/RYEK73sXjZEJyk8">here</a>.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xs-12">
+        <h3>Linguistic texts</h3>
+      </div>
+    </div>
+
+    <div class="textblock">
+      <div class="row">
+        <div class="col-xs-12">
+          <h4>The North Wind and the Sun (Version 1)</h4>
+          <p class="description">The IPA is retrieved by converting the English text with Epitran to IPA.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 col-xs-12">
+          <b>IPA</b>
+          <p>
+            ðə nɔɹθ wɪnd ænd ðə sʌn wɹ̩ dɪspjutɪŋ wɪtʃ wɑz ðə stɹɔŋɹ̩, wɛn ə tɹævəlɹ̩ kejm əlɔŋ ɹæpt ɪn ə wɔɹm
+            klowk.
+            ðej əɡɹid ðæt ðə wʌn hu fɹ̩st səksidəd ɪn mejkɪŋ ðə tɹævəlɹ̩ tejk hɪz klowk ɔf ʃʊd bi kənsɪdɹ̩d
+            stɹɔŋɹ̩
+            ðæn
+            ðə
+            ʌðɹ̩.
+            ðɛn ðə nɔɹθ wɪnd blu æz hɑɹd æz hi kʊd, bʌt ðə mɔɹ hi blu ðə mɔɹ klowsli dɪd ðə tɹævəlɹ̩ fowld hɪz
+            klowk
+            ɹ̩awnd hɪm; ænd æt læst ðə nɔɹθ wɪnd ɡejv ʌp ðə ətɛmpt.
+            ðɛn ðə sʌn ʃajnd awt wɔɹmli, ænd ɪmidiətli ðə tɹævəlɹ̩ tʊk ɔf hɪz klowk.
+            ænd sow ðə nɔɹθ wɪnd wɑz əblajdʒd tə kənfɛs ðæt ðə sʌn wɑz ðə stɹɔŋɹ̩ ʌv ðə tu.</p>
+        </div>
+        <div class="col-sm-6 col-xs-12">
+          <b>English</b>
+          <p>
+            The North Wind and the Sun were disputing which was the stronger, when a traveler came along wrapped
+            in
+            a
+            warm
+            cloak.
+            They agreed that the one who first succeeded in making the traveler take his cloak off should be
+            considered
+            stronger than the other.
+            Then the North Wind blew as hard as he could, but the more he blew the more closely did the traveler
+            fold
+            his
+            cloak around him;
+            and at last the North Wind gave up the attempt. Then the Sun shined out warmly, and immediately the
+            traveler
+            took off his cloak.
+            And so the North Wind was obliged to confess that the Sun was the stronger of the two.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 col-xs-12">
+          <audio controls>
+            <source src="samples/eng-north.wav" type="audio/wav">
+          </audio>
+        </div>
+      </div>
+    </div>
+
+    <div class="textblock">
+      <div class="row">
+        <div class="col-xs-12">
+          <h4>The North Wind and the Sun (Version 2)</h4>
+          <p class="description">The IPA is created by hand.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 col-xs-12">
+          <b>IPA</b>
+          <p>ðə nɔɹθ wɪnd ənd ðə sʌn wɹ̩ dɪspjutɪŋ wɪtʃ wɑz ðə stɹɑŋɹ̩, wen ə tɹævəlɹ̩ keɪm əlɑŋ ɹæpt ɪn ə wɔɹm
+            kloʊk.
+            ðeɪ əɡɹid ðæt ðə wʌn hu fɹ̩st səksidɪd ɪn meɪkɪŋ ðə tɹævəlɹ̩ teɪk ɑf hɪz kloʊk ʃʊd bi kənsɪdɹ̩d stɹɑŋɹ̩
+            ðən
+            ðə
+            ʌðɹ̩.
+            ðen ðə nɔɹθ wɪnd blu əz hɑɹd əz hi kʊd, bət ðə mɔɹ hi blu ðə mɔɹ kloʊsli dɪd ðə tɹævəlɹ̩ foʊld hɪz kloʊk
+            əɹaʊnd ɪm; ænd ət læst ðə nɔɹθ wɪnd ɡeɪv ʌp ðə ətempt.
+            ðen ðə sʌn ʃaɪnd aʊt wɔɹmli, ənd ɪmidiətli ðə tɹævəlɹ̩ tʊk ɑf hɪz kloʊk.
+            ənd soʊ ðə nɔɹθ wɪnd wɑz əblaɪdʒd tu kənfes ðæt ðə sʌn wɑz ðə stɹɑŋɹ̩ əv ðə tu.</p>
+        </div>
+        <div class="col-sm-6 col-xs-12">
+          <b>English</b>
+          <p>
+            The North Wind and the Sun were disputing which was the stronger, when a traveler came along wrapped
+            in
+            a
+            warm
+            cloak.
+            They agreed that the one who first succeeded in making the traveler take off his cloak should be
+            considered
+            stronger than the other.
+            Then the North Wind blew as hard as he could, but the more he blew the more closely did the traveler
+            fold
+            his
+            cloak around him;
+            and at last the North Wind gave up the attempt. Then the Sun shined out warmly, and immediately the
+            traveler
+            took off his cloak.
+            And so the North Wind was obliged to confess that the Sun was the stronger of the two.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 col-xs-12">
+          <audio controls>
+            <source src="samples/ipa-north.wav">
+          </audio>
+        </div>
+      </div>
+    </div>
+
+    <div class="textblock">
+      <div class="row">
+        <div class="col-xs-12">
+          <h4>Stella</h4>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 col-xs-12">
+          <b>IPA</b>
+          <p>
+            pliz kɔl stɛlə.
+            æsk hɹ̩ tə bɹɪŋ ðiz θɪŋz wɪð hɹ̩ fɹʌm ðə stɔɹ: sɪks spunz ʌv fɹɛʃ snow piz, fajv θɪk slæbz ʌv blu tʃiz,
+            ænd
+            mejbi ə snæk fɔɹ hɹ̩ bɹʌðɹ̩ bɑb.
+            wi ɔlsow nid ə smɔl plæstɪk snejk ænd ə bɪɡ toj fɹɑɡ fɔɹ ðə kɪdz.
+            ʃi kæn skup ðiz θɪŋz ɪntu θɹi ɹɛd bæɡz, ænd wi wɪl ɡow mit hɹ̩ wɛnzdi æt ðə tɹejn stejʃən.</p>
+        </div>
+        <div class="col-sm-6 col-xs-12">
+          <b>English</b>
+          <p>
+            Please call Stella. Ask her to bring these things with her from the store: six spoons of fresh snow
+            peas,
+            five
+            thick slabs of blue cheese, and maybe a snack for her brother Bob. We also need a small plastic snake
+            and
+            a
+            big toy frog for the kids. She can scoop these things into three red bags, and we will go meet her
+            Wednesday
+            at the train station.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 col-xs-12">
+          <audio controls>
+            <source src="samples/eng-stella.wav" type="audio/wav">
+          </audio>
+        </div>
+      </div>
+    </div>
+
+    <div class="textblock">
+      <div class="row">
+        <div class="col-xs-12">
+          <h4>Der Nordwind und die Sonne</h4>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 col-xs-12">
+          <b>IPA</b>
+          <p>
+            ainst stɹitən sih noətvind und sone, vəɹ fon inən baiedən vol dəɹ steəkeɹe veɹe, als ain vandeɹəɹ, dəɹ
+            in
+            aiənən vaəmən mantel ɡehult vaɹ, des veɡes daheəkam.
+            tsi vuədən aiəniʃ, das deəjeniɡe fuɹ dən steəkeɹən ɡeltən solte, dəɹ dən vandeɹəɹ tsviŋən vuəde, saiənən
+            mantel aptsunemən.
+            dəɹ noətvind plis mit aləɹ maht, abəɹ je meɹ əɹ plis, desto festəɹ hulte sih dəɹ vandeɹəɹ in saiənən
+            mantel
+            ain.
+            əntlih ɡab dəɹ noətvind dən kampf auf.
+            nun eəveəmte di sone di luft mit iɹən fɹountlihən stɹalən, und ʃon nah veniɡən auhɡənplikən tsoɡ dəɹ
+            vandeɹəɹ
+            saiənən mantel aus.
+            da muste dəɹ noətvind tsuɡebən, das di sone fon inən baiedən dəɹ steəkeɹe vaɹ.</p>
+        </div>
+        <div class="col-sm-6 col-xs-12">
+          <b>German</b>
+          <p>
+            Einst stritten sich Nordwind und Sonne, wer von ihnen beiden wohl der Stärkere wäre, als ein Wanderer,
+            der in einen warmen Mantel gehüllt war, des Weges daherkam. Sie wurden einig, daß derjenige für den
+            Stärkeren gelten sollte, der den Wanderer zwingen würde, seinen Mantel abzunehmen. Der Nordwind blies mit
+            aller Macht, aber je mehr er blies, desto fester hüllte sich der Wanderer in seinen Mantel ein. Endlich gab
+            der Nordwind den
+            Kampf
+            auf. Nun erwärmte die Sonne die Luft mit ihren freundlichen Strahlen, und schon nach wenigen
+            Augenblicken
+            zog
+            der Wanderer seinen Mantel aus. Da mußte der Nordwind zugeben, daß die Sonne von ihnen beiden der
+            Stärkere
+            war.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 col-xs-12">
+          <audio controls>
+            <source src="samples/ger-nord.wav" type="audio/wav">
+          </audio>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>
