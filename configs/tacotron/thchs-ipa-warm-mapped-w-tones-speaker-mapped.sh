@@ -1,5 +1,7 @@
 # Init
 ## Capslock
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
 source /datasets/code/tacotron2/configs/envs/caps.sh
 export train_name="thchs_ipa_warm_mapped_w_tones_speaker_mapped"
 export prep_name="thchs"
