@@ -11,8 +11,3 @@ class Gender(IntEnum):
     if self == Gender.FEMALE:
       return "F"
     raise Exception()
-
-
-x = Gender.FEMALE
-
-print(str(x))
