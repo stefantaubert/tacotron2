@@ -16,6 +16,9 @@ class UnitTests(unittest.TestCase):
   #   print(sents)
   #   sents = sents_convert_to_ipa(sents, ignore_tones=True, ignore_arcs=True)
   #   print(sents)
+  def test_add_text__chn__splits_sents(self):
+    _, sentences = add_text("暖耀着。旅行者。", lang=Language.CHN)
+    self.assertEqual(2, len(sentences))
 
   def test_get_formatted_core(self):
     symbols = list("this is a test!")

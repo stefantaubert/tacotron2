@@ -106,7 +106,7 @@ def map_to_prepared_data(ds_name: str, ds_data: DsData, text_data: TextData,
     lang=text_data.lang,
     duration=wav_data.duration,
     speaker_id=ds_data.speaker_id,
-    speaker_name=ds_data.get_speaker_name(),
+    speaker_name=ds_data.speaker_name,
     ds_name=ds_name
   )
 
@@ -119,7 +119,7 @@ def get_prepared_data(ds_name: str, ds_data: DsDataList, speaker_names: List[Tup
   for speaker_name, new_speaker_id in speaker_names:
     for ds_entry in ds_data.items():
       # TODO maybe compare speaker id to remove the speakername from DsData
-      if ds_entry.get_speaker_name() == speaker_name:
+      if ds_entry.speaker_name == speaker_name:
         prep_data = map_to_prepared_data(
           ds_name=ds_name,
           ds_data=ds_entry,

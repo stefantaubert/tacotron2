@@ -137,6 +137,10 @@ def get_uniform_weights(dimension: int, emb_dim: int) -> Tensor:
   nn.init.uniform_(weight, -val, val)
   return weight
 
+def get_xavier_weights(dimension: int, emb_dim: int) -> Tensor:
+  weight = torch.zeros(size=(dimension, emb_dim), device="cuda")
+  torch.nn.init.xavier_uniform_(weight)
+  return weight
 
 def update_weights(emb: nn.Embedding, weights: Tensor) -> None:
   emb.weight = nn.Parameter(weights)

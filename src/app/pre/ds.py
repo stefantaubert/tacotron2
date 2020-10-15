@@ -1,13 +1,22 @@
 import os
+from logging import Logger
+from shutil import copyfile
+from typing import List
+
+from unidecode import unidecode as convert_to_ascii
 
 from src.app.pre.io import get_pre_dir
+from src.app.utils import prepare_logger
 from src.core.common.accents_dict import AccentsDict
+from src.core.common.gender import Gender
+from src.core.common.language import Language
 from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
 from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.utils import get_subdir
+from src.core.common.utils import cast_as, get_subdir
 from src.core.pre.ds import (DsData, DsDataList, arctic_preprocess,
-                             libritts_preprocess, ljs_preprocess,
-                             thchs_kaldi_preprocess, thchs_preprocess)
+                             get_speaker_examples, libritts_preprocess,
+                             ljs_preprocess, thchs_kaldi_preprocess,
+                             thchs_preprocess)
 
 # don't do preprocessing here because inconsistent with mels because it is not always usefull to calc mels instand
 # from src.app.pre.text import preprocess_text
@@ -28,10 +37,19 @@ def get_ds_dir(base_dir: str, ds_name: str, create: bool = False):
   return get_subdir(_get_ds_root_dir(base_dir, create), ds_name, create)
 
 
+def get_ds_examples_dir(ds_dir: str, create: bool = False):
+  return get_subdir(ds_dir, "examples", create)
+
+
 def load_ds_csv(ds_dir: str) -> DsDataList:
   path = os.path.join(ds_dir, _ds_data_csv)
-  return DsDataList.load(DsData, path)
-
+  res = DsDataList.load(DsData, path)
+  # res = cast_as(res, DsDataList)
+  # for item in res.items():
+  #   item.lang = Language(item.lang)
+  #   item.gender = Gender(item.gender)
+  #   item.speaker_name = str(item.speaker_name)
+  return res
 
 def _save_ds_csv(ds_dir: str, result: DsDataList):
   path = os.path.join(ds_dir, _ds_data_csv)
@@ -73,6 +91,14 @@ def _save_speaker_log_json(ds_dir: str, speakers_log: SpeakersLogDict):
   speakers_log.save(path)
 
 
+def _save_speaker_examples(ds_dir: str, examples: DsDataList, logger: Logger) -> None:
+  logger.info("Saving examples for each speaker...")
+  for example in examples.items(True):
+    dest_file_name = f"{example.speaker_id}-{str(example.gender)}-{convert_to_ascii(example.speaker_name)}.wav"
+    dest_path = os.path.join(get_ds_examples_dir(ds_dir, create=True), dest_file_name)
+    copyfile(example.wav_path, dest_path)
+
+
 def preprocess_thchs(base_dir: str, ds_name: str, path: str, auto_dl: bool):
   print("Preprocessing THCHS-30 dataset...")
   _preprocess_ds(base_dir, ds_name, path, auto_dl, thchs_preprocess)
@@ -88,7 +114,6 @@ def preprocess_ljs(base_dir: str, ds_name: str, path: str, auto_dl: bool):
   _preprocess_ds(base_dir, ds_name, path, auto_dl, ljs_preprocess)
 
 
-
 def preprocess_libritts(base_dir: str, ds_name: str, path: str, auto_dl: bool):
   print("Preprocessing LibriTTS dataset...")
   _preprocess_ds(base_dir, ds_name, path, auto_dl, libritts_preprocess)
@@ -100,22 +125,52 @@ def preprocess_arctic(base_dir: str, ds_name: str, path: str, auto_dl: bool):
 
 
 def _preprocess_ds(base_dir: str, ds_name: str, path: str, auto_dl: bool, preprocess_func):
-  ds_path = get_ds_dir(base_dir, ds_name, create=False)
-  if os.path.isdir(ds_path):
-    print("Dataset already processed.")
+  ds_dir = get_ds_dir(base_dir, ds_name, create=False)
+  logger = prepare_logger()
+  if os.path.isdir(ds_dir):
+    logger.info("Dataset already processed.")
   else:
-    print("Reading data...")
+    logger.info("Reading data...")
     speakers, speakers_log, symbols, accents, ds_data = preprocess_func(path, auto_dl)
-    os.makedirs(ds_path)
-    _save_speaker_json(ds_path, speakers)
-    _save_speaker_log_json(ds_path, speakers_log)
-    _save_symbols_json(ds_path, symbols)
-    _save_accents_json(ds_path, accents)
-    _save_ds_csv(ds_path, ds_data)
+    os.makedirs(ds_dir)
+    _save_speaker_json(ds_dir, speakers)
+    _save_speaker_log_json(ds_dir, speakers_log)
+    _save_symbols_json(ds_dir, symbols)
+    _save_accents_json(ds_dir, accents)
+    _save_ds_csv(ds_dir, ds_data)
+    examples = get_speaker_examples(ds_data)
+    _save_speaker_examples(ds_dir, examples, logger)
     print("Dataset processed.")
 
 
+def add_speaker_examples(base_dir: str, ds_name: str):
+  logger = prepare_logger()
+  ds_dir = get_ds_dir(base_dir, ds_name, create=False)
+  ds_data = load_ds_csv(ds_dir)
+  examples = get_speaker_examples(ds_data)
+  _save_speaker_examples(ds_dir, examples, logger)
+
+
 if __name__ == "__main__":
+  add_speaker_examples(
+    base_dir="/datasets/models/taco2pt_v5",
+    ds_name="ljs",
+  )
+  add_speaker_examples(
+    base_dir="/datasets/models/taco2pt_v5",
+    ds_name="arctic",
+  )
+
+  add_speaker_examples(
+    base_dir="/datasets/models/taco2pt_v5",
+    ds_name="thchs",
+  )
+
+  add_speaker_examples(
+    base_dir="/datasets/models/taco2pt_v5",
+    ds_name="libritts",
+  )
+
   preprocess_libritts(
     base_dir="/datasets/models/taco2pt_v5",
     path="/datasets/libriTTS",
@@ -124,11 +179,11 @@ if __name__ == "__main__":
   )
 
   preprocess_arctic(
-    base_dir="/datasets/models/taco2pt_v5",
-    path="/datasets/l2arctic",
-    ds_name="arctic",
-    auto_dl=True,
-  )
+      base_dir="/datasets/models/taco2pt_v5",
+      path="/datasets/l2arctic",
+      ds_name="arctic",
+      auto_dl=True,
+    )
 
   preprocess_ljs(
     base_dir="/datasets/models/taco2pt_v5",
@@ -144,9 +199,9 @@ if __name__ == "__main__":
     auto_dl=True,
   )
 
-  # preprocess_thchs_kaldi(
-  #   base_dir="/datasets/models/taco2pt_v5",
-  #   path="/datasets/THCHS-30",
-  #   ds_name="thchs_kaldi",
-  #   auto_dl=True,
-  # )
+# preprocess_thchs_kaldi(
+#   base_dir="/datasets/models/taco2pt_v5",
+#   path="/datasets/THCHS-30",
+#   ds_name="thchs_kaldi",
+#   auto_dl=True,
+# )

@@ -35,7 +35,8 @@ from src.core.tacotron.model import (ACCENT_EMBEDDING_LAYER_NAME,
                                      SPEAKER_EMBEDDING_LAYER_NAME,
                                      SYMBOL_EMBEDDING_LAYER_NAME, Tacotron2)
 from src.core.tacotron.model_checkpoint import CheckpointTacotron
-from src.core.tacotron.model_weights import get_mapped_symbol_weights
+from src.core.tacotron.model_weights import (get_mapped_speaker_weights,
+                                             get_mapped_symbol_weights)
 
 
 class Tacotron2Loss(nn.Module):
@@ -77,7 +78,7 @@ def validate(model: nn.Module, criterion: nn.Module, val_loader: DataLoader, ite
   return avg_val_loss
 
 
-def train(warm_model: Optional[CheckpointTacotron], custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, symbols: SymbolIdDict, speakers: SpeakersDict, accents: AccentsDict, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, weights_checkpoint: Optional[CheckpointTacotron], weights_map: Optional[SymbolsMap], logger: Logger, checkpoint_logger: Logger):
+def train(warm_model: Optional[CheckpointTacotron], custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, symbols: SymbolIdDict, speakers: SpeakersDict, accents: AccentsDict, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, weights_checkpoint: Optional[CheckpointTacotron], weights_map: Optional[SymbolsMap], map_from_speaker_name: Optional[str], logger: Logger, checkpoint_logger: Logger):
   logger.info("Starting new model...")
   _train(
     custom_hparams=custom_hparams,
@@ -91,6 +92,7 @@ def train(warm_model: Optional[CheckpointTacotron], custom_hparams: Optional[Dic
     weights_checkpoint=weights_checkpoint,
     weights_map=weights_map,
     warm_model=warm_model,
+    map_from_speaker_name=map_from_speaker_name,
     checkpoint=None,
     logger=logger,
     checkpoint_logger=checkpoint_logger
@@ -111,6 +113,7 @@ def continue_train(checkpoint: CheckpointTacotron, custom_hparams: Optional[Dict
     weights_checkpoint=None,
     weights_map=None,
     warm_model=None,
+    map_from_speaker_name=None,
     checkpoint=checkpoint,
     logger=logger,
     checkpoint_logger=checkpoint_logger
@@ -128,7 +131,7 @@ def log_symbol_weights(model: Tacotron2, logger: Logger):
   logger.info(str(model.state_dict()[SYMBOL_EMBEDDING_LAYER_NAME]))
 
 
-def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, speakers: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict, checkpoint: Optional[CheckpointTacotron], warm_model: Optional[CheckpointTacotron], weights_checkpoint: Optional[CheckpointTacotron], weights_map: SymbolsMap, logger: Logger, checkpoint_logger: Logger):
+def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, speakers: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict, checkpoint: Optional[CheckpointTacotron], warm_model: Optional[CheckpointTacotron], weights_checkpoint: Optional[CheckpointTacotron], weights_map: SymbolsMap, map_from_speaker_name: Optional[str], logger: Logger, checkpoint_logger: Logger):
   """Training and validation logging results to tensorboard and stdout
   Params
   ------
@@ -177,7 +180,9 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
       warm_start_model(model, warm_model, hparams, logger)
 
     if weights_checkpoint is not None:
-      pretrained_weights = get_mapped_symbol_weights(
+      logger.info("Mapping symbol embeddings...")
+
+      pretrained_symbol_weights = get_mapped_symbol_weights(
         model_symbols=symbols,
         trained_weights=weights_checkpoint.get_symbol_embedding_weights(),
         trained_symbols=weights_checkpoint.get_symbols(),
@@ -186,8 +191,21 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
         logger=logger
       )
 
-      logger.info("Loading pretrained mapped embeddings...")
-      update_weights(model.embedding, pretrained_weights)
+      update_weights(model.embedding, pretrained_symbol_weights)
+
+      map_speaker_weights = map_from_speaker_name is not None
+      if map_speaker_weights:
+        logger.info("Mapping speaker embeddings...")
+        pretrained_speaker_weights = get_mapped_speaker_weights(
+          model_speakers=speakers,
+          trained_weights=weights_checkpoint.get_speaker_embedding_weights(),
+          trained_speaker=weights_checkpoint.get_speakers(),
+          map_from_speaker_name=map_from_speaker_name,
+          hparams=hparams,
+          logger=logger,
+        )
+
+        update_weights(model.speakers_embedding, pretrained_speaker_weights)
 
   log_symbol_weights(model, logger)
 

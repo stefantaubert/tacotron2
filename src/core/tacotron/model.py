@@ -7,8 +7,9 @@ from torch.autograd import Variable
 from torch.nn import functional as F
 
 from src.core.common.layers import ConvNorm, LinearNorm
-from src.core.common.train import get_uniform_weights, weights_to_embedding
-from src.core.common.utils import get_mask_from_lengths, to_gpu
+from src.core.common.train import (get_uniform_weights, get_xavier_weights,
+                                   weights_to_embedding)
+from src.core.common.utils import get_mask_from_lengths
 from src.core.tacotron.hparams import HParams
 from src.core.tacotron.model_symbols import get_model_symbols_count
 
@@ -600,6 +601,11 @@ class Decoder(nn.Module):
     return mel_outputs, gate_outputs, alignments
 
 
+def get_speaker_weights(hparams: HParams) -> torch.Tensor:
+  weights = get_xavier_weights(hparams.n_speakers, hparams.speakers_embedding_dim)
+  return weights
+
+
 def get_symbol_weights(hparams: HParams) -> torch.Tensor:
   model_symbols_count = get_model_symbols_count(
     hparams.n_symbols,
@@ -635,8 +641,8 @@ class Tacotron2(nn.Module):
     self.symbol_embedding = weights_to_embedding(symbol_emb_weights)
     logger.debug(f"is cuda: {self.symbol_embedding.weight.is_cuda}")
 
-    self.speaker_embedding = nn.Embedding(hparams.n_speakers, hparams.speakers_embedding_dim)
-    torch.nn.init.xavier_uniform_(self.speaker_embedding.weight)
+    speaker_emb_weights = get_speaker_weights(hparams)
+    self.speakers_embedding = weights_to_embedding(speaker_emb_weights)
 
     self.accent_embedding = nn.Embedding(hparams.n_accents, hparams.accents_embedding_dim)
     torch.nn.init.xavier_uniform_(self.accent_embedding.weight)

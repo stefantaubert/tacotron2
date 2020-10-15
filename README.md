@@ -1,5 +1,7 @@
 # Tacotron 2 with IPA and Multispeaker Support
 
+You can listen to sound samples [here](https://stefantaubert.github.io/tacotron2/)
+
 ## Applied modifications
 
 I have modified the original tacotron 2 code:
@@ -18,6 +20,7 @@ I have modified the original tacotron 2 code:
 - added downloader for LJSpeech dataset
 - added plotting of symbolspace in 2D and 3D and in a table
 - adjusted paths
+
 
 ## Setup
 
@@ -450,3 +453,11 @@ to save requirements:
 pip install pipreqs
 pipreqs . --savepath="pipreqs.txt"
 ```
+
+## How to prepare texts
+
+- "intrinsically blue," -> "intrinsically blue",
+- "intrinsically blue." -> "intrinsically blue".
+- "5cm" -> "5 cm"
+- "3.5*10^-5 -> "3.5e-5"
+

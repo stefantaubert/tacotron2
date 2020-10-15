@@ -1,22 +1,26 @@
 import re
 from collections import OrderedDict
-from typing import List, Optional
+from typing import Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set
 
-import epitran
 from dragonmapper import hanzi
+from epitran import Epitran
 from nltk import download
 from nltk.tokenize import sent_tokenize
 from unidecode import unidecode as convert_to_ascii
 
-from src.core.common.adjustments.abbreviations import expand_abbreviations
+from src.core.common.adjustments.abbreviations import (
+    expand_abbreviations, expand_units_of_measure,
+    replace_big_letter_abbreviations)
+from src.core.common.adjustments.emails import (replace_at_symbols,
+                                                replace_mail_addresses)
 from src.core.common.adjustments.numbers import normalize_numbers
 from src.core.common.adjustments.whitespace import collapse_whitespace
 from src.core.common.ipa2symb import extract_from_sentence
 from src.core.common.language import Language
 
-_epitran_cache = {}
+_epitran_cache: Dict[Language, Epitran] = dict()
 
 
 def deserialize_list(serialized_str: str) -> List[int]:
@@ -49,14 +53,14 @@ def switch_keys_with_values(dictionary: OrderedDictType) -> OrderedDictType:
 
 def en_to_ipa(text: str) -> str:
   if Language.ENG not in _epitran_cache.keys():
-    _epitran_cache[Language.ENG] = epitran.Epitran('eng-Latn')
+    _epitran_cache[Language.ENG] = Epitran('eng-Latn')
   result = _epitran_cache[Language.ENG].transliterate(text)
   return result
 
 
 def ger_to_ipa(text: str) -> str:
   if Language.GER not in _epitran_cache.keys():
-    _epitran_cache[Language.GER] = epitran.Epitran('deu-Latn')
+    _epitran_cache[Language.GER] = Epitran('deu-Latn')
   result = _epitran_cache[Language.GER].transliterate(text)
   return result
 
@@ -64,10 +68,14 @@ def ger_to_ipa(text: str) -> str:
 def normalize_en(text: str) -> str:
   text = convert_to_ascii(text)
   # text = text.lower()
-  # todo datetime conversion, BC to beecee
+  # todo datetime conversion
   text = text.strip()
   text = normalize_numbers(text)
   text = expand_abbreviations(text)
+  text = expand_units_of_measure(text)
+  text = replace_big_letter_abbreviations(text)
+  text = replace_mail_addresses(text)
+  text = replace_at_symbols(text)
   text = collapse_whitespace(text)
   return text
 
@@ -91,40 +99,49 @@ def normalize_chn(text: str) -> str:
 def normalize(text: str, lang: Language) -> str:
   if lang == Language.ENG:
     return normalize_en(text)
-  elif lang == Language.GER:
+
+  if lang == Language.GER:
     return normalize_ger(text)
-  elif lang == Language.CHN:
+
+  if lang == Language.CHN:
     return normalize_chn(text)
-  elif lang == Language.IPA:
+
+  if lang == Language.IPA:
     return normalize_ipa(text)
-  else:
-    assert False
+
+  assert False
 
 
 def convert_to_ipa(text: str, lang: Language) -> str:
   if lang == Language.ENG:
     return en_to_ipa(text)
-  elif lang == Language.GER:
+
+  if lang == Language.GER:
     return ger_to_ipa(text)
-  elif lang == Language.CHN:
+
+  if lang == Language.CHN:
     return chn_to_ipa(text)
-  elif lang == Language.IPA:
+
+  if lang == Language.IPA:
     return text
-  else:
-    assert False
+
+  assert False
 
 
 def split_sentences(text: str, lang: Language) -> List[str]:
   if lang == Language.CHN:
     return split_chn_text(text)
-  elif lang == Language.IPA:
+
+  if lang == Language.IPA:
     return split_ipa_text(text)
-  elif lang == Language.ENG:
+
+  if lang == Language.ENG:
     return split_en_text(text)
-  elif lang == Language.GER:
+
+  if lang == Language.GER:
     return split_ger_text(text)
-  else:
-    assert False
+
+  assert False
 
 
 def text_to_symbols(text: str, lang: Language, ignore_tones: Optional[bool] = None, ignore_arcs: Optional[bool] = None) -> List[str]:

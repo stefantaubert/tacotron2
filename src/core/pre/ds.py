@@ -2,7 +2,7 @@ import os
 from collections import Counter
 from dataclasses import dataclass
 from os import name
-from typing import List, Tuple
+from typing import Dict, List, Set, Tuple, Type
 
 from src.core.common.accents_dict import AccentsDict
 from src.core.common.gender import Gender
@@ -37,13 +37,15 @@ class DsData:
   lang: Language
   gender: Gender
 
-  def get_speaker_name(self):
-    return str(self.speaker_name)
-
+  # TODO: Bugfix on loading the original types are not loaded (also enums!)
 
 class DsDataList(GenericList[DsData]):
-  pass
 
+  def load_init(self):
+    for item in self.items():
+      item.lang = Language(item.lang)
+      item.gender = Gender(item.gender)
+      item.speaker_name = str(item.speaker_name)
 
 def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple[
         SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
@@ -55,6 +57,16 @@ def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple
   symbols = _get_symbols_id_dict(data)
   ds_data = _get_ds_data(data, speakers, accents, symbols)
   return speakers, speakers_log, symbols, accents, ds_data
+
+
+def get_speaker_examples(data: DsDataList) -> DsDataList:
+  processed_speakers: Set[str] = set()
+  result = DsDataList()
+  for values in data.items(True):
+    if values.speaker_name not in processed_speakers:
+      processed_speakers.add(values.speaker_name)
+      result.append(values)
+  return result
 
 
 def thchs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[

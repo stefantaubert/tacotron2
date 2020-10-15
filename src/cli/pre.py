@@ -151,8 +151,10 @@ def init_wavs_remove_silence_plot_parser(parser: ArgumentParser):
 
 
 def init_create_or_update_weights_map_parser(parser: ArgumentParser):
-  parser.add_argument('--prep_name', type=str, required=True)
-  parser.add_argument('--weights_prep_name', type=str, required=True)
+  parser.add_argument('--prep_name', type=str, required=True,
+                      help="The prepared name for the model which will be trained.")
+  parser.add_argument('--weights_prep_name', type=str, required=True,
+                      help="The prepared name of which were used by the pretrained model.")
   parser.add_argument('--template_map', type=str)
   return create_or_update_weights_map_main
 

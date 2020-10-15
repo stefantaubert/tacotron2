@@ -5,9 +5,10 @@ from logging import Logger
 from typing import Dict, Optional
 
 from src.app.io import (get_checkpoints_dir, get_train_checkpoints_log_file,
-                        get_train_log_file, get_train_logs_dir, load_trainset,
-                        load_valset, save_prep_name, split_dataset)
-from src.app.pre.mapping import try_load_symbols_map
+                        get_train_log_file, get_train_logs_dir, load_prep_name,
+                        load_trainset, load_valset, save_prep_name,
+                        split_dataset)
+from src.app.pre.mapping import load_weights_map
 from src.app.pre.prepare import (get_prepared_dir, load_prep_accents_ids,
                                  load_prep_speakers_json,
                                  load_prep_symbol_converter)
@@ -16,9 +17,8 @@ from src.app.utils import prepare_logger
 from src.core.common.train import (get_custom_or_last_checkpoint,
                                    get_last_checkpoint, get_pytorch_filename)
 from src.core.tacotron.logger import Tacotron2Logger
-from src.core.tacotron.training import CheckpointTacotron
-from src.core.tacotron.training import continue_train as continue_train_core
-from src.core.tacotron.training import train as train_core
+from src.core.tacotron.training import (CheckpointTacotron, continue_train,
+                                        train)
 
 
 def try_load_checkpoint(base_dir: str, train_name: Optional[str], checkpoint: Optional[int], logger: Logger) -> Optional[CheckpointTacotron]:
@@ -38,7 +38,7 @@ def save_checkpoint(checkpoint: CheckpointTacotron, save_checkpoint_dir: str, lo
   checkpoint.save(checkpoint_path, logger)
 
 
-def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, custom_hparams: Optional[Dict[str, str]] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, weights_map: Optional[str] = None):
+def train_main(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, custom_hparams: Optional[Dict[str, str]] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, use_weights_map: Optional[bool] = None, map_from_speaker: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   train_dir = get_train_dir(base_dir, train_name, create=True)
   logs_dir = get_train_logs_dir(train_dir)
@@ -68,6 +68,12 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
     logger=logger
   )
 
+  weights_map = None
+  if use_weights_map is not None and use_weights_map:
+    weights_train_dir = get_train_dir(base_dir, weights_train_name, False)
+    weights_prep_name = load_prep_name(weights_train_dir)
+    weights_map = load_weights_map(prep_dir, weights_prep_name)
+
   warm_model = try_load_checkpoint(
     base_dir=base_dir,
     train_name=warm_start_train_name,
@@ -81,7 +87,7 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
     logger=logger,
   )
 
-  train_core(
+  train(
     custom_hparams=custom_hparams,
     taco_logger=taco_logger,
     symbols=load_prep_symbol_converter(prep_dir),
@@ -90,15 +96,16 @@ def train(base_dir: str, train_name: str, prep_name: str, warm_start_train_name:
     trainset=trainset,
     valset=valset,
     save_callback=save_callback,
+    weights_map=weights_map,
+    weights_checkpoint=weights_model,
+    warm_model=warm_model,
+    map_from_speaker_name=map_from_speaker,
     logger=logger,
     checkpoint_logger=checkpoint_logger,
-    weights_map=try_load_symbols_map(weights_map),
-    weights_checkpoint=weights_model,
-    warm_model=warm_model
   )
 
 
-def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict[str, str]] = None):
+def continue_train_main(base_dir: str, train_name: str, custom_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -120,7 +127,7 @@ def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict
     logger=logger,
   )
 
-  continue_train_core(
+  continue_train(
     checkpoint=last_checkpoint,
     custom_hparams=custom_hparams,
     taco_logger=taco_logger,
@@ -135,7 +142,7 @@ def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict
 if __name__ == "__main__":
   mode = 0
   if mode == 0:
-    train(
+    train_main(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       prep_name="ljs_ipa",
@@ -150,7 +157,7 @@ if __name__ == "__main__":
     )
 
   elif mode == 1:
-    continue_train(
+    continue_train_main(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       custom_hparams={
@@ -159,41 +166,43 @@ if __name__ == "__main__":
     )
 
   elif mode == 2:
-    train(
+    train_main(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
-      prep_name="thchs_ipa",
-      warm_start_train_name="ljs_ipa_scratch",
-      weights_train_name="ljs_ipa_scratch",
+      prep_name="arctic_ipa_22050",
       custom_hparams={
-        "batch_size": 17,
-        "iters_per_checkpoint": 0,
-        "epochs_per_checkpoint": 1
-      }
+        "batch_size": 26,
+        "iters_per_checkpoint": 5,
+        "epochs_per_checkpoint": 1,
+      },
+      weights_train_name="ljs_ipa_scratch_128",
+      warm_start_train_name="ljs_ipa_scratch_128",
+      map_from_speaker="ljs,1",
+      use_weights_map=True,
     )
   elif mode == 3:
-    train(
+    train_main(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       prep_name="thchs_ipa",
       warm_start_train_name="ljs_ipa_scratch",
       weights_train_name="ljs_ipa_scratch",
-      weights_map="maps/weights/thchs_ipa_ljs_ipa.json",
+      # weights_map="maps/weights/thchs_ipa_ljs_ipa.json",
       custom_hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
     )
   elif mode == 4:
-    continue_train(
+    continue_train_main(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       custom_hparams="batch_size=17,iters_per_checkpoint=100,epochs_per_checkpoint=1,cache_mels=True,use_saved_mels=True"
     )
   elif mode == 5:
-    train(
+    train_main(
       base_dir="/datasets/models/taco2pt_v5",
       train_name="debug",
       prep_name="thchs_ipa_acc",
       warm_start_train_name="ljs_ipa_scratch",
       weights_train_name="ljs_ipa_scratch",
-      weights_map="maps/weights/thchs_ipa_acc_ljs_ipa.json",
+      # weights_map="maps/weights/thchs_ipa_acc_ljs_ipa.json",
       custom_hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
     )
