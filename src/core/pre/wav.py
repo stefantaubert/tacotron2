@@ -38,8 +38,7 @@ class WavDataList(GenericList[WavData]):
 def preprocess(data: DsDataList) -> WavDataList:
   result = WavDataList()
 
-  values: DsData
-  for values in tqdm(data):
+  for values in data.items(True):
     sampling_rate, wav = read(values.wav_path)
     duration = get_duration_s(wav, sampling_rate)
     result.append(WavData(values.entry_id, values.wav_path, duration, sampling_rate))

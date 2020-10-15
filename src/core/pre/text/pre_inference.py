@@ -55,14 +55,14 @@ def get_formatted_core(sent_id: int, symbols: List[str], accent_ids: List[int], 
   return result
 
 
-def get_right_nearest_index_of_symbol(text: str, position: int, symbol: str) -> int:
-  """returns -1 if symbol not in <= position in text, otherwise the first index"""
-  assert position < len(text)
-  assert len(symbol) == 1
-  while position >= 0:
-    if text[position] != symbol:
-      position -= 1
-  return position
+# def get_right_nearest_index_of_symbol(text: str, position: int, symbol: str) -> int:
+#   """returns -1 if symbol not in <= position in text, otherwise the first index"""
+#   assert position < len(text)
+#   assert len(symbol) == 1
+#   while position >= 0:
+#     if text[position] != symbol:
+#       position -= 1
+#   return position
 
 
 @dataclass()

@@ -22,6 +22,8 @@ from src.core.common.globals import CSV_SEPERATOR
 
 T = TypeVar('T')
 
+def cast_as(obj, _: T) -> T:
+  return obj
 
 def pass_lines(method: Any, text: str):
   lines = text.split("\n")
@@ -77,7 +79,12 @@ class GenericList(list, Generic[T]):
   def load(cls, member_class: Type[T], file_path: str):
     data = load_df(file_path)
     data_loaded: List[T] = [member_class(*xi) for xi in data.values]
-    return cls(data_loaded)
+    res = cls(data_loaded)
+    res.load_init()
+    return res
+
+  def load_init(self):
+    return self
 
   def items(self, with_tqdm: bool = False) -> List[T]:
     if with_tqdm:
