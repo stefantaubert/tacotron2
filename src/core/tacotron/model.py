@@ -642,7 +642,7 @@ class Tacotron2(nn.Module):
     logger.debug(f"is cuda: {self.symbol_embedding.weight.is_cuda}")
 
     speaker_emb_weights = get_speaker_weights(hparams)
-    self.speakers_embedding = weights_to_embedding(speaker_emb_weights)
+    self.speaker_embedding = weights_to_embedding(speaker_emb_weights)
 
     self.accent_embedding = nn.Embedding(hparams.n_accents, hparams.accents_embedding_dim)
     torch.nn.init.xavier_uniform_(self.accent_embedding.weight)

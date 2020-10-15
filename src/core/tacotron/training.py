@@ -205,7 +205,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
           logger=logger,
         )
 
-        update_weights(model.speakers_embedding, pretrained_speaker_weights)
+        update_weights(model.speaker_embedding, pretrained_speaker_weights)
 
   log_symbol_weights(model, logger)
 
