@@ -1,3 +1,4 @@
+import logging
 import os
 
 import imageio
@@ -15,9 +16,13 @@ def get_train_dir(base_dir: str, train_name: str, create: bool):
 def save_diff_plot(infer_dir: str):
   path1 = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}.png")
   path2 = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}_orig.png")
+
+  old_level = logging.getLogger().level
+  logging.getLogger().setLevel(logging.INFO)
   score, diff_img = compare_mels(path1, path2)
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}_diff.png")
   imageio.imsave(path, diff_img)
+  logging.getLogger().setLevel(old_level)
   return score
 
 
