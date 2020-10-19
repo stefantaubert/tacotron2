@@ -23,7 +23,7 @@ python -m src.cli.runner tacotron-train \
 
 python -m src.cli.runner tacotron-continue-train --train_name=$train_name --custom_hparams="epochs_per_checkpoint=$epochs_per_checkpoint"
 
-python -m src.cli.runner tacotron-validate --train_name=$train_name --custom_tacotron_hparams="max_decoder_steps=3000"
+python -m src.cli.runner tacotron-validate --train_name=$train_name
 # Inference
 
 ## add texts...
@@ -35,11 +35,10 @@ python -m src.cli.runner prepare-inference-map \
 
   --template_map="maps/weights/thchs_ipa_ljs_ipa.json"
 
-export text_name="ipa-north_sven_orig"
-export text_name="ipa-north_sven_v2"
+export text_name="ipa-north_sven"
 export text_name="ipa-north_ger"
 export text_name="chn-thchs"
-export text_name="chn-north"
+export text_name="chn-north-orig"
 export text_name="ger-nord"
 export text_name="eng-coma"
 export text_name="eng-rainbow"
@@ -47,7 +46,6 @@ export text_name="eng-stella"
 export text_name="eng-democritus_v2"
 export text_name="eng-north"
 export text_name="quick-test"
-
 export ds_speaker="ljs,1"
 
 export accent="north_america"
@@ -62,8 +60,7 @@ python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
   --ds_speaker=$ds_speaker \
   --text_name=$text_name \
-  --analysis \
-  --custom_tacotron_hparams="max_decoder_steps=3000"
+  --analysis
 
 
   --waveglow="warm"
