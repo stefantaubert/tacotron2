@@ -24,7 +24,7 @@ def validate(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: Check
   _, result = infer(
     tacotron_checkpoint=tacotron_checkpoint,
     waveglow_checkpoint=waveglow_checkpoint,
-    ds_speaker=model_speakers.get_speaker(entry.speaker_id),
+    speaker=model_speakers.get_speaker(entry.speaker_id),
     sentence_pause_s=0,
     sigma=sigma,
     denoiser_strength=denoiser_strength,
@@ -39,7 +39,7 @@ def validate(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: Check
   return result[0]
 
 
-def infer(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, ds_speaker: str, sentence_pause_s: float, sigma: float, denoiser_strength: float, sentences: InferSentenceList, custom_taco_hparams: Optional[Dict[str, str]], custom_wg_hparams: Optional[Dict[str, str]], logger: Logger) -> Tuple[np.ndarray, List[InferenceResult]]:
+def infer(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: CheckpointWaveglow, speaker: str, sentence_pause_s: float, sigma: float, denoiser_strength: float, sentences: InferSentenceList, custom_taco_hparams: Optional[Dict[str, str]], custom_wg_hparams: Optional[Dict[str, str]], logger: Logger) -> Tuple[np.ndarray, List[InferenceResult]]:
   synth = Synthesizer(
     tacotron_checkpoint,
     waveglow_checkpoint,
@@ -50,7 +50,7 @@ def infer(tacotron_checkpoint: CheckpointTacotron, waveglow_checkpoint: Checkpoi
 
   return synth.infer(
     sentences=sentences,
-    speaker=ds_speaker,
+    speaker=speaker,
     denoiser_strength=denoiser_strength,
     sentence_pause_s=sentence_pause_s,
     sigma=sigma,

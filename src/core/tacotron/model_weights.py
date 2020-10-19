@@ -100,7 +100,7 @@ def get_mapped_symbol_weights(model_symbols: SymbolIdDict, trained_weights: Tens
 
 
 def get_mapped_speaker_weights(model_speakers: SpeakersDict, trained_weights: Tensor, trained_speaker: SpeakersDict, map_from_speaker_name: str, hparams: HParams, logger: Logger) -> Tensor:
-  map_from_id = trained_speaker.get_speaker_id(map_from_speaker_name)
+  map_from_id = trained_speaker.get_id(map_from_speaker_name)
   speakers_map: OrderedDictType[int, int] = OrderedDict(
     {new_speaker_id: map_from_id for new_speaker_id in model_speakers.values()})
 

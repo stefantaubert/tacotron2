@@ -14,8 +14,8 @@ from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.utils import get_subdir
 from src.core.pre.ds import DsDataList
 from src.core.pre.mel import MelDataList
-from src.core.pre.merge_ds import PreparedData, PreparedDataList
-from src.core.pre.merge_ds import preprocess as merge_ds_core
+from src.core.pre.merge_ds import (DsDataset, DsDatasetList, PreparedData,
+                                   PreparedDataList, preprocess)
 from src.core.pre.text.pre import TextDataList
 from src.core.pre.wav import WavDataList
 
@@ -80,46 +80,61 @@ def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]]
   if os.path.isdir(prep_dir):
     print("Already created.")
   else:
-    datasets: Set[Tuple[DsDataList, TextDataList, WavDataList,
-                        MelDataList, List[str], SymbolIdDict, AccentsDict]] = {}
+    datasets = DsDatasetList()
     for ds_name, text_name, audio_name in ds_text_audio:
       # multiple uses of one ds are not valid
-      assert ds_name not in datasets
 
       ds_dir = get_ds_dir(base_dir, ds_name)
       text_dir = get_text_dir(ds_dir, text_name)
       wav_dir = get_wav_dir(ds_dir, audio_name)
       mel_dir = get_mel_dir(ds_dir, audio_name)
 
-      datasets[ds_name] = (
-        load_ds_csv(ds_dir),
-        load_text_csv(text_dir),
-        load_wav_csv(wav_dir),
-        load_mel_csv(mel_dir),
-        load_speaker_json(ds_dir).get_speakers(),
-        load_text_symbol_converter(text_dir),
-        load_accents_json(ds_dir)
+      ds_dataset = DsDataset(
+        name=ds_name,
+        data=load_ds_csv(ds_dir),
+        texts=load_text_csv(text_dir),
+        wavs=load_wav_csv(wav_dir),
+        mels=load_mel_csv(mel_dir),
+        speakers=load_speaker_json(ds_dir),
+        symbol_ids=load_text_symbol_converter(text_dir),
+        accent_ids=load_accents_json(ds_dir)
       )
 
-    data, symbol_ids, accent_ids, speakers_id_dict = merge_ds_core(
+      datasets.append(ds_dataset)
+
+    merged_data = preprocess(
       datasets=datasets,
       ds_speakers=ds_speakers
     )
 
+    prep_data = PreparedDataList.init_from_merged_ds(merged_data.data)
+
     os.makedirs(prep_dir)
-    save_filelist(prep_dir, data)
-    save_prep_symbol_converter(prep_dir, symbol_ids)
-    save_prep_accents_ids(prep_dir, accent_ids)
-    save_prep_speakers_json(prep_dir, speakers_id_dict)
+    save_filelist(prep_dir, prep_data)
+    save_prep_symbol_converter(prep_dir, merged_data.symbol_ids)
+    save_prep_accents_ids(prep_dir, merged_data.accent_ids)
+    save_prep_speakers_json(prep_dir, merged_data.speaker_ids)
 
 
 if __name__ == "__main__":
-  prepare_ds(
-    base_dir="/datasets/models/taco2pt_v5",
-    prep_name="thchs_ipa_acc",
-    ds_speakers=[("thchs", "D31"), ("thchs", "B4")],
-    ds_text_audio=[("thchs", "ipa", "22050Hz_norm_wo_sil")]
-  )
+  if False:
+    prepare_ds(
+      base_dir="/datasets/models/taco2pt_v5",
+      prep_name="debug",
+      ds_speakers=[("ljs", "all"), ("thchs", "all"), ("thchs", "B4")],
+      #ds_text_audio=[("thchs", "ipa", "22050Hz_normalized_nosil")]
+      ds_text_audio=[("ljs", "ipa_norm", "22050kHz"), ("thchs", "ipa", "22050Hz_normalized_nosil")]
+    )
+  else:
+    prep_dir = get_prepared_dir(
+      base_dir="/datasets/models/taco2pt_v5",
+      prep_name="debug",
+    )
+
+    res = load_filelist(
+      prep_dir=prep_dir,
+    )
+    
 
   # prepare_ds(
   #   base_dir="/datasets/models/taco2pt_v5",

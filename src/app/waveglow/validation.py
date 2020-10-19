@@ -1,7 +1,8 @@
 import os
+from src.app.pre.prepare import get_prepared_dir, load_prep_speakers_json
 from typing import Dict, Optional
 
-from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log,
+from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log, load_prep_name,
                         load_testset, load_valset, save_val_orig_plot,
                         save_val_orig_wav, save_val_plot, save_val_wav)
 from src.app.utils import prepare_logger
@@ -11,7 +12,7 @@ from src.core.waveglow.inference import infer
 from src.core.waveglow.train import CheckpointWaveglow
 
 
-def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = 0.666, denoiser_strength: float = 0.00, custom_hparams: Optional[Dict[str, str]] = None):
+def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = 0.666, denoiser_strength: float = 0.00, custom_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -22,7 +23,14 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, ds_
   else:
     raise Exception()
 
-  entry = data.get_for_validation(entry_id, ds_speaker)
+  speaker_id: Optional[int] = None
+  if speaker is not None:
+    prep_name = load_prep_name(train_dir)
+    prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
+    speakers = load_prep_speakers_json(prep_dir)
+    speaker_id = speakers.get_id(speaker)
+
+  entry = data.get_for_validation(entry_id, speaker_id)
 
   checkpoint_path, iteration = get_custom_or_last_checkpoint(
     get_checkpoints_dir(train_dir), custom_checkpoint)

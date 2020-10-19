@@ -130,7 +130,7 @@ def _get_validation_root_dir(train_dir: str):
 
 
 def get_val_dir(train_dir: str, entry: PreparedData, iteration: int):
-  subdir_name = f"{datetime.datetime.now():%Y-%m-%d,%H-%M-%S},id={entry.entry_id},ds={entry.ds_name},speaker={entry.get_speaker_name()},it={iteration}"
+  subdir_name = f"{datetime.datetime.now():%Y-%m-%d,%H-%M-%S},id={entry.ds_entry_id},ds={entry.ds_name},speaker={entry.get_speaker_name()},it={iteration}"
   return get_subdir(_get_validation_root_dir(train_dir), subdir_name, create=True)
 
 

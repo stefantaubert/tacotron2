@@ -40,12 +40,12 @@ python -m src.cli.runner prepare-inference-map \
   #--template_map="maps/weights/thchs_ipa_ljs_ipa.json"
 
 
-export ds_speaker="thchs,D31"
-export ds_speaker="thchs,D4"
+export speaker="thchs,D31"
+export speaker="thchs,D4"
 
 python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
-  --ds_speaker=$ds_speaker \
+  --speaker=$speaker \
   --text_name=$text_name \
   --custom_tacotron_hparams="max_decoder_steps=2000" \
   --analysis

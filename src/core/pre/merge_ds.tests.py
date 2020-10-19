@@ -1,11 +1,15 @@
 import unittest
 from typing import List, OrderedDict, Tuple
 
+from src.core.common.accents_dict import AccentsDict
+from src.core.common.gender import Gender
 from src.core.common.language import Language
+from src.core.common.speakers_dict import SpeakersDict
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.pre.ds import DsData, DsDataList
 from src.core.pre.mel import MelData, MelDataList
-from src.core.pre.merge_ds import (PreparedData, PreparedDataList,
+from src.core.pre.merge_ds import (DsDataset, PreparedData, PreparedDataList,
+                                   ds_dataset_to_merged_dataset,
                                    expand_speakers, get_prepared_data,
                                    get_speakers, map_to_prepared_data,
                                    merge_prepared_data, preprocess,
@@ -16,6 +20,66 @@ from src.core.pre.wav import WavData, WavDataList
 
 
 class UnitTests(unittest.TestCase):
+
+  def test_ds_dataset_to_merged_dataset(self):
+    ds = DsDataset(
+      name="ds",
+      accent_ids=AccentsDict.init_from_accents({"c", "d"}),
+      data=DsDataList([DsData(
+        entry_id=1,
+        basename="basename",
+        speaker_id=2,
+        serialized_symbols="0,1",
+        gender=Gender.MALE,
+        lang=Language.GER,
+        serialized_accents="0,0",
+        wav_path="wav",
+        speaker_name="speaker",
+        text="text",
+      )]),
+      mels=MelDataList([MelData(
+        entry_id=1,
+        mel_path="mel",
+        n_mel_channels=5,
+      )]),
+      speakers=SpeakersDict.fromlist(["sp1", "sp2", "sp3"]),
+      symbol_ids=SymbolIdDict.init_from_symbols({"a", "b"}),
+      texts=TextDataList([TextData(
+        entry_id=1,
+        lang=Language.IPA,
+        serialized_accent_ids="1,0",
+        serialized_symbol_ids="1,1",
+        text="text_new",
+      )]),
+      wavs=WavDataList([WavData(
+        entry_id=1,
+        duration=15,
+        sr=22050,
+        wav="wav_new",
+      )]),
+    )
+
+    res = ds_dataset_to_merged_dataset(ds)
+
+    self.assertEqual("ds", res.name)
+    self.assertEqual(2, len(res.accent_ids))
+    self.assertEqual(3, len(res.speakers))
+    self.assertEqual(2, len(res.symbol_ids))
+    self.assertEqual(1, len(res.items()))
+    first_entry = res.items()[0]
+    self.assertEqual(1, first_entry.entry_id)
+    self.assertEqual(Gender.MALE, first_entry.gender)
+    self.assertEqual("basename", first_entry.basename)
+    self.assertEqual(2, first_entry.speaker_id)
+    self.assertEqual(Language.IPA, first_entry.lang)
+    self.assertEqual("1,0", first_entry.serialized_accents)
+    self.assertEqual("1,1", first_entry.serialized_symbols)
+    self.assertEqual("wav_new", first_entry.wav_path)
+    self.assertEqual(15, first_entry.duration)
+    self.assertEqual(22050, first_entry.sampling_rate)
+    self.assertEqual("mel", first_entry.mel_path)
+    self.assertEqual(5, first_entry.n_mel_channels)
+
   def test_sort_prep_data_list(self):
     l = PreparedDataList([
       self.get_dummy_prep_data(entry_id=2),
@@ -23,7 +87,7 @@ class UnitTests(unittest.TestCase):
       self.get_dummy_prep_data(entry_id=3)
     ])
 
-    l.sort(key=PreparedDataList.get_key_for_sorting_after_entry_id, reverse=False)
+    l.sort(key=PreparedDataList._get_key_for_sorting, reverse=False)
 
     self.assertEqual(1, l[0].entry_id)
     self.assertEqual(2, l[1].entry_id)
@@ -35,7 +99,7 @@ class UnitTests(unittest.TestCase):
       "ljs": ["1", "2"],
     }
 
-    x = [("thchs","all"), ("ljs", "2"), ("ljs", "2"), ("unknown", "??"), ("thchs", "??")]
+    x = [("thchs", "all"), ("ljs", "2"), ("ljs", "2"), ("unknown", "??"), ("thchs", "??")]
     res = expand_speakers(speakers, x)
     self.assertEqual(3, len(res))
     self.assertEqual(("ljs", "2"), res[0])
@@ -43,7 +107,7 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(("thchs", "a2"), res[2])
 
   def test_get_speakers(self):
-    x = [("thchs","ab"), ("ljs", "23"), ("ljs", "12")]
+    x = [("thchs", "ab"), ("ljs", "23"), ("ljs", "12")]
 
     res, speakers_id_dict = get_speakers(x)
 
@@ -53,7 +117,7 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(("12", 0), res["ljs"][0])
     self.assertEqual(("23", 1), res["ljs"][1])
     self.assertEqual(("ab", 2), res["thchs"][0])
-    self.assertEqual(["ljs,12", "ljs,23", "thchs,ab"], speakers_id_dict.get_speakers())
+    self.assertEqual(["ljs,12", "ljs,23", "thchs,ab"], speakers_id_dict.get_all_speakers())
 
   def test_map_to_prepared_data(self):
     ds = DsData(1, "basename0", 11233, 0, "text0", "wavpath0", Language.ENG)
@@ -134,7 +198,7 @@ class UnitTests(unittest.TestCase):
     whole, conv, speakers_id_dict = preprocess(datasets, ds_speakers, speakers_as_accents=False)
 
     self.assertEqual(4, len(whole))
-    self.assertEqual(set({"a", "b", "c"}) ,set(conv.get_all_symbols()))
+    self.assertEqual(set({"a", "b", "c"}), set(conv.get_all_symbols()))
     # TODO
     self.assertEqual("1,2,3", whole[0].serialized_symbol_ids)
     self.assertEqual("1,2,3", whole[1].serialized_symbol_ids)
@@ -157,7 +221,8 @@ class UnitTests(unittest.TestCase):
       MelData(0, "", 0),
     ])
 
-    res: PreparedDataList = get_prepared_data("", ds_data, speaker_names, text_list, wav_list, mel_list)
+    res: PreparedDataList = get_prepared_data(
+      "", ds_data, speaker_names, text_list, wav_list, mel_list)
 
     self.assertEqual(1, len(res))
     self.assertEqual("1123", res[0].speaker_name)
@@ -185,7 +250,8 @@ class UnitTests(unittest.TestCase):
       MelData(2, "melpath_pre2", 80),
     ])
 
-    res: PreparedDataList = get_prepared_data("ds1", ds_data, speaker_names, text_list, wav_list, mel_list)
+    res: PreparedDataList = get_prepared_data(
+      "ds1", ds_data, speaker_names, text_list, wav_list, mel_list)
 
     self.assertEqual(2, len(res))
 
@@ -212,19 +278,19 @@ class UnitTests(unittest.TestCase):
       (PreparedDataList([
         PreparedData(0, 1, "", "", "", 0, "0,1,2", 0, 0, "", 0, ""),
       ]),
-      SymbolIdDict({
-        0: (0, "a"),
-        1: (0, "b"),
-        2: (0, "c"),
-      })),
+          SymbolIdDict({
+              0: (0, "a"),
+              1: (0, "b"),
+              2: (0, "c"),
+          })),
       (PreparedDataList([
         PreparedData(0, 2, "", "", "", 0, "0,1,2", 0, 0, "", 0, ""),
       ]),
-      SymbolIdDict({
-        0: (0, "b"),
-        1: (0, "a"),
-        2: (0, "d"),
-      })),
+          SymbolIdDict({
+              0: (0, "b"),
+              1: (0, "a"),
+              2: (0, "d"),
+          })),
     ]
 
     res, conv = merge_prepared_data(prep_list)
@@ -275,26 +341,31 @@ class UnitTests(unittest.TestCase):
   def test_split_train_test_val_keeps_always_same_valset(self):
     data = list(range(6))
 
-    _, _, val = split_train_test_val(data, test_size=0, validation_size=2/6, seed=0, shuffle=False)
+    _, _, val = split_train_test_val(
+      data, test_size=0, validation_size=2 / 6, seed=0, shuffle=False)
 
     self.assertEqual([4, 5], val)
 
-    _, _, val = split_train_test_val(data, test_size=1/6, validation_size=2/6, seed=0, shuffle=False)
+    _, _, val = split_train_test_val(
+      data, test_size=1 / 6, validation_size=2 / 6, seed=0, shuffle=False)
 
     self.assertEqual([4, 5], val)
 
-    _, _, val = split_train_test_val(data, test_size=2/6, validation_size=2/6, seed=0, shuffle=False)
+    _, _, val = split_train_test_val(
+      data, test_size=2 / 6, validation_size=2 / 6, seed=0, shuffle=False)
 
     self.assertEqual([4, 5], val)
 
-    _, _, val = split_train_test_val(data, test_size=3/6, validation_size=2/6, seed=0, shuffle=False)
+    _, _, val = split_train_test_val(
+      data, test_size=3 / 6, validation_size=2 / 6, seed=0, shuffle=False)
 
     self.assertEqual([4, 5], val)
 
   def test_split_train_test_val_123(self):
     data = list(range(6))
 
-    train, test, val = split_train_test_val(data, test_size=1/6, validation_size=2/6, seed=0, shuffle=False)
+    train, test, val = split_train_test_val(
+      data, test_size=1 / 6, validation_size=2 / 6, seed=0, shuffle=False)
 
     self.assertEqual([0, 1, 2], train)
     self.assertEqual([3], test)
@@ -303,7 +374,8 @@ class UnitTests(unittest.TestCase):
   def test_split_train_test_val_024(self):
     data = list(range(6))
 
-    train, test, val = split_train_test_val(data, test_size=0, validation_size=2/6, seed=0, shuffle=False)
+    train, test, val = split_train_test_val(
+      data, test_size=0, validation_size=2 / 6, seed=0, shuffle=False)
 
     self.assertEqual([0, 1, 2, 3], train)
     self.assertEqual([], test)
@@ -312,7 +384,8 @@ class UnitTests(unittest.TestCase):
   def test_split_train_test_val_510(self):
     data = list(range(6))
 
-    train, test, val = split_train_test_val(data, test_size=1/6, validation_size=0, seed=0, shuffle=False)
+    train, test, val = split_train_test_val(
+      data, test_size=1 / 6, validation_size=0, seed=0, shuffle=False)
 
     self.assertEqual([0, 1, 2, 3, 4], train)
     self.assertEqual([5], test)
@@ -334,15 +407,17 @@ class UnitTests(unittest.TestCase):
       self.get_dummy_prep_data(i=11),
     ])
 
-    train, test, val = split_prepared_data_train_test_val(data, test_size=1/6, validation_size=2/6, seed=0, shuffle=False)
+    train, test, val = split_prepared_data_train_test_val(
+      data, test_size=1 / 6, validation_size=2 / 6, seed=0, shuffle=False)
 
     self.assertEqual(2, len(test))
     self.assertEqual(4, len(val))
     self.assertEqual(6, len(train))
 
   @staticmethod
-  def get_dummy_prep_data(i: int=0, entry_id: int=0):
+  def get_dummy_prep_data(i: int = 0, entry_id: int = 0):
     return PreparedData(i, entry_id, "", "", "", 0, "", 0, 1, "", Language.ENG, "")
+
 
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)

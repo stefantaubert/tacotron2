@@ -37,15 +37,17 @@ class DsData:
   lang: Language
   gender: Gender
 
-  # TODO: Bugfix on loading the original types are not loaded (also enums!)
+  def load_init(self):
+    self.lang = Language(self.lang)
+    self.gender = Gender(self.gender)
+    self.speaker_name = str(self.speaker_name)
+
 
 class DsDataList(GenericList[DsData]):
-
   def load_init(self):
     for item in self.items():
-      item.lang = Language(item.lang)
-      item.gender = Gender(item.gender)
-      item.speaker_name = str(item.speaker_name)
+      item.load_init()
+
 
 def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple[
         SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:

@@ -39,7 +39,7 @@ def continue_train_cli(**args):
 def init_validate_parser(parser: ArgumentParser):
   parser.add_argument('--train_name', type=str, required=True)
   parser.add_argument('--entry_id', type=int, help="Utterance id or nothing if random")
-  parser.add_argument('--ds_speaker', type=str, help="ds_name,speaker_name")
+  parser.add_argument('--speaker', type=str, help="ds_name,speaker_name")
   parser.add_argument('--ds', type=str, help="Choose if validation- or testset should be taken.",
                       choices=["val", "test"], default="val")
   parser.add_argument('--custom_checkpoint', type=int)

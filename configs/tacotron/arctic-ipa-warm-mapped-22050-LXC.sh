@@ -54,7 +54,7 @@ python -m src.cli.runner prepare-inference-map \
 export text_name="eng-north"
 export text_name="eng-democritus"
 
-export ds_speaker="arctic,LXC"
+export speaker="arctic,LXC"
 
 export accent="Chinese-LXC"
 
@@ -66,7 +66,7 @@ python -m src.cli.runner prepare-text-set-accent \
 
 python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
-  --ds_speaker=$ds_speaker \
+  --speaker=$speaker \
   --text_name=$text_name \
   --analysis
 

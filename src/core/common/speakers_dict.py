@@ -1,5 +1,7 @@
 from collections import Counter, OrderedDict
+from typing import List
 from typing import OrderedDict as OrderedDictType
+from typing import Set
 
 from src.core.common.text import switch_keys_with_values
 from src.core.common.utils import parse_json, save_json
@@ -9,10 +11,22 @@ class SpeakersDict(OrderedDict):  # [str, int]
   def save(self, file_path: str):
     save_json(file_path, self.raw())
 
-  def get_speakers(self):
+  def get_all_speakers(self) -> List[str]:
     return list(self.keys())
 
-  def get_speaker_id(self, speaker: str) -> int:
+  def get_all_speaker_ids(self) -> List[int]:
+    return list(self.values())
+
+  def remove_ids(self, ids: Set[int]) -> None:
+    pop_keys: Set[str] = set()
+    for speaker_name, speaker_id in self.items():
+      if speaker_id in ids:
+        pop_keys |= {speaker_name}
+
+    for pop_key in pop_keys:
+      self.pop(pop_key)
+
+  def get_id(self, speaker: str) -> int:
     result = self[speaker]
     return result
 

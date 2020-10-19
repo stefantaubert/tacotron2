@@ -45,13 +45,13 @@ python -m src.cli.runner tacotron-train \
   --weights_map="maps/weights/"$prep_name"_ljs_ipa.json"
 
 # Inference
-export ds_speaker="thchs,D21"
-export ds_speaker="thchs,D31"
-export text="examples/chn/north.txt"
+export speaker="thchs,D21"
+export speaker="thchs,D31"
+export text_path="examples/chn/north.txt"
 python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
   --ipa \
-  --ds_speaker=$ds_speaker \
+  --speaker=$speaker \
   --symbols_map="maps/inference/thchs_ipa.json" \
   --lang=CHN \
   --text=$text \
@@ -61,5 +61,5 @@ python -m src.cli.runner tacotron-infer \
 # Validate
 python -m src.cli.runner tacotron-validate \
   --train_name=$train_name \
-  --ds_speaker=$ds_speaker
+  --speaker=$speaker
 

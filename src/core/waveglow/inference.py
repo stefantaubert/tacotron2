@@ -1,9 +1,9 @@
 from logging import Logger
-from src.core.common.audio import normalize_wav
 from typing import Dict, Optional
 
 import torch
 
+from src.core.common.audio import normalize_wav
 from src.core.common.taco_stft import TacotronSTFT
 from src.core.common.utils import cosine_dist_mels
 from src.core.waveglow.synthesizer import Synthesizer

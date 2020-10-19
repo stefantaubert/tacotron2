@@ -41,10 +41,10 @@ python -m src.cli.runner tacotron-train \
   --weights_map="maps/weights/thchs_ljs_ipa_ljs_ipa.json"
 
 # Inference
-export ds_speaker="thchs,D31"
+export speaker="thchs,D31"
 
 python -m src.cli.runner tacotron-validate \
   --train_name=$train_name \
-  --ds_speaker=$ds_speaker
+  --speaker=$speaker
 
 421000
