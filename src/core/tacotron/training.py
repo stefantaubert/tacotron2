@@ -191,7 +191,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logge
         logger=logger
       )
 
-      update_weights(model.embedding, pretrained_symbol_weights)
+      update_weights(model.symbol_embedding, pretrained_symbol_weights)
 
       map_speaker_weights = map_from_speaker_name is not None
       if map_speaker_weights:
