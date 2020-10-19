@@ -5,6 +5,14 @@ from src.core.common.symbol_id_dict import *
 
 class UnitTests(unittest.TestCase):
 
+  def test_remove_symbol_ids(self):
+    res = SymbolIdDict.init_from_symbols({"a", "b", "c"})
+
+    res.remove_ids({0, 2})
+    self.assertEqual(1, len(res))
+    self.assertEqual("b", res.get_symbol(1))
+    self.assertEqual(1, res.get_id("b"))
+
   def test_init_from_symbols_adds_no_symbols(self):
     res = SymbolIdDict.init_from_symbols({"a", "b", "c"})
 

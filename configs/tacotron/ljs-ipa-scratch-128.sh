@@ -47,7 +47,7 @@ export text_name="eng-democritus_v2"
 export text_name="eng-north"
 export text_name="quick-test"
 
-export ds_speaker="ljs,1"
+export speaker="ljs,1"
 
 export accent="north_america"
 
@@ -58,7 +58,7 @@ python -m src.cli.runner prepare-text-set-accent \
 
 python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
-  --ds_speaker=$ds_speaker \
+  --speaker=$speaker \
   --text_name=$text_name \
   --analysis \
   --custom_tacotron_hparams="max_decoder_steps=3000"

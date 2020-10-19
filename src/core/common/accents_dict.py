@@ -38,8 +38,16 @@ class AccentsDict():
         return accent
     assert False
 
+  def remove_ids(self, ids: Set[int]) -> None:
+    for accent_id in ids:
+      accent = self.get_accent(accent_id)
+      self._ids_to_accents.pop(accent)
+
   def get_all_accents(self) -> Set[str]:
     return set(self._ids_to_accents.keys())
+
+  def get_all_ids(self) -> Set[int]:
+    return set(self._ids_to_accents.values())
 
   def get_ids(self, accents: List[str]) -> List[int]:
     ids = [self.get_id(accent) for accent in accents]

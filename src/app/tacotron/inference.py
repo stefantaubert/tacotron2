@@ -98,7 +98,7 @@ def save_infer_h_plot(infer_dir: str, sentence_ids: List[int]):
   stack_images_horizontally(paths, path)
 
 
-def infer_main(base_dir: str, train_name: str, text_name: str, ds_speaker: str, waveglow: str = DEFAULT_WAVEGLOW, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = DEFAULT_SENTENCE_PAUSE_S, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, analysis: bool = True, custom_tacotron_hparams: Optional[Dict[str, str]] = None, custom_waveglow_hparams: Optional[Dict[str, str]] = None):
+def infer_main(base_dir: str, train_name: str, text_name: str, speaker: str, waveglow: str = DEFAULT_WAVEGLOW, custom_checkpoint: Optional[int] = None, sentence_pause_s: float = DEFAULT_SENTENCE_PAUSE_S, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, analysis: bool = True, custom_tacotron_hparams: Optional[Dict[str, str]] = None, custom_waveglow_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -115,7 +115,7 @@ def infer_main(base_dir: str, train_name: str, text_name: str, ds_speaker: str, 
   prep_name = load_prep_name(train_dir)
   infer_sents = get_infer_sentences(base_dir, prep_name, text_name)
 
-  infer_dir = get_infer_dir(train_dir, text_name, iteration, ds_speaker)
+  infer_dir = get_infer_dir(train_dir, text_name, iteration, speaker)
   add_file_out_to_logger(logger, get_infer_log(infer_dir))
 
   train_dir_wg = get_wg_train_dir(base_dir, waveglow, create=False)
@@ -125,7 +125,7 @@ def infer_main(base_dir: str, train_name: str, text_name: str, ds_speaker: str, 
   wav, inference_results = infer(
     tacotron_checkpoint=taco_checkpoint,
     waveglow_checkpoint=wg_checkpoint,
-    ds_speaker=ds_speaker,
+    speaker=speaker,
     sentence_pause_s=sentence_pause_s,
     sigma=sigma,
     denoiser_strength=denoiser_strength,
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     base_dir="/datasets/models/taco2pt_v5",
     train_name="ljs_ipa_scratch_128",
     text_name="ipa-north_sven_orig",
-    ds_speaker="ljs,1",
+    speaker="ljs,1",
     analysis=True,
     custom_tacotron_hparams={
       "max_decoder_steps": 0

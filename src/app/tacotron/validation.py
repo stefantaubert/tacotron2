@@ -4,9 +4,10 @@ from typing import Dict, Optional
 import matplotlib.pylab as plt
 
 from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log,
-                        load_testset, load_valset, save_val_comparison,
-                        save_val_orig_plot, save_val_orig_wav, save_val_plot,
-                        save_val_wav)
+                        load_prep_name, load_testset, load_valset,
+                        save_val_comparison, save_val_orig_plot,
+                        save_val_orig_wav, save_val_plot, save_val_wav)
+from src.app.pre.prepare import get_prepared_dir, load_prep_speakers_json
 from src.app.tacotron.defaults import (DEFAULT_DENOISER_STRENGTH,
                                        DEFAULT_SIGMA, DEFAULT_WAVEGLOW)
 from src.app.tacotron.io import get_train_dir
@@ -38,7 +39,7 @@ def save_val_alignments_sentence_plot(val_dir: str, mel):
   plt.close()
 
 
-def validate_main(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, entry_id: Optional[int] = None, ds_speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_tacotron_hparams: Optional[Dict[str, str]] = None, custom_waveglow_hparams: Optional[Dict[str, str]] = None):
+def validate_main(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGLOW, entry_id: Optional[int] = None, speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_tacotron_hparams: Optional[Dict[str, str]] = None, custom_waveglow_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -49,7 +50,14 @@ def validate_main(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGL
   else:
     assert False
 
-  entry = data.get_for_validation(entry_id, ds_speaker)
+  speaker_id: Optional[int] = None
+  if speaker is not None:
+    prep_name = load_prep_name(train_dir)
+    prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
+    speakers = load_prep_speakers_json(prep_dir)
+    speaker_id = speakers.get_id(speaker)
+
+  entry = data.get_for_validation(entry_id, speaker_id)
 
   checkpoint_path, iteration = get_custom_or_last_checkpoint(
     get_checkpoints_dir(train_dir), custom_checkpoint)

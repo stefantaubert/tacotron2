@@ -42,7 +42,7 @@ python -m src.cli.runner tacotron-train \
 python -m src.cli.runner tacotron-continue-train --train_name=$train_name --custom_hparams="epochs_per_checkpoint=$epochs_per_checkpoint"
 # Inference
 
-python -m src.cli.runner tacotron-validate --train_name=$train_name --custom_tacotron_hparams="max_decoder_steps=2000"
+python -m src.cli.runner tacotron-validate --train_name=$train_name
 
 # Update Inference Map
 python -m src.cli.runner prepare-inference-map \
@@ -50,13 +50,14 @@ python -m src.cli.runner prepare-inference-map \
   --template_map="maps/inference/chn_ipa.json"
 # NOTE: set for "," -> " " instead of ""
 
-
+export text_name="ger-nord"
+export text_name="eng-democritus"
 export text_name="chn-north"
-export ds_speaker="thchs,D4"
+export speaker="thchs,D4"
 
 python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
-  --ds_speaker=$ds_speaker \
+  --speaker=$speaker \
   --text_name=$text_name \
   --analysis
 

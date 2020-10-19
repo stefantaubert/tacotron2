@@ -33,7 +33,7 @@ python -m src.cli.runner prepare-inference-map \
 
   --template_map="maps/weights/thchs_ipa_ljs_ipa.json"
 
-export ds_speaker="ljs,1"
+export speaker="ljs,1"
 
 export accent="north_america"
 
@@ -62,7 +62,7 @@ python -m src.cli.runner prepare-text-set-accent \
 
 python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
-  --ds_speaker=$ds_speaker \
+  --speaker=$speaker \
   --text_name=$text_name \
   --analysis \
   --custom_checkpoint=73038

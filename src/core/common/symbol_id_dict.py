@@ -59,6 +59,11 @@ class SymbolIdDict():
   def get_all_symbol_ids(self) -> Set[int]:
     return set(self._ids_to_symbols.values())
 
+  def remove_ids(self, ids: Set[int]) -> None:
+    for symbol_id in ids:
+      self._symbols_to_ids.pop(symbol_id)
+    self._ids_to_symbols = switch_keys_with_values(self._symbols_to_ids)
+
   def save(self, file_path: str):
     save_json(file_path, self._ids_to_symbols)
 

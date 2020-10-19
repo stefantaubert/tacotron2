@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import List
-from typing import Tuple
+from typing import List, Tuple
 
 from tqdm import tqdm
 
@@ -22,9 +21,15 @@ class TextData:
   serialized_accent_ids: str
   lang: Language
 
+  def load_init(self):
+    self.lang = Language(self.lang)
+
 
 class TextDataList(GenericList[TextData]):
-  pass
+  def load_init(self):
+    for item in self.items():
+      item.load_init()
+
 
 
 def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:

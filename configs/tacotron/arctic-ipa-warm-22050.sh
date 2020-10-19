@@ -36,7 +36,7 @@ python -m src.cli.runner prepare-inference-map \
   --template_map="maps/inference/eng_ipa.json"
   #--template_map="maps/weights/thchs_ipa_ljs_ipa.json"
 
-export ds_speaker="arctic,BWC"
+export speaker="arctic,BWC"
 
 export accent="Chinese-BWC"
 
@@ -59,7 +59,7 @@ python -m src.cli.runner prepare-text-set-accent \
 
 python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
-  --ds_speaker=$ds_speaker \
+  --speaker=$speaker \
   --text_name=$text_name \
   --custom_tacotron_hparams="max_decoder_steps=2000" \
   --analysis
