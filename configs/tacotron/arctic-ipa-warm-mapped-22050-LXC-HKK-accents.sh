@@ -52,8 +52,9 @@ python -m src.cli.runner prepare-inference-map \
   --template_map="maps/inference/eng_ipa.json"
   #--template_map="maps/weights/thchs_ipa_ljs_ipa.json"
 
-export text_name="eng-north"
 export text_name="eng-democritus"
+
+export text_name="eng-north"
 
 export speaker="arctic,LXC"
 export speaker="arctic,HKK"
