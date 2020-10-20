@@ -104,7 +104,6 @@ python -m src.cli.runner prepare-text-normalize --prep_name=$prep_name --text_na
 python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=$text_name
 
 
-
 # Update Inference Map
 
 python -m src.cli.runner prepare-inference-map \

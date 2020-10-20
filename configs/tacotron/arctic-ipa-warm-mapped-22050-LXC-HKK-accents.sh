@@ -4,7 +4,7 @@ source /datasets/code/tacotron2/configs/envs/caps.sh
 export train_name="arctic_ipa_22050_warm_mapped_64_LXC_HKK_accents"
 export prep_name="arctic_ipa_22050_LXC_HKK"
 export batch_size=26
-export epochs_per_checkpoint=1
+export epochs_per_checkpoint=5
 
 ## Phil
 source /home/stefan/tacotron2/configs/envs/phil.sh
@@ -37,9 +37,9 @@ python -m src.cli.runner tacotron-train \
   --use_weights_map \
   --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint,speakers_embedding_dim=64,accents_embedding_dim=128"
 
-python -m src.cli.runner tacotron-continue-train --train_name=$train_name
+python -m src.cli.runner tacotron-continue-train --train_name=$train_name --custom_hparams="epochs_per_checkpoint=$epochs_per_checkpoint"
 
-python -m src.cli.runner tacotron-validate --train_name=$train_name --custom_tacotron_hparams="max_decoder_steps=2000"
+python -m src.cli.runner tacotron-validate --train_name=$train_name
 
 
 # Inference
@@ -56,8 +56,10 @@ export text_name="eng-north"
 export text_name="eng-democritus"
 
 export speaker="arctic,LXC"
+export speaker="arctic,HKK"
 
 export accent="Chinese-LXC"
+export accent="Korean-HKK"
 
 
 python -m src.cli.runner prepare-text-set-accent \
