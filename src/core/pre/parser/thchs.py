@@ -14,6 +14,11 @@ QUESTION_PARTICLE_2 = '呢'
 
 MALE_SPEAKERS = {"A8", "A9", "A33", "A35", "B8", "B21", "B34", "C8", "D8"}
 
+ACCENTS = {
+  "D4": "Mandarin",  # Standard Mandarin
+  "D6": "Mandarin",  # Standard Mandarin
+}
+
 
 def download(dir_path: str):
   download_tar("http://data.cslt.org/thchs30/zip/wav.tgz", dir_path)
@@ -72,13 +77,16 @@ def parse(dir_path: str) -> PreDataList:
 
       symbols = text_to_symbols(chinese, lang)
 
+      accent_name = speaker_name
+      if speaker_name in ACCENTS.keys():
+        accent_name = ACCENTS[speaker_name]
       entry = PreData(
         name=name,
         speaker_name=speaker_name,
         text=chinese,
         wav_path=wav_path,
         symbols=symbols,
-        accents=[speaker_name] * len(symbols),
+        accents=[accent_name] * len(symbols),
         gender=speaker_gender,
         lang=lang
       )
