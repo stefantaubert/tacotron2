@@ -38,6 +38,7 @@ python -m src.cli.runner tacotron-train \
   --warm_start_train_name="ljs_ipa_scratch_64_accents" \
   --weights_train_name="ljs_ipa_scratch_64_accents" \
   --map_from_speaker="ljs,1" \
+  --map_from_accent="north_america" \
   --use_weights_map \
   --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint,speakers_embedding_dim=64,accents_embedding_dim=128"
 
