@@ -43,6 +43,7 @@ def init_train_parser(parser: ArgumentParser):
   parser.add_argument('--weights_train_name', type=str)
   parser.add_argument('--weights_checkpoint', type=int)
   parser.add_argument('--map_from_speaker', type=str)
+  parser.add_argument('--map_from_accent', type=str)
   parser.add_argument('--use_weights_map', action='store_true')
   return train_cli
 

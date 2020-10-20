@@ -5,11 +5,13 @@ from typing import OrderedDict as OrderedDictType
 
 from torch import Tensor
 
+from src.core.common.accents_dict import AccentsDict
+from src.core.common.globals import PADDING_ACCENT, PADDING_SYMBOL
 from src.core.common.speakers_dict import SpeakersDict
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.symbols_map import SymbolsMap
 from src.core.tacotron.hparams import HParams
-from src.core.tacotron.model import get_speaker_weights, get_symbol_weights
+from src.core.tacotron.model import get_accent_weights, get_speaker_weights, get_symbol_weights
 from src.core.tacotron.model_symbols import get_model_symbol_id
 
 
@@ -108,6 +110,28 @@ def get_mapped_speaker_weights(model_speakers: SpeakersDict, trained_weights: Te
 
   map_weights(
     model_symbols_id_map=speakers_map,
+    model_weights=weights,
+    trained_weights=trained_weights,
+    logger=logger
+  )
+
+  return weights
+
+
+
+def get_mapped_accent_weights(model_accents: AccentsDict, trained_weights: Tensor, trained_accents: AccentsDict, map_from_accent_name: str, hparams: HParams, logger: Logger) -> Tensor:
+  map_from_id = trained_accents.get_id(map_from_accent_name)
+  accents_map: OrderedDictType[int, int] = OrderedDict(
+    {new_accent_id: map_from_id for new_accent_id in model_accents.get_all_ids()})
+
+  assert PADDING_ACCENT in trained_accents.get_all_accents()
+  assert PADDING_ACCENT in model_accents.get_all_accents()
+  accents_map[model_accents.get_id(PADDING_ACCENT)] = trained_accents.get_id(PADDING_ACCENT)
+
+  weights = get_accent_weights(hparams)
+
+  map_weights(
+    model_symbols_id_map=accents_map,
     model_weights=weights,
     trained_weights=trained_weights,
     logger=logger

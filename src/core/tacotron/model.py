@@ -606,6 +606,11 @@ def get_speaker_weights(hparams: HParams) -> torch.Tensor:
   return weights
 
 
+def get_accent_weights(hparams: HParams) -> torch.Tensor:
+  weights = get_xavier_weights(hparams.n_accents, hparams.accents_embedding_dim)
+  return weights
+
+
 def get_symbol_weights(hparams: HParams) -> torch.Tensor:
   model_symbols_count = get_model_symbols_count(
     hparams.n_symbols,
@@ -644,8 +649,8 @@ class Tacotron2(nn.Module):
     speaker_emb_weights = get_speaker_weights(hparams)
     self.speaker_embedding = weights_to_embedding(speaker_emb_weights)
 
-    self.accent_embedding = nn.Embedding(hparams.n_accents, hparams.accents_embedding_dim)
-    torch.nn.init.xavier_uniform_(self.accent_embedding.weight)
+    accent_emb_weights = get_accent_weights(hparams)
+    self.accent_embedding = weights_to_embedding(accent_emb_weights)
 
     self.symbol_encoder = SymbolsEncoder(hparams)
     self.accent_encoder = AccentsEncoder(hparams)

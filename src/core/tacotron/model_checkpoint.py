@@ -15,7 +15,7 @@ from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.train import (get_pytorch_filename,
                                    overwrite_custom_hparams)
 from src.core.tacotron.hparams import HParams
-from src.core.tacotron.model import (SPEAKER_EMBEDDING_LAYER_NAME,
+from src.core.tacotron.model import (ACCENT_EMBEDDING_LAYER_NAME, SPEAKER_EMBEDDING_LAYER_NAME,
                                      SYMBOL_EMBEDDING_LAYER_NAME, Tacotron2)
 
 
@@ -59,6 +59,10 @@ class CheckpointTacotron(Checkpoint):
 
   def get_speaker_embedding_weights(self) -> Tensor:
     pretrained_weights = self.state_dict[SPEAKER_EMBEDDING_LAYER_NAME]
+    return pretrained_weights
+
+  def get_accent_embedding_weights(self) -> Tensor:
+    pretrained_weights = self.state_dict[ACCENT_EMBEDDING_LAYER_NAME]
     return pretrained_weights
 
   @classmethod

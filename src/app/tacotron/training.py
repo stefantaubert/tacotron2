@@ -38,7 +38,7 @@ def save_checkpoint(checkpoint: CheckpointTacotron, save_checkpoint_dir: str, lo
   checkpoint.save(checkpoint_path, logger)
 
 
-def train_main(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, custom_hparams: Optional[Dict[str, str]] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, use_weights_map: Optional[bool] = None, map_from_speaker: Optional[str] = None):
+def train_main(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, custom_hparams: Optional[Dict[str, str]] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, use_weights_map: Optional[bool] = None, map_from_speaker: Optional[str] = None, map_from_accent: Optional[str] = None):
   prep_dir = get_prepared_dir(base_dir, prep_name)
   train_dir = get_train_dir(base_dir, train_name, create=True)
   logs_dir = get_train_logs_dir(train_dir)
@@ -100,6 +100,7 @@ def train_main(base_dir: str, train_name: str, prep_name: str, warm_start_train_
     weights_checkpoint=weights_model,
     warm_model=warm_model,
     map_from_speaker_name=map_from_speaker,
+    map_from_accent_name=map_from_accent,
     logger=logger,
     checkpoint_logger=checkpoint_logger,
   )
@@ -140,7 +141,7 @@ def continue_train_main(base_dir: str, train_name: str, custom_hparams: Optional
 
 
 if __name__ == "__main__":
-  mode = 1
+  mode = 6
   if mode == 0:
     train_main(
       base_dir="/datasets/models/taco2pt_v5",
@@ -178,6 +179,7 @@ if __name__ == "__main__":
       weights_train_name="ljs_ipa_scratch_128",
       warm_start_train_name="ljs_ipa_scratch_128",
       map_from_speaker="ljs,1",
+      map_from_accent="north_america",
       use_weights_map=True,
     )
   elif mode == 3:
@@ -205,4 +207,22 @@ if __name__ == "__main__":
       weights_train_name="ljs_ipa_scratch",
       # weights_map="maps/weights/thchs_ipa_acc_ljs_ipa.json",
       custom_hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
+    )
+  elif mode == 6:
+    train_main(
+      base_dir="/datasets/models/taco2pt_v5",
+      train_name="debug",
+      prep_name="arctic_ipa_22050_LXC_HKK",
+      custom_hparams={
+        "batch_size": 26,
+        "iters_per_checkpoint": 5,
+        "epochs_per_checkpoint": 1,
+        "speakers_embedding_dim": 64,
+        "accents_embedding_dim": 128,
+      },
+      weights_train_name="ljs_ipa_scratch_64_accents",
+      warm_start_train_name="ljs_ipa_scratch_64_accents",
+      map_from_speaker="ljs,1",
+      map_from_accent="north_america",
+      use_weights_map=True,
     )
