@@ -38,7 +38,7 @@ python -m src.cli.runner tacotron-train \
 
 python -m src.cli.runner tacotron-continue-train --train_name=$train_name
 
-python -m src.cli.runner tacotron-validate --train_name=$train_name --custom_tacotron_hparams="max_decoder_steps=2000"
+python -m src.cli.runner tacotron-validate --train_name=$train_name
 
 
 # Inference
