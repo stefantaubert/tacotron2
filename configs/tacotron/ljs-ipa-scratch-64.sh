@@ -11,7 +11,7 @@ source /home/stefan/tacotron2/configs/envs/phil.sh
 export train_name="ljs_ipa_scratch_64"
 export prep_name="ljs_ipa"
 export batch_size=25
-export epochs_per_checkpoint=5
+export epochs_per_checkpoint=20
 
 # Training
 python -m src.cli.runner tacotron-train \
@@ -21,7 +21,7 @@ python -m src.cli.runner tacotron-train \
   --validation_size=0.01 \
   --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint,speakers_embedding_dim=64"
 
-python -m src.cli.runner tacotron-continue-train --train_name=$train_name
+python -m src.cli.runner tacotron-continue-train --train_name=$train_name --custom_hparams="epochs_per_checkpoint=$epochs_per_checkpoint"
 
 python -m src.cli.runner tacotron-validate --train_name=$train_name
 # Inference
@@ -60,8 +60,6 @@ python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
   --speaker=$speaker \
   --text_name=$text_name \
-  --analysis \
-  --custom_tacotron_hparams="max_decoder_steps=3000"
-
+  --analysis
 
   --waveglow="warm"

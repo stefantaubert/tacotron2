@@ -171,12 +171,12 @@ def get_basename(filepath: str) -> str:
   return basename
 
 
-def get_parent_dirname(filepath: str):
+def get_parent_dirname(filepath: str) -> str:
   last_dir_name = Path(filepath).parts[-1]
   return last_dir_name
 
 
-def get_chunk_name(i, chunksize, maximum):
+def get_chunk_name(i, chunksize, maximum) -> str:
   assert i >= 0
   assert chunksize > 0
   assert maximum >= 0
@@ -189,7 +189,7 @@ def get_chunk_name(i, chunksize, maximum):
   return res
 
 
-def stack_images_vertically(list_im, out_path):
+def stack_images_vertically(list_im, out_path) -> None:
   old_level = logging.getLogger().level
   logging.getLogger().setLevel(logging.INFO)
   images = [Image.open(i) for i in list_im]
@@ -212,7 +212,7 @@ def stack_images_vertically(list_im, out_path):
   logging.getLogger().setLevel(old_level)
 
 
-def stack_images_horizontally(list_im: List[str], out_path: str):
+def stack_images_horizontally(list_im: List[str], out_path: str) -> None:
   old_level = logging.getLogger().level
   logging.getLogger().setLevel(logging.INFO)
   images = [Image.open(i) for i in list_im]
@@ -255,7 +255,7 @@ def get_subdir(training_dir_path: str, subdir: str, create: bool = True) -> str:
   return result
 
 
-def download_tar(download_url, dir_path, tarmode: str = "r:gz"):
+def download_tar(download_url, dir_path, tarmode: str = "r:gz") -> None:
   print("Starting download of {}...".format(download_url))
   os.makedirs(dir_path, exist_ok=True)
   dest = wget.download(download_url, dir_path)
@@ -269,7 +269,7 @@ def download_tar(download_url, dir_path, tarmode: str = "r:gz"):
   print("Done.")
 
 
-def args_to_str(args):
+def args_to_str(args) -> str:
   res = ""
   for arg, value in sorted(vars(args).items()):
     res += "{}: {}\n".format(arg, value)
@@ -283,7 +283,7 @@ def parse_json(path: str) -> dict:
   return tmp
 
 
-def save_json(path: str, mapping_dict: dict):
+def save_json(path: str, mapping_dict: dict) -> None:
   with open(path, 'w', encoding='utf-8') as f:
     json.dump(mapping_dict, f, ensure_ascii=False, indent=2)
 
@@ -295,7 +295,7 @@ def get_mask_from_lengths(lengths):
   return mask
 
 
-def to_gpu(x):
+def to_gpu(x) -> torch.autograd.Variable:
   x = x.contiguous()
 
   if torch.cuda.is_available():
