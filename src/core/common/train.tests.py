@@ -11,10 +11,11 @@ from src.core.common.train import (SaveIterationSettings, check_is_first,
                                    check_is_save_iteration,
                                    get_continue_batch_iteration,
                                    get_continue_epoch, get_dataclass_from_dict,
-                                   get_next_save_it, get_only_known_params, get_uniform_weights,
-                                   get_value_in_type,
+                                   get_next_save_it, get_only_known_params,
+                                   get_uniform_weights, get_value_in_type,
                                    iteration_to_batch_iteration,
-                                   iteration_to_epoch, skip_batch)
+                                   iteration_to_epoch, skip_batch,
+                                   split_train_test_val)
 
 
 class DummyDataset(Dataset):
@@ -396,6 +397,63 @@ class UnitTests(unittest.TestCase):
     res = get_next_save_it(iteration, settings)
 
     self.assertIsNone(res)
+
+  # region split
+
+  def test_split_train_test_val_keeps_always_same_valset(self):
+    data = list(range(6))
+
+    _, _, val = split_train_test_val(
+      data, test_size=0, validation_size=2 / 6, seed=0, shuffle=False)
+
+    self.assertEqual([4, 5], val)
+
+    _, _, val = split_train_test_val(
+      data, test_size=1 / 6, validation_size=2 / 6, seed=0, shuffle=False)
+
+    self.assertEqual([4, 5], val)
+
+    _, _, val = split_train_test_val(
+      data, test_size=2 / 6, validation_size=2 / 6, seed=0, shuffle=False)
+
+    self.assertEqual([4, 5], val)
+
+    _, _, val = split_train_test_val(
+      data, test_size=3 / 6, validation_size=2 / 6, seed=0, shuffle=False)
+
+    self.assertEqual([4, 5], val)
+
+  def test_split_train_test_val_123(self):
+    data = list(range(6))
+
+    train, test, val = split_train_test_val(
+      data, test_size=1 / 6, validation_size=2 / 6, seed=0, shuffle=False)
+
+    self.assertEqual([0, 1, 2], train)
+    self.assertEqual([3], test)
+    self.assertEqual([4, 5], val)
+
+  def test_split_train_test_val_024(self):
+    data = list(range(6))
+
+    train, test, val = split_train_test_val(
+      data, test_size=0, validation_size=2 / 6, seed=0, shuffle=False)
+
+    self.assertEqual([0, 1, 2, 3], train)
+    self.assertEqual([], test)
+    self.assertEqual([4, 5], val)
+
+  def test_split_train_test_val_510(self):
+    data = list(range(6))
+
+    train, test, val = split_train_test_val(
+      data, test_size=1 / 6, validation_size=0, seed=0, shuffle=False)
+
+    self.assertEqual([0, 1, 2, 3, 4], train)
+    self.assertEqual([5], test)
+    self.assertEqual([], val)
+
+  # endregion
 
 
 if __name__ == '__main__':

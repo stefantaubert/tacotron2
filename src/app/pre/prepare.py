@@ -1,5 +1,5 @@
 import os
-from typing import List, Set, Tuple
+from typing import List, Tuple
 
 from src.app.pre.ds import (get_ds_dir, load_accents_json, load_ds_csv,
                             load_speaker_json)
@@ -12,12 +12,8 @@ from src.core.common.accents_dict import AccentsDict
 from src.core.common.speakers_dict import SpeakersDict
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.utils import get_subdir
-from src.core.pre.ds import DsDataList
-from src.core.pre.mel import MelDataList
 from src.core.pre.merge_ds import (DsDataset, DsDatasetList, PreparedData,
                                    PreparedDataList, preprocess)
-from src.core.pre.text.pre import TextDataList
-from src.core.pre.wav import WavDataList
 
 
 def _get_prepared_root_dir(base_dir: str, create: bool = False):
@@ -134,7 +130,7 @@ if __name__ == "__main__":
     res = load_filelist(
       prep_dir=prep_dir,
     )
-    
+
 
   # prepare_ds(
   #   base_dir="/datasets/models/taco2pt_v5",

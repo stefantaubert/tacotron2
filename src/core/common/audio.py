@@ -19,9 +19,8 @@ def get_dBFS(wav, max_value) -> float:
   value = np.sqrt(np.mean((wav / max_value)**2))
   if value == 0:
     return -inf
-  else:
-    result = 20 * log10(value)
-    return result
+  result = 20 * log10(value)
+  return result
 
 
 def detect_leading_silence(wav: np.array, silence_threshold: float, chunk_size: int, buffer: int):
@@ -197,7 +196,7 @@ def normalize_file(in_path, out_path):
 def normalize_wav(wav: np.ndarray):
   if wav.dtype == np.int16 and np.min(wav) == get_min_value(np.int16):
     return wav
-  elif wav.dtype == np.int32 and np.min(wav) == get_min_value(np.int32):
+  if wav.dtype == np.int32 and np.min(wav) == get_min_value(np.int32):
     return wav
 
   wav_abs = np.abs(wav)

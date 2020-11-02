@@ -208,6 +208,7 @@ def sents_normalize(sentences: SentenceList, text_symbols: SymbolIdDict) -> Tupl
       lang=sentence.lang,
       accent_ids=deserialize_list(sentence.serialized_accents)
     )
+    # TODO: check if new sentences resulted and then split them.
     sentence.serialized_accents = serialize_list(new_accent_ids)
     sents_new_symbols.append(new_symbols)
 

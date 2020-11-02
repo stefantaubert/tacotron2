@@ -135,7 +135,7 @@ class WN(torch.nn.Module):
 
 class WaveGlow(torch.nn.Module):
   def __init__(self, hparams: HParams):
-    super(WaveGlow, self).__init__()
+    super().__init__()
 
     self.upsample = torch.nn.ConvTranspose1d(
       hparams.n_mel_channels,

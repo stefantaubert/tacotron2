@@ -9,12 +9,8 @@ from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.pre.ds import DsData, DsDataList
 from src.core.pre.mel import MelData, MelDataList
 from src.core.pre.merge_ds import (DsDataset, PreparedData, PreparedDataList,
-                                   ds_dataset_to_merged_dataset,
-                                   expand_speakers, get_prepared_data,
-                                   get_speakers, map_to_prepared_data,
-                                   merge_prepared_data, preprocess,
-                                   split_prepared_data_train_test_val,
-                                   split_train_test_val)
+                                   expand_speakers, preprocess,
+                                   split_prepared_data_train_test_val)
 from src.core.pre.text.pre import TextData, TextDataList
 from src.core.pre.wav import WavData, WavDataList
 
@@ -337,59 +333,6 @@ class UnitTests(unittest.TestCase):
   #   self.assertEqual([1], train)
   #   self.assertEqual([], test)
   #   self.assertEqual([2], val)
-
-  def test_split_train_test_val_keeps_always_same_valset(self):
-    data = list(range(6))
-
-    _, _, val = split_train_test_val(
-      data, test_size=0, validation_size=2 / 6, seed=0, shuffle=False)
-
-    self.assertEqual([4, 5], val)
-
-    _, _, val = split_train_test_val(
-      data, test_size=1 / 6, validation_size=2 / 6, seed=0, shuffle=False)
-
-    self.assertEqual([4, 5], val)
-
-    _, _, val = split_train_test_val(
-      data, test_size=2 / 6, validation_size=2 / 6, seed=0, shuffle=False)
-
-    self.assertEqual([4, 5], val)
-
-    _, _, val = split_train_test_val(
-      data, test_size=3 / 6, validation_size=2 / 6, seed=0, shuffle=False)
-
-    self.assertEqual([4, 5], val)
-
-  def test_split_train_test_val_123(self):
-    data = list(range(6))
-
-    train, test, val = split_train_test_val(
-      data, test_size=1 / 6, validation_size=2 / 6, seed=0, shuffle=False)
-
-    self.assertEqual([0, 1, 2], train)
-    self.assertEqual([3], test)
-    self.assertEqual([4, 5], val)
-
-  def test_split_train_test_val_024(self):
-    data = list(range(6))
-
-    train, test, val = split_train_test_val(
-      data, test_size=0, validation_size=2 / 6, seed=0, shuffle=False)
-
-    self.assertEqual([0, 1, 2, 3], train)
-    self.assertEqual([], test)
-    self.assertEqual([4, 5], val)
-
-  def test_split_train_test_val_510(self):
-    data = list(range(6))
-
-    train, test, val = split_train_test_val(
-      data, test_size=1 / 6, validation_size=0, seed=0, shuffle=False)
-
-    self.assertEqual([0, 1, 2, 3, 4], train)
-    self.assertEqual([5], test)
-    self.assertEqual([], val)
 
   def test_split_prepared_data(self):
     data = PreparedDataList([

@@ -6,6 +6,7 @@ from math import floor, sqrt
 from typing import Any, Dict, List, Optional, Set, Tuple, Type, TypeVar, Union
 
 import torch
+from sklearn.model_selection import train_test_split
 from torch import Tensor, nn
 from torch.optim.optimizer import \
     Optimizer  # pylint: disable=no-name-in-module
@@ -115,6 +116,7 @@ def update_learning_rate_optimizer(optimizer: Optimizer, learning_rate: float):
   for param_group in optimizer.param_groups:
     param_group['lr'] = learning_rate
 
+
 def overwrite_custom_hparams(hparams_dc: _T, custom_hparams: Optional[Dict[str, str]]) -> _T:
   if custom_hparams is None:
     return hparams_dc
@@ -137,10 +139,12 @@ def get_uniform_weights(dimension: int, emb_dim: int) -> Tensor:
   nn.init.uniform_(weight, -val, val)
   return weight
 
+
 def get_xavier_weights(dimension: int, emb_dim: int) -> Tensor:
   weight = torch.zeros(size=(dimension, emb_dim), device="cuda")
   torch.nn.init.xavier_uniform_(weight)
   return weight
+
 
 def update_weights(emb: nn.Embedding, weights: Tensor) -> None:
   emb.weight = nn.Parameter(weights)
@@ -311,3 +315,52 @@ def filter_checkpoints(iterations: List[int], select: Optional[int], min_it: Opt
                          select == 0 and min_it <= checkpoint <= max_it]
 
   return process_checkpoints
+
+
+def split_train_test_val(wholeset: List[_T], test_size: float, validation_size: float, seed: int, shuffle: bool, verbose: bool) -> Tuple[List[_T], List[_T], List[_T]]:
+  assert seed >= 0
+  assert 0 <= test_size <= 1
+  assert 0 <= validation_size <= 1
+  assert test_size + validation_size < 1
+
+  trainset, testset, valset = wholeset, [], []
+
+  if validation_size:
+    is_ok = assert_fraction_is_big_enough(validation_size, len(trainset), verbose)
+    trainset, valset = train_test_split(
+      trainset, test_size=validation_size, random_state=seed, shuffle=shuffle)
+    if not is_ok:
+      check_is_not_empty(trainset)
+      check_is_not_empty(valset)
+      if verbose:
+        print(f"Split was however successfull, trainsize {len(trainset)}, valsize: {len(valset)}.")
+  if test_size:
+    adj_test_size = test_size / (1 - validation_size)
+    is_ok = assert_fraction_is_big_enough(adj_test_size, len(trainset), verbose)
+    trainset, testset = train_test_split(
+      trainset, test_size=adj_test_size, random_state=seed, shuffle=shuffle)
+    if not is_ok:
+      check_is_not_empty(trainset)
+      check_is_not_empty(valset)
+      if verbose:
+        print(
+          f"Split was however successfull, trainsize {len(trainset)}, testsize: {len(testset)}.")
+
+  return trainset, testset, valset
+
+
+def check_is_not_empty(dataset: List[_T]) -> None:
+  if len(dataset) == 0:
+    raise Exception("Aborting splitting, as a size of 0 resulted.")
+
+
+def assert_fraction_is_big_enough(fraction: float, size: int, verbose: bool) -> bool:
+  """tests that the fraction is bigger than the smallest fraction possible with that size to get at least one example in splitting"""
+  calculation_inaccuracy = 10e-5
+  min_frac = 1 / size
+  y = min(fraction, 1 - fraction)
+  if y + calculation_inaccuracy < min_frac:
+    if verbose:
+      print(f"Warn: Split-fraction {fraction} is to small, it should be >= {min_frac}.")
+    return False
+  return True

@@ -89,8 +89,7 @@ class GenericList(list, Generic[T]):
   def items(self, with_tqdm: bool = False) -> List[T]:
     if with_tqdm:
       return tqdm(self)
-    else:
-      return self
+    return self
 
   def get_random_entry(self) -> T:
     idx = random.choice(range(len(self)))
