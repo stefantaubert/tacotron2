@@ -43,7 +43,7 @@ export text_name="ger-nord"
 export text_name="eng-coma"
 export text_name="eng-rainbow"
 export text_name="eng-stella"
-export text_name="eng-democritus_v2"
+export text_name="eng-democritus"
 export text_name="eng-north"
 export text_name="quick-test"
 

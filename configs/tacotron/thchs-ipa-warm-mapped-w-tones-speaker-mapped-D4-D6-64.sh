@@ -53,6 +53,7 @@ python -m src.cli.runner prepare-inference-map \
 # NOTE: set for "," -> " " instead of ""
 
 
+export text_name="eng-north"
 export text_name="chn-north"
 export speaker="thchs,D4"
 export speaker="thchs,D6"
@@ -70,5 +71,5 @@ python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \
   --speaker=$speaker \
   --text_name=$text_name \
-  --analysis
-
+  --analysis \
+  --custom_checkpoint=6160
