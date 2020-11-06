@@ -10,7 +10,8 @@ from scipy.io.wavfile import read
 from tqdm import tqdm
 
 from src.core.common.audio import (get_duration_s, normalize_file,
-                                   remove_silence_file, upsample_file)
+                                   remove_silence_file, stereo_to_mono_file,
+                                   upsample_file)
 from src.core.common.taco_stft import TacotronSTFT, TSTFTHParams
 from src.core.common.utils import GenericList, get_chunk_name
 from src.core.pre.ds import DsData, DsDataList
@@ -50,8 +51,7 @@ def upsample(data: WavDataList, dest_dir: str, new_rate: int) -> WavDataList:
   assert os.path.isdir(dest_dir)
   result = WavDataList()
 
-  values: WavData
-  for values in tqdm(data):
+  for values in data.items(True):
     chunk_dir = os.path.join(dest_dir, get_chunk_name(
       values.entry_id, chunksize=500, maximum=len(data) - 1))
     os.makedirs(chunk_dir, exist_ok=True)
@@ -63,12 +63,27 @@ def upsample(data: WavDataList, dest_dir: str, new_rate: int) -> WavDataList:
   return result
 
 
+def stereo_to_mono(data: WavDataList, dest_dir: str) -> WavDataList:
+  assert os.path.isdir(dest_dir)
+  result = WavDataList()
+
+  for values in data.items(True):
+    chunk_dir = os.path.join(dest_dir, get_chunk_name(
+      values.entry_id, chunksize=500, maximum=len(data) - 1))
+    os.makedirs(chunk_dir, exist_ok=True)
+    dest_wav_path = os.path.join(chunk_dir, f"{values!r}.wav")
+    # todo assert not is_overamp
+    stereo_to_mono_file(values.wav, dest_wav_path)
+    result.append(WavData(values.entry_id, dest_wav_path, values.duration, values.sr))
+
+  return result
+
+
 def remove_silence(data: WavDataList, dest_dir: str, chunk_size: int, threshold_start: float, threshold_end: float, buffer_start_ms: float, buffer_end_ms: float) -> WavDataList:
   assert os.path.isdir(dest_dir)
   result = WavDataList()
 
-  values: WavData
-  for values in tqdm(data):
+  for values in data.items(True):
     chunk_dir = os.path.join(dest_dir, get_chunk_name(
       values.entry_id, chunksize=500, maximum=len(data) - 1))
     os.makedirs(chunk_dir, exist_ok=True)
@@ -114,8 +129,7 @@ def normalize(data: WavDataList, dest_dir: str) -> WavDataList:
   assert os.path.isdir(dest_dir)
   result = WavDataList()
 
-  values: WavData
-  for values in tqdm(data):
+  for values in data.items(True):
     chunk_dir = os.path.join(dest_dir, get_chunk_name(
       values.entry_id, chunksize=500, maximum=len(data) - 1))
     os.makedirs(chunk_dir, exist_ok=True)

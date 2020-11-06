@@ -1,8 +1,7 @@
 import os
 from collections import Counter
 from dataclasses import dataclass
-from os import name
-from typing import Dict, List, Set, Tuple, Type
+from typing import Any, List, Optional, Set, Tuple
 
 from src.core.common.accents_dict import AccentsDict
 from src.core.common.gender import Gender
@@ -13,7 +12,8 @@ from src.core.common.utils import (GenericList,
                                    remove_duplicates_list_orderpreserving)
 from src.core.pre.parser.arctic import download as dl_arctic
 from src.core.pre.parser.arctic import parse as parse_arctic
-from src.core.pre.parser.data import PreData, PreDataList
+from src.core.pre.parser.custom import parse as parse_custom
+from src.core.pre.parser.data import PreDataList
 from src.core.pre.parser.libritts import download as dl_libritts
 from src.core.pre.parser.libritts import parse as parse_libritts
 from src.core.pre.parser.ljs import download as dl_ljs
@@ -47,12 +47,13 @@ class DsDataList(GenericList[DsData]):
   def load_init(self):
     for item in self.items():
       item.load_init()
+from functools import partial
 
-
-def _preprocess_core(dir_path: str, auto_dl: bool, dl_func, parse_func) -> Tuple[
+def _preprocess_core(dir_path: str, auto_dl: bool, dl_func: Optional[Any], parse_func) -> Tuple[
         SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
-  if not os.path.isdir(dir_path) and auto_dl:
+  if not os.path.isdir(dir_path) and auto_dl and dl_func is not None:
     dl_func(dir_path)
+
   data = parse_func(dir_path)
   speakers, speakers_log = _get_all_speakers(data)
   accents = _get_all_accents(data)
@@ -76,6 +77,11 @@ def thchs_preprocess(dir_path: str, auto_dl: bool) -> Tuple[
   return _preprocess_core(dir_path, auto_dl, dl_thchs, parse_thchs)
 
 
+def custom_preprocess(dir_path: str, auto_dl: bool) -> Tuple[
+  SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
+  return _preprocess_core(dir_path, auto_dl, None, parse_custom)
+
+
 def libritts_preprocess(dir_path: str, auto_dl: bool) -> Tuple[
   SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   return _preprocess_core(dir_path, auto_dl, dl_libritts, parse_libritts)
@@ -96,8 +102,7 @@ def thchs_kaldi_preprocess(dir_path: str, auto_dl: bool) -> Tuple[SpeakersDict, 
 
 
 def _get_all_speakers(l: PreDataList) -> Tuple[SpeakersDict, SpeakersLogDict]:
-  x: PreData
-  all_speakers: List[str] = [x.speaker_name for x in l]
+  all_speakers: List[str] = [x.speaker_name for x in l.items()]
   all_speakers_count = Counter(all_speakers)
   speakers_log = SpeakersLogDict.fromcounter(all_speakers_count)
   all_speakers = remove_duplicates_list_orderpreserving(all_speakers)

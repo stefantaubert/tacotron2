@@ -8,6 +8,7 @@ from src.cli.pre import (init_accent_apply_text_parser,
                          init_map_text_parser, init_map_to_prep_symbols_parser,
                          init_normalize_text_parser, init_prepare_ds_parser,
                          init_preprocess_arctic_parser,
+                         init_preprocess_custom_parser,
                          init_preprocess_ljs_parser,
                          init_preprocess_mels_parser,
                          init_preprocess_text_parser,
@@ -18,7 +19,7 @@ from src.cli.pre import (init_accent_apply_text_parser,
                          init_text_normalize_parser,
                          init_wavs_normalize_parser,
                          init_wavs_remove_silence_parser,
-                         init_wavs_remove_silence_plot_parser,
+                         init_wavs_remove_silence_plot_parser, init_wavs_stereo_to_mono_parser,
                          init_wavs_upsample_parser)
 from src.cli.tacotron import \
     init_continue_train_parser as init_taco_continue_train_parser
@@ -49,6 +50,7 @@ def _init_parser():
   result = ArgumentParser()
   subparsers = result.add_subparsers(help='sub-command help')
 
+  _add_parser_to(subparsers, "preprocess-custom", init_preprocess_custom_parser)
   _add_parser_to(subparsers, "preprocess-ljs", init_preprocess_ljs_parser)
   _add_parser_to(subparsers, "preprocess-arctic", init_preprocess_arctic_parser)
   _add_parser_to(subparsers, "preprocess-libritts", init_preprocess_arctic_parser)
@@ -58,6 +60,7 @@ def _init_parser():
   _add_parser_to(subparsers, "preprocess-wavs", init_preprocess_wavs_parser)
   _add_parser_to(subparsers, "wavs-normalize", init_wavs_normalize_parser)
   _add_parser_to(subparsers, "wavs-resample", init_wavs_upsample_parser)
+  _add_parser_to(subparsers, "wavs-stereo-to-mono", init_wavs_stereo_to_mono_parser)
   _add_parser_to(subparsers, "wavs-remove-silence", init_wavs_remove_silence_parser)
   _add_parser_to(subparsers, "wavs-remove-silence-plot", init_wavs_remove_silence_plot_parser)
 

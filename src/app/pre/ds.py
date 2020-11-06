@@ -14,9 +14,9 @@ from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.utils import cast_as, get_subdir
 from src.core.pre.ds import (DsData, DsDataList, arctic_preprocess,
-                             get_speaker_examples, libritts_preprocess,
-                             ljs_preprocess, thchs_kaldi_preprocess,
-                             thchs_preprocess)
+                             custom_preprocess, get_speaker_examples,
+                             libritts_preprocess, ljs_preprocess,
+                             thchs_kaldi_preprocess, thchs_preprocess)
 
 # don't do preprocessing here because inconsistent with mels because it is not always usefull to calc mels instand
 # from src.app.pre.text import preprocess_text
@@ -50,6 +50,7 @@ def load_ds_csv(ds_dir: str) -> DsDataList:
   #   item.gender = Gender(item.gender)
   #   item.speaker_name = str(item.speaker_name)
   return res
+
 
 def _save_ds_csv(ds_dir: str, result: DsDataList):
   path = os.path.join(ds_dir, _ds_data_csv)
@@ -119,6 +120,11 @@ def preprocess_libritts(base_dir: str, ds_name: str, path: str, auto_dl: bool):
   _preprocess_ds(base_dir, ds_name, path, auto_dl, libritts_preprocess)
 
 
+def preprocess_custom(base_dir: str, ds_name: str, path: str, auto_dl: bool):
+  print("Preprocessing custom dataset...")
+  _preprocess_ds(base_dir, ds_name, path, auto_dl, custom_preprocess)
+
+
 def preprocess_arctic(base_dir: str, ds_name: str, path: str, auto_dl: bool):
   print("Preprocessing L2 Arctic dataset...")
   _preprocess_ds(base_dir, ds_name, path, auto_dl, arctic_preprocess)
@@ -152,6 +158,13 @@ def add_speaker_examples(base_dir: str, ds_name: str):
 
 
 if __name__ == "__main__":
+  preprocess_custom(
+    base_dir="/datasets/models/taco2pt_v5",
+    auto_dl=False,
+    ds_name="NNLV_pilot",
+    path="/datasets/NNLV_pilot",
+  )
+
   add_speaker_examples(
     base_dir="/datasets/models/taco2pt_v5",
     ds_name="ljs",

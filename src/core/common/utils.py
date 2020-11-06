@@ -4,6 +4,7 @@ import os
 import random
 import tarfile
 import unicodedata
+from abc import ABC
 from collections import Counter
 from dataclasses import astuple
 from pathlib import Path
@@ -22,8 +23,10 @@ from src.core.common.globals import CSV_SEPERATOR
 
 T = TypeVar('T')
 
+
 def cast_as(obj, _: T) -> T:
   return obj
+
 
 def pass_lines(method: Any, text: str):
   lines = text.split("\n")

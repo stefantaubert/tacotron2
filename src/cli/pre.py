@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
 
-from src.app.pre.ds import (preprocess_arctic, preprocess_libritts,
-                            preprocess_ljs, preprocess_thchs,
-                            preprocess_thchs_kaldi)
+from src.app.pre.ds import (preprocess_arctic, preprocess_custom,
+                            preprocess_libritts, preprocess_ljs,
+                            preprocess_thchs, preprocess_thchs_kaldi)
 from src.app.pre.inference import (accent_apply, accent_set, add_text,
                                    ipa_convert_text, map_text,
                                    map_to_prep_symbols, normalize_text)
@@ -14,7 +14,8 @@ from src.app.pre.text import (preprocess_text, text_convert_to_ipa,
                               text_normalize)
 from src.app.pre.tools import remove_silence_plot
 from src.app.pre.wav import (preprocess_wavs, wavs_normalize,
-                             wavs_remove_silence, wavs_upsample)
+                             wavs_remove_silence, wavs_stereo_to_mono,
+                             wavs_upsample)
 from src.cli.utils import parse_tuple_list, split_hparams_string
 from src.core.common.language import Language
 
@@ -45,6 +46,13 @@ def init_preprocess_libritts_parser(parser: ArgumentParser):
   parser.add_argument('--auto_dl', action="store_true")
   parser.add_argument('--ds_name', type=str, required=True, default='libritts')
   return preprocess_libritts
+
+
+def init_preprocess_custom_parser(parser: ArgumentParser):
+  parser.add_argument('--path', type=str, required=True, help='LibriTTS dataset directory')
+  parser.add_argument('--ds_name', type=str, required=True, default='custom')
+  parser.set_defaults(auto_dl=False)
+  return preprocess_custom
 
 
 def init_preprocess_thchs_kaldi_parser(parser: ArgumentParser):
@@ -120,6 +128,12 @@ def init_wavs_upsample_parser(parser: ArgumentParser):
   parser.add_argument('--dest_wav_name', type=str, required=True)
   parser.add_argument('--rate', type=int, required=True)
   return wavs_upsample
+
+def init_wavs_stereo_to_mono_parser(parser: ArgumentParser):
+  parser.add_argument('--ds_name', type=str, required=True)
+  parser.add_argument('--orig_wav_name', type=str, required=True)
+  parser.add_argument('--dest_wav_name', type=str, required=True)
+  return wavs_stereo_to_mono
 
 
 def init_wavs_remove_silence_parser(parser: ArgumentParser):

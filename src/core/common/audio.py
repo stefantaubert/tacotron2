@@ -194,6 +194,8 @@ def normalize_file(in_path, out_path):
 
 
 def normalize_wav(wav: np.ndarray):
+  # Mono or stereo is supported.
+
   if wav.dtype == np.int16 and np.min(wav) == get_min_value(np.int16):
     return wav
   if wav.dtype == np.int32 and np.min(wav) == get_min_value(np.int32):
@@ -238,7 +240,10 @@ def is_overamp(wav: np.ndarray) -> bool:
   return is_overamplified
 
 
-def resample_core(wav, sr, new_rate):
+def resample_core(wav: np.ndarray, sr: int, new_rate: int) -> np.ndarray:
+  if not check_wav_is_mono(wav):
+    raise Exception("It is only possible to resample mono-channel wavs.")
+
   if sr != new_rate:
     origin_dtype = wav.dtype
     wav_float = convert_wav(wav, np.float32)
@@ -249,10 +254,38 @@ def resample_core(wav, sr, new_rate):
   return wav
 
 
-def upsample_file(origin, dest, new_rate):
+def upsample_file(origin: str, dest: str, new_rate: int) -> None:
   sampling_rate, wav = read(origin)
   wav = resample_core(wav, sampling_rate, new_rate)
   write(filename=dest, rate=new_rate, data=wav)
+
+
+def check_wav_is_stereo(wav: np.ndarray) -> bool:
+  channels_axis = 1
+  wav_is_stereo = len(wav.shape) == 2 and wav.shape[channels_axis] == 2
+  return wav_is_stereo
+
+
+def check_wav_is_mono(wav: np.ndarray) -> bool:
+  wav_is_mono = len(wav.shape) == 1
+  return wav_is_mono
+
+
+def stereo_to_mono(wav: np.ndarray) -> np.ndarray:
+  assert check_wav_is_stereo(wav)
+
+  origin_dtype = wav.dtype
+  wav_float = convert_wav(wav, np.float32)
+  channels_axis = 1
+  wav_float = wav_float.sum(axis=channels_axis) / 2
+  wav = convert_wav(wav_float, origin_dtype)
+  return wav
+
+
+def stereo_to_mono_file(origin: str, dest: str) -> None:
+  sampling_rate, wav = read(origin)
+  wav = stereo_to_mono(wav)
+  write(filename=dest, rate=sampling_rate, data=wav)
 
 
 def get_duration_s(wav, sampling_rate) -> float:
@@ -292,8 +325,12 @@ def get_wav_tensor_segment(wav_tensor: torch.Tensor, segment_length: int) -> tor
 
 
 if __name__ == "__main__":
-  a, b = read("/datasets/libriTTS/dev-clean/8842/304647/8842_304647_000050_000000.wav")
-  a, b = read("/datasets/l2arctic/suitcase_corpus/wav/tlv.wav")
+  sr, wav = read("/datasets/NNLV_pilot/40mins/audio/0.wav")
+  #sr, wav = read("/datasets/l2arctic/suitcase_corpus/wav/tlv.wav")
+  wav = normalize_wav(wav)
+  wav = stereo_to_mono(wav)
+  wav = resample_core(wav, sr, 22050)
+  write("/tmp/test.wav", 22050, wav)
   normalize_file("/datasets/thchs_wav/wav/train/A2/A2_21.wav", "/tmp/A2_21.wav")
   import tempfile
   dest = tempfile.mktemp("-A13_224.wav")

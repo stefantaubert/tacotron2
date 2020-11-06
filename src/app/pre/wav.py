@@ -1,13 +1,11 @@
 import os
 from functools import partial
+from typing import Any
 
 from src.app.pre.ds import get_ds_dir, load_ds_csv
 from src.core.common.utils import get_subdir
-from src.core.pre.wav import WavData, WavDataList
-from src.core.pre.wav import normalize as wavs_normalize_core
-from src.core.pre.wav import preprocess as wavs_preprocess_core
-from src.core.pre.wav import remove_silence as wavs_remove_silence_core
-from src.core.pre.wav import upsample as wavs_upsample_core
+from src.core.pre.wav import (WavData, WavDataList, normalize, preprocess,
+                              remove_silence, stereo_to_mono, upsample)
 
 _wav_data_csv = "data.csv"
 
@@ -38,12 +36,12 @@ def preprocess_wavs(base_dir: str, ds_name: str, wav_name: str):
     print("Already exists.")
   else:
     data = load_ds_csv(ds_dir)
-    wav_data = wavs_preprocess_core(data)
+    wav_data = preprocess(data)
     os.makedirs(wav_dir)
     save_wav_csv(wav_dir, wav_data)
 
 
-def _wav_op(base_dir: str, ds_name: str, origin_wav_name: str, destination_wav_name: str, op):
+def _wav_op(base_dir: str, ds_name: str, origin_wav_name: str, destination_wav_name: str, op: Any):
   ds_dir = get_ds_dir(base_dir, ds_name)
   dest_wav_dir = get_wav_dir(ds_dir, destination_wav_name)
   if os.path.isdir(dest_wav_dir):
@@ -59,19 +57,25 @@ def _wav_op(base_dir: str, ds_name: str, origin_wav_name: str, destination_wav_n
 
 def wavs_normalize(base_dir: str, ds_name: str, orig_wav_name: str, dest_wav_name: str):
   print("Normalizing wavs...")
-  op = partial(wavs_normalize_core)
+  op = partial(normalize)
   _wav_op(base_dir, ds_name, orig_wav_name, dest_wav_name, op)
 
 
 def wavs_upsample(base_dir: str, ds_name: str, orig_wav_name: str, dest_wav_name: str, rate: int):
   print("Resampling wavs...")
-  op = partial(wavs_upsample_core, new_rate=rate)
+  op = partial(upsample, new_rate=rate)
+  _wav_op(base_dir, ds_name, orig_wav_name, dest_wav_name, op)
+
+
+def wavs_stereo_to_mono(base_dir: str, ds_name: str, orig_wav_name: str, dest_wav_name: str):
+  print("Converting wavs from stereo to mono...")
+  op = partial(stereo_to_mono)
   _wav_op(base_dir, ds_name, orig_wav_name, dest_wav_name, op)
 
 
 def wavs_remove_silence(base_dir: str, ds_name: str, orig_wav_name: str, dest_wav_name: str, chunk_size: int, threshold_start: float, threshold_end: float, buffer_start_ms: float, buffer_end_ms: float):
   print("Removing silence in wavs...")
-  op = partial(wavs_remove_silence_core, chunk_size=chunk_size, threshold_start=threshold_start,
+  op = partial(remove_silence, chunk_size=chunk_size, threshold_start=threshold_start,
                threshold_end=threshold_end, buffer_start_ms=buffer_start_ms, buffer_end_ms=buffer_end_ms)
   _wav_op(base_dir, ds_name, orig_wav_name, dest_wav_name, op)
 
