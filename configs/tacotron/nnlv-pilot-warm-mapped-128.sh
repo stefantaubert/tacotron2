@@ -33,7 +33,7 @@ python -m src.cli.runner tacotron-train \
   --use_weights_map \
   --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint"
 
-python -m src.cli.runner tacotron-continue-train --train_name=$train_name --custom_hparams="epochs_per_checkpoint=$epochs_per_checkpoint"
+python -m src.cli.runner tacotron-continue-train --train_name=$train_name --custom_hparams="batch_size=$batch_size,iters_per_checkpoint=0,epochs_per_checkpoint=$epochs_per_checkpoint"
 # Inference
 
 python -m src.cli.runner tacotron-validate --train_name=$train_name
@@ -47,7 +47,7 @@ python -m src.cli.runner prepare-inference-map \
 export text_name="ger-nord"
 export text_name="eng-democritus"
 export text_name="chn-north"
-export speaker="thchs,D4"
+export speaker="nnlv_pilot_10s,phd1"
 
 python -m src.cli.runner tacotron-infer \
   --train_name=$train_name \

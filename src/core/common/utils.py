@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 import random
 import tarfile
@@ -71,6 +72,55 @@ def console_out_len(text: str):
   res = len([c for c in text if unicodedata.combining(c) == 0])
   return res
 
+# TODO: tests
+def make_batches_v_h(arr: List[T], v: int, h: int) -> List[List[T]]:
+  vertical_merge_count = math.ceil(len(arr) / v)
+  # print("v", vertical_merge_count)
+  horizontal_merge_count = math.ceil(vertical_merge_count / h)
+  # print("h", horizontal_merge_count)
+
+  current = 0
+  vertical_batches = []
+
+  for _ in range(vertical_merge_count):
+    vertical_batch = arr[current:current + v]
+    current += v
+    vertical_batches.append(vertical_batch)
+  # print(vertical_batches)
+
+  current = 0
+  horizontal_batches = []
+  for _ in range(horizontal_merge_count):
+    horizontal_batch = vertical_batches[current:current + h]
+    current += h
+    horizontal_batches.append(horizontal_batch)
+
+  return horizontal_batches
+
+# TODO: tests
+def make_batches_h_v(arr: List[T], v: int, h: int) -> List[List[T]]:
+  horizontal_merge_count = math.ceil(len(arr) / h)
+  # print("v", vertical_merge_count)
+  vertical_merge_count = math.ceil(horizontal_merge_count / v)
+  # print("h", horizontal_merge_count)
+
+  current = 0
+  horizontal_batches = []
+  for _ in range(horizontal_merge_count):
+    horizontal_batch = arr[current:current + h]
+    current += h
+    horizontal_batches.append(horizontal_batch)
+
+  current = 0
+  vertical_batches = []
+
+  for _ in range(vertical_merge_count):
+    vertical_batch = horizontal_batches[current:current + v]
+    current += v
+    vertical_batches.append(vertical_batch)
+  # print(vertical_batches)
+
+  return vertical_batches
 
 class GenericList(list, Generic[T]):
   def save(self, file_path: str):

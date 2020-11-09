@@ -21,4 +21,4 @@ export arctic_data="$datasets_dir/l2arctic"
 export lbritts_data="$datasets_dir/libriTTS"
 
 # optional
-export nnlv_pilot_data="$datasets_dir/NNLV_pilot_10s"
+export nnlv_pilot_data="$datasets_dir/NNLV_pilot"
