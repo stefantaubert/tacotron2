@@ -99,7 +99,7 @@ def validate_main(base_dir: str, train_name: str, waveglow: str = DEFAULT_WAVEGL
 if __name__ == "__main__":
   validate_main(
     base_dir="/datasets/models/taco2pt_v5",
-    train_name="arctic_ipa_warm",
+    train_name="ljs_ipa_scratch_128",
   )
 
   # validate(

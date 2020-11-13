@@ -3,11 +3,11 @@ input: wav data
 output: mel data
 """
 from logging import getLogger
-from src.core.pre.ds import DsDataList
 from typing import Any, Dict, List, Optional
 
 from src.core.common.taco_stft import TacotronSTFT, TSTFTHParams
 from src.core.common.train import overwrite_custom_hparams
+from src.core.pre.ds import DsDataList
 from src.core.pre.wav import WavDataList
 
 

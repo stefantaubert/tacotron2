@@ -140,7 +140,7 @@ def continue_train_main(base_dir: str, train_name: str, custom_hparams: Optional
 
 
 if __name__ == "__main__":
-  mode = 0
+  mode = 6
   if mode == 0:
     train_main(
       base_dir="/datasets/models/taco2pt_v5",
@@ -203,4 +203,22 @@ if __name__ == "__main__":
       weights_train_name="ljs_ipa_scratch",
       # weights_map="maps/weights/thchs_ipa_acc_ljs_ipa.json",
       custom_hparams="batch_size=17,iters_per_checkpoint=0,epochs_per_checkpoint=1"
+    )
+  elif mode == 6:
+    prep_dir = get_prepared_dir(
+      base_dir="/datasets/models/taco2pt_v5",
+      prep_name="ljs_ipa"
+    )
+    train_dir = get_train_dir(
+      base_dir="/datasets/models/taco2pt_v5",
+      train_name="ljs_ipa_scratch_128",
+      create=False
+    )
+
+    split_dataset(
+      prep_dir=prep_dir,
+      train_dir=train_dir,
+      test_size=0.001,
+      validation_size=0.01,
+      split_seed=1234,
     )

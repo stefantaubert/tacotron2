@@ -9,6 +9,7 @@ from src.app.pre.inference import (accent_apply, accent_set, add_text,
 from src.app.pre.mapping import (create_or_update_inference_map_main,
                                  create_or_update_weights_map_main)
 from src.app.pre.mel import preprocess_mels
+from src.app.pre.plots import plot_mels
 from src.app.pre.prepare import prepare_ds
 from src.app.pre.text import (preprocess_text, text_convert_to_ipa,
                               text_normalize)
@@ -74,6 +75,18 @@ def preprocess_mels_cli(**args):
   preprocess_mels(**args)
 
 
+def init_mels_plot_parser(parser: ArgumentParser):
+  parser.add_argument('--ds_name', type=str, required=True)
+  parser.add_argument('--wav_name', type=str, required=True)
+  parser.add_argument('--custom_hparams', type=str)
+  return plot_mels_cli
+
+
+def plot_mels_cli(**args):
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  plot_mels(**args)
+
+
 def init_prepare_ds_parser(parser: ArgumentParser):
   parser.add_argument('--prep_name', type=str, required=True)
   parser.add_argument('--ds_speakers', type=str, required=True)
@@ -128,6 +141,7 @@ def init_wavs_upsample_parser(parser: ArgumentParser):
   parser.add_argument('--dest_wav_name', type=str, required=True)
   parser.add_argument('--rate', type=int, required=True)
   return wavs_upsample
+
 
 def init_wavs_stereo_to_mono_parser(parser: ArgumentParser):
   parser.add_argument('--ds_name', type=str, required=True)

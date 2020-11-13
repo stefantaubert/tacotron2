@@ -47,7 +47,6 @@ class DsDataList(GenericList[DsData]):
   def load_init(self):
     for item in self.items():
       item.load_init()
-from functools import partial
 
 def _preprocess_core(dir_path: str, auto_dl: bool, dl_func: Optional[Any], parse_func) -> Tuple[
         SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:

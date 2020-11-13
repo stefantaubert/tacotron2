@@ -15,9 +15,7 @@ export prep_name="libritts_ipa_22050"
 ## Quick-Test
 export text_path="examples/quick-test.txt"
 export text_name="quick-test"
-python -m src.cli.runner prepare-text-add --filepath=$text_path --prep_name=$prep_name --text_name=$text_name --lang=ENG
-python -m src.cli.runner prepare-text-normalize --prep_name=$prep_name --text_name=$text_name
-python -m src.cli.runner prepare-text-to-ipa --prep_name=$prep_name --text_name=$text_name
+python -m src.cli.runner prepare-text-add --filepath=$text_path --prep_name=$prep_name --text_name=$text_name --lang=IPA
 
 
 

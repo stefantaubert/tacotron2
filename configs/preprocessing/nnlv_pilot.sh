@@ -1,6 +1,7 @@
-#################
-# Preprocessing #
-#################
+source /datasets/code/tacotron2/configs/envs/caps.sh
+###################
+## Preprocessing ##
+###################
 
 # Init
 
@@ -54,6 +55,10 @@ python -m src.cli.runner wavs-resample \
   --rate=22050
 
 python -m src.cli.runner preprocess-mels \
+  --ds_name=$ds_name \
+  --wav_name="22050Hz_norm_mono"
+
+python -m src.cli.runner mels-plot \
   --ds_name=$ds_name \
   --wav_name="22050Hz_norm_mono"
 
