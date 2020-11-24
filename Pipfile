@@ -1,0 +1,36 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+autopep8 = "*"
+pylint = "*"
+pycodestyle = "*"
+isort = "*"
+
+[packages]
+epitran = "*"
+pandas = "*"
+librosa = "*"
+plotly = "*"
+torch = "*"
+scikit-image = "*"
+nltk = "*"
+matplotlib = "*"
+tqdm = "*"
+dragonmapper = "*"
+ipapy = "*"
+inflect = "*"
+wget = "*"
+numpy = "*"
+gdown = "*"
+scikit-learn = "*"
+numba = "*"
+scipy = "*"
+tensorboard = "*"
+Unidecode = "*"
+Pillow = "*"
+
+[requires]
+python_version = "3.7"

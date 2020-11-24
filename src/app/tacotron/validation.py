@@ -2,7 +2,6 @@ import os
 from typing import Dict, Optional
 
 import matplotlib.pylab as plt
-
 from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log,
                         load_prep_name, load_testset, load_valset,
                         save_val_comparison, save_val_orig_plot,
