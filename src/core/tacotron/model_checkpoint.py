@@ -92,6 +92,6 @@ def convert_v1_to_v2_model(old_model_path: str, custom_hparams: Optional[Dict[st
     accents=accents.raw()
   )
 
-  new_model_path = old_model_path + "_" + get_pytorch_filename(chp.iteration)
+  new_model_path = f"{old_model_path}_{get_pytorch_filename(chp.iteration)}"
 
   chp.save(new_model_path, logging.getLogger())
