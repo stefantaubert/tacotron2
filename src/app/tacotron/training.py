@@ -140,10 +140,11 @@ def continue_train_main(base_dir: str, train_name: str, custom_hparams: Optional
 
 
 if __name__ == "__main__":
-  mode = 6
+  mode = 0
   if mode == 0:
     train_main(
-      base_dir="/datasets/models/taco2pt_v5",
+      # base_dir="/datasets/models/taco2pt_v5",
+      base_dir="/home/stefan/taco2pt_v5",
       train_name="debug",
       prep_name="arctic_ipa",
       custom_hparams={
