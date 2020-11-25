@@ -3,12 +3,9 @@ from logging import Logger
 from shutil import copyfile
 from typing import List
 
-from unidecode import unidecode as convert_to_ascii
-
 from src.app.pre.io import get_pre_dir
 from src.app.utils import prepare_logger
 from src.core.common.accents_dict import AccentsDict
-from src.core.common.gender import Gender
 from src.core.common.language import Language
 from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
 from src.core.common.symbol_id_dict import SymbolIdDict
@@ -17,6 +14,7 @@ from src.core.pre.ds import (DsData, DsDataList, arctic_preprocess,
                              custom_preprocess, get_speaker_examples,
                              libritts_preprocess, ljs_preprocess,
                              thchs_kaldi_preprocess, thchs_preprocess)
+from unidecode import unidecode as convert_to_ascii
 
 # don't do preprocessing here because inconsistent with mels because it is not always usefull to calc mels instand
 # from src.app.pre.text import preprocess_text

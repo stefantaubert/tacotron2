@@ -27,4 +27,3 @@ def split_hparams_string(hparams: Optional[str]) -> Optional[Dict[str, str]]:
   assignments = hparams.split(",")
   result = dict([x.split("=") for x in assignments])
   return result
-
