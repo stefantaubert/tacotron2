@@ -114,3 +114,5 @@ LJSpeech-1.1
 tacotron_output
 .vscode
 examples/quick-test.txt
+
+*.debug.py
