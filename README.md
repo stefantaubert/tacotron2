@@ -133,21 +133,14 @@ and then copy the content of the file `~/.ssh/gloud-rsa.pub` to properties -> SS
 ### Checkout repo
 
 ```bash
-# get link from https://www.anaconda.com/products/individual and then 'Linux Python 3.7 64-Bit (x86) Installer' copy link
-wget https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
-bash Anaconda3-2020.02-Linux-x86_64.sh
-# reopen shell
-rm Anaconda3-2020.02-Linux-x86_64.sh
-
 git clone https://github.com/stefantaubert/tacotron2
 cd tacotron2
-# Python 3.8 is not yet supported because tensorflow 1.x will not run there
-conda create -n taco2pytorch python=3.7 -y
-conda activate taco2pytorch
-pip install -r requirements.txt
+sudo apt install -y python3.8 python3.8-distutils python3.8-dev
+python3.8 -m pip install pipenv
+python3.8 -m pipenv install --dev
 ```
 
-to be able to run training without being connected with ssh:
+to be able to run training without being connected via ssh:
 
 ```bash
 sudo apt install screen
@@ -398,21 +391,13 @@ These maps are used to translate unknown symbols in the text which should be inf
 ## Notes
 
 Create custom pylint file: `pylint --generate-rcfile > pylintrc`
-Sort imports on save (not really working):
+Sort imports on save:
 
 ```json
 {
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
   }
-}
-```
-
-For custom isort (not working)
-
-```json
-{
-  "python.sortImports.path": "/home/mi/anaconda3/envs/py37/bin/isort"
 }
 ```
 
@@ -434,11 +419,9 @@ sudo apt-get install praat
 
 ### Requirements
 
-- `numba==0.48` is needed because `librosa` otherwise fails later in runtime [see](https://github.com/librosa/librosa/issues/1160)
-- `gdown` only required for downloading pretrained waveglow-model
-- `wget` only required for automatically downloading datasets
-- `scikit-image` only for comparing mels for waveglow evaluation
-- `setuptools==50.3.0` for isort, becaus otherwise the error occurs `"Distutils was imported before Setuptools. This usage is discouraged "`
+- `gdown` required for downloading pretrained waveglow-model
+- `wget` required for automatically downloading datasets
+- `scikit-image` required for comparing mels for waveglow evaluation
 
 ### Configs
 
@@ -446,13 +429,6 @@ I also successfully tryed this configurations:
 
 - Cuda 10.0, Nvidia driver 440.64.00, cuDNN 7.6.5 with GTX 1070 Mobile 8GB
 - Cuda 10.2.89, Nvidia driver 440.100, cuDNN not installed with RTX 2070 8GB
-
-to save requirements:
-
-```bash
-pip install pipreqs
-pipreqs . --savepath="pipreqs.txt"
-```
 
 ## How to prepare texts
 

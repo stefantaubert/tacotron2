@@ -143,16 +143,17 @@ if __name__ == "__main__":
   mode = 0
   if mode == 0:
     train_main(
-      # base_dir="/datasets/models/taco2pt_v5",
-      base_dir="/home/stefan/taco2pt_v5",
+      base_dir="/datasets/models/taco2pt_v5",
+      # base_dir="/home/stefan/taco2pt_v5",
       train_name="debug",
       prep_name="arctic_ipa",
       custom_hparams={
         "batch_size": 17,
         "iters_per_checkpoint": 5,
         "epochs_per_checkpoint": 1,
-        "accents_use_own_symbols": False
-      }
+        "accents_use_own_symbols": False,
+      },
+      validation_size=0.001,
     )
 
   elif mode == 1:
