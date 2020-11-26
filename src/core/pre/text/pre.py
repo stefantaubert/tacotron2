@@ -1,15 +1,15 @@
 from dataclasses import dataclass
-from typing import List, Tuple
-
-from tqdm import tqdm
+from logging import Logger
+from typing import List, Optional, Tuple
 
 from src.core.common.accents_dict import AccentsDict
 from src.core.common.language import Language
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.symbols_dict import SymbolsDict
-from src.core.common.text import deserialize_list, serialize_list
+from src.core.common.text import (ENG_TO_IPA_MODE, deserialize_list,
+                                  serialize_list)
 from src.core.common.utils import GenericList, get_counter
-from src.core.pre.ds import DsData, DsDataList
+from src.core.pre.ds import DsDataList
 from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
 
 
@@ -31,18 +31,21 @@ class TextDataList(GenericList[TextData]):
       item.load_init()
 
 
-
-def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
+def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, mode: Optional[ENG_TO_IPA_MODE], logger: Logger) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
   processed_data: List[Tuple[int, List[str], List[int], Language]] = []
 
-  values: TextData
-  for values in tqdm(data.items()):
+  for values in data.items(True):
+    if values.lang == Language.ENG and mode is None:
+      ex = "Please specify the ipa conversion mode."
+      logger.exception(ex)
+      raise Exception(ex)
     new_symbols, new_accent_ids = symbols_convert_to_ipa(
       symbols=symbol_converter.get_symbols(values.serialized_symbol_ids),
       lang=values.lang,
       accent_ids=deserialize_list(values.serialized_accent_ids),
       ignore_arcs=ignore_arcs,
-      ignore_tones=ignore_tones
+      ignore_tones=ignore_tones,
+      mode=mode,
     )
     processed_data.append((values.entry_id, new_symbols, new_accent_ids, Language.IPA))
 
@@ -52,8 +55,7 @@ def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_to
 def normalize(data: TextDataList, symbol_converter: SymbolIdDict) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
   processed_data: List[Tuple[int, List[str], List[int], Language]] = []
 
-  values: TextData
-  for values in tqdm(data):
+  for values in data.items(True):
     new_symbols, new_accent_ids = symbols_normalize(
       symbols=symbol_converter.get_symbols(values.serialized_symbol_ids),
       lang=values.lang,
@@ -68,8 +70,7 @@ def normalize(data: TextDataList, symbol_converter: SymbolIdDict) -> Tuple[TextD
 def preprocess(data: DsDataList, symbol_ids: SymbolIdDict) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
   processed_data: List[Tuple[int, List[str], List[int], Language]] = []
 
-  values: DsData
-  for values in tqdm(data):
+  for values in data.items(True):
     symbols: List[str] = symbol_ids.get_symbols(deserialize_list(values.serialized_symbols))
     accents: List[int] = deserialize_list(values.serialized_accents)
     processed_data.append((values.entry_id, symbols, accents, values.lang))

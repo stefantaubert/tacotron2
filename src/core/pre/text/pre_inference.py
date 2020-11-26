@@ -1,14 +1,15 @@
 from dataclasses import dataclass
 from logging import Logger
 from math import ceil
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 from src.core.common.accents_dict import AccentsDict
 from src.core.common.language import Language
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.symbols_map import SymbolsMap
-from src.core.common.text import (deserialize_list, serialize_list,
-                                  split_sentences, text_to_symbols)
+from src.core.common.text import (ENG_TO_IPA_MODE, deserialize_list,
+                                  serialize_list, split_sentences,
+                                  text_to_symbols)
 from src.core.common.utils import (GenericList, console_out_len,
                                    get_unique_items)
 from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
@@ -225,16 +226,21 @@ def update_symbols_and_text(sentences: SentenceList, sents_new_symbols: List[Lis
   return symbols, sentences
 
 
-def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool) -> Tuple[SymbolIdDict, SentenceList]:
+def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, mode: Optional[ENG_TO_IPA_MODE], logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
 
   sents_new_symbols = []
   for sentence in sentences.items(True):
+    if sentence.lang == Language.ENG and mode is None:
+      ex = "Please specify the ipa conversion mode."
+      logger.exception(ex)
+      raise Exception(ex)
     new_symbols, new_accent_ids = symbols_convert_to_ipa(
       symbols=text_symbols.get_symbols(sentence.serialized_symbols),
       lang=sentence.lang,
       accent_ids=deserialize_list(sentence.serialized_accents),
       ignore_arcs=ignore_arcs,
-      ignore_tones=ignore_tones
+      ignore_tones=ignore_tones,
+      mode=mode,
     )
     assert len(new_symbols) == len(new_accent_ids)
     sentence.lang = Language.IPA

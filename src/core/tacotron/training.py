@@ -1,15 +1,10 @@
 import logging
 import time
 from logging import Logger
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Callable, Dict, Iterator, List, Optional
 
 import numpy as np
 import torch
-from torch import nn
-from torch.nn import Parameter
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-
 from src.core.common.accents_dict import PADDING_ACCENT, AccentsDict
 from src.core.common.checkpoint import Checkpoint, get_iteration
 from src.core.common.speakers_dict import SpeakersDict
@@ -36,6 +31,10 @@ from src.core.tacotron.model import (SPEAKER_EMBEDDING_LAYER_NAME,
 from src.core.tacotron.model_checkpoint import CheckpointTacotron
 from src.core.tacotron.model_weights import (get_mapped_speaker_weights,
                                              get_mapped_symbol_weights)
+from torch import nn
+from torch.nn import Parameter
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 
 class Tacotron2Loss(nn.Module):
@@ -77,7 +76,7 @@ def validate(model: nn.Module, criterion: nn.Module, val_loader: DataLoader, ite
   return avg_val_loss
 
 
-def train(warm_model: Optional[CheckpointTacotron], custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, symbols: SymbolIdDict, speakers: SpeakersDict, accents: AccentsDict, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, weights_checkpoint: Optional[CheckpointTacotron], weights_map: Optional[SymbolsMap], map_from_speaker_name: Optional[str], logger: Logger, checkpoint_logger: Logger):
+def train(warm_model: Optional[CheckpointTacotron], custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, symbols: SymbolIdDict, speakers: SpeakersDict, accents: AccentsDict, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Callable[[str], None], weights_checkpoint: Optional[CheckpointTacotron], weights_map: Optional[SymbolsMap], map_from_speaker_name: Optional[str], logger: Logger, checkpoint_logger: Logger):
   logger.info("Starting new model...")
   _train(
     custom_hparams=custom_hparams,
@@ -98,7 +97,7 @@ def train(warm_model: Optional[CheckpointTacotron], custom_hparams: Optional[Dic
   )
 
 
-def continue_train(checkpoint: CheckpointTacotron, custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, logger: Logger, checkpoint_logger: Logger):
+def continue_train(checkpoint: CheckpointTacotron, custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Callable[[str], None], logger: Logger, checkpoint_logger: Logger):
   logger.info("Continuing training from checkpoint...")
   _train(
     custom_hparams=custom_hparams,
@@ -130,7 +129,7 @@ def log_symbol_weights(model: nn.Module, logger: Logger):
   logger.info(str(model.state_dict()[SYMBOL_EMBEDDING_LAYER_NAME]))
 
 
-def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Any, speakers: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict, checkpoint: Optional[CheckpointTacotron], warm_model: Optional[CheckpointTacotron], weights_checkpoint: Optional[CheckpointTacotron], weights_map: SymbolsMap, map_from_speaker_name: Optional[str], logger: Logger, checkpoint_logger: Logger):
+def _train(custom_hparams: Optional[Dict[str, str]], taco_logger: Tacotron2Logger, trainset: PreparedDataList, valset: PreparedDataList, save_callback: Callable[[str], None], speakers: SpeakersDict, accents: AccentsDict, symbols: SymbolIdDict, checkpoint: Optional[CheckpointTacotron], warm_model: Optional[CheckpointTacotron], weights_checkpoint: Optional[CheckpointTacotron], weights_map: SymbolsMap, map_from_speaker_name: Optional[str], logger: Logger, checkpoint_logger: Logger):
   """Training and validation logging results to tensorboard and stdout
   Params
   ------

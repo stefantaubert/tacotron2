@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6d6bfc4e1bca54ecbda401f19c97ce1762fc44389cf7a4a35b36d28d7751b41f"
+            "sha256": "8d4c9db69725383349edea2e7faea2c74ec294c8f654f536f128a8cf24aaec17"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -104,6 +104,11 @@
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'",
             "version": "==7.1.2"
+        },
+        "cmudict-parser": {
+            "editable": true,
+            "git": "ssh://git@github.com/stefantaubert/cmudict-parser.git",
+            "ref": "f0251789f44ffc45b9ad27a5ead1aeef6e081900"
         },
         "cycler": {
             "hashes": [

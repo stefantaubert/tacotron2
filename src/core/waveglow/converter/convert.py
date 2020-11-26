@@ -6,7 +6,6 @@ import tempfile
 from dataclasses import asdict
 
 import torch
-
 from src.core.waveglow.hparams import HParams
 from src.core.waveglow.train import CheckpointWaveglow
 
@@ -57,7 +56,7 @@ def _convert_core(source: str, destination: str):
   # if "iteration" in checkpoint_dict.keys():
   #   iteration = checkpoint_dict["iteration"]
 
-  optimizer = dict()
+  optimizer = {}
   # if "optimizer" in checkpoint_dict.keys():
   #   optimizer = checkpoint_dict["optimizer"]
 
@@ -65,7 +64,7 @@ def _convert_core(source: str, destination: str):
   # if "learning_rate" in checkpoint_dict.keys():
   #   learning_rate = checkpoint_dict["learning_rate"]
 
-  state_dict = dict()
+  state_dict = {}
   if "model" in checkpoint_dict.keys():
     model = checkpoint_dict["model"]
     state_dict = model.state_dict()

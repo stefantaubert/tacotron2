@@ -32,7 +32,7 @@ def try_load_checkpoint(base_dir: str, train_name: Optional[str], checkpoint: Op
   return result
 
 
-def save_checkpoint(checkpoint: CheckpointTacotron, save_checkpoint_dir: str, logger: Logger):
+def save_checkpoint(checkpoint: CheckpointTacotron, save_checkpoint_dir: str, logger: Logger) -> None:
   checkpoint_path = os.path.join(
     save_checkpoint_dir, get_pytorch_filename(checkpoint.iteration))
   checkpoint.save(checkpoint_path, logger)

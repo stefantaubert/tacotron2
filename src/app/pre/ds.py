@@ -1,22 +1,19 @@
 import os
 from logging import Logger
 from shutil import copyfile
-from typing import List
-
-from unidecode import unidecode as convert_to_ascii
+from typing import Callable, Tuple
 
 from src.app.pre.io import get_pre_dir
 from src.app.utils import prepare_logger
 from src.core.common.accents_dict import AccentsDict
-from src.core.common.gender import Gender
-from src.core.common.language import Language
 from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
 from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.utils import cast_as, get_subdir
+from src.core.common.utils import get_subdir
 from src.core.pre.ds import (DsData, DsDataList, arctic_preprocess,
                              custom_preprocess, get_speaker_examples,
                              libritts_preprocess, ljs_preprocess,
                              thchs_kaldi_preprocess, thchs_preprocess)
+from unidecode import unidecode as convert_to_ascii
 
 # don't do preprocessing here because inconsistent with mels because it is not always usefull to calc mels instand
 # from src.app.pre.text import preprocess_text
@@ -44,11 +41,6 @@ def get_ds_examples_dir(ds_dir: str, create: bool = False):
 def load_ds_csv(ds_dir: str) -> DsDataList:
   path = os.path.join(ds_dir, _ds_data_csv)
   res = DsDataList.load(DsData, path)
-  # res = cast_as(res, DsDataList)
-  # for item in res.items():
-  #   item.lang = Language(item.lang)
-  #   item.gender = Gender(item.gender)
-  #   item.speaker_name = str(item.speaker_name)
   return res
 
 
@@ -101,38 +93,44 @@ def _save_speaker_examples(ds_dir: str, examples: DsDataList, logger: Logger) ->
 
 
 def preprocess_thchs(base_dir: str, ds_name: str, path: str, auto_dl: bool):
-  print("Preprocessing THCHS-30 dataset...")
-  _preprocess_ds(base_dir, ds_name, path, auto_dl, thchs_preprocess)
+  logger = prepare_logger()
+  logger.info("Preprocessing THCHS-30 dataset...")
+  _preprocess_ds(base_dir, ds_name, path, auto_dl, thchs_preprocess, logger=logger)
 
 
 def preprocess_thchs_kaldi(base_dir: str, ds_name: str, path: str, auto_dl: bool):
-  print("Preprocessing THCHS-30 (Kaldi-Version) dataset...")
-  _preprocess_ds(base_dir, ds_name, path, auto_dl, thchs_kaldi_preprocess)
+  logger = prepare_logger()
+  logger.info("Preprocessing THCHS-30 (Kaldi-Version) dataset...")
+  _preprocess_ds(base_dir, ds_name, path, auto_dl, thchs_kaldi_preprocess, logger=logger)
 
 
 def preprocess_ljs(base_dir: str, ds_name: str, path: str, auto_dl: bool):
-  print("Preprocessing LJSpeech dataset...")
-  _preprocess_ds(base_dir, ds_name, path, auto_dl, ljs_preprocess)
+  logger = prepare_logger()
+  logger.info("Preprocessing LJSpeech dataset...")
+  _preprocess_ds(base_dir, ds_name, path, auto_dl, ljs_preprocess, logger=logger)
 
 
 def preprocess_libritts(base_dir: str, ds_name: str, path: str, auto_dl: bool):
-  print("Preprocessing LibriTTS dataset...")
-  _preprocess_ds(base_dir, ds_name, path, auto_dl, libritts_preprocess)
+  logger = prepare_logger()
+  logger.info("Preprocessing LibriTTS dataset...")
+  _preprocess_ds(base_dir, ds_name, path, auto_dl, libritts_preprocess, logger=logger)
 
 
 def preprocess_custom(base_dir: str, ds_name: str, path: str, auto_dl: bool):
-  print("Preprocessing custom dataset...")
-  _preprocess_ds(base_dir, ds_name, path, auto_dl, custom_preprocess)
+  logger = prepare_logger()
+  logger.info("Preprocessing custom dataset...")
+  _preprocess_ds(base_dir, ds_name, path, auto_dl, custom_preprocess, logger=logger)
 
 
 def preprocess_arctic(base_dir: str, ds_name: str, path: str, auto_dl: bool):
-  print("Preprocessing L2 Arctic dataset...")
-  _preprocess_ds(base_dir, ds_name, path, auto_dl, arctic_preprocess)
-
-
-def _preprocess_ds(base_dir: str, ds_name: str, path: str, auto_dl: bool, preprocess_func):
-  ds_dir = get_ds_dir(base_dir, ds_name, create=False)
   logger = prepare_logger()
+  logger.info("Preprocessing L2 Arctic dataset...")
+  _preprocess_ds(base_dir, ds_name, path, auto_dl, arctic_preprocess, logger=logger)
+
+
+def _preprocess_ds(base_dir: str, ds_name: str, path: str, auto_dl: bool, preprocess_func: Callable[[str, bool], Tuple[
+  SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]], logger: Logger):
+  ds_dir = get_ds_dir(base_dir, ds_name, create=False)
   if os.path.isdir(ds_dir):
     logger.info("Dataset already processed.")
   else:

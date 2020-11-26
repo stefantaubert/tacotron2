@@ -18,9 +18,8 @@ import wget
 from matplotlib.figure import Figure
 from PIL import Image
 from scipy.spatial.distance import cosine
-from tqdm import tqdm
-
 from src.core.common.globals import CSV_SEPERATOR
+from tqdm import tqdm
 
 T = TypeVar('T')
 
@@ -73,6 +72,8 @@ def console_out_len(text: str):
   return res
 
 # TODO: tests
+
+
 def make_batches_v_h(arr: List[T], v: int, h: int) -> List[List[T]]:
   vertical_merge_count = math.ceil(len(arr) / v)
   # print("v", vertical_merge_count)
@@ -98,6 +99,8 @@ def make_batches_v_h(arr: List[T], v: int, h: int) -> List[List[T]]:
   return horizontal_batches
 
 # TODO: tests
+
+
 def make_batches_h_v(arr: List[T], v: int, h: int) -> List[List[T]]:
   horizontal_merge_count = math.ceil(len(arr) / h)
   # print("v", vertical_merge_count)
@@ -121,6 +124,7 @@ def make_batches_h_v(arr: List[T], v: int, h: int) -> List[List[T]]:
   # print(vertical_batches)
 
   return vertical_batches
+
 
 class GenericList(list, Generic[T]):
   def save(self, file_path: str):

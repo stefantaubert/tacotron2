@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from src.app.pre.io import (get_text_dir, load_text_symbol_converter,
                             save_text_symbol_converter)
@@ -9,21 +10,17 @@ from src.app.pre.prepare import (get_prepared_dir, load_prep_accents_ids,
 from src.app.utils import prepare_logger
 from src.core.common.language import Language
 from src.core.common.symbols_map import SymbolsMap
+from src.core.common.text import ENG_TO_IPA_MODE
 from src.core.common.utils import read_text
 from src.core.pre.text.pre_inference import (AccentedSymbol,
                                              AccentedSymbolList,
                                              InferSentenceList, Sentence,
                                              SentenceList)
 from src.core.pre.text.pre_inference import add_text as infer_add
-from src.core.pre.text.pre_inference import \
-    sents_accent_apply as infer_accents_apply
-from src.core.pre.text.pre_inference import \
-    sents_accent_template as infer_accents_template
-from src.core.pre.text.pre_inference import \
-    sents_convert_to_ipa as infer_convert_ipa
-from src.core.pre.text.pre_inference import sents_map
-from src.core.pre.text.pre_inference import sents_normalize as infer_norm
-from src.core.pre.text.pre_inference import set_accent
+from src.core.pre.text.pre_inference import (sents_accent_apply,
+                                             sents_accent_template,
+                                             sents_convert_to_ipa, sents_map,
+                                             sents_normalize, set_accent)
 
 _text_csv = "text.csv"
 _accents_csv = "accents.csv"
@@ -50,11 +47,12 @@ def _save_accents_csv(text_dir: str, data: AccentedSymbolList):
 
 
 def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang: Language):
+  logger = prepare_logger()
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   if not os.path.isdir(prep_dir):
-    print("Please prepare data first.")
+    logger.error("Please prepare data first.")
   else:
-    print("Adding text...")
+    logger.info("Adding text...")
     symbol_ids, data = infer_add(
       text=read_text(filepath),
       lang=lang,
@@ -71,13 +69,14 @@ def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang:
 
 
 def normalize_text(base_dir: str, prep_name: str, text_name: str):
+  logger = prepare_logger()
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
-    print("Please add text first.")
+    logger.error("Please add text first.")
   else:
-    print("Normalizing text...")
-    symbol_ids, updated_sentences = infer_norm(
+    logger.info("Normalizing text...")
+    symbol_ids, updated_sentences = sents_normalize(
       sentences=load_text_csv(text_dir),
       text_symbols=load_text_symbol_converter(text_dir)
     )
@@ -91,18 +90,21 @@ def normalize_text(base_dir: str, prep_name: str, text_name: str):
     _check_for_unknown_symbols(base_dir, prep_name, text_name)
 
 
-def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones: bool = False, ignore_arcs: bool = True):
+def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones: bool = False, ignore_arcs: bool = True, mode: Optional[ENG_TO_IPA_MODE] = None):
+  logger = prepare_logger()
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
-    print("Please add text first.")
+    logger.error("Please add text first.")
   else:
-    print("Converting text to IPA...")
-    symbol_ids, updated_sentences = infer_convert_ipa(
+    logger.info("Converting text to IPA...")
+    symbol_ids, updated_sentences = sents_convert_to_ipa(
       sentences=load_text_csv(text_dir),
       text_symbols=load_text_symbol_converter(text_dir),
       ignore_tones=ignore_tones,
-      ignore_arcs=ignore_arcs
+      ignore_arcs=ignore_arcs,
+      mode=mode,
+      logger=logger,
     )
     print("\n" + updated_sentences.get_formatted(
       symbol_id_dict=symbol_ids,
@@ -115,12 +117,13 @@ def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones
 
 
 def accent_set(base_dir: str, prep_name: str, text_name: str, accent: str):
+  logger = prepare_logger()
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
-    print("Please add text first.")
+    logger.error("Please add text first.")
   else:
-    print(f"Applying accent {accent}...")
+    logger.info(f"Applying accent {accent}...")
     updated_sentences = set_accent(
       sentences=load_text_csv(text_dir),
       accent_ids=load_prep_accents_ids(prep_dir),
@@ -136,13 +139,14 @@ def accent_set(base_dir: str, prep_name: str, text_name: str, accent: str):
 
 
 def accent_apply(base_dir: str, prep_name: str, text_name: str):
+  logger = prepare_logger()
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
-    print("Please add text first.")
+    logger.error("Please add text first.")
   else:
-    print("Applying accents...")
-    updated_sentences = infer_accents_apply(
+    logger.info("Applying accents...")
+    updated_sentences = sents_accent_apply(
       sentences=load_text_csv(text_dir),
       accented_symbols=_load_accents_csv(text_dir),
       accent_ids=load_prep_accents_ids(prep_dir),
@@ -156,10 +160,11 @@ def accent_apply(base_dir: str, prep_name: str, text_name: str):
 
 
 def map_text(base_dir: str, prep_name: str, text_name: str, symbols_map_path: str, ignore_arcs: bool = True):
+  logger = prepare_logger()
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
   if not os.path.isdir(text_dir):
-    print("Please add text first.")
+    logger.error("Please add text first.")
   else:
     symbol_ids, updated_sentences = sents_map(
       sentences=load_text_csv(text_dir),
@@ -194,7 +199,7 @@ def _accent_template(base_dir: str, prep_name: str, text_name: str):
     print("Please add text first.")
   else:
     print("Updating accent template...")
-    accented_symbol_list = infer_accents_template(
+    accented_symbol_list = sents_accent_template(
       sentences=load_text_csv(text_dir),
       text_symbols=load_text_symbol_converter(text_dir),
       accent_ids=load_prep_accents_ids(prep_dir),
@@ -234,99 +239,3 @@ def _check_for_unknown_symbols(base_dir: str, prep_name: str, text_name: str):
   else:
     logger.info("All symbols are in the prepared dataset symbolset. You can now synthesize this text.")
 
-
-if __name__ == "__main__":
-  mode = 1
-  if mode == 1:
-    add_text(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="arctic_ipa",
-      text_name="north",
-      filepath="examples/en/north.txt",
-      lang=Language.ENG,
-    )
-
-    normalize_text(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="arctic_ipa",
-      text_name="north",
-    )
-
-    accent_set(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="arctic_ipa",
-      text_name="north",
-      accent="Chinese-BWC"
-    )
-
-    ipa_convert_text(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="arctic_ipa",
-      text_name="north",
-    )
-
-    create_or_update_inference_map(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="arctic_ipa",
-    )
-
-    # map_text(
-    #   base_dir="/datasets/models/taco2pt_v5",
-    #   prep_name="arctic_ipa",
-    #   text_name="north",
-    #   symbols_map="",
-    # )
-
-    map_to_prep_symbols(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="arctic_ipa",
-      text_name="north"
-    )
-
-  elif mode == 2:
-    accent_apply(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="arctic_ipa",
-      text_name="north",
-    )
-  elif mode == 3:
-    add_text(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="ljs_ipa",
-      text_name="ipa-north_sven_orig",
-      filepath="examples/ipa/north_sven_orig.txt",
-      lang=Language.IPA,
-    )
-
-    normalize_text(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="ljs_ipa",
-      text_name="ipa-north_sven_orig",
-    )
-
-  elif mode == 4:
-    add_text(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="ljs_ipa",
-      text_name="en-coma",
-      filepath="examples/en/coma.txt",
-      lang=Language.ENG,
-    )
-
-    normalize_text(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="ljs_ipa",
-      text_name="en-coma",
-    )
-
-    ipa_convert_text(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="ljs_ipa",
-      text_name="en-coma",
-    )
-
-    map_to_prep_symbols(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="ljs_ipa",
-      text_name="en-coma",
-    )

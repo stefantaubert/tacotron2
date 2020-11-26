@@ -16,7 +16,7 @@ def process(data: WavDataList, ds: DsDataList, custom_hparams: Optional[Dict[str
   hparams = overwrite_custom_hparams(hparams, custom_hparams)
   mel_parser = TacotronSTFT(hparams, logger=getLogger())
 
-  all_paths: List[str] = list()
+  all_paths: List[str] = []
   for wav_entry, ds_entry in zip(data.items(True), ds.items(True)):
     mel_tensor = mel_parser.get_mel_tensor_from_file(wav_entry.wav)
     path = save_callback(wav_entry=wav_entry, ds_entry=ds_entry, mel_tensor=mel_tensor)

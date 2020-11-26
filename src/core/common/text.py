@@ -1,15 +1,15 @@
 import re
 from collections import OrderedDict
+from enum import IntEnum
 from typing import Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set
 
+from cmudict_parser import CMUDict, get_dict
 from dragonmapper import hanzi
 from epitran import Epitran
 from nltk import download
 from nltk.tokenize import sent_tokenize
-from unidecode import unidecode as convert_to_ascii
-
 from src.core.common.adjustments.abbreviations import (
     expand_abbreviations, expand_units_of_measure,
     replace_big_letter_abbreviations)
@@ -19,8 +19,11 @@ from src.core.common.adjustments.numbers import normalize_numbers
 from src.core.common.adjustments.whitespace import collapse_whitespace
 from src.core.common.ipa2symb import extract_from_sentence
 from src.core.common.language import Language
+from unidecode import unidecode as convert_to_ascii
 
-_epitran_cache: Dict[Language, Epitran] = dict()
+EPITRAN_CACHE: Dict[Language, Epitran] = {}
+
+CMU_CACHE: Optional[CMUDict] = None
 
 
 def deserialize_list(serialized_str: str) -> List[int]:
@@ -51,17 +54,70 @@ def switch_keys_with_values(dictionary: OrderedDictType) -> OrderedDictType:
   return result
 
 
-def en_to_ipa(text: str) -> str:
-  if Language.ENG not in _epitran_cache.keys():
-    _epitran_cache[Language.ENG] = Epitran('eng-Latn')
-  result = _epitran_cache[Language.ENG].transliterate(text)
+class ENG_TO_IPA_MODE(IntEnum):
+  EPITRAN = 0
+  CMUDICT = 1
+  BOTH = 2
+
+
+def en_to_ipa(text: str, mode: ENG_TO_IPA_MODE) -> str:
+  if mode is None:
+    raise Exception("Assert")
+  if mode == ENG_TO_IPA_MODE.EPITRAN:
+    return en_to_ipa_epitran(text)
+  if mode == ENG_TO_IPA_MODE.CMUDICT:
+    return en_to_ipa_cmu(text)
+  if mode == ENG_TO_IPA_MODE.BOTH:
+    return en_to_ipa_cmu_epitran(text)
+  raise Exception()
+
+
+def en_to_ipa_epitran(text: str) -> str:
+  global EPITRAN_CACHE
+  if Language.ENG not in EPITRAN_CACHE.keys():
+    EPITRAN_CACHE[Language.ENG] = Epitran('eng-Latn')
+  result = EPITRAN_CACHE[Language.ENG].transliterate(text)
+  return result
+
+
+def en_to_ipa_cmu_epitran(text: str) -> str:
+  global CMU_CACHE
+  global EPITRAN_CACHE
+  if CMU_CACHE is None:
+    CMU_CACHE = get_dict(silent=True)
+  if Language.ENG not in EPITRAN_CACHE.keys():
+    EPITRAN_CACHE[Language.ENG] = Epitran('eng-Latn')
+  result = CMU_CACHE.sentence_to_ipa(
+    sentence=text,
+    # replace_unknown_with=EPITRAN_CACHE[Language.ENG].transliterate
+    replace_unknown_with=en_to_ipa_epi_verbose
+  )
+  return result
+
+
+def en_to_ipa_epi_verbose(word: str) -> str:
+  global EPITRAN_CACHE
+  res = EPITRAN_CACHE[Language.ENG].transliterate(word)
+  print(f"used Epitran for: {word} => {res}")
+  return res
+
+
+def en_to_ipa_cmu(text: str) -> str:
+  global CMU_CACHE
+  if CMU_CACHE is None:
+    CMU_CACHE = get_dict(silent=True)
+  result = CMU_CACHE.sentence_to_ipa(
+    sentence=text,
+    replace_unknown_with="_"
+  )
   return result
 
 
 def ger_to_ipa(text: str) -> str:
-  if Language.GER not in _epitran_cache.keys():
-    _epitran_cache[Language.GER] = Epitran('deu-Latn')
-  result = _epitran_cache[Language.GER].transliterate(text)
+  global EPITRAN_CACHE
+  if Language.GER not in EPITRAN_CACHE.keys():
+    EPITRAN_CACHE[Language.GER] = Epitran('deu-Latn')
+  result = EPITRAN_CACHE[Language.GER].transliterate(text)
   return result
 
 
@@ -112,9 +168,9 @@ def normalize(text: str, lang: Language) -> str:
   assert False
 
 
-def convert_to_ipa(text: str, lang: Language) -> str:
+def convert_to_ipa(text: str, lang: Language, mode: Optional[ENG_TO_IPA_MODE]) -> str:
   if lang == Language.ENG:
-    return en_to_ipa(text)
+    return en_to_ipa(text, mode)
 
   if lang == Language.GER:
     return ger_to_ipa(text)

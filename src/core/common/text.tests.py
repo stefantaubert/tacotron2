@@ -18,7 +18,7 @@ class UnitTests(unittest.TestCase):
     start = time.time()
     res = []
     for _ in range(25):
-      res.append(en_to_ipa(text))
+      res.append(en_to_ipa(text, ENG_TO_IPA_MODE.EPITRAN))
     duration_s = time.time() - start
     # 21s with no caching
     self.assertTrue(duration_s < 6)
@@ -74,6 +74,13 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("And a line with \n in it.", res[4])
     self.assertEqual("This is a question?", res[5])
     self.assertEqual("This is a error!", res[6])
+
+  def test_split_en_north(self):
+    example_text = "his cloak around him;\nand at last."
+    res = split_en_text(example_text)
+    self.assertEqual(2, len(res))
+    self.assertEqual("his cloak around him;", res[0])
+    self.assertEqual("and at last.", res[1])
 
   def test_split_ger(self):
     example_text = "Das ist ein Test 4.000. Und ein weiterer.\nUnd eine neue Zeile.\r\nUnd eine Zeile mit \r.\n\nUnd eine Zeile mit \n drin. Das ist eine Frage? Das ist ein Fehler!"

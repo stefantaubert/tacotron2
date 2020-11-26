@@ -44,7 +44,7 @@ def parse(dir_path: str) -> PreDataList:
 
   result = PreDataList()
   lang = Language.ENG
-  tmp: List[Tuple[Tuple, PreDataList]] = list()
+  tmp: List[Tuple[Tuple, PreDataList]] = []
 
   subfolders = get_subfolders(dir_path)
   for subfolder in tqdm(subfolders):

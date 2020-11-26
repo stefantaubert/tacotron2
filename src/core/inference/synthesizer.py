@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-
 from src.core.common.audio import (concatenate_audios, mel_to_numpy,
                                    normalize_wav)
 from src.core.common.utils import pass_lines
@@ -80,7 +79,7 @@ class Synthesizer():
   def infer(self, sentences: InferSentenceList, speaker: str, sigma: float, denoiser_strength: float, sentence_pause_s: float) -> Tuple[np.ndarray, List[InferenceResult]]:
     self._logger.debug(f"Selected speaker: {speaker}")
 
-    result: List[InferenceResult] = list()
+    result: List[InferenceResult] = []
 
     accent_id_dict = self._taco_synt.accents
 

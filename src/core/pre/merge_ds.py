@@ -202,7 +202,7 @@ class MergedDatasetContainerList():
     return f"{ds_name},{speaker_name}"
 
   def make_common_speaker_ids(self) -> SpeakersDict:
-    all_speakers: List[str] = list()
+    all_speakers: List[str] = []
     for ds in self.data:
       old_speaker_names = ds.speaker_ids.get_all_speakers()
       new_speaker_names = [MergedDatasetContainerList.get_new_speaker_name(
@@ -307,7 +307,7 @@ def _get_ds_speaker_ids(datasets: DsDatasetList, ds_speakers: List[Tuple[str, st
   speakers_dict = {ds.name: ds.speakers.get_all_speakers() for ds in datasets.items()}
   expanded_ds_speakers = expand_speakers(speakers_dict, ds_speakers)
 
-  result: Dict[str, Set[int]] = dict()
+  result: Dict[str, Set[int]] = { }
   for ds_name, speaker_name in expanded_ds_speakers:
     for ds in datasets.items():
       if ds.name == ds_name:
@@ -323,7 +323,7 @@ def _get_ds_speaker_ids(datasets: DsDatasetList, ds_speakers: List[Tuple[str, st
 def preprocess(datasets: DsDatasetList, ds_speakers: List[Tuple[str, str]]) -> MergedDatasetContainer:
   ds_sepaker_ids = _get_ds_speaker_ids(datasets, ds_speakers)
 
-  merged_datasets: List[MergedDatasetContainer] = list()
+  merged_datasets: List[MergedDatasetContainer] = []
   for ds in datasets.items():
     if ds.name in ds_sepaker_ids.keys():
       merged_ds_container = MergedDatasetContainer.init_from_ds_dataset(ds)
