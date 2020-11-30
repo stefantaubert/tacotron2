@@ -2,7 +2,6 @@
 code_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"/../..
 cd $code_dir
 export PYTHONPATH=$code_dir
-pipenv shell
 
 # required
 export base_dir="/home/stefan_taubert/taco2pt_v5"
@@ -23,3 +22,5 @@ export lbritts_data="$datasets_dir/libriTTS"
 
 # optional
 export nnlv_pilot_data="$datasets_dir/NNLV_pilot"
+
+pipenv shell
