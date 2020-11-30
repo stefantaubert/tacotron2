@@ -2,11 +2,13 @@ from dataclasses import dataclass
 from logging import Logger
 from typing import List, Optional, Tuple
 
+from text_utils.text import EngToIpaMode
+
 from src.core.common.accents_dict import AccentsDict
 from src.core.common.language import Language
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.symbols_dict import SymbolsDict
-from src.core.common.text import (ENG_TO_IPA_MODE, deserialize_list,
+from src.core.common.text import (deserialize_list,
                                   serialize_list)
 from src.core.common.utils import GenericList, get_counter
 from src.core.pre.ds import DsDataList
@@ -31,7 +33,7 @@ class TextDataList(GenericList[TextData]):
       item.load_init()
 
 
-def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, mode: Optional[ENG_TO_IPA_MODE], logger: Logger) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
+def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, mode: Optional[EngToIpaMode], logger: Logger) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
   processed_data: List[Tuple[int, List[str], List[int], Language]] = []
 
   for values in data.items(True):

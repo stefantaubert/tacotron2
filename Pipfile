@@ -10,18 +10,13 @@ pycodestyle = "*"
 isort = "*"
 
 [packages]
-epitran = "*"
 pandas = "*"
 librosa = "*"
 plotly = "*"
 torch = "*"
 scikit-image = "*"
-nltk = "*"
 matplotlib = "*"
 tqdm = "*"
-dragonmapper = "*"
-ipapy = "*"
-inflect = "*"
 wget = "*"
 numpy = "*"
 gdown = "*"
@@ -31,7 +26,7 @@ scipy = "*"
 tensorboard = "*"
 Unidecode = "*"
 Pillow = "*"
-cmudict-parser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/cmudict-parser.git"}
+text-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/text-utils.git"}
 
 [requires]
 python_version = "3.8"

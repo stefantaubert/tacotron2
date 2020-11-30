@@ -7,7 +7,7 @@ import tempfile
 from tqdm import tqdm
 
 from src.core.common.language import Language
-from src.core.common.text import text_to_symbols
+from text_utils.text import text_to_symbols
 from src.core.common.utils import (create_parent_folder, download_tar,
                                    read_lines)
 from src.core.pre.parser.data import PreData, PreDataList
@@ -60,7 +60,8 @@ def parse(dir_path: str) -> PreDataList:
 
     symbols = text_to_symbols(chn, Language.CHN)
     accents = [speaker] * len(symbols)
-    tmp = PreData(basename, speaker, chn, wav, symbols, accents, Gender.FEMALE, Language.CHN)  # TODO Gender
+    tmp = PreData(basename, speaker, chn, wav, symbols, accents,
+                  Gender.FEMALE, Language.CHN)  # TODO Gender
     res.append(tmp)
   print("Done.")
 

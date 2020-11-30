@@ -10,7 +10,6 @@ from src.app.pre.prepare import (get_prepared_dir, load_prep_accents_ids,
 from src.app.utils import prepare_logger
 from src.core.common.language import Language
 from src.core.common.symbols_map import SymbolsMap
-from src.core.common.text import ENG_TO_IPA_MODE
 from src.core.common.utils import read_text
 from src.core.pre.text.pre_inference import (AccentedSymbol,
                                              AccentedSymbolList,
@@ -21,6 +20,7 @@ from src.core.pre.text.pre_inference import (sents_accent_apply,
                                              sents_accent_template,
                                              sents_convert_to_ipa, sents_map,
                                              sents_normalize, set_accent)
+from text_utils import EngToIpaMode
 
 _text_csv = "text.csv"
 _accents_csv = "accents.csv"
@@ -90,7 +90,7 @@ def normalize_text(base_dir: str, prep_name: str, text_name: str):
     _check_for_unknown_symbols(base_dir, prep_name, text_name)
 
 
-def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones: bool = False, ignore_arcs: bool = True, mode: Optional[ENG_TO_IPA_MODE] = None):
+def ipa_convert_text(base_dir: str, prep_name: str, text_name: str, ignore_tones: bool = False, ignore_arcs: bool = True, mode: Optional[EngToIpaMode] = None):
   logger = prepare_logger()
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   text_dir = get_text_dir(prep_dir, text_name, create=False)
@@ -238,4 +238,3 @@ def _check_for_unknown_symbols(base_dir: str, prep_name: str, text_name: str):
       "Some symbols are not in the prepared dataset symbolset. You need to create an inference map and then apply it to the symbols.")
   else:
     logger.info("All symbols are in the prepared dataset symbolset. You can now synthesize this text.")
-

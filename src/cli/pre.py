@@ -1,5 +1,7 @@
 from argparse import ArgumentParser
 
+from text_utils.text import EngToIpaMode
+
 from src.app.pre.ds import (preprocess_arctic, preprocess_custom,
                             preprocess_libritts, preprocess_ljs,
                             preprocess_thchs, preprocess_thchs_kaldi)
@@ -19,7 +21,6 @@ from src.app.pre.wav import (preprocess_wavs, wavs_normalize,
                              wavs_upsample)
 from src.cli.utils import parse_tuple_list, split_hparams_string
 from src.core.common.language import Language
-from src.core.common.text import ENG_TO_IPA_MODE
 
 
 def init_preprocess_thchs_parser(parser: ArgumentParser):
@@ -120,8 +121,8 @@ def init_text_convert_to_ipa_parser(parser: ArgumentParser):
   parser.add_argument('--dest_text_name', type=str, required=True)
   parser.add_argument('--ignore_tones', action='store_true')
   parser.add_argument('--ignore_arcs', action='store_true')
-  parser.add_argument('--mode', choices=ENG_TO_IPA_MODE,
-                      type=ENG_TO_IPA_MODE.__getitem__)
+  parser.add_argument('--mode', choices=EngToIpaMode,
+                      type=EngToIpaMode.__getitem__)
   return text_convert_to_ipa
 
 
@@ -215,8 +216,8 @@ def init_convert_to_ipa_text_parser(parser: ArgumentParser):
   parser.add_argument('--text_name', type=str, required=True)
   parser.add_argument('--ignore_tones', action='store_true')
   #parser.add_argument('--ignore_arcs', action='store_true')
-  parser.add_argument('--mode', choices=ENG_TO_IPA_MODE,
-                      type=ENG_TO_IPA_MODE.__getitem__)
+  parser.add_argument('--mode', choices=EngToIpaMode,
+                      type=EngToIpaMode.__getitem__)
   parser.set_defaults(ignore_arcs=True)
   return ipa_convert_text
 

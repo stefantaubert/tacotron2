@@ -2,13 +2,12 @@ import os
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from tqdm.std import tqdm
-
 from src.core.common.gender import Gender
 from src.core.common.language import Language
-from src.core.common.text import text_to_symbols
 from src.core.common.utils import GenericList, cast_as, get_subfolders
 from src.core.pre.parser.data import PreData, PreDataList
+from text_utils.text import text_to_symbols
+from tqdm.std import tqdm
 
 OATA_CSV_NAME = "data.csv"
 AUDIO_FOLDER_NAME = "audio"

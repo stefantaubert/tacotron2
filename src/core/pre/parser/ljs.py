@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from src.core.common.gender import Gender
 from src.core.common.language import Language
-from src.core.common.text import text_to_symbols
+from text_utils.text import text_to_symbols
 from src.core.common.utils import read_lines
 from src.core.pre.parser.data import PreData, PreDataList
 

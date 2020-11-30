@@ -7,12 +7,11 @@ from src.core.common.accents_dict import AccentsDict
 from src.core.common.language import Language
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.symbols_map import SymbolsMap
-from src.core.common.text import (ENG_TO_IPA_MODE, deserialize_list,
-                                  serialize_list, split_sentences,
-                                  text_to_symbols)
+from src.core.common.text import deserialize_list, serialize_list
 from src.core.common.utils import (GenericList, console_out_len,
                                    get_unique_items)
 from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
+from text_utils.text import EngToIpaMode, text_to_sentences, text_to_symbols
 
 
 def get_formatted_core(sent_id: int, symbols: List[str], accent_ids: List[int], max_pairs_per_line: int, space_length: int, accent_id_dict: AccentsDict) -> str:
@@ -170,7 +169,7 @@ class InferSentenceList(GenericList[InferSentence]):
 
 def add_text(text: str, lang: Language) -> Tuple[SymbolIdDict, SentenceList]:
   res = SentenceList()
-  sents = split_sentences(text, lang)
+  sents = text_to_sentences(text, lang)
   default_accent_id = 0
   sents_symbols: List[List[str]] = [text_to_symbols(
     sent,
@@ -226,7 +225,7 @@ def update_symbols_and_text(sentences: SentenceList, sents_new_symbols: List[Lis
   return symbols, sentences
 
 
-def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, mode: Optional[ENG_TO_IPA_MODE], logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
+def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, mode: Optional[EngToIpaMode], logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
 
   sents_new_symbols = []
   for sentence in sentences.items(True):
@@ -263,7 +262,7 @@ def sents_map(sentences: SentenceList, text_symbols: SymbolIdDict, symbols_map: 
 
     text = SymbolIdDict.symbols_to_text(mapped_symbols)
     # a resulting empty text would make no problems
-    sents = split_sentences(text, sentence.lang)
+    sents = text_to_sentences(text, sentence.lang)
     for new_sent_text in sents:
       new_symbols = text_to_symbols(
         new_sent_text,

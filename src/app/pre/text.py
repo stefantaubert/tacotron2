@@ -2,10 +2,11 @@ import os
 from functools import partial
 from typing import Optional
 
+from text_utils.text import EngToIpaMode
+
 from src.app.pre.ds import get_ds_dir, load_ds_csv, load_symbols_json
 from src.app.utils import prepare_logger
 from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.text import ENG_TO_IPA_MODE
 from src.core.common.utils import get_subdir
 from src.core.pre.text.pre import (SymbolsDict, TextData, TextDataList,
                                    convert_to_ipa, normalize, preprocess)
@@ -99,7 +100,7 @@ def text_normalize(base_dir: str, ds_name: str, orig_text_name: str, dest_text_n
   _text_op(base_dir, ds_name, orig_text_name, dest_text_name, operation)
 
 
-def text_convert_to_ipa(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: str, ignore_tones: bool = False, ignore_arcs: bool = False, mode: Optional[ENG_TO_IPA_MODE] = None):
+def text_convert_to_ipa(base_dir: str, ds_name: str, orig_text_name: str, dest_text_name: str, ignore_tones: bool = False, ignore_arcs: bool = False, mode: Optional[EngToIpaMode] = None):
   logger = prepare_logger()
   logger.info("Converting text to IPA...")
   operation = partial(
@@ -110,4 +111,3 @@ def text_convert_to_ipa(base_dir: str, ds_name: str, orig_text_name: str, dest_t
     logger=logger
   )
   _text_op(base_dir, ds_name, orig_text_name, dest_text_name, operation)
-
