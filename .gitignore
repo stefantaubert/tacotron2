@@ -1,7 +1,5 @@
 .vscode
 .ipynb_checkpoints
-src/playground.py
-src/playground.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -109,10 +107,8 @@ venv.bak/
 .mypy_cache/
 
 # Tacotron 2 oddities
-logs-*/
-LJSpeech-1.1
-tacotron_output
-.vscode
 examples/quick-test.txt
-
 *.debug.py
+src/playground.py
+src/playground.sh
+configs/

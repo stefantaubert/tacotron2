@@ -26,7 +26,7 @@ I have modified the original tacotron 2 code:
 
 ### Change Console Encoding to display IPA chars
 
-Check with `locale` which setting you have and if `en_US.UTF-8` is not in the values of `LANG` or `LC_*` then change them:
+Either `screen -U` or: Check with `locale` which setting you have and if `en_US.UTF-8` is not in the values of `LANG` or `LC_*` then change them:
 
 ```sh
 export LC_ALL=en_US.UTF-8
@@ -144,7 +144,8 @@ to be able to run training without being connected via ssh:
 
 ```bash
 sudo apt install screen
-# usage: screen
+# -U for unicode to display IPA
+# usage: screen -U
 ```
 
 check cuda is installed:
