@@ -2,7 +2,7 @@
 code_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"/../..
 cd $code_dir
 export PYTHONPATH=$code_dir
-conda activate py37
+pipenv shell
 
 datasets_dir="/datasets"
 # required

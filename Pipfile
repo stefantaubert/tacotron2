@@ -31,7 +31,7 @@ scipy = "*"
 tensorboard = "*"
 Unidecode = "*"
 Pillow = "*"
-cmudict-parser = {editable = true, ref = "master", git = "git@github.com:stefantaubert/cmudict-parser.git"}
+cmudict-parser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/cmudict-parser.git"}
 
 [requires]
 python_version = "3.8"
