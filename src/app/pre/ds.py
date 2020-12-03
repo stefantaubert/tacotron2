@@ -128,14 +128,14 @@ def preprocess_arctic(base_dir: str, ds_name: str, path: str, auto_dl: bool):
   _preprocess_ds(base_dir, ds_name, path, auto_dl, arctic_preprocess, logger=logger)
 
 
-def _preprocess_ds(base_dir: str, ds_name: str, path: str, auto_dl: bool, preprocess_func: Callable[[str, bool], Tuple[
+def _preprocess_ds(base_dir: str, ds_name: str, path: str, auto_dl: bool, preprocess_func: Callable[[str, bool, Logger], Tuple[
   SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]], logger: Logger):
   ds_dir = get_ds_dir(base_dir, ds_name, create=False)
   if os.path.isdir(ds_dir):
     logger.info("Dataset already processed.")
   else:
     logger.info("Reading data...")
-    speakers, speakers_log, symbols, accents, ds_data = preprocess_func(path, auto_dl)
+    speakers, speakers_log, symbols, accents, ds_data = preprocess_func(path, auto_dl, logger)
     os.makedirs(ds_dir)
     _save_speaker_json(ds_dir, speakers)
     _save_speaker_log_json(ds_dir, speakers_log)
@@ -159,7 +159,7 @@ if __name__ == "__main__":
   preprocess_custom(
     base_dir="/datasets/models/taco2pt_v5",
     auto_dl=False,
-    ds_name="NNLV_pilot",
+    ds_name="NNLV_pilot_test",
     path="/datasets/NNLV_pilot",
   )
 

@@ -1,9 +1,10 @@
-from logging import getLogger
 import unittest
+from logging import getLogger
 
 from src.core.common import (AccentsDict, Language, SpeakersDict,
                              SpeakersLogDict, SymbolIdDict,
                              remove_duplicates_list_orderpreserving)
+from src.core.pre.ds import DsData
 from src.core.pre.text.pre import *
 
 
@@ -50,7 +51,8 @@ class UnitTests(unittest.TestCase):
     ])
     symbol_ids = SymbolIdDict.init_from_symbols({" ", "b", "c"})
 
-    result, conv, symbols_dict = convert_to_ipa(data, symbol_ids, ignore_tones=False, ignore_arcs=False)
+    result, conv, symbols_dict = convert_to_ipa(
+      data, symbol_ids, ignore_tones=False, ignore_arcs=False)
 
     self.assertEqual(2, len(conv))
     self.assertEqual(1, len(result))
@@ -61,6 +63,7 @@ class UnitTests(unittest.TestCase):
     self.assertEqual("0,1", result[0].serialized_symbol_ids)
     self.assertEqual("7,7", result[0].serialized_accent_ids)
     self.assertEqual("bi", result[0].text)
+
 
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)

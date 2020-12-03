@@ -1,7 +1,6 @@
 from logging import Logger
 from typing import List, Optional, Tuple
 
-from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.language import Language
 from src.core.common.symbol_id_dict import SymbolIdDict
 from text_utils.ipa2symb import IPAExtractionSettings
