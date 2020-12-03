@@ -1,5 +1,8 @@
 # Tacotron 2 with IPA and Multispeaker Support
 
+![Python](https://img.shields.io/github/license/stefantaubert/tacotron2)
+![Python](https://img.shields.io/badge/python-3.8.6-green.svg)
+
 You can listen to sound samples [here](https://stefantaubert.github.io/tacotron2/)
 
 ## Applied modifications
