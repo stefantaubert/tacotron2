@@ -52,7 +52,7 @@ def symbols_convert_to_ipa(symbols: List[str], lang: Language, accent_ids: List[
   settings = IPAExtractionSettings(
     ignore_arcs=ignore_arcs,
     ignore_tones=ignore_tones,
-    replace_unknown_with=replace_unknown_with,
+    replace_unknown_ipa_by=replace_unknown_with,
   )
 
   new_symbols: List[str] = text_to_symbols(
