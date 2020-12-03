@@ -1,16 +1,15 @@
 import os
 from logging import Logger, getLogger
-from src.core.common.gender import Gender
 from typing import List, Tuple
 
-from tqdm import tqdm
-
+from src.core.common.gender import Gender
 from src.core.common.language import Language
-from text_utils.text import text_to_symbols
 from src.core.common.utils import (download_tar, get_basename, get_filenames,
                                    get_filepaths, get_subfolders, read_lines,
                                    read_text)
 from src.core.pre.parser.data import PreData, PreDataList
+from text_utils.text import text_to_symbols
+from tqdm import tqdm
 
 # found some invalid text at:
 # train-clean-360/8635/295759/8635_295759_000008_000001.original.txt
@@ -23,8 +22,9 @@ def download(dir_path: str):
 
 def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
   if not os.path.exists(dir_path):
-    print("Directory not found:", dir_path)
-    raise Exception()
+    ex = ValueError(f"Directory not found: {dir_path}")
+    logger.error("", exc_info=ex)
+    raise ex
 
   speakers_path = os.path.join(dir_path, "SPEAKERS.txt")
   speakers = read_lines(speakers_path)
@@ -57,7 +57,12 @@ def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
         for wav_file, text_file in zip(wavs, texts):
           assert get_basename(wav_file) == get_basename(text_file)[:-len(".normalized")]
           text_en = read_text(text_file)
-          symbols = text_to_symbols(text_en, lang)
+          symbols = text_to_symbols(
+            text=text_en,
+            lang=lang,
+            ipa_settings=None,
+            logger=logger,
+          )
 
           entry = PreData(
             name=get_basename(wav_file),

@@ -1,13 +1,13 @@
 import os
+from logging import Logger, getLogger
 from typing import List, Tuple
-
-from tqdm import tqdm
 
 from src.core.common.gender import Gender
 from src.core.common.language import Language
-from text_utils.text import text_to_symbols
 from src.core.common.utils import download_tar, read_lines
 from src.core.pre.parser.data import PreData, PreDataList
+from text_utils.text import text_to_symbols
+from tqdm import tqdm
 
 QUESTION_PARTICLE_1 = '吗'
 QUESTION_PARTICLE_2 = '呢'
@@ -25,10 +25,11 @@ def download(dir_path: str):
   download_tar("http://data.cslt.org/thchs30/zip/doc.tgz", dir_path)
 
 
-def parse(dir_path: str) -> PreDataList:
+def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
   if not os.path.exists(dir_path):
-    print("Directory not found:", dir_path)
-    raise Exception()
+    ex = ValueError(f"Directory not found: {dir_path}")
+    logger.error("", exc_info=ex)
+    raise ex
 
   train_words = os.path.join(dir_path, 'doc/trans/train.word.txt')
   test_words = os.path.join(dir_path, 'doc/trans/test.word.txt')
@@ -43,7 +44,7 @@ def parse(dir_path: str) -> PreDataList:
   files: List[Tuple[Tuple[str, int, int], PreData]] = []
   lang = Language.CHN
 
-  print("Parsing files...")
+  logger.info("Parsing files...")
   for words_path, wavs_dir in parse_paths:
     lines = read_lines(words_path)
 
@@ -62,7 +63,7 @@ def parse(dir_path: str) -> PreDataList:
         wav_path = os.path.join(wavs_dir, speaker_name, name + '.WAV')
       exists = os.path.exists(wav_path)
       if not exists:
-        print("Not found wav file:", wav_path)
+        logger.info(f"Found no wav file: {wav_path}")
         continue
 
       # remove "=" from chinese transcription because it is not correct
@@ -75,7 +76,12 @@ def parse(dir_path: str) -> PreDataList:
       else:
         chinese += "。"
 
-      symbols = text_to_symbols(chinese, lang)
+      symbols = text_to_symbols(
+        text=chinese,
+        lang=lang,
+        ipa_settings=None,
+        logger=logger,
+      )
 
       accent_name = speaker_name
       if speaker_name in ACCENTS.keys():

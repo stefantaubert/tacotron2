@@ -1,3 +1,4 @@
+from logging import getLogger
 import unittest
 
 from src.core.common import (AccentsDict, Language, SpeakersDict,
@@ -31,7 +32,7 @@ class UnitTests(unittest.TestCase):
     ])
     symbol_ids = SymbolIdDict.init_from_symbols({" ", "b"})
 
-    result, conv, symbols_dict = normalize(data, symbol_ids)
+    result, conv, symbols_dict = normalize(data, symbol_ids, getLogger())
 
     self.assertEqual(1, len(conv))
     self.assertEqual(1, len(result))

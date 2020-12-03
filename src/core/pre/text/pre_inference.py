@@ -4,6 +4,7 @@ from math import ceil
 from typing import List, Optional, Set, Tuple
 
 from src.core.common.accents_dict import AccentsDict
+from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.language import Language
 from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.symbols_map import SymbolsMap
@@ -11,6 +12,7 @@ from src.core.common.text import deserialize_list, serialize_list
 from src.core.common.utils import (GenericList, console_out_len,
                                    get_unique_items)
 from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
+from text_utils.ipa2symb import IPAExtractionSettings
 from text_utils.text import EngToIpaMode, text_to_sentences, text_to_symbols
 
 
@@ -91,8 +93,18 @@ class Sentence:
 
 
 class SentenceList(GenericList[Sentence]):
-  def get_occuring_symbols(self) -> Set[str]:
-    return get_unique_items([text_to_symbols(x.text, x.lang) for x in self.items()])
+  # def get_occuring_symbols(self) -> Set[str]:
+  #   ipa_settings = IPAExtractionSettings(
+  #     ignore_tones=False,
+  #     ignore_arcs=False,
+  #     replace_unknown_ipa_by=PADDING_SYMBOL,
+  #   )
+
+  #   return get_unique_items([text_to_symbols(
+  #     text=x.text,
+  #     lang=x.lang,
+  #     ipa_settings=ipa_settings,
+  #     ) for x in self.items()])
 
   def get_formatted(self, symbol_id_dict: SymbolIdDict, accent_id_dict: AccentsDict):
     result = "\n".join([sentence.get_formatted(symbol_id_dict, accent_id_dict)
@@ -167,15 +179,26 @@ class InferSentenceList(GenericList[InferSentence]):
     return res
 
 
-def add_text(text: str, lang: Language) -> Tuple[SymbolIdDict, SentenceList]:
+def add_text(text: str, lang: Language, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
   res = SentenceList()
-  sents = text_to_sentences(text, lang)
+  sents = text_to_sentences(
+    text=text,
+    lang=lang,
+    logger=logger,
+  )
+
   default_accent_id = 0
+  ipa_settings = IPAExtractionSettings(
+    ignore_tones=False,
+    ignore_arcs=False,
+    replace_unknown_ipa_by=PADDING_SYMBOL,
+  )
+
   sents_symbols: List[List[str]] = [text_to_symbols(
     sent,
     lang=lang,
-    ignore_tones=False,
-    ignore_arcs=False
+    ipa_settings=ipa_settings,
+    logger=logger,
   ) for sent in sents]
   symbols = SymbolIdDict.init_from_symbols(get_unique_items(sents_symbols))
   for i, sent_symbols in enumerate(sents_symbols):
@@ -199,14 +222,15 @@ def set_accent(sentences: SentenceList, accent_ids: AccentsDict, accent: str) ->
   return sentences
 
 
-def sents_normalize(sentences: SentenceList, text_symbols: SymbolIdDict) -> Tuple[SymbolIdDict, SentenceList]:
+def sents_normalize(sentences: SentenceList, text_symbols: SymbolIdDict, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
   # Maybe add info if something was unknown
   sents_new_symbols = []
   for sentence in sentences.items():
     new_symbols, new_accent_ids = symbols_normalize(
       symbols=text_symbols.get_symbols(sentence.serialized_symbols),
       lang=sentence.lang,
-      accent_ids=deserialize_list(sentence.serialized_accents)
+      accent_ids=deserialize_list(sentence.serialized_accents),
+      logger=logger,
     )
     # TODO: check if new sentences resulted and then split them.
     sentence.serialized_accents = serialize_list(new_accent_ids)
@@ -240,6 +264,8 @@ def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ig
       ignore_arcs=ignore_arcs,
       ignore_tones=ignore_tones,
       mode=mode,
+      replace_unknown_with=PADDING_SYMBOL,
+      logger=logger,
     )
     assert len(new_symbols) == len(new_accent_ids)
     sentence.lang = Language.IPA
@@ -250,10 +276,17 @@ def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ig
   return update_symbols_and_text(sentences, sents_new_symbols)
 
 
-def sents_map(sentences: SentenceList, text_symbols: SymbolIdDict, symbols_map: SymbolsMap, ignore_arcs: bool) -> Tuple[SymbolIdDict, SentenceList]:
+def sents_map(sentences: SentenceList, text_symbols: SymbolIdDict, symbols_map: SymbolsMap, ignore_arcs: bool, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
   sents_new_symbols = []
   result = SentenceList()
   new_sent_id = 0
+
+  ipa_settings = IPAExtractionSettings(
+    ignore_tones=False,
+    ignore_arcs=ignore_arcs,
+    replace_unknown_ipa_by=PADDING_SYMBOL,
+  )
+
   for sentence in sentences.items():
     symbols = text_symbols.get_symbols(sentence.serialized_symbols)
     accent_ids = deserialize_list(sentence.serialized_accents)
@@ -262,13 +295,18 @@ def sents_map(sentences: SentenceList, text_symbols: SymbolIdDict, symbols_map: 
 
     text = SymbolIdDict.symbols_to_text(mapped_symbols)
     # a resulting empty text would make no problems
-    sents = text_to_sentences(text, sentence.lang)
+    sents = text_to_sentences(
+      text=text,
+      lang=sentence.lang,
+      logger=logger,
+    )
+
     for new_sent_text in sents:
       new_symbols = text_to_symbols(
         new_sent_text,
         lang=sentence.lang,
-        ignore_tones=False,
-        ignore_arcs=ignore_arcs
+        ipa_settings=ipa_settings,
+        logger=logger,
       )
 
       if len(accent_ids) > 0:

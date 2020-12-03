@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from logging import Logger, getLogger
 from typing import List, Tuple
 
 from src.core.common.gender import Gender
@@ -36,10 +37,11 @@ def sort_entries_key(entry: PreData) -> Tuple[str, str]:
   return entry.speaker_name, entry.wav_path
 
 
-def parse(dir_path: str) -> PreDataList:
+def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
   if not os.path.exists(dir_path):
-    print("Directory not found:", dir_path)
-    raise Exception()
+    ex = ValueError(f"Directory not found: {dir_path}")
+    logger.error("", exc_info=ex)
+    raise ex
 
   result = PreDataList()
   lang = Language.ENG
@@ -52,7 +54,13 @@ def parse(dir_path: str) -> PreDataList:
     for entry in entries.items():
       gender = Gender.MALE if entry.gender == "m" else Gender.FEMALE
 
-      symbols = text_to_symbols(entry.text, lang)
+      symbols = text_to_symbols(
+        text=entry.text,
+        lang=lang,
+        ipa_settings=None,
+        logger=logger
+      )
+
       wav_path = os.path.join(subfolder, AUDIO_FOLDER_NAME, entry.wav)
       data = PreData(
         name=entry.entry_id,

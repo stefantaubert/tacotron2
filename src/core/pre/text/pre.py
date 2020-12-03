@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from logging import Logger
+from src.core.common.globals import PADDING_SYMBOL
 from typing import List, Optional, Tuple
 
 from text_utils.text import EngToIpaMode
@@ -48,13 +49,15 @@ def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_to
       ignore_arcs=ignore_arcs,
       ignore_tones=ignore_tones,
       mode=mode,
+      replace_unknown_with=PADDING_SYMBOL,
+      logger=logger,
     )
     processed_data.append((values.entry_id, new_symbols, new_accent_ids, Language.IPA))
 
   return _prepare_data(processed_data)
 
 
-def normalize(data: TextDataList, symbol_converter: SymbolIdDict) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
+def normalize(data: TextDataList, symbol_converter: SymbolIdDict, logger: Logger) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:
   processed_data: List[Tuple[int, List[str], List[int], Language]] = []
 
   for values in data.items(True):
@@ -62,6 +65,7 @@ def normalize(data: TextDataList, symbol_converter: SymbolIdDict) -> Tuple[TextD
       symbols=symbol_converter.get_symbols(values.serialized_symbol_ids),
       lang=values.lang,
       accent_ids=deserialize_list(values.serialized_accent_ids),
+      logger=logger,
     )
 
     processed_data.append((values.entry_id, new_symbols, new_accent_ids, values.lang))

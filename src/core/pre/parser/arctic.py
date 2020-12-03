@@ -18,8 +18,9 @@ def download(dir_path: str):
 
 def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
   if not os.path.exists(dir_path):
-    logger.exception(f"Directory not found: {dir_path}!")
-    raise Exception()
+    ex = ValueError(f"Directory not found: {dir_path}")
+    logger.error("", exc_info=ex)
+    raise ex
 
   readme_path = os.path.join(dir_path, "README.md")
   readme = read_lines(readme_path)
@@ -56,7 +57,12 @@ def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
     for wav, textgrid, transcript in zip(wavs, textgrids, transcripts):
       text_en = read_text(transcript)
       text_en = f"{text_en}."
-      symbols = text_to_symbols(text_en, lang)
+      symbols = text_to_symbols(
+        text=text_en,
+        lang=lang,
+        ipa_settings=None,
+        logger=logger,
+      )
 
       entry = PreData(
         name=get_basename(wav),

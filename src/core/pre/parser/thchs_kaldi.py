@@ -1,16 +1,16 @@
 import glob
 import os
 import shutil
-from src.core.common.gender import Gender
 import tempfile
+from logging import Logger, getLogger
 
-from tqdm import tqdm
-
+from src.core.common.gender import Gender
 from src.core.common.language import Language
-from text_utils.text import text_to_symbols
 from src.core.common.utils import (create_parent_folder, download_tar,
                                    read_lines)
 from src.core.pre.parser.data import PreData, PreDataList
+from text_utils.text import text_to_symbols
+from tqdm import tqdm
 
 # Warning: Script is not good as thchs normal.
 
@@ -27,10 +27,11 @@ def download(dir_path: str):
   os.rename(dest, dir_path)
 
 
-def parse(dir_path: str) -> PreDataList:
+def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
   if not os.path.exists(dir_path):
-    print("Directory not found:", dir_path)
-    raise Exception()
+    ex = ValueError(f"Directory not found: {dir_path}")
+    logger.error("", exc_info=ex)
+    raise ex
 
   sent_paths = os.path.join(dir_path, "data", "*.trn")
   wav_paths = os.path.join(dir_path, "data", "*.wav")
@@ -42,11 +43,12 @@ def parse(dir_path: str) -> PreDataList:
   skipped = [x for x in wavs_sents if x[1] not in sent_files]
   wavs_sents = [x for x in wavs_sents if x[1] in sent_files]
 
-  print("Skipped:", len(skipped), "of", len(sent_files_gen))
+  logger.info(f"Skipped: {len(skipped)} of {len(sent_files_gen)}")
   # print(skipped)
 
   res = PreDataList()
-  print("Parsing files...")
+  lang = Language.CHN
+  logger.info("Parsing files...")
   for wav, sent_file in tqdm(wavs_sents):
     content = read_lines(sent_file)
     chn = content[0].strip()
@@ -58,10 +60,16 @@ def parse(dir_path: str) -> PreDataList:
     nr = int(nr)
     #res.append((nr, speaker, basename, wav, chn, sent_file))
 
-    symbols = text_to_symbols(chn, Language.CHN)
+    symbols = text_to_symbols(
+      text=chn,
+      lang=lang,
+      ipa_settings=None,
+      logger=logger,
+    )
+
     accents = [speaker] * len(symbols)
     tmp = PreData(basename, speaker, chn, wav, symbols, accents,
-                  Gender.FEMALE, Language.CHN)  # TODO Gender
+                  Gender.FEMALE, lang)  # TODO Gender
     res.append(tmp)
   print("Done.")
 

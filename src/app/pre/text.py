@@ -95,7 +95,8 @@ def text_normalize(base_dir: str, ds_name: str, orig_text_name: str, dest_text_n
   logger = prepare_logger()
   logger.info("Normalizing text...")
   operation = partial(
-    normalize
+    normalize,
+    logger=logger,
   )
   _text_op(base_dir, ds_name, orig_text_name, dest_text_name, operation)
 

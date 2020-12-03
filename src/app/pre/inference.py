@@ -56,6 +56,7 @@ def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang:
     symbol_ids, data = infer_add(
       text=read_text(filepath),
       lang=lang,
+      logger=logger,
     )
     print("\n" + data.get_formatted(
       symbol_id_dict=symbol_ids,
@@ -78,7 +79,8 @@ def normalize_text(base_dir: str, prep_name: str, text_name: str):
     logger.info("Normalizing text...")
     symbol_ids, updated_sentences = sents_normalize(
       sentences=load_text_csv(text_dir),
-      text_symbols=load_text_symbol_converter(text_dir)
+      text_symbols=load_text_symbol_converter(text_dir),
+      logger=logger,
     )
     print("\n" + updated_sentences.get_formatted(
       symbol_id_dict=symbol_ids,
@@ -170,7 +172,8 @@ def map_text(base_dir: str, prep_name: str, text_name: str, symbols_map_path: st
       sentences=load_text_csv(text_dir),
       text_symbols=load_text_symbol_converter(text_dir),
       symbols_map=SymbolsMap.load(symbols_map_path),
-      ignore_arcs=ignore_arcs
+      ignore_arcs=ignore_arcs,
+      logger=logger,
     )
 
     print("\n" + updated_sentences.get_formatted(

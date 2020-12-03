@@ -1,3 +1,4 @@
+from logging import getLogger
 import unittest
 
 from src.core.pre.text.pre_inference import *
@@ -17,7 +18,7 @@ class UnitTests(unittest.TestCase):
   #   sents = sents_convert_to_ipa(sents, ignore_tones=True, ignore_arcs=True)
   #   print(sents)
   def test_add_text__chn__splits_sents(self):
-    _, sentences = add_text("暖耀着。旅行者。", lang=Language.CHN)
+    _, sentences = add_text("暖耀着。旅行者。", lang=Language.CHN, logger=getLogger())
     self.assertEqual(2, len(sentences))
 
   def test_get_formatted_core(self):

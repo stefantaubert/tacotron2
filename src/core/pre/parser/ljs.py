@@ -1,15 +1,15 @@
 import os
 import shutil
 import tarfile
+from logging import Logger, getLogger
 
 import wget
-from tqdm import tqdm
-
 from src.core.common.gender import Gender
 from src.core.common.language import Language
-from text_utils.text import text_to_symbols
 from src.core.common.utils import read_lines
 from src.core.pre.parser.data import PreData, PreDataList
+from text_utils.text import text_to_symbols
+from tqdm import tqdm
 
 
 def download(dir_path: str):
@@ -36,22 +36,25 @@ def download(dir_path: str):
   os.rmdir(ljs_data_dir)
 
 
-def parse(path: str) -> PreDataList:
-  if not os.path.exists(path):
-    print("Directory not found:", path)
-    raise Exception()
+def parse(dir_path: str, logger: Logger = getLogger()) -> PreDataList:
+  if not os.path.exists(dir_path):
+    ex = ValueError(f"Directory not found: {dir_path}")
+    logger.error("", exc_info=ex)
+    raise ex
 
-  metadata_filepath = os.path.join(path, 'metadata.csv')
+  metadata_filepath = os.path.join(dir_path, 'metadata.csv')
 
   if not os.path.exists(metadata_filepath):
-    print("Metadatafile not found:", metadata_filepath)
-    raise Exception()
+    ex = ValueError(f"Metadatafile not found: {metadata_filepath}")
+    logger.error("", exc_info=ex)
+    raise ex
 
-  wav_dirpath = os.path.join(path, 'wavs')
+  wav_dirpath = os.path.join(dir_path, 'wavs')
 
   if not os.path.exists(wav_dirpath):
-    print("WAVs not found:", wav_dirpath)
-    raise Exception()
+    ex = ValueError(f"WAVs not found: {wav_dirpath}")
+    logger.error("", exc_info=ex)
+    raise ex
 
   result = PreDataList()
   speaker_name = '1'
@@ -60,7 +63,7 @@ def parse(path: str) -> PreDataList:
   gender = Gender.FEMALE
 
   lines = read_lines(metadata_filepath)
-  print("Parsing files...")
+  logger.info("Parsing files...")
   for line in tqdm(lines):
     parts = line.split('|')
     basename = parts[0]
@@ -68,7 +71,13 @@ def parse(path: str) -> PreDataList:
     # ex. ['LJ001-0045', '1469, 1470;', 'fourteen sixty-nine, fourteen seventy;']
     wav_path = os.path.join(wav_dirpath, f'{basename}.wav')
     text = parts[2]
-    symbols = text_to_symbols(text, lang)
+    symbols = text_to_symbols(
+      text=text,
+      lang=lang,
+      ipa_settings=None,
+      logger=logger,
+    )
+
     entry = PreData(
       name=basename,
       speaker_name=speaker_name,
@@ -98,5 +107,5 @@ if __name__ == "__main__":
   # )
 
   tmp = parse(
-    path='/datasets/LJSpeech-1.1'
+    dir_path='/datasets/LJSpeech-1.1'
   )
