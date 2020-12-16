@@ -141,6 +141,7 @@ cd tacotron2
 sudo apt install -y python3.8 python3.8-distutils python3.8-dev
 python3.8 -m pip install pipenv
 python3.8 -m pipenv install --dev
+# on error for distlib 0.3.0 -> pipenv install distlib
 ```
 
 to be able to run training without being connected via ssh:
