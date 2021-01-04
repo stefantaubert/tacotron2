@@ -111,7 +111,7 @@
         "cmudict-parser": {
             "editable": true,
             "git": "https://github.com/stefantaubert/cmudict-parser.git",
-            "ref": "faede2d6ee6734a86741d8471f1e108a2a60dd3a"
+            "ref": "1c4cce798af0f76e882f3083ce382ff1317ecc96"
         },
         "cycler": {
             "hashes": [
