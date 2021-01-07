@@ -1,19 +1,13 @@
 from dataclasses import dataclass
 from logging import Logger
-from src.core.common.globals import PADDING_SYMBOL
 from typing import List, Optional, Tuple
 
-from text_utils.text import EngToIpaMode
-
-from src.core.common.accents_dict import AccentsDict
-from src.core.common.language import Language
-from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.symbols_dict import SymbolsDict
-from src.core.common.text import (deserialize_list,
-                                  serialize_list)
+from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.utils import GenericList, get_counter
 from src.core.pre.ds import DsDataList
 from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
+from text_utils import (AccentsDict, EngToIpaMode, Language, SymbolIdDict,
+                        SymbolsDict, deserialize_list, serialize_list)
 
 
 @dataclass()

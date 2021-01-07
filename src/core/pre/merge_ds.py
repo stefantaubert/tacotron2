@@ -2,18 +2,15 @@ import random
 from dataclasses import dataclass
 from typing import Dict, List, Optional, OrderedDict, Set, Tuple
 
-from src.core.common.accents_dict import AccentsDict
-from src.core.common.gender import Gender
-from src.core.common.language import Language
-from src.core.common.speakers_dict import SpeakersDict
-from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.text import deserialize_list
+from src.core.common.globals import PADDING_ACCENT, PADDING_SYMBOL
 from src.core.common.train import split_train_test_val
 from src.core.common.utils import GenericList
 from src.core.pre.ds import DsDataList
 from src.core.pre.mel import MelDataList
 from src.core.pre.text.pre import TextDataList
 from src.core.pre.wav import WavDataList
+from text_utils import (AccentsDict, Gender, Language, SpeakersDict,
+                        SymbolIdDict, deserialize_list)
 
 ALL_SPEAKERS_INDICATOR = "all"
 
@@ -173,7 +170,7 @@ class MergedDatasetContainerList():
     all_symbols: Set[str] = set()
     for ds in self.data:
       all_symbols |= ds.symbol_ids.get_all_symbols()
-    new_symbol_ids = SymbolIdDict.init_from_symbols_with_pad(all_symbols)
+    new_symbol_ids = SymbolIdDict.init_from_symbols_with_pad(all_symbols, pad_symbol=PADDING_SYMBOL)
 
     for ds in self.data:
       for entry in ds.data.items():
@@ -187,7 +184,7 @@ class MergedDatasetContainerList():
     all_accents: Set[str] = set()
     for ds in self.data:
       all_accents |= ds.accent_ids.get_all_accents()
-    new_accent_ids = AccentsDict.init_from_accents_with_pad(all_accents)
+    new_accent_ids = AccentsDict.init_from_accents_with_pad(all_accents, pad_accent=PADDING_ACCENT)
 
     for ds in self.data:
       for entry in ds.data.items():
@@ -307,7 +304,7 @@ def _get_ds_speaker_ids(datasets: DsDatasetList, ds_speakers: List[Tuple[str, st
   speakers_dict = {ds.name: ds.speakers.get_all_speakers() for ds in datasets.items()}
   expanded_ds_speakers = expand_speakers(speakers_dict, ds_speakers)
 
-  result: Dict[str, Set[int]] = { }
+  result: Dict[str, Set[int]] = {}
   for ds_name, speaker_name in expanded_ds_speakers:
     for ds in datasets.items():
       if ds.name == ds_name:

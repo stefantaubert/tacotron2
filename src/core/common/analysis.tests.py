@@ -7,7 +7,7 @@ import torch
 from src.core.common.analysis import (emb_plot_2d, emb_plot_3d,
                                       get_similarities, norm2emb,
                                       plot_embeddings, sims_to_csv)
-from src.core.common.symbol_id_dict import SymbolIdDict
+from text_utils import SymbolIdDict
 
 
 class UnitTests(unittest.TestCase):

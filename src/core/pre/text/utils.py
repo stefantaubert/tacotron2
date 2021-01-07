@@ -1,10 +1,10 @@
 from logging import Logger
 from typing import List, Optional, Tuple
 
-from src.core.common.language import Language
-from src.core.common.symbol_id_dict import SymbolIdDict
-from text_utils.ipa2symb import IPAExtractionSettings
-from text_utils.text import (EngToIpaMode, text_normalize, text_to_ipa,
+from text_utils import Language
+from text_utils import SymbolIdDict
+from text_utils import IPAExtractionSettings
+from text_utils import (EngToIpaMode, text_normalize, text_to_ipa,
                              text_to_symbols)
 
 

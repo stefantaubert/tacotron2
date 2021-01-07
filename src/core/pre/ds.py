@@ -5,20 +5,18 @@ from logging import Logger
 from typing import Any, Callable, List, Optional, Set, Tuple
 
 from speech_dataset_parser import (download_arctic, download_libritts,
-                                   download_ljs, download_thchs,
-                                   download_thchs_kaldi, parse_arctic,
-                                   parse_custom, parse_libritts, parse_ljs,
-                                   parse_thchs, parse_thchs_kaldi)
+                                   download_ljs, download_mailabs,
+                                   download_thchs, download_thchs_kaldi,
+                                   parse_arctic, parse_custom, parse_libritts,
+                                   parse_ljs, parse_mailabs, parse_thchs,
+                                   parse_thchs_kaldi)
 from speech_dataset_parser.data import PreData, PreDataList
-from src.core.common.accents_dict import AccentsDict
-from src.core.common.gender import Gender
 from src.core.common.globals import PADDING_SYMBOL
-from src.core.common.language import Language
-from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
-from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.utils import (GenericList,
                                    remove_duplicates_list_orderpreserving)
-from text_utils import IPAExtractionSettings, text_to_symbols
+from text_utils import (AccentsDict, Gender, IPAExtractionSettings, Language,
+                        SpeakersDict, SpeakersLogDict, SymbolIdDict,
+                        text_to_symbols)
 
 
 @dataclass()
@@ -103,6 +101,11 @@ def arctic_preprocess(dir_path: str, auto_dl: bool, logger: Logger) -> Tuple[
 def ljs_preprocess(dir_path: str, auto_dl: bool, logger: Logger) -> Tuple[
   SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
   return _preprocess_core(dir_path, auto_dl, download_ljs, parse_ljs, logger)
+
+
+def mailabs_preprocess(dir_path: str, auto_dl: bool, logger: Logger) -> Tuple[
+  SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:
+  return _preprocess_core(dir_path, auto_dl, download_mailabs, parse_mailabs, logger)
 
 
 def thchs_kaldi_preprocess(dir_path: str, auto_dl: bool, logger: Logger) -> Tuple[SpeakersDict, SpeakersLogDict, DsDataList, SymbolIdDict, AccentsDict]:

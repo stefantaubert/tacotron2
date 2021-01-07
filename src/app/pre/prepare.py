@@ -8,9 +8,9 @@ from src.app.pre.mel import get_mel_dir, load_mel_csv
 from src.app.pre.text import (get_text_dir, load_text_csv,
                               load_text_symbol_converter)
 from src.app.pre.wav import get_wav_dir, load_wav_csv
-from src.core.common.accents_dict import AccentsDict
-from src.core.common.speakers_dict import SpeakersDict
-from src.core.common.symbol_id_dict import SymbolIdDict
+from text_utils import AccentsDict
+from text_utils import SpeakersDict
+from text_utils import SymbolIdDict
 from src.core.common.utils import get_subdir
 from src.core.pre.merge_ds import (DsDataset, DsDatasetList, PreparedData,
                                    PreparedDataList, preprocess)
@@ -130,7 +130,6 @@ if __name__ == "__main__":
     res = load_filelist(
       prep_dir=prep_dir,
     )
-
 
   # prepare_ds(
   #   base_dir="/datasets/models/taco2pt_v5",

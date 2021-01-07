@@ -1,4 +1,5 @@
 import logging
+from src.core.common.globals import PADDING_SYMBOL
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -46,7 +47,7 @@ class Synthesizer():
   def infer(self, symbols: List[str], accents: List[str], speaker: str, allow_unknown: bool = False) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     if self.symbols.has_unknown_symbols(symbols):
       if allow_unknown:
-        symbols = self.symbols.replace_unknown_symbols_with_pad(symbols)
+        symbols = self.symbols.replace_unknown_symbols_with_pad(symbols, pad_symbol=PADDING_SYMBOL)
       else:
         self._logger.exception("Unknown symbols are not allowed!")
         raise Exception()

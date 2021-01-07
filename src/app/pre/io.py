@@ -1,6 +1,6 @@
 import os
 
-from src.core.common.symbol_id_dict import SymbolIdDict
+from text_utils import SymbolIdDict
 from src.core.common.utils import get_subdir
 
 _symbols_json = "symbols.json"

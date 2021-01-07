@@ -5,14 +5,13 @@ from typing import Callable, Tuple
 
 from src.app.pre.io import get_pre_dir
 from src.app.utils import prepare_logger
-from src.core.common.accents_dict import AccentsDict
-from src.core.common.speakers_dict import SpeakersDict, SpeakersLogDict
-from src.core.common.symbol_id_dict import SymbolIdDict
 from src.core.common.utils import get_subdir
 from src.core.pre.ds import (DsData, DsDataList, arctic_preprocess,
                              custom_preprocess, get_speaker_examples,
                              libritts_preprocess, ljs_preprocess,
-                             thchs_kaldi_preprocess, thchs_preprocess)
+                             mailabs_preprocess, thchs_kaldi_preprocess,
+                             thchs_preprocess)
+from text_utils import AccentsDict, SpeakersDict, SpeakersLogDict, SymbolIdDict
 from unidecode import unidecode as convert_to_ascii
 
 # don't do preprocessing here because inconsistent with mels because it is not always usefull to calc mels instand
@@ -108,6 +107,12 @@ def preprocess_ljs(base_dir: str, ds_name: str, path: str, auto_dl: bool):
   logger = prepare_logger()
   logger.info("Preprocessing LJSpeech dataset...")
   _preprocess_ds(base_dir, ds_name, path, auto_dl, ljs_preprocess, logger=logger)
+
+
+def preprocess_mailabs(base_dir: str, ds_name: str, path: str, auto_dl: bool):
+  logger = prepare_logger()
+  logger.info("Preprocessing M-AILABS dataset...")
+  _preprocess_ds(base_dir, ds_name, path, auto_dl, mailabs_preprocess, logger=logger)
 
 
 def preprocess_libritts(base_dir: str, ds_name: str, path: str, auto_dl: bool):

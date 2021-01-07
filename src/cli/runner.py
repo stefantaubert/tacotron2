@@ -10,6 +10,7 @@ from src.cli.pre import (init_accent_apply_text_parser,
                          init_preprocess_arctic_parser,
                          init_preprocess_custom_parser,
                          init_preprocess_ljs_parser,
+                         init_preprocess_mailabs_parser,
                          init_preprocess_mels_parser,
                          init_preprocess_text_parser,
                          init_preprocess_thchs_kaldi_parser,
@@ -53,6 +54,7 @@ def _init_parser():
 
   _add_parser_to(subparsers, "preprocess-custom", init_preprocess_custom_parser)
   _add_parser_to(subparsers, "preprocess-ljs", init_preprocess_ljs_parser)
+  _add_parser_to(subparsers, "preprocess-mailabs", init_preprocess_mailabs_parser)
   _add_parser_to(subparsers, "preprocess-arctic", init_preprocess_arctic_parser)
   _add_parser_to(subparsers, "preprocess-libritts", init_preprocess_arctic_parser)
   _add_parser_to(subparsers, "preprocess-thchs", init_preprocess_thchs_parser)

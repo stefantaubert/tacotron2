@@ -8,8 +8,6 @@ from src.app.pre.mapping import (create_or_update_inference_map,
 from src.app.pre.prepare import (get_prepared_dir, load_prep_accents_ids,
                                  load_prep_symbol_converter)
 from src.app.utils import prepare_logger
-from src.core.common.language import Language
-from src.core.common.symbols_map import SymbolsMap
 from src.core.common.utils import read_text
 from src.core.pre.text.pre_inference import (AccentedSymbol,
                                              AccentedSymbolList,
@@ -20,7 +18,7 @@ from src.core.pre.text.pre_inference import (sents_accent_apply,
                                              sents_accent_template,
                                              sents_convert_to_ipa, sents_map,
                                              sents_normalize, set_accent)
-from text_utils import EngToIpaMode
+from text_utils import EngToIpaMode, Language, SymbolsMap
 
 _text_csv = "text.csv"
 _accents_csv = "accents.csv"

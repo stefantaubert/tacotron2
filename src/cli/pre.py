@@ -1,9 +1,7 @@
 from argparse import ArgumentParser
 
-from text_utils.text import EngToIpaMode
-
 from src.app.pre.ds import (preprocess_arctic, preprocess_custom,
-                            preprocess_libritts, preprocess_ljs,
+                            preprocess_libritts, preprocess_ljs, preprocess_mailabs,
                             preprocess_thchs, preprocess_thchs_kaldi)
 from src.app.pre.inference import (accent_apply, accent_set, add_text,
                                    ipa_convert_text, map_text,
@@ -20,7 +18,7 @@ from src.app.pre.wav import (preprocess_wavs, wavs_normalize,
                              wavs_remove_silence, wavs_stereo_to_mono,
                              wavs_upsample)
 from src.cli.utils import parse_tuple_list, split_hparams_string
-from src.core.common.language import Language
+from text_utils import EngToIpaMode, Language
 
 
 def init_preprocess_thchs_parser(parser: ArgumentParser):
@@ -35,6 +33,12 @@ def init_preprocess_ljs_parser(parser: ArgumentParser):
   parser.add_argument('--auto_dl', action="store_true")
   parser.add_argument('--ds_name', type=str, required=True, default='ljs')
   return preprocess_ljs
+
+def init_preprocess_mailabs_parser(parser: ArgumentParser):
+  parser.add_argument('--path', type=str, required=True, help='M-AILABS dataset directory')
+  parser.add_argument('--auto_dl', action="store_true")
+  parser.add_argument('--ds_name', type=str, required=True, default='mailabs')
+  return preprocess_mailabs
 
 
 def init_preprocess_arctic_parser(parser: ArgumentParser):

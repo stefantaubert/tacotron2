@@ -936,7 +936,7 @@
         "speech-dataset-parser": {
             "editable": true,
             "git": "https://github.com/stefantaubert/speech-dataset-parser.git",
-            "ref": "bdcb1492e1a4434536677fd1ae66030d6462f708"
+            "ref": "78a9edfe5851e325736db7d282aee824ea7ceb4f"
         },
         "tensorboard": {
             "hashes": [
@@ -954,7 +954,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "d662b47fad6db21a3d3dbe63f0bf9dbc8bd19224"
+            "ref": "12a2537b063a71980f863647b628f13c6a26e93f"
         },
         "threadpoolctl": {
             "hashes": [

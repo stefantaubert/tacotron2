@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from src.core.common.taco_stft import TacotronSTFT
-from src.core.common.text import deserialize_list
+from text_utils import deserialize_list
 from src.core.common.utils import to_gpu
 from src.core.pre.merge_ds import PreparedDataList
 from src.core.tacotron.hparams import HParams
@@ -176,6 +176,7 @@ def parse_batch(batch: Tuple[torch.LongTensor, torch.LongTensor, torch.LongTenso
        mel_padded, max_len, output_lengths, speaker_ids)
   y = (mel_padded, gate_padded)
   return x, y
+
 
 def prepare_valloader(hparams: HParams, collate_fn: SymbolsMelCollate, valset: PreparedDataList, logger: Logger) -> DataLoader:
   logger.info(

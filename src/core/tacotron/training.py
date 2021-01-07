@@ -5,11 +5,8 @@ from typing import Any, Callable, Dict, Iterator, List, Optional
 
 import numpy as np
 import torch
-from src.core.common.accents_dict import PADDING_ACCENT, AccentsDict
 from src.core.common.checkpoint import Checkpoint, get_iteration
-from src.core.common.speakers_dict import SpeakersDict
-from src.core.common.symbol_id_dict import PADDING_SYMBOL, SymbolIdDict
-from src.core.common.symbols_map import SymbolsMap
+from src.core.common.globals import PADDING_ACCENT, PADDING_SYMBOL
 from src.core.common.train import (SaveIterationSettings, check_save_it,
                                    copy_state_dict,
                                    get_continue_batch_iteration,
@@ -31,6 +28,7 @@ from src.core.tacotron.model import (SPEAKER_EMBEDDING_LAYER_NAME,
 from src.core.tacotron.model_checkpoint import CheckpointTacotron
 from src.core.tacotron.model_weights import (get_mapped_speaker_weights,
                                              get_mapped_symbol_weights)
+from text_utils import AccentsDict, SpeakersDict, SymbolIdDict, SymbolsMap
 from torch import nn
 from torch.nn import Parameter
 from torch.utils.data import DataLoader

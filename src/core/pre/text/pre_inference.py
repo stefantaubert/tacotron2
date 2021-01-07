@@ -3,17 +3,13 @@ from logging import Logger
 from math import ceil
 from typing import List, Optional, Set, Tuple
 
-from src.core.common.accents_dict import AccentsDict
 from src.core.common.globals import PADDING_SYMBOL
-from src.core.common.language import Language
-from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.symbols_map import SymbolsMap
-from src.core.common.text import deserialize_list, serialize_list
 from src.core.common.utils import (GenericList, console_out_len,
                                    get_unique_items)
 from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
-from text_utils.ipa2symb import IPAExtractionSettings
-from text_utils.text import EngToIpaMode, text_to_sentences, text_to_symbols
+from text_utils import (AccentsDict, EngToIpaMode, IPAExtractionSettings,
+                        Language, SymbolIdDict, SymbolsMap, deserialize_list,
+                        serialize_list, text_to_sentences, text_to_symbols)
 
 
 def get_formatted_core(sent_id: int, symbols: List[str], accent_ids: List[int], max_pairs_per_line: int, space_length: int, accent_id_dict: AccentsDict) -> str:
@@ -158,7 +154,7 @@ class InferSentenceList(GenericList[InferSentence]):
     unknown_symbols_exist = False
     for sentence in self.items():
       if model_symbols.has_unknown_symbols(sentence.symbols):
-        sentence.symbols = model_symbols.replace_unknown_symbols_with_pad(sentence.symbols)
+        sentence.symbols = model_symbols.replace_unknown_symbols_with_pad(sentence.symbols, pad_symbol=PADDING_SYMBOL)
         text = SymbolIdDict.symbols_to_text(sentence.symbols)
         logger.info(f"Sentence {sentence.sent_id} contains unknown symbols: {text}")
         unknown_symbols_exist = True

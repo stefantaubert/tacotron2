@@ -5,9 +5,9 @@ from typing import OrderedDict as OrderedDictType
 
 from torch import Tensor
 
-from src.core.common.speakers_dict import SpeakersDict
-from src.core.common.symbol_id_dict import SymbolIdDict
-from src.core.common.symbols_map import SymbolsMap
+from text_utils import SpeakersDict
+from text_utils import SymbolIdDict
+from text_utils import SymbolsMap
 from src.core.tacotron.hparams import HParams
 from src.core.tacotron.model import get_speaker_weights, get_symbol_weights
 from src.core.tacotron.model_symbols import get_model_symbol_id

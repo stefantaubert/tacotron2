@@ -4,9 +4,9 @@ from typing import List, Optional, Set
 from src.app.pre.io import get_text_dir, load_text_symbol_converter
 from src.app.pre.prepare import get_prepared_dir, load_prep_symbol_converter
 from src.app.utils import add_console_out_to_logger, init_logger
-from src.core.common.symbols_map import (SymbolsMap,
-                                         create_or_update_inference_map,
-                                         create_or_update_weights_map)
+from text_utils import (SymbolsMap,
+                        create_or_update_inference_map,
+                        create_or_update_weights_map)
 from src.core.common.utils import get_subfolder_names
 
 INFER_MAP_FN = "inference_map.json"

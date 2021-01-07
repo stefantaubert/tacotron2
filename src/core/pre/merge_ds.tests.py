@@ -1,11 +1,11 @@
 import unittest
 from typing import List, OrderedDict, Tuple
 
-from src.core.common.accents_dict import AccentsDict
-from src.core.common.gender import Gender
-from src.core.common.language import Language
-from src.core.common.speakers_dict import SpeakersDict
-from src.core.common.symbol_id_dict import SymbolIdDict
+from text_utils import AccentsDict
+from text_utils import Gender
+from text_utils import Language
+from text_utils import SpeakersDict
+from text_utils import SymbolIdDict
 from src.core.pre.ds import DsData, DsDataList
 from src.core.pre.mel import MelData, MelDataList
 from src.core.pre.merge_ds import (DsDataset, PreparedData, PreparedDataList,

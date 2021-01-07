@@ -9,7 +9,7 @@ from scipy.spatial.distance import cosine
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import normalize
 
-from src.core.common.symbol_id_dict import SymbolIdDict
+from text_utils import SymbolIdDict
 
 
 def norm2emb(emb: torch.Tensor) -> np.ndarray:

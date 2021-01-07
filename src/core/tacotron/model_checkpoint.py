@@ -8,10 +8,10 @@ import torch
 from torch import Tensor
 from torch.optim.adam import Adam  # pylint: disable=no-name-in-module
 
-from src.core.common.accents_dict import AccentsDict
+from text_utils import AccentsDict
 from src.core.common.checkpoint import Checkpoint
-from src.core.common.speakers_dict import SpeakersDict
-from src.core.common.symbol_id_dict import SymbolIdDict
+from text_utils import SpeakersDict
+from text_utils import SymbolIdDict
 from src.core.common.train import (get_pytorch_filename,
                                    overwrite_custom_hparams)
 from src.core.tacotron.hparams import HParams

@@ -2,11 +2,11 @@ import os
 from functools import partial
 from typing import Optional
 
-from text_utils.text import EngToIpaMode
+from text_utils import EngToIpaMode
 
 from src.app.pre.ds import get_ds_dir, load_ds_csv, load_symbols_json
 from src.app.utils import prepare_logger
-from src.core.common.symbol_id_dict import SymbolIdDict
+from text_utils import SymbolIdDict
 from src.core.common.utils import get_subdir
 from src.core.pre.text.pre import (SymbolsDict, TextData, TextDataList,
                                    convert_to_ipa, normalize, preprocess)
