@@ -954,7 +954,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "12a2537b063a71980f863647b628f13c6a26e93f"
+            "ref": "c96d0b0a22a98cf4d4428337a97262c90c3c70e2"
         },
         "threadpoolctl": {
             "hashes": [
