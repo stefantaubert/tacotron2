@@ -5,6 +5,7 @@ import wget
 
 from src.core.common.utils import create_parent_folder
 
+# src: https://ngc.nvidia.com/catalog/models/nvidia:waveglow_ljs_256channels
 
 def dl_wg(destination: str, version: int):
   if version == 1:
