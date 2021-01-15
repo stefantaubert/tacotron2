@@ -6,7 +6,8 @@ from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.utils import GenericList, get_counter
 from src.core.pre.ds import DsDataList
 from text_utils import (AccentsDict, EngToIpaMode, Language, SymbolIdDict,
-                        SymbolsDict, deserialize_list, serialize_list, symbols_normalize, symbols_to_ipa)
+                        SymbolsDict, deserialize_list, serialize_list,
+                        symbols_normalize, symbols_to_ipa)
 
 
 @dataclass()

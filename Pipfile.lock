@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "907b4165893f891ace7359a9648b2add9d6ca6a3e92a128edf0c0edcdd2bcdaf"
+            "sha256": "8a4c2a061269cf1c2ab2737a96662401c56b5168516e78ff216bd0a0357ba5c7"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -29,6 +29,11 @@
                 "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"
             ],
             "version": "==1.4.4"
+        },
+        "audio-utils": {
+            "editable": true,
+            "git": "https://github.com/stefantaubert/audio-utils.git",
+            "ref": "e553ddfe46613acb2ed89a82406ffc378ec35e8a"
         },
         "audioread": {
             "hashes": [
@@ -454,7 +459,7 @@
                 "sha256:e8e9274bda21782928bcdf4919cd1854fa1c0962461f385f6f5c686aeceed847",
                 "sha256:ed9a3704827055c0882d9aff2f8785bcd9a5fe7eae044459cc0d5f3e0a80706b"
             ],
-            "index": "pypi",
+            "markers": "python_version >= '3.6' and python_version < '3.9'",
             "version": "==0.52.0"
         },
         "numpy": {

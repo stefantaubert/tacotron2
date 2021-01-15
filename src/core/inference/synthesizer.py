@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-from src.core.common.audio import (concatenate_audios, mel_to_numpy,
+from audio_utils import (concatenate_audios,
                                    normalize_wav)
+from src.core.common.audio import (mel_to_numpy)
 from src.core.common.utils import pass_lines
 from src.core.pre.text.pre_inference import (InferSentence, InferSentenceList,
                                              Sentence)

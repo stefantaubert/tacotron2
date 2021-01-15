@@ -6,7 +6,7 @@ from typing import Dict, Optional
 import numpy as np
 import torch
 
-from src.core.common.audio import is_overamp
+from audio_utils import is_overamp
 from src.core.common.train import overwrite_custom_hparams
 from src.core.waveglow.denoiser import Denoiser
 from src.core.waveglow.train import CheckpointWaveglow, load_model

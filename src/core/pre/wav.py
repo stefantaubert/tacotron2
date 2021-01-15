@@ -6,15 +6,13 @@ import os
 from dataclasses import dataclass
 from logging import getLogger
 
+from audio_utils import (get_duration_s, normalize_file, remove_silence_file,
+                         stereo_to_mono_file, upsample_file)
 from scipy.io.wavfile import read
-from tqdm import tqdm
-
-from src.core.common.audio import (get_duration_s, normalize_file,
-                                   remove_silence_file, stereo_to_mono_file,
-                                   upsample_file)
 from src.core.common.taco_stft import TacotronSTFT, TSTFTHParams
 from src.core.common.utils import GenericList, get_chunk_name
 from src.core.pre.ds import DsData, DsDataList
+from tqdm import tqdm
 
 
 @dataclass()

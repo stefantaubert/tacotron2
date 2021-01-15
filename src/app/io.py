@@ -1,13 +1,12 @@
 import datetime
 import os
 from shutil import copyfile
-from typing import Optional, Tuple
+from typing import Optional
 
 import matplotlib.pylab as plt
 import numpy as np
-
+from audio_utils import float_to_wav
 from src.app.pre.prepare import load_filelist
-from src.core.common.audio import float_to_wav
 from src.core.common.mel_plot import plot_melspec
 from src.core.common.utils import (get_parent_dirname, get_subdir, parse_json,
                                    save_json, stack_images_vertically)

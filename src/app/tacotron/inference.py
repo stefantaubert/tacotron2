@@ -3,8 +3,7 @@ import os
 from typing import Dict, List, Optional
 
 import matplotlib.pylab as plt
-from tqdm import tqdm
-
+from audio_utils import float_to_wav
 from src.app.io import (get_checkpoints_dir, get_infer_log,
                         get_inference_root_dir, load_prep_name, save_infer_wav)
 from src.app.pre.inference import get_infer_sentences
@@ -15,7 +14,6 @@ from src.app.tacotron.io import get_train_dir
 from src.app.utils import (add_console_out_to_logger, add_file_out_to_logger,
                            get_default_logger, init_logger)
 from src.app.waveglow.io import get_train_dir as get_wg_train_dir
-from src.core.common.audio import float_to_wav
 from src.core.common.mel_plot import plot_melspec
 from src.core.common.train import (get_custom_or_last_checkpoint,
                                    get_last_checkpoint)
@@ -26,6 +24,7 @@ from src.core.inference.infer import infer
 from src.core.inference.synthesizer import InferenceResult
 from src.core.tacotron.training import CheckpointTacotron
 from src.core.waveglow.train import CheckpointWaveglow
+from tqdm import tqdm
 
 
 def get_infer_dir(train_dir: str, input_name: str, iteration: int, speaker_name: str):

@@ -21,7 +21,6 @@ wget = "*"
 numpy = "*"
 gdown = "*"
 scikit-learn = "*"
-numba = "*"
 scipy = "*"
 tensorboard = "*"
 Unidecode = "*"
@@ -29,6 +28,7 @@ Pillow = "*"
 text-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/text-utils.git"}
 cmudict-parser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/cmudict-parser.git"}
 speech-dataset-parser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/speech-dataset-parser.git"}
+audio-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/audio-utils.git"}
 
 [requires]
 python_version = "3.8"
