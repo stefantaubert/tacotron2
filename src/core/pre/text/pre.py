@@ -5,9 +5,8 @@ from typing import List, Optional, Tuple
 from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.utils import GenericList, get_counter
 from src.core.pre.ds import DsDataList
-from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
 from text_utils import (AccentsDict, EngToIpaMode, Language, SymbolIdDict,
-                        SymbolsDict, deserialize_list, serialize_list)
+                        SymbolsDict, deserialize_list, serialize_list, symbols_normalize, symbols_to_ipa)
 
 
 @dataclass()
@@ -36,7 +35,7 @@ def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_to
       ex = "Please specify the ipa conversion mode."
       logger.exception(ex)
       raise Exception(ex)
-    new_symbols, new_accent_ids = symbols_convert_to_ipa(
+    new_symbols, new_accent_ids = symbols_to_ipa(
       symbols=symbol_converter.get_symbols(values.serialized_symbol_ids),
       lang=values.lang,
       accent_ids=deserialize_list(values.serialized_accent_ids),

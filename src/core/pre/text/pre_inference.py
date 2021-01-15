@@ -6,10 +6,9 @@ from typing import List, Optional, Set, Tuple
 from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.utils import (GenericList, console_out_len,
                                    get_unique_items)
-from src.core.pre.text.utils import symbols_convert_to_ipa, symbols_normalize
 from text_utils import (AccentsDict, EngToIpaMode, IPAExtractionSettings,
                         Language, SymbolIdDict, SymbolsMap, deserialize_list,
-                        serialize_list, text_to_sentences, text_to_symbols)
+                        serialize_list, text_to_sentences, text_to_symbols, symbols_normalize, symbols_to_ipa)
 
 
 def get_formatted_core(sent_id: int, symbols: List[str], accent_ids: List[int], max_pairs_per_line: int, space_length: int, accent_id_dict: AccentsDict) -> str:
@@ -253,7 +252,7 @@ def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ig
       ex = "Please specify the ipa conversion mode."
       logger.exception(ex)
       raise Exception(ex)
-    new_symbols, new_accent_ids = symbols_convert_to_ipa(
+    new_symbols, new_accent_ids = symbols_to_ipa(
       symbols=text_symbols.get_symbols(sentence.serialized_symbols),
       lang=sentence.lang,
       accent_ids=deserialize_list(sentence.serialized_accents),

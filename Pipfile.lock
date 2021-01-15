@@ -944,10 +944,10 @@
         },
         "tensorboard": {
             "hashes": [
-                "sha256:cde0c663a85609441cb4d624e7255fd8e2b6b1d679645095aac8a234a2812738"
+                "sha256:7b8c53c396069b618f6f276ec94fc45d17e3282d668979216e5d30be472115e4"
             ],
             "index": "pypi",
-            "version": "==2.4.0"
+            "version": "==2.4.1"
         },
         "tensorboard-plugin-wit": {
             "hashes": [
@@ -958,7 +958,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "491caef9c6990e768cf88b4294a0e83e33762956"
+            "ref": "098d09ff72cdc6cdd4966c51f7716c81d5e0eb3b"
         },
         "threadpoolctl": {
             "hashes": [
