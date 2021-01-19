@@ -1,6 +1,7 @@
 import logging
 import os
 from logging import Logger
+from src.core.common.utils import disable_matplot_logger
 from typing import Optional
 
 formatter = logging.Formatter(
@@ -37,6 +38,8 @@ def init_logger(logger: logging.Logger = get_default_logger()):
 
   for h in logger.handlers:
     logger.removeHandler(h)
+
+  disable_matplot_logger()
 
   return logger
 

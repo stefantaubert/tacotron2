@@ -24,6 +24,32 @@ from tqdm import tqdm
 T = TypeVar('T')
 
 
+def disable_matplot_logger():
+  disable_matplot_font_logger()
+  disable_matplot_colorbar_logger()
+
+
+def disable_matplot_font_logger():
+  '''
+  Disables:
+    DEBUG:matplotlib.font_manager:findfont: score(<Font 'Noto Sans Oriya UI' (NotoSansOriyaUI-Bold.ttf) normal normal 700 normal>) = 10.335
+    DEBUG:matplotlib.font_manager:findfont: score(<Font 'Noto Serif Khmer' (NotoSerifKhmer-Regular.ttf) normal normal 400 normal>) = 10.05
+    DEBUG:matplotlib.font_manager:findfont: score(<Font 'Samyak Gujarati' (Samyak-Gujarati.ttf) normal normal 500 normal>) = 10.14
+    ...
+  '''
+  logging.getLogger('matplotlib.font_manager').disabled = True
+
+
+def disable_matplot_colorbar_logger():
+  '''
+  Disables:
+    DEBUG:matplotlib.colorbar:locator: <matplotlib.colorbar._ColorbarAutoLocator object at 0x7f78f08e6370>
+    DEBUG:matplotlib.colorbar:Using auto colorbar locator <matplotlib.colorbar._ColorbarAutoLocator object at 0x7f78f08e6370> on colorbar
+    DEBUG:matplotlib.colorbar:Setting pcolormesh
+  '''
+  logging.getLogger('matplotlib.colorbar').disabled = True
+
+
 def cast_as(obj, _: T) -> T:
   return obj
 
@@ -202,7 +228,7 @@ def cosine_dist_mels(a: np.ndarray, b: np.ndarray) -> float:
       score = 1
     scores.append(score)
   score = np.mean(scores)
-  #scores = cdist(pred_np, orig_np, 'cosine')
+  # scores = cdist(pred_np, orig_np, 'cosine')
   final_score = 1 - score
   return final_score
 
@@ -374,6 +400,6 @@ def read_text(path: str) -> str:
 
 if __name__ == "__main__":
   pass
-  #x = "/datasets/models/taco2pt_v2/debug/filelist/filelist.csv"
-  #data = pd.read_csv(x, header=None, sep=_csv_separator)
+  # x = "/datasets/models/taco2pt_v2/debug/filelist/filelist.csv"
+  # data = pd.read_csv(x, header=None, sep=_csv_separator)
   # get_speaker_count_csv(data)

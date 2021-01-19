@@ -2,9 +2,8 @@ import random
 
 import matplotlib.pylab as plt
 import torch
+from src.core.common.utils import disable_matplot_logger, figure_to_numpy
 from torch.utils.tensorboard import SummaryWriter
-
-from src.core.common.utils import figure_to_numpy
 
 
 def plot_alignment_to_numpy(alignment, info=None):
@@ -17,7 +16,7 @@ def plot_alignment_to_numpy(alignment, info=None):
     xlabel += '\n\n' + info
   plt.xlabel(xlabel)
   plt.ylabel('Encoder timestep')
-  plt.tight_layout()
+  plt.tight_layout()  # font logging occurs here
 
   fig.canvas.draw()
   data = figure_to_numpy(fig)
