@@ -46,6 +46,9 @@ def is_pytorch_file(filename: str):
 
 
 def get_last_checkpoint(checkpoint_dir: str) -> Tuple[str, int]:
+  '''
+  Returns the full path of the last checkpoint and its iteration.
+  '''
   # checkpoint_dir = get_checkpoint_dir(training_dir_path)
   its = get_all_checkpoint_iterations(checkpoint_dir)
   at_least_one_checkpoint_exists = len(its) > 0

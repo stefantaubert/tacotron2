@@ -6,7 +6,8 @@ from src.app.tacotron.defaults import (DEFAULT_DENOISER_STRENGTH,
                                        DEFAULT_WAVEGLOW)
 from src.app.tacotron.eval_checkpoints import eval_checkpoints_main
 from src.app.tacotron.inference import infer_main
-from src.app.tacotron.training import continue_train_main, train_main
+from src.app.tacotron.training import (continue_train_main, restore_model,
+                                       train_main)
 from src.app.tacotron.validation import validate_main
 from src.cli.utils import split_hparams_string
 
@@ -29,6 +30,11 @@ def init_eval_checkpoints_parser(parser):
 def eval_checkpoints_main_cli(**args):
   args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
   eval_checkpoints_main(**args)
+
+def init_restore_parser(parser: ArgumentParser):
+  parser.add_argument('--train_name', type=str, required=True)
+  parser.add_argument('--checkpoint_dir', type=str, required=True)
+  return restore_model
 
 
 def init_train_parser(parser: ArgumentParser):

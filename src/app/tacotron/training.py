@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 from functools import partial
 from logging import Logger
 from typing import Dict, Optional
@@ -38,7 +39,18 @@ def save_checkpoint(checkpoint: CheckpointTacotron, save_checkpoint_dir: str, lo
   checkpoint.save(checkpoint_path, logger)
 
 
-def train_main(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, custom_hparams: Optional[Dict[str, str]] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, use_weights_map: Optional[bool] = None, map_from_speaker: Optional[str] = None):
+def restore_model(base_dir: str, train_name: str, checkpoint_dir: str) -> None:
+  train_dir = get_train_dir(base_dir, train_name, create=True)
+  logs_dir = get_train_logs_dir(train_dir)
+  logger = prepare_logger(get_train_log_file(logs_dir), reset=True)
+  save_checkpoint_dir = get_checkpoints_dir(train_dir)
+  last_checkpoint, iteration = get_last_checkpoint(checkpoint_dir)
+  logger.info(f"Restoring checkpoint {iteration} from {checkpoint_dir}...")
+  shutil.copy2(last_checkpoint, save_checkpoint_dir)
+  logger.info("Restoring done.")
+
+
+def train_main(base_dir: str, train_name: str, prep_name: str, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None, test_size: float = 0.01, validation_size: float = 0.05, custom_hparams: Optional[Dict[str, str]] = None, split_seed: int = 1234, weights_train_name: Optional[str] = None, weights_checkpoint: Optional[int] = None, use_weights_map: Optional[bool] = None, map_from_speaker: Optional[str] = None) -> None:
   prep_dir = get_prepared_dir(base_dir, prep_name)
   train_dir = get_train_dir(base_dir, train_name, create=True)
   logs_dir = get_train_logs_dir(train_dir)
@@ -105,7 +117,7 @@ def train_main(base_dir: str, train_name: str, prep_name: str, warm_start_train_
   )
 
 
-def continue_train_main(base_dir: str, train_name: str, custom_hparams: Optional[Dict[str, str]] = None):
+def continue_train_main(base_dir: str, train_name: str, custom_hparams: Optional[Dict[str, str]] = None) -> None:
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 

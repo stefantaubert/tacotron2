@@ -1,8 +1,9 @@
 from argparse import ArgumentParser
 
 from src.app.pre.ds import (preprocess_arctic, preprocess_custom,
-                            preprocess_libritts, preprocess_ljs, preprocess_mailabs,
-                            preprocess_thchs, preprocess_thchs_kaldi)
+                            preprocess_libritts, preprocess_ljs,
+                            preprocess_mailabs, preprocess_thchs,
+                            preprocess_thchs_kaldi)
 from src.app.pre.inference import (accent_apply, accent_set, add_text,
                                    ipa_convert_text, map_text,
                                    map_to_prep_symbols, normalize_text)
@@ -202,7 +203,8 @@ def init_create_or_update_inference_map_parser(parser: ArgumentParser):
 
 
 def init_add_text_parser(parser: ArgumentParser):
-  parser.add_argument('--filepath', type=str, required=True)
+  parser.add_argument('--filepath', type=str, required=False)
+  parser.add_argument('--text', type=str, required=False)
   parser.add_argument('--prep_name', type=str, required=True)
   parser.add_argument('--text_name', type=str, required=True)
   parser.add_argument('--lang', choices=Language, type=Language.__getitem__, required=True)

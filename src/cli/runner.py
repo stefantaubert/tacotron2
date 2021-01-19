@@ -29,6 +29,7 @@ from src.cli.tacotron import \
     init_eval_checkpoints_parser as init_taco_eval_checkpoints_parser
 from src.cli.tacotron import init_inference_parser as init_taco_infer_parser
 from src.cli.tacotron import init_plot_emb_parser as init_taco_plot_emb_parser
+from src.cli.tacotron import init_restore_parser as init_taco_restore_parser
 from src.cli.tacotron import init_train_parser as init_taco_train_parser
 from src.cli.tacotron import init_validate_parser as init_taco_val_parser
 from src.cli.utils import add_base_dir
@@ -92,6 +93,7 @@ def _init_parser():
   _add_parser_to(subparsers, "waveglow-validate", init_wg_val_parser)
   _add_parser_to(subparsers, "waveglow-infer", init_wg_infer_parser)
 
+  _add_parser_to(subparsers, "tacotron-restore", init_taco_restore_parser)
   _add_parser_to(subparsers, "tacotron-train", init_taco_train_parser)
   _add_parser_to(subparsers, "tacotron-continue-train", init_taco_continue_train_parser)
   _add_parser_to(subparsers, "tacotron-validate", init_taco_val_parser)

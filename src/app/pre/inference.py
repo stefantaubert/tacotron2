@@ -44,15 +44,21 @@ def _save_accents_csv(text_dir: str, data: AccentedSymbolList):
   data.save(path)
 
 
-def add_text(base_dir: str, prep_name: str, text_name: str, filepath: str, lang: Language):
+def add_text(base_dir: str, prep_name: str, text_name: str, filepath: Optional[str], lang: Language, text: Optional[str]):
   logger = prepare_logger()
   prep_dir = get_prepared_dir(base_dir, prep_name, create=False)
   if not os.path.isdir(prep_dir):
     logger.error("Please prepare data first.")
   else:
     logger.info("Adding text...")
+    text_input = ""
+    if filepath is None:
+      assert text is not None
+      text_input = text
+    else:
+      text_input = read_text(filepath)
     symbol_ids, data = infer_add(
-      text=read_text(filepath),
+      text=text_input,
       lang=lang,
       logger=logger,
     )
