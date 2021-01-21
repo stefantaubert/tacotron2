@@ -6,8 +6,8 @@ from src.cli.pre import (init_accent_apply_text_parser,
                          init_create_or_update_inference_map_parser,
                          init_create_or_update_weights_map_parser,
                          init_map_text_parser, init_map_to_prep_symbols_parser,
-                         init_normalize_text_parser, init_prepare_ds_parser,
-                         init_preprocess_arctic_parser,
+                         init_mels_plot_parser, init_normalize_text_parser,
+                         init_prepare_ds_parser, init_preprocess_arctic_parser,
                          init_preprocess_custom_parser,
                          init_preprocess_libritts_parser,
                          init_preprocess_ljs_parser,
@@ -77,7 +77,7 @@ def _init_parser():
 
   _add_parser_to(subparsers, "preprocess-mels", init_preprocess_mels_parser)
   # is also possible without preprocess mels first
-  _add_parser_to(subparsers, "mels-plot", init_preprocess_mels_parser)
+  _add_parser_to(subparsers, "mels-plot", init_mels_plot_parser)
 
   _add_parser_to(subparsers, "prepare-ds", init_prepare_ds_parser)
   _add_parser_to(subparsers, "prepare-text-add", init_add_text_parser)

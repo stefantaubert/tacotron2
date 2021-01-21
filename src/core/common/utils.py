@@ -28,10 +28,12 @@ def disable_matplot_logger():
   disable_matplot_font_logger()
   disable_matplot_colorbar_logger()
 
-def disable_numba_logger():
-  disable_numba_core_ssa_logger()
 
-def disable_numba_core_ssa_logger():
+def disable_numba_logger():
+  disable_numba_core_logger()
+
+
+def disable_numba_core_logger():
   """
   Disables:
     DEBUG:numba.core.ssa:on stmt: $92load_attr.32 = getattr(value=y, attr=shape)
@@ -43,8 +45,19 @@ def disable_numba_core_ssa_logger():
     DEBUG:numba.core.ssa:on stmt: $106get_iter.38 = getiter(value=$104call_function.37)
     DEBUG:numba.core.ssa:on stmt: $phi108.0 = $106get_iter.38
     DEBUG:numba.core.ssa:on stmt: jump 108
+    DEBUG:numba.core.byteflow:block_infos State(pc_initial=446 nstack_initial=1):
+    AdaptBlockInfo(insts=((446, {'res': '$time_register446.1'}), (448, {'res': '$time_increment448.2'}), (450, {'lhs': '$time_register446.1', 'rhs': '$time_increment448.2', 'res': '$450inplace_add.3'}), (452, {'value': '$450inplace_add.3'}),
+    (454, {})), outgoing_phis={}, blockstack=(), active_try_block=None, outgoing_edgepushed={108: ('$phi446.0',)})
+    DEBUG:numba.core.byteflow:block_infos State(pc_initial=456 nstack_initial=0):
+    AdaptBlockInfo(insts=((456, {'res': '$const456.0'}), (458, {'retval': '$const456.0', 'castval': '$458return_value.1'})), outgoing_phis={}, blockstack=(), active_try_block=None, outgoing_edgepushed={})
+    DEBUG:numba.core.interpreter:label 0:
+        x = arg(0, name=x)                       ['x']
+        y = arg(1, name=y)                       ['y']
+        sample_ratio = arg(2, name=sample_ratio) ['sample_ratio']
+    ...
   """
-  logging.getLogger('numba.core.ssa').disabled = True
+  logging.getLogger('numba.core').disabled = True
+
 
 def disable_matplot_font_logger():
   '''
