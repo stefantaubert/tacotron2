@@ -149,7 +149,7 @@ def _preprocess_ds(base_dir: str, ds_name: str, path: str, auto_dl: bool, prepro
     _save_ds_csv(ds_dir, ds_data)
     examples = get_speaker_examples(ds_data)
     _save_speaker_examples(ds_dir, examples, logger)
-    print("Dataset processed.")
+    logger.info("Dataset processed.")
 
 
 def add_speaker_examples(base_dir: str, ds_name: str):

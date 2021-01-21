@@ -9,6 +9,7 @@ from src.cli.pre import (init_accent_apply_text_parser,
                          init_normalize_text_parser, init_prepare_ds_parser,
                          init_preprocess_arctic_parser,
                          init_preprocess_custom_parser,
+                         init_preprocess_libritts_parser,
                          init_preprocess_ljs_parser,
                          init_preprocess_mailabs_parser,
                          init_preprocess_mels_parser,
@@ -21,6 +22,7 @@ from src.cli.pre import (init_accent_apply_text_parser,
                          init_wavs_normalize_parser,
                          init_wavs_remove_silence_parser,
                          init_wavs_remove_silence_plot_parser,
+                         init_wavs_stats_parser,
                          init_wavs_stereo_to_mono_parser,
                          init_wavs_upsample_parser)
 from src.cli.tacotron import \
@@ -57,11 +59,12 @@ def _init_parser():
   _add_parser_to(subparsers, "preprocess-ljs", init_preprocess_ljs_parser)
   _add_parser_to(subparsers, "preprocess-mailabs", init_preprocess_mailabs_parser)
   _add_parser_to(subparsers, "preprocess-arctic", init_preprocess_arctic_parser)
-  _add_parser_to(subparsers, "preprocess-libritts", init_preprocess_arctic_parser)
+  _add_parser_to(subparsers, "preprocess-libritts", init_preprocess_libritts_parser)
   _add_parser_to(subparsers, "preprocess-thchs", init_preprocess_thchs_parser)
   _add_parser_to(subparsers, "preprocess-thchs-kaldi", init_preprocess_thchs_kaldi_parser)
 
   _add_parser_to(subparsers, "preprocess-wavs", init_preprocess_wavs_parser)
+  _add_parser_to(subparsers, "wavs-stats", init_wavs_stats_parser)
   _add_parser_to(subparsers, "wavs-normalize", init_wavs_normalize_parser)
   _add_parser_to(subparsers, "wavs-resample", init_wavs_upsample_parser)
   _add_parser_to(subparsers, "wavs-stereo-to-mono", init_wavs_stereo_to_mono_parser)

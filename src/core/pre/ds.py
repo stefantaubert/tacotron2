@@ -37,6 +37,9 @@ class DsData:
     self.gender = Gender(self.gender)
     self.speaker_name = str(self.speaker_name)
 
+  def __repr__(self):
+    return str(self.entry_id)
+
 
 class DsDataList(GenericList[DsData]):
   def load_init(self):
