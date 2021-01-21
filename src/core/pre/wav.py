@@ -124,7 +124,6 @@ def preprocess(data: DsDataList, dest_dir: str) -> WavDataList:
 
 
 def resample(data: WavDataList, orig_dir: str, dest_dir: str, new_rate: int) -> WavDataList:
-  # assert os.path.isdir(dest_dir)
   result = WavDataList()
 
   for values in data.items(True):
@@ -148,7 +147,6 @@ def resample(data: WavDataList, orig_dir: str, dest_dir: str, new_rate: int) -> 
 
 
 def stereo_to_mono(data: WavDataList, orig_dir: str, dest_dir: str) -> WavDataList:
-  assert os.path.isdir(dest_dir)
   result = WavDataList()
 
   for values in data.items(True):
@@ -173,7 +171,6 @@ def stereo_to_mono(data: WavDataList, orig_dir: str, dest_dir: str) -> WavDataLi
 
 
 def remove_silence(data: WavDataList, orig_dir: str, dest_dir: str, chunk_size: int, threshold_start: float, threshold_end: float, buffer_start_ms: float, buffer_end_ms: float) -> WavDataList:
-  assert os.path.isdir(dest_dir)
   result = WavDataList()
 
   for values in data.items(True):
@@ -228,7 +225,6 @@ def remove_silence_plot(wav_path: str, out_path: str, chunk_size: int, threshold
 
 
 def normalize(data: WavDataList, orig_dir: str, dest_dir: str) -> WavDataList:
-  assert os.path.isdir(dest_dir)
   result = WavDataList()
 
   for values in data.items(True):

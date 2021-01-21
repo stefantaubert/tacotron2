@@ -28,6 +28,23 @@ def disable_matplot_logger():
   disable_matplot_font_logger()
   disable_matplot_colorbar_logger()
 
+def disable_numba_logger():
+  disable_numba_core_ssa_logger()
+
+def disable_numba_core_ssa_logger():
+  """
+  Disables:
+    DEBUG:numba.core.ssa:on stmt: $92load_attr.32 = getattr(value=y, attr=shape)
+    DEBUG:numba.core.ssa:on stmt: $const94.33 = const(int, 1)
+    DEBUG:numba.core.ssa:on stmt: $96binary_subscr.34 = static_getitem(value=$92load_attr.32, index=1, index_var=$const94.33, fn=<built-in function getitem>)
+    DEBUG:numba.core.ssa:on stmt: n_channels = $96binary_subscr.34
+    DEBUG:numba.core.ssa:on stmt: $100load_global.35 = global(range: <class 'range'>)
+    DEBUG:numba.core.ssa:on stmt: $104call_function.37 = call $100load_global.35(n_out, func=$100load_global.35, args=[Var(n_out, interpn.py:24)], kws=(), vararg=None)
+    DEBUG:numba.core.ssa:on stmt: $106get_iter.38 = getiter(value=$104call_function.37)
+    DEBUG:numba.core.ssa:on stmt: $phi108.0 = $106get_iter.38
+    DEBUG:numba.core.ssa:on stmt: jump 108
+  """
+  logging.getLogger('numba.core.ssa').disabled = True
 
 def disable_matplot_font_logger():
   '''

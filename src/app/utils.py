@@ -1,8 +1,9 @@
 import logging
 import os
 from logging import Logger
-from src.core.common.utils import disable_matplot_logger
 from typing import Optional
+
+from src.core.common.utils import disable_matplot_logger, disable_numba_logger
 
 formatter = logging.Formatter(
   '[%(asctime)s.%(msecs)03d] (%(levelname)s) %(message)s',
@@ -40,6 +41,7 @@ def init_logger(logger: logging.Logger = get_default_logger()):
     logger.removeHandler(h)
 
   disable_matplot_logger()
+  disable_numba_logger()
 
   return logger
 
