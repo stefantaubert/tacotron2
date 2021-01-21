@@ -22,7 +22,7 @@ from src.core.pre.ds import DsData, DsDataList
 @dataclass()
 class WavData:
   entry_id: int
-  wav: str
+  relative_wav_path: str
   duration: float
   sr: int
   #size: float
@@ -99,82 +99,107 @@ def log_stats(ds_data: DsDataList, wav_data: WavDataList, logger: Logger):
     print(stats_csv)
 
 
-def preprocess(data: DsDataList, dest_dir: str, copy_wavs: bool) -> WavDataList:
+def preprocess(data: DsDataList, dest_dir: str) -> WavDataList:
   result = WavDataList()
 
   for values in data.items(True):
     sampling_rate, wav = read(values.wav_path)
     duration = get_duration_s(wav, sampling_rate)
 
-    source_wav_path = values.wav_path
-    if copy_wavs:
-      chunk_dir = os.path.join(dest_dir, get_chunk_name(
-        values.entry_id, chunksize=PRE_CHUNK_SIZE, maximum=len(data) - 1))
-      os.makedirs(chunk_dir, exist_ok=True)
-      dest_wav_path = os.path.join(chunk_dir, f"{values!r}.wav")
-      # 370its/s
-      write(dest_wav_path, sampling_rate, wav)
-      # 160its/s
-      #copy2(values.wav_path, dest_wav_path)
+    chunk_dir_name = get_chunk_name(
+      i=values.entry_id,
+      chunksize=PRE_CHUNK_SIZE,
+      maximum=len(data) - 1
+    )
+    absolute_chunk_dir = os.path.join(dest_dir, chunk_dir_name)
+    os.makedirs(absolute_chunk_dir, exist_ok=True)
+    relative_dest_wav_path = os.path.join(chunk_dir_name, f"{values!r}.wav")
+    absolute_dest_wav_path = os.path.join(dest_dir, relative_dest_wav_path)
+    write(absolute_dest_wav_path, sampling_rate, wav)
 
-      source_wav_path = dest_wav_path
-
-    result.append(WavData(values.entry_id, source_wav_path, duration, sampling_rate))
+    wav_data = WavData(values.entry_id, relative_dest_wav_path, duration, sampling_rate)
+    result.append(wav_data)
 
   return result
 
 
-def upsample(data: WavDataList, dest_dir: str, new_rate: int) -> WavDataList:
-  assert os.path.isdir(dest_dir)
+def resample(data: WavDataList, orig_dir: str, dest_dir: str, new_rate: int) -> WavDataList:
+  # assert os.path.isdir(dest_dir)
   result = WavDataList()
 
   for values in data.items(True):
-    chunk_dir = os.path.join(dest_dir, get_chunk_name(
-      values.entry_id, chunksize=PRE_CHUNK_SIZE, maximum=len(data) - 1))
-    os.makedirs(chunk_dir, exist_ok=True)
-    dest_wav_path = os.path.join(chunk_dir, f"{values!r}.wav")
+    chunk_dir_name = get_chunk_name(
+      i=values.entry_id,
+      chunksize=PRE_CHUNK_SIZE,
+      maximum=len(data) - 1
+    )
+    absolute_chunk_dir = os.path.join(dest_dir, chunk_dir_name)
+    os.makedirs(absolute_chunk_dir, exist_ok=True)
+    relative_dest_wav_path = os.path.join(chunk_dir_name, f"{values!r}.wav")
+    absolute_dest_wav_path = os.path.join(dest_dir, relative_dest_wav_path)
+
     # todo assert not is_overamp
-    upsample_file(values.wav, dest_wav_path, new_rate)
-    result.append(WavData(values.entry_id, dest_wav_path, values.duration, new_rate))
+    absolute_orig_wav_path = os.path.join(orig_dir, values.relative_wav_path)
+    upsample_file(absolute_orig_wav_path, absolute_dest_wav_path, new_rate)
+    wav_data = WavData(values.entry_id, relative_dest_wav_path, values.duration, new_rate)
+    result.append(wav_data)
 
   return result
 
 
-def stereo_to_mono(data: WavDataList, dest_dir: str) -> WavDataList:
+def stereo_to_mono(data: WavDataList, orig_dir: str, dest_dir: str) -> WavDataList:
   assert os.path.isdir(dest_dir)
   result = WavDataList()
 
   for values in data.items(True):
-    chunk_dir = os.path.join(dest_dir, get_chunk_name(
-      values.entry_id, chunksize=PRE_CHUNK_SIZE, maximum=len(data) - 1))
-    os.makedirs(chunk_dir, exist_ok=True)
-    dest_wav_path = os.path.join(chunk_dir, f"{values!r}.wav")
+    chunk_dir_name = get_chunk_name(
+      i=values.entry_id,
+      chunksize=PRE_CHUNK_SIZE,
+      maximum=len(data) - 1
+    )
+    absolute_chunk_dir = os.path.join(dest_dir, chunk_dir_name)
+    os.makedirs(absolute_chunk_dir, exist_ok=True)
+    relative_dest_wav_path = os.path.join(chunk_dir_name, f"{values!r}.wav")
+    absolute_dest_wav_path = os.path.join(dest_dir, relative_dest_wav_path)
+
     # todo assert not is_overamp
-    stereo_to_mono_file(values.wav, dest_wav_path)
-    result.append(WavData(values.entry_id, dest_wav_path, values.duration, values.sr))
+    absolute_orig_wav_path = os.path.join(orig_dir, values.relative_wav_path)
+    stereo_to_mono_file(absolute_orig_wav_path, absolute_dest_wav_path)
+
+    wav_data = WavData(values.entry_id, relative_dest_wav_path, values.duration, values.sr)
+    result.append(wav_data)
 
   return result
 
 
-def remove_silence(data: WavDataList, dest_dir: str, chunk_size: int, threshold_start: float, threshold_end: float, buffer_start_ms: float, buffer_end_ms: float) -> WavDataList:
+def remove_silence(data: WavDataList, orig_dir: str, dest_dir: str, chunk_size: int, threshold_start: float, threshold_end: float, buffer_start_ms: float, buffer_end_ms: float) -> WavDataList:
   assert os.path.isdir(dest_dir)
   result = WavDataList()
 
   for values in data.items(True):
-    chunk_dir = os.path.join(dest_dir, get_chunk_name(
-      values.entry_id, chunksize=PRE_CHUNK_SIZE, maximum=len(data) - 1))
-    os.makedirs(chunk_dir, exist_ok=True)
-    dest_wav_path = os.path.join(chunk_dir, f"{values!r}.wav")
+    chunk_dir_name = get_chunk_name(
+      i=values.entry_id,
+      chunksize=PRE_CHUNK_SIZE,
+      maximum=len(data) - 1
+    )
+    absolute_chunk_dir = os.path.join(dest_dir, chunk_dir_name)
+    os.makedirs(absolute_chunk_dir, exist_ok=True)
+    relative_dest_wav_path = os.path.join(chunk_dir_name, f"{values!r}.wav")
+    absolute_dest_wav_path = os.path.join(dest_dir, relative_dest_wav_path)
+
+    absolute_orig_wav_path = os.path.join(orig_dir, values.relative_wav_path)
     new_duration = remove_silence_file(
-      in_path=values.wav,
-      out_path=dest_wav_path,
+      in_path=absolute_orig_wav_path,
+      out_path=absolute_dest_wav_path,
       chunk_size=chunk_size,
       threshold_start=threshold_start,
       threshold_end=threshold_end,
       buffer_start_ms=buffer_start_ms,
       buffer_end_ms=buffer_end_ms
     )
-    result.append(WavData(values.entry_id, dest_wav_path, new_duration, values.sr))
+
+    wav_data = WavData(values.entry_id, relative_dest_wav_path, new_duration, values.sr)
+    result.append(wav_data)
 
   return result
 
@@ -202,16 +227,25 @@ def remove_silence_plot(wav_path: str, out_path: str, chunk_size: int, threshold
   return mel_orig, mel_trimmed
 
 
-def normalize(data: WavDataList, dest_dir: str) -> WavDataList:
+def normalize(data: WavDataList, orig_dir: str, dest_dir: str) -> WavDataList:
   assert os.path.isdir(dest_dir)
   result = WavDataList()
 
   for values in data.items(True):
-    chunk_dir = os.path.join(dest_dir, get_chunk_name(
-      values.entry_id, chunksize=PRE_CHUNK_SIZE, maximum=len(data) - 1))
-    os.makedirs(chunk_dir, exist_ok=True)
-    dest_wav_path = os.path.join(chunk_dir, f"{values!r}.wav")
-    normalize_file(values.wav, dest_wav_path)
-    result.append(WavData(values.entry_id, dest_wav_path, values.duration, values.sr))
+    chunk_dir_name = get_chunk_name(
+      i=values.entry_id,
+      chunksize=PRE_CHUNK_SIZE,
+      maximum=len(data) - 1
+    )
+    absolute_chunk_dir = os.path.join(dest_dir, chunk_dir_name)
+    os.makedirs(absolute_chunk_dir, exist_ok=True)
+    relative_dest_wav_path = os.path.join(chunk_dir_name, f"{values!r}.wav")
+    absolute_dest_wav_path = os.path.join(dest_dir, relative_dest_wav_path)
+
+    absolute_orig_wav_path = os.path.join(orig_dir, values.relative_wav_path)
+    normalize_file(absolute_orig_wav_path, absolute_dest_wav_path)
+
+    wav_data = WavData(values.entry_id, relative_dest_wav_path, values.duration, values.sr)
+    result.append(wav_data)
 
   return result

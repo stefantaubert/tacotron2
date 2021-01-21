@@ -1,3 +1,4 @@
+import os
 import random
 from dataclasses import dataclass
 from typing import Dict, List, Optional, OrderedDict, Set, Tuple
@@ -25,6 +26,8 @@ class DsDataset():
   speakers: SpeakersDict
   symbol_ids: SymbolIdDict
   accent_ids: AccentsDict
+  absolute_mel_dir: str
+  absolute_wav_dir: str
 
 
 @dataclass
@@ -41,10 +44,10 @@ class MergedDatasetEntry():
   serialized_accent_ids: str
   gender: Gender
   lang: Language
-  wav_path: str
+  absolute_wav_path: str
   duration: float
   sampling_rate: int
-  mel_path: str
+  absolute_mel_path: str
   n_mel_channels: int
 
   def load_init(self):
@@ -61,21 +64,23 @@ class MergedDataset(GenericList[MergedDatasetEntry]):
   @classmethod
   def init_from_ds_dataset(cls, ds: DsDataset):
     res = cls()
-    for data in zip(ds.data.items(), ds.texts.items(), ds.wavs.items(), ds.mels.items()):
-      entry, text, wav, mel = data
+    for ds_data, text_data, wav_data, mel_data in zip(ds.data.items(), ds.texts.items(), ds.wavs.items(), ds.mels.items()):
+      absolute_wav_path = os.path.join(ds.absolute_wav_dir, wav_data.relative_wav_path)
+      absolute_mel_path = os.path.join(ds.absolute_mel_dir, mel_data.relative_mel_path)
+
       new_entry = MergedDatasetEntry(
-        entry_id=entry.entry_id,
-        gender=entry.gender,
-        basename=entry.basename,
-        speaker_id=entry.speaker_id,
-        lang=text.lang,
-        serialized_accent_ids=text.serialized_accent_ids,
-        serialized_symbol_ids=text.serialized_symbol_ids,
-        wav_path=wav.wav,
-        duration=wav.duration,
-        sampling_rate=wav.sr,
-        mel_path=mel.mel_path,
-        n_mel_channels=mel.n_mel_channels,
+        entry_id=ds_data.entry_id,
+        gender=ds_data.gender,
+        basename=ds_data.basename,
+        speaker_id=ds_data.speaker_id,
+        lang=text_data.lang,
+        serialized_accent_ids=text_data.serialized_accent_ids,
+        serialized_symbol_ids=text_data.serialized_symbol_ids,
+        absolute_wav_path=absolute_wav_path,
+        duration=wav_data.duration,
+        sampling_rate=wav_data.sr,
+        absolute_mel_path=absolute_mel_path,
+        n_mel_channels=mel_data.n_mel_channels,
       )
       res.append(new_entry)
     return res
@@ -287,11 +292,11 @@ class PreparedDataList(GenericList[PreparedData]):
         entry_id=-1,
         ds_entry_id=entry.entry_id,
         duration=entry.duration,
-        mel_path=entry.mel_path,
+        mel_path=entry.absolute_mel_path,
         speaker_id=entry.speaker_id,
         serialized_accent_ids=entry.serialized_accent_ids,
         serialized_symbol_ids=entry.serialized_symbol_ids,
-        wav_path=entry.wav_path,
+        wav_path=entry.absolute_wav_path,
       )
       res.append(prep_data)
     res.custom_sort()

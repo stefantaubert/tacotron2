@@ -17,7 +17,7 @@ from src.app.pre.text import (preprocess_text, text_convert_to_ipa,
 from src.app.pre.tools import remove_silence_plot
 from src.app.pre.wav import (preprocess_wavs, wavs_normalize,
                              wavs_remove_silence, wavs_stats,
-                             wavs_stereo_to_mono, wavs_upsample)
+                             wavs_stereo_to_mono, wavs_resample)
 from src.cli.utils import parse_tuple_list, split_hparams_string
 from text_utils import EngToIpaMode, Language
 
@@ -155,7 +155,7 @@ def init_wavs_upsample_parser(parser: ArgumentParser):
   parser.add_argument('--orig_wav_name', type=str, required=True)
   parser.add_argument('--dest_wav_name', type=str, required=True)
   parser.add_argument('--rate', type=int, required=True)
-  return wavs_upsample
+  return wavs_resample
 
 
 def init_wavs_stereo_to_mono_parser(parser: ArgumentParser):

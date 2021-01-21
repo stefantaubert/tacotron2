@@ -5,7 +5,7 @@ from src.app.pre.prepare import prepare_ds
 from src.app.pre.text import (preprocess_text, text_convert_to_ipa,
                               text_normalize)
 from src.app.pre.wav import (preprocess_wavs, wavs_normalize,
-                             wavs_remove_silence, wavs_upsample)
+                             wavs_remove_silence, wavs_resample)
 
 
 def prepare_thchs(base_dir: str):
@@ -55,7 +55,7 @@ def prepare_thchs(base_dir: str):
     buffer_end_ms=150
   )
 
-  wavs_upsample(
+  wavs_resample(
     base_dir=base_dir,
     ds_name="thchs",
     orig_wav_name="16000Hz_norm_wo_sil",

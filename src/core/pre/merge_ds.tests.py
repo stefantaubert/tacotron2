@@ -35,7 +35,7 @@ class UnitTests(unittest.TestCase):
       )]),
       mels=MelDataList([MelData(
         entry_id=1,
-        mel_path="mel",
+        relative_mel_path="mel",
         n_mel_channels=5,
       )]),
       speakers=SpeakersDict.fromlist(["sp1", "sp2", "sp3"]),
@@ -51,7 +51,7 @@ class UnitTests(unittest.TestCase):
         entry_id=1,
         duration=15,
         sr=22050,
-        wav="wav_new",
+        relative_wav_path="wav_new",
       )]),
     )
 

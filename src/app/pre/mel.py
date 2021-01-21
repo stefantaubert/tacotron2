@@ -3,17 +3,16 @@ from functools import partial
 from typing import Dict, Optional
 
 import torch
-from torch import Tensor
-
 from src.app.pre.ds import get_ds_dir
 from src.app.pre.wav import get_wav_dir, load_wav_csv
+from src.core.common.globals import PRE_CHUNK_SIZE
 from src.core.common.train import get_pytorch_filename
 from src.core.common.utils import get_chunk_name, get_subdir
 from src.core.pre.mel import MelData, MelDataList, process
 from src.core.pre.wav import WavData
+from torch import Tensor
 
 MEL_DATA_CSV = "data.csv"
-CHUNK_SIZE = 500
 
 
 def _get_mel_root_dir(ds_dir: str, create: bool = False):
@@ -36,12 +35,24 @@ def save_mel_csv(mel_dir: str, mel_data: MelDataList):
 
 
 def save_mel(dest_dir: str, data_len: int, wav_entry: WavData, mel_tensor: Tensor) -> str:
-  chunk_dir = os.path.join(dest_dir, get_chunk_name(
-    wav_entry.entry_id, chunksize=CHUNK_SIZE, maximum=data_len - 1))
-  os.makedirs(chunk_dir, exist_ok=True)
-  dest_mel_path = os.path.join(chunk_dir, get_pytorch_filename(repr(wav_entry)))
-  torch.save(mel_tensor, dest_mel_path)
-  return dest_mel_path
+  # chunk_dir = os.path.join(dest_dir, get_chunk_name(
+  #   wav_entry.entry_id, chunksize=CHUNK_SIZE, maximum=data_len - 1))
+  # os.makedirs(chunk_dir, exist_ok=True)
+  # dest_mel_path = os.path.join(chunk_dir, get_pytorch_filename(repr(wav_entry)))
+
+  chunk_dir_name = get_chunk_name(
+    i=wav_entry.entry_id,
+    chunksize=PRE_CHUNK_SIZE,
+    maximum=data_len - 1
+  )
+  relative_dest_wav_path = os.path.join(chunk_dir_name, get_pytorch_filename(repr(wav_entry)))
+  absolute_chunk_dir = os.path.join(dest_dir, chunk_dir_name)
+  absolute_dest_wav_path = os.path.join(dest_dir, relative_dest_wav_path)
+
+  os.makedirs(absolute_chunk_dir, exist_ok=True)
+  torch.save(mel_tensor, absolute_dest_wav_path)
+
+  return relative_dest_wav_path
 
 
 def preprocess_mels(base_dir: str, ds_name: str, wav_name: str, custom_hparams: Optional[Dict[str, str]] = None):
@@ -56,20 +67,5 @@ def preprocess_mels(base_dir: str, ds_name: str, wav_name: str, custom_hparams: 
     data = load_wav_csv(wav_dir)
     assert len(data) > 0
     save_callback = partial(save_mel, dest_dir=mel_dir, data_len=len(data))
-    mel_data = process(data, custom_hparams, save_callback)
+    mel_data = process(data, wav_dir, custom_hparams, save_callback)
     save_mel_csv(mel_dir, mel_data)
-
-
-if __name__ == "__main__":
-
-  preprocess_mels(
-    base_dir="/datasets/models/taco2pt_v5",
-    ds_name="thchs",
-    wav_name="22050kHz_normalized_nosil"
-  )
-
-  preprocess_mels(
-    base_dir="/datasets/models/taco2pt_v5",
-    ds_name="ljs",
-    wav_name="22050kHz"
-  )

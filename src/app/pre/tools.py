@@ -66,9 +66,10 @@ def remove_silence_plot(base_dir: str, ds_name: str, wav_name: str, chunk_size: 
   dest_name = f"cs={chunk_size},ts={threshold_start}dBFS,bs={buffer_start_ms}ms,te={threshold_end}dBFS,be={buffer_end_ms}ms"
 
   wav_trimmed = os.path.join(dest_dir, f"{dest_name}.wav")
+  absolute_wav_path = os.path.join(wav_dir, entry.relative_wav_path)
 
   mel_orig, mel_trimmed = remove_silence_plot_core(
-    wav_path=entry.wav,
+    wav_path=absolute_wav_path,
     out_path=wav_trimmed,
     chunk_size=chunk_size,
     threshold_start=threshold_start,
@@ -77,7 +78,7 @@ def remove_silence_plot(base_dir: str, ds_name: str, wav_name: str, chunk_size: 
     buffer_end_ms=buffer_end_ms
   )
 
-  _save_orig_wav_if_not_exists(dest_dir, entry.wav)
+  _save_orig_wav_if_not_exists(dest_dir, absolute_wav_path)
   orig = _save_orig_plot_if_not_exists(dest_dir, mel_orig)
   trimmed = _save_trimmed_plot_temp(mel_trimmed)
   resulting_path = _save_comparison(dest_dir, dest_name, [orig, trimmed])

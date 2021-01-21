@@ -4,11 +4,9 @@ from tempfile import mktemp
 from typing import Dict, Optional
 
 from matplotlib import pyplot as plt
-from torch import Tensor
-from tqdm import tqdm
-
 from src.app.pre.ds import get_ds_dir, load_ds_csv
 from src.app.pre.wav import get_wav_dir, load_wav_csv
+from src.core.common.globals import PRE_CHUNK_SIZE
 from src.core.common.mel_plot import plot_melspec
 from src.core.common.utils import (get_chunk_name, get_filepaths, get_subdir,
                                    get_subfolders, make_batches_h_v,
@@ -17,8 +15,9 @@ from src.core.common.utils import (get_chunk_name, get_filepaths, get_subdir,
 from src.core.pre.ds import DsData
 from src.core.pre.plots import process
 from src.core.pre.wav import WavData
+from torch import Tensor
+from tqdm import tqdm
 
-CHUNK_SIZE = 500
 VERTICAL_COUNT = 10
 HORIZONTAL_COUNT = 4
 
@@ -33,15 +32,15 @@ def get_plots_dir(ds_dir: str, mel_name: str, create: bool = False):
 
 def save_plot(dest_dir: str, data_len: int, wav_entry: WavData, ds_entry: DsData, mel_tensor: Tensor) -> str:
   chunk_dir = os.path.join(dest_dir, get_chunk_name(
-    wav_entry.entry_id, chunksize=CHUNK_SIZE, maximum=data_len - 1))
+    wav_entry.entry_id, chunksize=PRE_CHUNK_SIZE, maximum=data_len - 1))
   os.makedirs(chunk_dir, exist_ok=True)
 
   plot_melspec(mel_tensor, title=f"{repr(wav_entry)}: {ds_entry.text}")
-  path = os.path.join(chunk_dir, f"{repr(wav_entry)}.png")
-  plt.savefig(path, bbox_inches='tight')
+  absolute_path = os.path.join(chunk_dir, f"{repr(wav_entry)}.png")
+  plt.savefig(absolute_path, bbox_inches='tight')
   plt.close()
 
-  return path
+  return absolute_path
 
 
 def plot_mels(base_dir: str, ds_name: str, wav_name: str, custom_hparams: Optional[Dict[str, str]] = None):
@@ -57,11 +56,11 @@ def plot_mels(base_dir: str, ds_name: str, wav_name: str, custom_hparams: Option
     ds_data = load_ds_csv(ds_dir)
     assert len(data) > 0
     save_callback = partial(save_plot, dest_dir=plots_dir, data_len=len(data))
-    all_paths = process(data, ds_data, custom_hparams, save_callback)
+    all_absolute_paths = process(data, ds_data, wav_dir, custom_hparams, save_callback)
 
     # all_paths = get_all_paths(plots_dir)
 
-    batches = make_batches_h_v(all_paths, VERTICAL_COUNT, HORIZONTAL_COUNT)
+    batches = make_batches_h_v(all_absolute_paths, VERTICAL_COUNT, HORIZONTAL_COUNT)
 
     plot_batches_h_v(batches, plots_dir)
 

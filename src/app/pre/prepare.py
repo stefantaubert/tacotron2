@@ -8,12 +8,10 @@ from src.app.pre.mel import get_mel_dir, load_mel_csv
 from src.app.pre.text import (get_text_dir, load_text_csv,
                               load_text_symbol_converter)
 from src.app.pre.wav import get_wav_dir, load_wav_csv
-from text_utils import AccentsDict
-from text_utils import SpeakersDict
-from text_utils import SymbolIdDict
 from src.core.common.utils import get_subdir
 from src.core.pre.merge_ds import (DsDataset, DsDatasetList, PreparedData,
                                    PreparedDataList, preprocess)
+from text_utils import AccentsDict, SpeakersDict, SymbolIdDict
 
 
 def _get_prepared_root_dir(base_dir: str, create: bool = False):
@@ -93,7 +91,9 @@ def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]]
         mels=load_mel_csv(mel_dir),
         speakers=load_speaker_json(ds_dir),
         symbol_ids=load_text_symbol_converter(text_dir),
-        accent_ids=load_accents_json(ds_dir)
+        accent_ids=load_accents_json(ds_dir),
+        absolute_wav_dir=wav_dir,
+        absolute_mel_dir=mel_dir,
       )
 
       datasets.append(ds_dataset)
@@ -111,43 +111,3 @@ def prepare_ds(base_dir: str, prep_name: str, ds_speakers: List[Tuple[str, str]]
     save_prep_accents_ids(prep_dir, merged_data.accent_ids)
     save_prep_speakers_json(prep_dir, merged_data.speaker_ids)
 
-
-if __name__ == "__main__":
-  if False:
-    prepare_ds(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="debug",
-      ds_speakers=[("ljs", "all"), ("thchs", "all"), ("thchs", "B4")],
-      #ds_text_audio=[("thchs", "ipa", "22050Hz_normalized_nosil")]
-      ds_text_audio=[("ljs", "ipa_norm", "22050kHz"), ("thchs", "ipa", "22050Hz_normalized_nosil")]
-    )
-  else:
-    prep_dir = get_prepared_dir(
-      base_dir="/datasets/models/taco2pt_v5",
-      prep_name="debug",
-    )
-
-    res = load_filelist(
-      prep_dir=prep_dir,
-    )
-
-  # prepare_ds(
-  #   base_dir="/datasets/models/taco2pt_v5",
-  #   prep_name="thchs_ljs_ipa",
-  #   ds_speakers=[("ljs", "all"), ("thchs", "all")],
-  #   ds_text_audio=[("ljs", "ipa_norm", "22050Hz"), ("thchs", "ipa", "22050kHz_normalized_nosil")]
-  # )
-
-  # prepare_ds(
-  #   base_dir="/datasets/models/taco2pt_v5",
-  #   prep_name="ljs",
-  #   ds_speakers=[("ljs", "all")],
-  #   ds_text_audio=[("ljs", "ipa_norm", "22050Hz")]
-  # )
-
-  # prepare_ds(
-  #   base_dir="/datasets/models/taco2pt_v5",
-  #   prep_name="thchs",
-  #   ds_speakers=[("thchs", "all")],
-  #   ds_text_audio=[("thchs", "ipa", "22050Hz_norm_wo_sil")]
-  # )

@@ -7,7 +7,7 @@ from src.app.utils import prepare_logger
 from src.core.common.utils import get_subdir
 from src.core.pre.wav import (WavData, WavDataList, log_stats, normalize,
                               preprocess, remove_silence, stereo_to_mono,
-                              upsample)
+                              resample)
 
 _wav_data_csv = "data.csv"
 
@@ -40,7 +40,7 @@ def preprocess_wavs(base_dir: str, ds_name: str, wav_name: str):
     logger.error("Already exists.")
   else:
     data = load_ds_csv(ds_dir)
-    wav_data = preprocess(data, dest_wav_dir, copy_wavs=True)
+    wav_data = preprocess(data, dest_wav_dir)
     save_wav_csv(dest_wav_dir, wav_data)
     ds_data = load_ds_csv(ds_dir)
     log_stats(ds_data, wav_data, logger)
@@ -57,7 +57,7 @@ def wavs_stats(base_dir: str, ds_name: str, wav_name: str):
     log_stats(ds_data, wav_data, logger)
 
 
-def _wav_op(base_dir: str, ds_name: str, origin_wav_name: str, destination_wav_name: str, op: Callable[[WavDataList, str], WavDataList], logger):
+def _wav_op(base_dir: str, ds_name: str, origin_wav_name: str, destination_wav_name: str, op: Callable[[WavDataList, str, str], WavDataList], logger):
   ds_dir = get_ds_dir(base_dir, ds_name)
   dest_wav_dir = get_wav_dir(ds_dir, destination_wav_name)
   if os.path.isdir(dest_wav_dir):
@@ -66,7 +66,7 @@ def _wav_op(base_dir: str, ds_name: str, origin_wav_name: str, destination_wav_n
     orig_wav_dir = get_wav_dir(ds_dir, origin_wav_name)
     assert os.path.isdir(orig_wav_dir)
     data = load_wav_csv(orig_wav_dir)
-    wav_data = op(data, dest_wav_dir)
+    wav_data = op(data, orig_wav_dir, dest_wav_dir)
     save_wav_csv(dest_wav_dir, wav_data)
     ds_data = load_ds_csv(ds_dir)
     log_stats(ds_data, wav_data, logger)
@@ -79,10 +79,10 @@ def wavs_normalize(base_dir: str, ds_name: str, orig_wav_name: str, dest_wav_nam
   _wav_op(base_dir, ds_name, orig_wav_name, dest_wav_name, op, logger)
 
 
-def wavs_upsample(base_dir: str, ds_name: str, orig_wav_name: str, dest_wav_name: str, rate: int):
+def wavs_resample(base_dir: str, ds_name: str, orig_wav_name: str, dest_wav_name: str, rate: int):
   logger = prepare_logger()
   logger.info("Resampling wavs...")
-  op = partial(upsample, new_rate=rate)
+  op = partial(resample, new_rate=rate)
   _wav_op(base_dir, ds_name, orig_wav_name, dest_wav_name, op, logger)
 
 
