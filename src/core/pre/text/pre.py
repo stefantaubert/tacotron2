@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from logging import Logger
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
+import pandas as pd
+from numpy.core.fromnumeric import mean
 from src.core.common.globals import PADDING_SYMBOL
 from src.core.common.utils import GenericList, get_counter
 from src.core.pre.ds import DsDataList
@@ -26,6 +28,56 @@ class TextDataList(GenericList[TextData]):
   def load_init(self):
     for item in self.items():
       item.load_init()
+
+
+def log_stats(ds_data: DsDataList, text_data: TextDataList, logger: Logger):
+  stats: List[str, int, float, float, float] = []
+  text_lengths = [len(deserialize_list(x.serialized_symbol_ids)) for x in text_data.items()]
+  stats.append((
+    "Overall",
+    len(text_lengths),
+    min(text_lengths),
+    max(text_lengths),
+    mean(text_lengths),
+    sum(text_lengths),
+  ))
+
+  speakers_text_lengths: List[int, List[float]] = {}
+  speaker_names: Dict[int, str] = {}
+  for ds_entry, text_entry in zip(ds_data.items(), text_data.items()):
+    if ds_entry.speaker_id not in speakers_text_lengths:
+      speakers_text_lengths[ds_entry.speaker_id] = []
+      speaker_names[ds_entry.speaker_id] = ds_entry.speaker_name
+    speakers_text_lengths[ds_entry.speaker_id].append(
+      len(deserialize_list(text_entry.serialized_symbol_ids)))
+
+  for k, speaker_text_lengths in speakers_text_lengths.items():
+    stats.append((
+      f"{speaker_names[k]} ({k})",
+      len(speaker_text_lengths),
+      min(speaker_text_lengths),
+      max(speaker_text_lengths),
+      mean(speaker_text_lengths),
+      sum(speaker_text_lengths),
+    ))
+
+  stats.sort(key=lambda x: (x[-1]), reverse=True)
+  stats_csv = pd.DataFrame(stats, columns=[
+    "Speaker",
+    "# Entries",
+    "# Min",
+    "# Max",
+    "# Avg",
+    "# Total",
+  ])
+
+  with pd.option_context(
+    'display.max_rows', None,
+    'display.max_columns', None,
+    'display.width', None,
+    'display.precision', 0,
+  ):  # more options can be specified also
+    print(stats_csv)
 
 
 def convert_to_ipa(data: TextDataList, symbol_converter: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, mode: Optional[EngToIpaMode], logger: Logger) -> Tuple[TextDataList, SymbolIdDict, SymbolsDict]:

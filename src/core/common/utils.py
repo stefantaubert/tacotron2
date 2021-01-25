@@ -21,8 +21,11 @@ from scipy.spatial.distance import cosine
 from src.core.common.globals import CSV_SEPERATOR
 from tqdm import tqdm
 
-T = TypeVar('T')
+_T = TypeVar('_T')
 
+def have_common_entries(l: Union[Tuple[_T], List[_T]], s: Union[Tuple[_T], List[_T]]) -> bool:
+  res = len(set(l).union(set(s))) > 0
+  return res
 
 def disable_matplot_logger():
   disable_matplot_font_logger()
@@ -80,7 +83,7 @@ def disable_matplot_colorbar_logger():
   logging.getLogger('matplotlib.colorbar').disabled = True
 
 
-def cast_as(obj, _: T) -> T:
+def cast_as(obj, _: _T) -> _T:
   return obj
 
 
@@ -130,7 +133,7 @@ def console_out_len(text: str):
 # TODO: tests
 
 
-def make_batches_v_h(arr: List[T], v: int, h: int) -> List[List[T]]:
+def make_batches_v_h(arr: List[_T], v: int, h: int) -> List[List[_T]]:
   vertical_merge_count = math.ceil(len(arr) / v)
   # print("v", vertical_merge_count)
   horizontal_merge_count = math.ceil(vertical_merge_count / h)
@@ -157,7 +160,7 @@ def make_batches_v_h(arr: List[T], v: int, h: int) -> List[List[T]]:
 # TODO: tests
 
 
-def make_batches_h_v(arr: List[T], v: int, h: int) -> List[List[T]]:
+def make_batches_h_v(arr: List[_T], v: int, h: int) -> List[List[_T]]:
   horizontal_merge_count = math.ceil(len(arr) / h)
   # print("v", vertical_merge_count)
   vertical_merge_count = math.ceil(horizontal_merge_count / v)
@@ -182,16 +185,16 @@ def make_batches_h_v(arr: List[T], v: int, h: int) -> List[List[T]]:
   return vertical_batches
 
 
-class GenericList(list, Generic[T]):
+class GenericList(list, Generic[_T]):
   def save(self, file_path: str):
     data = [astuple(xi) for xi in self.items()]
     dataframe = pd.DataFrame(data)
     save_df(dataframe, file_path)
 
   @classmethod
-  def load(cls, member_class: Type[T], file_path: str):
+  def load(cls, member_class: Type[_T], file_path: str):
     data = load_df(file_path)
-    data_loaded: List[T] = [member_class(*xi) for xi in data.values]
+    data_loaded: List[_T] = [member_class(*xi) for xi in data.values]
     res = cls(data_loaded)
     res.load_init()
     return res
@@ -199,12 +202,12 @@ class GenericList(list, Generic[T]):
   def load_init(self):
     return self
 
-  def items(self, with_tqdm: bool = False) -> List[T]:
+  def items(self, with_tqdm: bool = False) -> List[_T]:
     if with_tqdm:
       return tqdm(self)
     return self
 
-  def get_random_entry(self) -> T:
+  def get_random_entry(self) -> _T:
     idx = random.choice(range(len(self)))
     return self[idx]
 
@@ -218,8 +221,8 @@ def save_df(dataframe: pd.DataFrame, path: str):
   dataframe.to_csv(path, header=None, index=None, sep=CSV_SEPERATOR)
 
 
-def get_sorted_list_from_set(unsorted_set: Set[T]) -> List[T]:
-  res: List[T] = list(sorted(list(unsorted_set)))
+def get_sorted_list_from_set(unsorted_set: Set[_T]) -> List[_T]:
+  res: List[_T] = list(sorted(list(unsorted_set)))
   return res
 
 
@@ -232,7 +235,7 @@ def remove_duplicates_list_orderpreserving(l: List[str]) -> List[str]:
   return result
 
 
-def get_counter(l: List[List[T]]) -> Counter:
+def get_counter(l: List[List[_T]]) -> Counter:
   items = []
   for sublist in l:
     items.extend(sublist)
@@ -240,8 +243,8 @@ def get_counter(l: List[List[T]]) -> Counter:
   return symbol_counter
 
 
-def get_unique_items(of_list: List[Union[List[T], Set[T]]]) -> Set[T]:
-  items: Set[T] = set()
+def get_unique_items(of_list: List[Union[List[_T], Set[_T]]]) -> Set[_T]:
+  items: Set[_T] = set()
   for sub_entries in of_list:
     items = items.union(set(sub_entries))
   return items

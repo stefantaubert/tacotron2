@@ -9,7 +9,7 @@ from src.app.utils import prepare_logger
 from text_utils import SymbolIdDict
 from src.core.common.utils import get_subdir
 from src.core.pre.text.pre import (SymbolsDict, TextData, TextDataList,
-                                   convert_to_ipa, normalize, preprocess)
+                                   convert_to_ipa, log_stats, normalize, preprocess)
 
 _text_data_csv = "data.csv"
 _text_symbols_json = "symbols.json"
@@ -52,6 +52,17 @@ def load_text_csv(text_dir: str) -> TextDataList:
 def save_text_csv(text_dir: str, data: TextDataList):
   path = os.path.join(text_dir, _text_data_csv)
   data.save(path)
+
+def text_stats(base_dir: str, ds_name: str, text_name: str):
+  logger = prepare_logger()
+  logger.info(f"Stats of {text_name}")
+  ds_dir = get_ds_dir(base_dir, ds_name)
+  text_dir = get_text_dir(ds_dir, text_name)
+  if os.path.isdir(text_dir):
+    ds_data = load_ds_csv(ds_dir)
+    text_data = load_text_csv(text_dir)
+    log_stats(ds_data, text_data, logger)
+
 
 
 def preprocess_text(base_dir: str, ds_name: str, text_name: str):

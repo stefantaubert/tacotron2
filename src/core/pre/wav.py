@@ -82,7 +82,7 @@ def log_stats(ds_data: DsDataList, wav_data: WavDataList, logger: Logger):
   stats.sort(key=lambda x: (x[-2]), reverse=True)
   stats_csv = pd.DataFrame(stats, columns=[
     "Speaker",
-    "Entries",
+    "# Entries",
     "Min (s)",
     "Max (s)",
     "Avg (s)",
