@@ -9,7 +9,7 @@ from abc import ABC
 from collections import Counter
 from dataclasses import astuple
 from pathlib import Path
-from typing import Any, Generic, List, Set, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Generic, List, Set, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -23,9 +23,16 @@ from tqdm import tqdm
 
 _T = TypeVar('_T')
 
+
 def have_common_entries(l: Union[Tuple[_T], List[_T]], s: Union[Tuple[_T], List[_T]]) -> bool:
   res = len(set(l).union(set(s))) > 0
   return res
+
+
+def contains_only_allowed_symbols(l: Union[Tuple[_T], List[_T]], allowed: Union[Tuple[_T], List[_T]]) -> bool:
+  res = len(set(l).difference(set(allowed))) == 0
+  return res
+
 
 def disable_matplot_logger():
   disable_matplot_font_logger()
@@ -398,9 +405,14 @@ def parse_json(path: str) -> dict:
   return tmp
 
 
-def save_json(path: str, mapping_dict: dict) -> None:
+def save_json(path: str, mapping_dict: Dict) -> None:
   with open(path, 'w', encoding='utf-8') as f:
     json.dump(mapping_dict, f, ensure_ascii=False, indent=2)
+
+
+def save_txt(path: str, text: str) -> None:
+  with open(path, 'w', encoding='utf-8') as f:
+    f.write(text)
 
 
 def get_mask_from_lengths(lengths):

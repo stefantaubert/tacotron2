@@ -2,17 +2,17 @@ import os
 from functools import partial
 from typing import Optional
 
-from text_utils import EngToIpaMode
-
 from src.app.pre.ds import get_ds_dir, load_ds_csv, load_symbols_json
 from src.app.utils import prepare_logger
-from text_utils import SymbolIdDict
-from src.core.common.utils import get_subdir
+from src.core.common.utils import get_subdir, save_txt
 from src.core.pre.text.pre import (SymbolsDict, TextData, TextDataList,
-                                   convert_to_ipa, log_stats, normalize, preprocess)
+                                   convert_to_ipa, log_stats, normalize,
+                                   preprocess)
+from text_utils import EngToIpaMode, SymbolIdDict
 
 _text_data_csv = "data.csv"
 _text_symbols_json = "symbols.json"
+_whole_text_txt = "text.txt"
 _text_symbol_ids_json = "symbol_ids.json"
 
 
@@ -44,6 +44,12 @@ def save_text_symbols_json(text_dir: str, data: SymbolsDict):
   data.save(path)
 
 
+def save_whole_text(text_dir: str, data: TextDataList):
+  path = os.path.join(text_dir, _whole_text_txt)
+  text = data.get_whole_text()
+  save_txt(path, text)
+
+
 def load_text_csv(text_dir: str) -> TextDataList:
   path = os.path.join(text_dir, _text_data_csv)
   return TextDataList.load(TextData, path)
@@ -52,6 +58,7 @@ def load_text_csv(text_dir: str) -> TextDataList:
 def save_text_csv(text_dir: str, data: TextDataList):
   path = os.path.join(text_dir, _text_data_csv)
   data.save(path)
+
 
 def text_stats(base_dir: str, ds_name: str, text_name: str):
   logger = prepare_logger()
@@ -63,6 +70,16 @@ def text_stats(base_dir: str, ds_name: str, text_name: str):
     text_data = load_text_csv(text_dir)
     log_stats(ds_data, text_data, logger)
 
+
+def export_text(base_dir: str, ds_name: str, text_name: str):
+  logger = prepare_logger()
+  logger.info("Exporting text...")
+  ds_dir = get_ds_dir(base_dir, ds_name)
+  text_dir = get_text_dir(ds_dir, text_name)
+  if os.path.isdir(text_dir):
+    data = load_text_csv(text_dir)
+    save_whole_text(text_dir, data)
+    logger.info("Finished.")
 
 
 def preprocess_text(base_dir: str, ds_name: str, text_name: str):

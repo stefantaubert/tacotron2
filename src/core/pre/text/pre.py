@@ -29,6 +29,11 @@ class TextDataList(GenericList[TextData]):
     for item in self.items():
       item.load_init()
 
+  def get_whole_text(self) -> str:
+    texts = [x.text for x in self.items()]
+    res = " ".join(texts)
+    return res
+
 
 def log_stats(ds_data: DsDataList, text_data: TextDataList, logger: Logger):
   stats: List[str, int, float, float, float] = []

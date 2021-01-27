@@ -109,7 +109,6 @@ venv.bak/
 # Tacotron 2 oddities
 examples/quick-test.txt
 *.debug.py
-src/playground.py
-src/playground.sh
 configs/
 src/app/globals_debug.py
+playground.*
